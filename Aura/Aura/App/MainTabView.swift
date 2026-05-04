@@ -8,20 +8,26 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab: Tabs = .main
+    @State private var selectedTab: Tabs = .home
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(value: .main, role: .none) {
+            Tab(value: .home, role: .none) {
                 HomeView()
             } label: {
-                Image(systemName: Tabs.main.icon)
+                Image(systemName: Tabs.home.icon)
             }
 
             Tab(value: .compability, role: .none) {
-                CompabilityView()
+                CompatibilityView()
             } label: {
                 Image(systemName: Tabs.compability.icon)
+            }
+            
+            Tab(value: .history, role: .none) {
+                HistoryView()
+            } label: {
+                Image(systemName: Tabs.history.icon)
             }
             
             Tab(value: .profile, role: .none) {
@@ -35,15 +41,21 @@ struct MainTabView: View {
 }
 
 fileprivate enum Tabs {
-    case main
+    case home
     case compability
+    case history
     case profile
     
     var icon: String {
         switch self {
-            case .main: return "house"
-            case .compability: return "heart"
-            case .profile: return "person"
+            case .home: 
+                return "house"
+            case .compability:
+                return "flame"
+            case .history:
+                return "clock.arrow.circlepath"
+            case .profile:
+                return "person"
         }
     }
 }
