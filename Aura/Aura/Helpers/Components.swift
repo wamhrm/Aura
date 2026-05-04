@@ -6,3 +6,10 @@
 //
 
 import Foundation
+import SwiftUI
+
+struct Components {
+    static func backgroundColor() -> some View {
+        return Color(uiColor: .background).ignoresSafeArea()
+    }
+}
