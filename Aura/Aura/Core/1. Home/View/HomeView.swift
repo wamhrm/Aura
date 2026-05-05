@@ -8,120 +8,135 @@
 import SwiftUI
 
 struct HomeView: View {
+    @StateObject private var vm = HomeViewModel()
+    @State private var hasInfo = true
+    
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $vm.homeRoutes) {
             ZStack {
                 Components.backgroundColor()
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 35) {
+                    VStack(alignment: .leading, spacing: 15) {
                         HStack(spacing: 15) {
-                            Image(systemName: "globe.asia.australia")
-                                .font(.title)
-                                .padding(10)
-                                .background(Circle() .fill(
-                                    LinearGradient(colors: [.purple.opacity(0.35),
-                                                            .pink.opacity(0.05)],
-                                                   startPoint: .topLeading,
-                                                   endPoint: .bottomTrailing)))
-                                .overlay(Circle() .stroke(.white, lineWidth: 5))
-                                .clipShape(Circle())
+                            Components.logoImage(35)
                                 
-                            Text("Добро пожаловать")
+                            Text("Здравствуйте, Дмитрий")
                                 .fontWeight(.semibold)
                                 .fontDesign(.monospaced)
                             
                             Spacer()
                         }
-                        .padding(.horizontal)
                         
-                        VStack(alignment: .leading, spacing: 15) {
-                            Text("ИНСАЙТ ДНЯ")
-                                .fontWeight(.heavy)
+                        if hasInfo {
+                            VStack(alignment: .leading, spacing: 15) {
+                                Text("ИНСАЙТ ДНЯ")
+                                    .fontWeight(.heavy)
 
-                            Text("""
-                                 "Сегодня лучше вести спокойные беседы, чем давить эмоционально"
-                                 """)
-                                .font(.callout)
-                                .fontWeight(.semibold)
-                                .italic()
-                        }
-                        .foregroundStyle(.white)
-                        .padding(25)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(minHeight: 125)
-                        .background(.feedQuote)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .padding(.horizontal)
-                        .padding(.top, -15)
-                        
-                        VStack(alignment: .leading, spacing: 15) {
-                            headerText("Гороскопы на сегодня", "Все знаки") {
-                                
+                                Text("Сегодня лучше вести спокойные беседы, чем давить эмоционально")
+                                    .font(.callout)
+                                    .fontWeight(.medium)
                             }
-                            
-                            ScrollView(.horizontal) {
-                                LazyHGrid(rows: [GridItem()], spacing: 20) {
-                                    ForEach(0..<5) { _ in
-                                        HoroscopeCellView(type: .aquarius, isHorizontal: true)
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
-                            .scrollIndicators(.hidden)
-                        }
-                        
-                        HStack {
-                            Text("Проверьте вашу совместимость с кем-то")
-                                .font(.title3)
-                                .bold()
-                                .foregroundStyle(.white)
-                                .lineSpacing(8)
-                                
-                            Spacer()
-                                
-                            Image(systemName: "sparkles")
-                                .imageScale(.large)
-                                .foregroundStyle(.white)
-                                .padding(10)
-                                .background(Color(.systemGray6).opacity(0.15))
-                                .clipShape(Circle())
-                        }
-                        .padding(25)
-                        .frame(maxWidth: .infinity)
-                        .background(LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing))
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .padding(.horizontal)
-                        
-                        VStack(alignment: .leading, spacing: 15) {
-                            headerText("Проверьте себя", "Все тесты") {
-                                
-                            }
+                            .foregroundStyle(.white)
+                            .padding(22)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.softPurple)
+                            .clipShape(RoundedRectangle(cornerRadius: 15))
                             
                             VStack(alignment: .leading, spacing: 10) {
-                                ForEach(TestType.allCases.prefix(3), id: \.self) { test in
-                                    TestCellView(type: test)
+                                headerText("Гороскоп на неделю", "Читать") {
+                                    vm.homeRoutes.append(.horoscopeDetails)
+                                }
+                                
+                                HoroscopeCellView(horoscope: .mock) {
+                                    vm.homeRoutes.append(.horoscopeDetails)
                                 }
                             }
-                            .padding(.horizontal)
+                            .padding(.top, 15)
+                        }
+                        
+                        if !hasInfo {
+                            Components.completeYourProfile {
+                                vm.homeRoutes.append(.addProfileInfo)
+                            }
+                        }
+                        
+                        Button {
+                            
+                        } label: {
+                            HStack {
+                                Text("Проверить совместимость")
+                                    .font(.title3)
+                                    .bold()
+                                    .foregroundStyle(.white)
+                                    .lineSpacing(8)
+                                
+                                Spacer()
+                                    
+                                Components.sparkImageWithBackground(.large, .white)
+                            }
+                            .padding(20)
+                            .frame(maxWidth: .infinity)
+                            .background(LinearGradient(colors: [.purple, .blue],
+                                                       startPoint: .leading,
+                                                       endPoint: .trailing))
+                            .clipShape(RoundedRectangle(cornerRadius: 15))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 10) {
+                            headerText("Проверьте себя", "Все тесты") {
+                                vm.homeRoutes.append(.tests)
+                            }
+                            
+                            ForEach(Array(TestType.allCases[0...2]), id: \.self) { test in
+                                TestCellView(type: test,
+                                             showSelection: true,
+                                             hasChosenTest: Binding(
+                                                get: { vm.selectedTests.contains(test) },
+                                                set: { _ in })) {
+                                    vm.toggleTestSelection(test)
+                                } onTapHandler: {
+                                    vm.homeRoutes.append(.testDetails(test))
+                                }
+                            }
+                            
+                            Components.classicButton("Проверить себя") {
+                                vm.homeRoutes.append(.testResults)
+                            }
+                            .padding(.top, 10)
+                        }
+                        .blur(radius: !hasInfo ? 5 : 0)
+                        .padding(.top, 15)
+                        .overlay {
+                            if !hasInfo {
+                                Components.completeYourProfileLock("Заполните свой профиль для прохождения тестов")
+                            }
                         }
                     }
+                    .padding(.horizontal)
                 }
                 .navigationTitle("Главная")
                 .navigationBarTitleDisplayMode(.inline)
+                .scrollIndicators(.hidden)
                 .bottomAreaPadding()
+                .navigationDestination(for: HomeRoutes.self) { destination in
+                    destinationView(destination)
+                }
             }
+        }
+        .alert("Нельзя выбрать меньше 2 тестов", isPresented: $vm.showMinTestsAlert) {
+            Button("OK", role: .cancel) {}
         }
     }
 }
 
 extension HomeView {
     private func headerText(_ title: String, _ buttonTitle: String,
-                           _ onTapHandler: @escaping () -> Void) -> some View {
+                            _ onTapHandler: @escaping () -> Void) -> some View {
         HStack {
             Text(title)
                 .fontWeight(.semibold)
-                .padding(.leading, 2)
+                .padding(.leading, 4)
             
             Spacer()
             
@@ -133,7 +148,26 @@ extension HomeView {
                     .fontWeight(.medium)
             }
         }
-        .padding(.horizontal)
+    }
+    
+    @ViewBuilder
+    private func destinationView(_ route: HomeRoutes) -> some View {
+        switch route {
+            case .tests:
+                AllTestsView(vm: vm) { test in
+                    vm.homeRoutes.append(.testDetails(test))
+                }
+            case .testDetails(let test):
+                TestDetailsView(type: test) {
+                    vm.selectTest(test)
+                }
+            case .testResults:
+                TestResultsView(vm: HomeViewModel())
+            case .horoscopeDetails:
+                HoroscopeDetailsView(horoscope: .mock)
+            case .addProfileInfo:
+                AddProfileInfoView(vm: vm)
+        }
     }
 }
 

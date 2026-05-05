@@ -18,10 +18,10 @@ struct MainTabView: View {
                 Image(systemName: Tabs.home.icon)
             }
 
-            Tab(value: .compability, role: .none) {
+            Tab(value: .compatibility, role: .none) {
                 CompatibilityView()
             } label: {
-                Image(systemName: Tabs.compability.icon)
+                Image(systemName: Tabs.compatibility.icon)
             }
             
             Tab(value: .history, role: .none) {
@@ -36,22 +36,19 @@ struct MainTabView: View {
                 Image(systemName: Tabs.profile.icon)
             }
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabBarMinimizeBehavior(.never)
     }
 }
 
 fileprivate enum Tabs {
-    case home
-    case compability
-    case history
-    case profile
+    case home, compatibility, history, profile
     
     var icon: String {
         switch self {
             case .home: 
                 return "house"
-            case .compability:
-                return "flame"
+            case .compatibility:
+                return "heart"
             case .history:
                 return "clock.arrow.circlepath"
             case .profile:
@@ -63,3 +60,4 @@ fileprivate enum Tabs {
 #Preview {
     MainTabView()
 }
+    

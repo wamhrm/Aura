@@ -6,3 +6,17 @@
 //
 
 import Foundation
+import Combine
+
+enum AuthState {
+    case signedIn(UserModel)
+    case signedOut
+}
+
+protocol AuthServiceProtocol {
+    var authState: CurrentValueSubject<AuthState, Never> { get }
+}
+
+final class AuthService: AuthServiceProtocol {
+    var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
+}
