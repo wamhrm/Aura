@@ -149,7 +149,7 @@ struct Components {
                 
                 Text(type.rightSide)
             }
-            .font(.footnote)
+            .font(.system(size: 14))
             .fontWeight(.semibold)
             .foregroundStyle(.deepGray)
             
@@ -159,7 +159,7 @@ struct Components {
                         .fill(Color(.systemGray6))
                     
                     Capsule()
-                        .fill(LinearGradient(colors: [.purple, .softPurple],
+                        .fill(LinearGradient(colors: type.colors,
                                              startPoint: .leading,
                                              endPoint: .trailing))
                         .frame(width: bar.size.width * (CGFloat(value) / CGFloat(10)))
@@ -170,7 +170,7 @@ struct Components {
     }
     
     enum EmotionalProfileTypes {
-        case temperament, thinking, organization, relationships
+        case temperament, thinking, organization, relationships, emotionalResonance, innerOpenness, soulAlignment, emotionalWarmth
         
         var leftSide: String {
             switch self {
@@ -182,7 +182,15 @@ struct Components {
                     return "Хаос"
                 case .relationships:
                     return "Независимость"
-            }
+                case .emotionalResonance:
+                    return "Дистанция"
+                case .innerOpenness:
+                    return "Закрытость"
+                case .soulAlignment:
+                    return "Недопонимание"
+                case .emotionalWarmth:
+                    return "Холодная дистанция"
+                }
         }
         
         var rightSide: String {
@@ -195,6 +203,95 @@ struct Components {
                     return "Контроль"
                 case .relationships:
                     return "Привязанность"
+                case .emotionalResonance:
+                    return "Близость"
+                case .innerOpenness:
+                    return "Душевная открытость"
+                case .soulAlignment:
+                    return "Взаимопонимание"
+                case .emotionalWarmth:
+                    return "Теплая привязанность"
+            }
+        }
+        
+        var colors: [Color] {
+            switch self {
+                case .temperament, .thinking, .organization, .relationships:
+                    return [.purple, .softPurple]
+                case .emotionalResonance, .innerOpenness, .soulAlignment, .emotionalWarmth:
+                    return [.blue, .softPurple]
+            }
+        }
+    }
+    
+    static func resultsSection<Content: View>(_ title: String,
+                                        @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .bold()
+            
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .backgroundWithShape(15, true)
+    }
+    
+    static func resultsWithNumbersSection(_ type: LoveLanguageTypes, _ title: String, _ description: String) -> some View {
+        HStack(alignment: .top) {
+            Text(type.number)
+                .font(.callout)
+                .fontWeight(.semibold)
+                .foregroundStyle(type.numberColor)
+                .padding(10)
+                .background(type.numberColor.opacity(0.15))
+                .clipShape(Circle())
+                .frame(width: 35, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: 7) {
+                Text(type.rawValue.uppercased())
+                    .font(.footnote)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.gray)
+                
+                Text(title)
+                    .font(.callout)
+                    .bold()
+                
+                Text(description)
+                    .font(.footnote)
+                    .foregroundStyle(.deepGray)
+            }
+            .padding(.top, 5)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    enum LoveLanguageTypes: String {
+        case main = "Основной"
+        case additional = "Дополнительный"
+        case spark = "Искра"
+        case potentional = "Потенциал"
+        
+        var number: String {
+            switch self {
+                case .main, .spark:
+                    return "1"
+                case .additional, .potentional:
+                    return "2"
+            }
+        }
+        
+        var numberColor: Color {
+            switch self {
+                case .main:
+                    return .red
+                case .additional:
+                    return .blue
+                case .spark:
+                    return .blue
+                case .potentional:
+                    return .yellow
             }
         }
     }

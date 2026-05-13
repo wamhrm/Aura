@@ -9,20 +9,14 @@ import SwiftUI
 
 struct TestDetailsView<Test: TestCellDisplayable>: View {
     let type: Test
-    let onTapHandler: (() -> Void)?
-    
-    @Environment(\.dismiss) private var dismiss
-    
-    init(type: Test, onTapHandler: (() -> Void)? = nil) {
-        self.type = type
-        self.onTapHandler = onTapHandler
-    }
-    
+    let isSelected: Bool
+    let onTapHandler: () -> Void
+
     var body: some View {
         ZStack {
             Components.backgroundColor()
             
-            VStack(alignment: .leading, spacing: 25) {
+            VStack(alignment: .leading, spacing: 20) {
                 Components.testCellImage(type.icon, type.color, .title, 60, false)
                 
                 Text(type.deepDescription)
@@ -55,11 +49,8 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 .padding(20)
                 .backgroundWithShape(15, true)
                 
-                if let onTapHandler {
-                    Components.classicButton("Выбрать") {
-                        onTapHandler()
-                        dismiss()
-                    }
+                Components.classicButton(isSelected ? "Убрать" : "Выбрать") {
+                    onTapHandler()
                 }
                 
                 Spacer()
@@ -74,6 +65,8 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
 
 #Preview {
     NavigationStack {
-        TestDetailsView(type: TestType.astrology)
+        TestDetailsView(type: TestTypes.astrology, isSelected: false) {
+
+        }
     }
 }

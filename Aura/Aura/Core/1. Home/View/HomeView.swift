@@ -8,8 +8,11 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject private var vm = HomeViewModel()
-    @State private var hasInfo = true
+    @StateObject private var vm: HomeViewModel
+    
+    init(authService: any AuthServiceProtocol) {
+        _vm = StateObject(wrappedValue: HomeViewModel(authService: authService))
+    }
     
     var body: some View {
         NavigationStack(path: $vm.homeRoutes) {
@@ -28,7 +31,7 @@ struct HomeView: View {
                             Spacer()
                         }
                         
-                        if hasInfo {
+                        if vm.hasProfileInfo {
                             VStack(alignment: .leading, spacing: 15) {
                                 Text("ИНСАЙТ ДНЯ")
                                     .fontWeight(.heavy)
@@ -55,7 +58,7 @@ struct HomeView: View {
                             .padding(.top, 15)
                         }
                         
-                        if !hasInfo {
+                        if !vm.hasProfileInfo {
                             Components.completeYourProfile {
                                 vm.homeRoutes.append(.addProfileInfo)
                             }
@@ -88,9 +91,8 @@ struct HomeView: View {
                                 vm.homeRoutes.append(.tests)
                             }
                             
-                            ForEach(Array(TestType.allCases[0...2]), id: \.self) { test in
+                            ForEach(Array(TestTypes.allCases[0...2]), id: \.self) { test in
                                 TestCellView(type: test,
-                                             showSelection: true,
                                              hasChosenTest: Binding(
                                                 get: { vm.selectedTests.contains(test) },
                                                 set: { _ in })) {
@@ -101,14 +103,20 @@ struct HomeView: View {
                             }
                             
                             Components.classicButton("Проверить себя") {
-                                vm.homeRoutes.append(.testResults)
+                                vm.generatePersonalityAnalysis()
                             }
+                            .disabled(vm.isGeneratingPersonalityAnalysis)
                             .padding(.top, 10)
+
+                            if vm.isGeneratingPersonalityAnalysis {
+                                ProgressView("Готовим результат")
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
-                        .blur(radius: !hasInfo ? 5 : 0)
+                        .blur(radius: !vm.hasProfileInfo ? 5 : 0)
                         .padding(.top, 15)
                         .overlay {
-                            if !hasInfo {
+                            if !vm.hasProfileInfo {
                                 Components.completeYourProfileLock("Заполните свой профиль для прохождения тестов")
                             }
                         }
@@ -126,6 +134,11 @@ struct HomeView: View {
         }
         .alert("Нельзя выбрать меньше 2 тестов", isPresented: $vm.showMinTestsAlert) {
             Button("OK", role: .cancel) {}
+        }
+        .alert("Не удалось получить результат", isPresented: $vm.showPersonalityAnalysisError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(vm.personalityAnalysisErrorMessage ?? "Попробуйте ещё раз")
         }
     }
 }
@@ -158,11 +171,11 @@ extension HomeView {
                     vm.homeRoutes.append(.testDetails(test))
                 }
             case .testDetails(let test):
-                TestDetailsView(type: test) {
-                    vm.selectTest(test)
+                TestDetailsView(type: test, isSelected: vm.selectedTests.contains(test)) {
+                    vm.toggleTestSelection(test)
                 }
             case .testResults:
-                TestResultsView(vm: HomeViewModel())
+                PersonalityResultsView(vm: vm)
             case .horoscopeDetails:
                 HoroscopeDetailsView(horoscope: .mock)
             case .addProfileInfo:
@@ -172,5 +185,5 @@ extension HomeView {
 }
 
 #Preview {
-    HomeView()
+    HomeView(authService: AuthService())
 }

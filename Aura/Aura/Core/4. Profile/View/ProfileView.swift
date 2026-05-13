@@ -8,15 +8,22 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @StateObject private var vm = ProfileViewModel()
+    @StateObject private var vm: ProfileViewModel
+    private let authService: any AuthServiceProtocol
+
+    init(authService: any AuthServiceProtocol) {
+        self.authService = authService
+        _vm = StateObject(wrappedValue: ProfileViewModel(authService: authService))
+    }
     
     var body: some View {
         NavigationStack(path: $vm.profileRoutes) {
             Group {
-                if case .signedIn(_) = vm.authState {
-                    SignedOutView(vm: vm)
-                } else {
-                    SignedInView(vm: vm, user: .mock)
+                switch vm.authState {
+                    case .signedIn(let user):
+                        SignedInView(vm: vm, user: user)
+                    case .signedOut:
+                        SignedOutView(vm: vm)
                 }
             }
             .navigationTitle("Профиль")
@@ -34,7 +41,9 @@ struct ProfileView: View {
                 }
             }
             .sheet(isPresented: $vm.showSettings) {
-                SettingsSheetView()
+                SettingsSheetView {
+                    vm.signOut()
+                }
                     .presentationDetents([.height(380)])
             }
         }
@@ -46,7 +55,7 @@ extension ProfileView {
     private func destinationView(_ route: ProfileRoutes) -> some View {
         switch route {
             case .completeProfile:
-                AddProfileInfoView(vm: HomeViewModel())
+                AddProfileInfoView(vm: HomeViewModel(authService: authService))
             case .settings:
                 EmptyView()
         }
@@ -54,5 +63,5 @@ extension ProfileView {
 }
 
 #Preview {
-    ProfileView()
+    ProfileView(authService: AuthService())
 }

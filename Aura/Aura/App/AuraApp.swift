@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct AuraApp: App {
+    @StateObject private var authService = AuthService()
+
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environmentObject(authService)
         }
     }
 }
