@@ -34,13 +34,15 @@ struct SignedInView: View {
                             .fontWeight(.bold)
 
                         HStack {
-                            Text(user.dateOfBirth.formatted())
+                            Text(user.dateOfBirth ?? "Дата рождения не указана")
                             
-                            Text("·")
-                                .font(.title3)
-                                .bold()
-                            
-                            Text("Козерог")
+                            if user.dateOfBirth != nil {
+                                Text("·")
+                                    .font(.title3)
+                                    .bold()
+                                
+                                Text("Козерог")
+                            }
                         }
                         .font(.callout)
                         .foregroundStyle(.gray)
@@ -163,6 +165,6 @@ extension SignedInView {
 
 #Preview {
     NavigationStack {
-        SignedInView(vm: ProfileViewModel(), user: .mock)
+//        SignedInView(vm: ProfileViewModel(authService: MockAuthService(authState: .signedIn(.mock))), user: .mock)
     }
 }

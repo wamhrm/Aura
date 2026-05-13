@@ -20,7 +20,7 @@ struct SignedOutButtonView: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .backgroundWithShape(15, true)
+            .backgroundWithShape(10, true)
         }
     }
 }

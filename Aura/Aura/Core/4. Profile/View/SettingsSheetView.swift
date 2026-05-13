@@ -11,6 +11,7 @@ struct SettingsSheetView: View {
     @State private var isLightTheme = true
     @State private var selectedAccent = 0
     @Environment(\.dismiss) private var dismiss
+    let onSignOut: () -> Void
     
     let colors: [Color] = [.deepBlue, .softPurple, .red, .teal, .orange]
     
@@ -46,7 +47,8 @@ struct SettingsSheetView: View {
                 }
                 
                 Button {
-                    
+                    onSignOut()
+                    dismiss()
                 } label: {
                     VStack(alignment: .center) {
                         Text("Выйти")
@@ -69,6 +71,8 @@ struct SettingsSheetView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(role: .cancel) {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
                     }
                 }
             }
@@ -85,5 +89,5 @@ extension SettingsSheetView {
 }
 
 #Preview {
-    SettingsSheetView()
+    SettingsSheetView {}
 }

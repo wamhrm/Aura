@@ -44,10 +44,20 @@ struct SignedOutView: View {
             .overlay {
                 if showSignIn {
                     SignInCreateAccountView(vm: vm, type: .signIn,
-                                            showSignInCreate: $showSignIn)
+                                            showSignInCreate: $showSignIn) {
+                        withAnimation(.spring) {
+                            showSignIn = false
+                            showCreateAccount = true
+                        }
+                    }
                 } else if showCreateAccount {
                     SignInCreateAccountView(vm: vm, type: .createAccount,
-                                            showSignInCreate: $showCreateAccount)
+                                            showSignInCreate: $showCreateAccount) {
+                        withAnimation(.spring) {
+                            showCreateAccount = false
+                            showSignIn = true
+                        }
+                    }
                 }
             }
         }
@@ -55,5 +65,5 @@ struct SignedOutView: View {
 }
 
 #Preview {
-    SignedOutView(vm: ProfileViewModel())
+//    SignedOutView(vm: ProfileViewModel(authService: MockAuthService()))
 }

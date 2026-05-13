@@ -77,7 +77,7 @@ struct CompatibilityView: View {
                                 Spacer()
                                 
                                 Button {
-                                    vm.selectedTests = CompatibilityTestType.allCases
+                                    vm.selectedTests = CompatibilityTestTypes.allCases
                                 } label: {
                                     Text("Выбрать все")
                                         .foregroundStyle(.blue)
@@ -85,9 +85,8 @@ struct CompatibilityView: View {
                                 }
                             }
                             
-                            ForEach(CompatibilityTestType.allCases, id: \.self) { test in
+                            ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
                                 TestCellView(type: test,
-                                             showSelection: true,
                                              hasChosenTest: Binding(
                                                 get: { vm.selectedTests.contains(test) },
                                                 set: { _ in })) {
@@ -98,7 +97,7 @@ struct CompatibilityView: View {
                             }
                             
                             Components.classicButton("Узнать совместимость") {
-                                
+                                vm.compatibilityRoutes.append(.compatibilityResults)
                             }
                             .padding(.top, 10)
                         }
@@ -152,9 +151,11 @@ extension CompatibilityView {
     private func destinationView(_ route: CompatibilityRoutes) -> some View {
         switch route {
             case .testDetails(let test):
-                TestDetailsView(type: test) {
-                    
-            }
+                TestDetailsView(type: test, isSelected: vm.selectedTests.contains(test)) {
+                    vm.toggleTestSelection(test)
+                }
+            case .compatibilityResults:
+                CompatibilityResultsView()
         }
     }
 }

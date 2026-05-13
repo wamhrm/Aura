@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 enum CompatibilityRoutes: Hashable {
-    case testDetails(CompatibilityTestType)
+    case testDetails(CompatibilityTestTypes), compatibilityResults
 }
 
 final class CompatibilityViewModel: ObservableObject {
@@ -20,7 +20,7 @@ final class CompatibilityViewModel: ObservableObject {
     @Published var partnerTimeOfBirth = ""
     @Published var partnerAge = ""
     @Published var partnerGender = ""
-    @Published var selectedTests: [CompatibilityTestType] = []
+    @Published var selectedTests: [CompatibilityTestTypes] = []
     @Published var showMinTestsAlert = false
     
     private let minSelectedTests = 2
@@ -33,7 +33,7 @@ final class CompatibilityViewModel: ObservableObject {
         return !partnerName.isEmpty && !partnerGender.isEmpty
     }
     
-    func toggleTestSelection(_ test: CompatibilityTestType) {
+    func toggleTestSelection(_ test: CompatibilityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > minSelectedTests else {
                 showMinTestsAlert = true
@@ -48,7 +48,7 @@ final class CompatibilityViewModel: ObservableObject {
     
     func minimumSelectedTests() {
         if selectedTests.count < minSelectedTests {
-            selectedTests = Array(CompatibilityTestType.allCases.prefix(minSelectedTests))
+            selectedTests = Array(CompatibilityTestTypes.allCases.prefix(minSelectedTests))
         }
     }
 }
