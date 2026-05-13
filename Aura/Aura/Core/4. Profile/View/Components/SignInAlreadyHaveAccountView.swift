@@ -19,13 +19,9 @@ struct SignInAlreadyHaveAccountView: View {
                 Text(type.rawValue)
                     .foregroundStyle(.signInCreateAccountField)
                 
-                Button {
-                    
-                } label: {
-                    Text(type.buttonTitle)
-                        .foregroundStyle(.blue)
-                        .bold()
-                }
+                Text(type.buttonTitle)
+                    .foregroundStyle(.blue)
+                    .bold()
                 
                 Spacer()
             }

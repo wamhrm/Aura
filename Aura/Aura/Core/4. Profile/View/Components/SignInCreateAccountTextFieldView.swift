@@ -17,11 +17,20 @@ struct SignInCreateAccountTextFieldView: View {
                 .foregroundStyle(.signInCreateAccountField)
                 .fontWeight(.semibold)
                 
-            TextField(type.textField, text: $field)
-                .padding(.vertical, 15)
-                .padding(.horizontal, 20)
-                .background(.signInCreateAccountFieldButton)
-                .clipShape(RoundedRectangle(cornerRadius: 15))
+            Group {
+                if type == .password {
+                    SecureField(type.textField, text: $field)
+                } else {
+                    TextField(type.textField, text: $field)
+                        .textInputAutocapitalization(type == .email ? .never : .words)
+                        .keyboardType(type == .email ? .emailAddress : .default)
+                }
+            }
+            .autocorrectionDisabled(type == .email || type == .password)
+            .padding(.vertical, 15)
+            .padding(.horizontal, 20)
+            .background(.signInCreateAccountFieldButton)
+            .clipShape(RoundedRectangle(cornerRadius: 15))
         }
     }
 }
@@ -41,6 +50,7 @@ enum SignInCreateAccountTextFieldType: String {
                 return "Введите ваш пароль"
         }
     }
+
 }
 
 #Preview {

@@ -20,6 +20,8 @@ volumes:
 
 x-shared_environment: &shared_environment
   LOG_LEVEL: ${LOG_LEVEL:-debug}
+  JWT_SECRET: ${JWT_SECRET:-aura-local-development-secret}
+  OPENAI_KEY: ${OPENAI_KEY}
   DATABASE_HOST: db
   DATABASE_NAME: &db_name vapor_database
   DATABASE_USERNAME: &db_username vapor_username

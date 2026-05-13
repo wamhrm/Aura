@@ -29,11 +29,12 @@ struct HoroscopeCellView: View {
                 Text("""
                      "\(horoscope.description)"
                      """)
-                    .foregroundStyle(.deepGray)
-                    .fontWeight(.medium)
-                    .italic()
-                    .lineLimit(3)
-                    .multilineTextAlignment(.leading)
+                .font(.system(size: 15))
+                .italic()
+                .foregroundStyle(.deepGray)
+                .fontWeight(.medium)
+                .lineLimit(3)
+                .multilineTextAlignment(.leading)
             }
             .foregroundStyle(.black)
             .padding(22)
