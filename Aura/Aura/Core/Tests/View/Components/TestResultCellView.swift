@@ -51,13 +51,7 @@ enum PersonalityCellTypes: String, TestResultDisplayable {
     case intellectualMatch = "Интеллектуальная схожесть"
     case emotionalDepth = "Глубина связи"
     
-    // Язык любви
-    case primaryLanguage = "Основной язык"
-    case secondaryLanguage = "Дополнительный язык"
-    
-    var title: String {
-        return rawValue
-    }
+    var title: String { return rawValue }
 
     var icon: String {
         switch self {
@@ -69,8 +63,6 @@ enum PersonalityCellTypes: String, TestResultDisplayable {
             case .securityBase: return "⚓"
             case .intellectualMatch: return "🧠"
             case .emotionalDepth: return "🌊"
-            case .primaryLanguage: return "❤️"
-            case .secondaryLanguage: return "💬"
         }
     }
 }
@@ -97,12 +89,10 @@ enum CompatibilityCellTypes: String, TestResultDisplayable {
     case peaceRecovery = "Скорость примирения"
     
     // Сексуальная совместимость
-    case sexualTemperament = "Темперамент"
+    case sexualTemperament = "Сексуальный темперамент"
     case sexualChemistry = "Сексуальная химия"
     
-    var title: String {
-        return rawValue
-    }
+    var title: String { return rawValue }
 
     var icon: String {
         switch self {
@@ -123,5 +113,6 @@ enum CompatibilityCellTypes: String, TestResultDisplayable {
 }
 
 #Preview {
-    TestResultCellView(test: CompatibilityCellTypes.attachmentBond, description: "Понятная работа настала")
+    TestResultCellView(test: CompatibilityCellTypes.comfortDistance, description: "Понятная работа настала")
+        .padding(.horizontal)
 }

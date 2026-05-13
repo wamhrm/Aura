@@ -56,19 +56,12 @@ extension View {
             .clipShape(RoundedRectangle(cornerRadius: 15))
     }
     
-    func addProfileInfoSectionStyle() -> some View {
-        self
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .backgroundWithShape(15, false)
-    }
-    
     func testTopicsModifier() -> some View {
         self
             .padding(10)
-            .background(Color(.systemGray6).opacity(0.75))
+            .background(Color(.systemGray6).opacity(0.55))
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10) .stroke(Color(.systemGray6), lineWidth: 2))
+            .overlay(RoundedRectangle(cornerRadius: 10) .stroke(Color(.systemGray6), lineWidth: 1))
             .padding(.top, 5)
     }
 }

@@ -16,88 +16,100 @@ struct AddProfileInfoView: View {
             
             ScrollView {
                 VStack(spacing: 16) {
-                    section("👤", "Ваш пол") {
+                    section("Ваш пол") {
                         HStack {
                             option("👱🏻‍♂️", "Мужской",
                                    AddProfileInfoCellType.Gender.man,
-                                   $vm.userSex)
+                                   $vm.profileInfo.gender)
                             option("👩🏻", "Женский",
                                    AddProfileInfoCellType.Gender.woman,
-                                   $vm.userSex)
+                                   $vm.profileInfo.gender)
                         }
                     }
                     
-                    section("🔋", "Социальная энергия") {
+                    section("Дата рождения") {
+                        VStack(spacing: 10) {
+                            CompatibilityDateOfBirthView(title: "День/Месяц/Год",
+                                                         text: $vm.profileInfo.dateOfBirth,
+                                                         isTime: false)
+                            
+                            CompatibilityDateOfBirthView(title: "Время (необязательно)",
+                                                         text: $vm.profileInfo.birthTime,
+                                                         isTime: true)
+                        }
+                    }
+                    
+                    section("Темперамент") {
                         FlowLayout() {
                             option("🌙", "Интроверт",
                                    AddProfileInfoCellType.SocialType.introvert,
-                                   $vm.socialType)
+                                   $vm.profileInfo.socialType)
                             option("🌗", "Амбиверт",
                                    AddProfileInfoCellType.SocialType.ambivert,
-                                   $vm.socialType)
+                                   $vm.profileInfo.socialType)
                             option("🔥", "Экстраверт",
                                    AddProfileInfoCellType.SocialType.extrovert,
-                                   $vm.socialType)
+                                   $vm.profileInfo.socialType)
                         }
                     }
                     
-                    section("⚔️", "Стиль в конфликте") {
+                    section("Стиль в конфликте") {
                         FlowLayout() {
                             option("🤝", "Миротворец",
                                    AddProfileInfoCellType.ConflictStyle.mediator,
-                                   $vm.conflictStyle)
+                                   $vm.profileInfo.conflictStyle)
                             option("⚡", "Прямой",
                                    AddProfileInfoCellType.ConflictStyle.direct,
-                                   $vm.conflictStyle)
+                                   $vm.profileInfo.conflictStyle)
                             option("🌫", "Избегающий",
                                    AddProfileInfoCellType.ConflictStyle.avoider,
-                                   $vm.conflictStyle)
+                                   $vm.profileInfo.conflictStyle)
                         }
                     }
                     
-                    section("💫", "Эмоциональная основа") {
+                    section("Эмоциональная основа") {
                         FlowLayout() {
                             option("🧠", "Рациональный",
                                    AddProfileInfoCellType.EmotionalCore.logic,
-                                   $vm.emotionalCore)
+                                   $vm.profileInfo.emotionalCore)
                             option("✨", "Интуитивный",
                                    AddProfileInfoCellType.EmotionalCore.intuitive,
-                                   $vm.emotionalCore)
+                                   $vm.profileInfo.emotionalCore)
                         }
                     }
                     
-                    section("📊", "Вы чаще") {
+                    section("Вы чаще") {
                         FlowLayout() {
                             option("🗂", "Планируете",
                                    AddProfileInfoCellType.DecisionStyle.planner,
-                                   $vm.decisionStyle)
+                                   $vm.profileInfo.decisionStyle)
                             option("⚡", "По ситуации",
                                    AddProfileInfoCellType.DecisionStyle.spontaneous,
-                                   $vm.decisionStyle)
+                                   $vm.profileInfo.decisionStyle)
                             option("⏳", "Откладываете",
                                    AddProfileInfoCellType.DecisionStyle.procrastinator,
-                                   $vm.decisionStyle)
+                                   $vm.profileInfo.decisionStyle)
                         }
                     }
                     
-                    section("❤️", "Приоритет") {
+                    section("Приоритет") {
                         FlowLayout() {
                             option("🛡", "Стабильность",
                                    AddProfileInfoCellType.CoreRelationshipFocus.stability,
-                                   $vm.coreFocus)
+                                   $vm.profileInfo.coreFocus)
                             option("🚀", "Рост",
                                    AddProfileInfoCellType.CoreRelationshipFocus.growth,
-                                   $vm.coreFocus)
+                                   $vm.profileInfo.coreFocus)
                             option("🕊", "Спокойствие",
                                    AddProfileInfoCellType.CoreRelationshipFocus.peace,
-                                   $vm.coreFocus)
+                                   $vm.profileInfo.coreFocus)
                         }
                     }
                     
                     Button {
-                        
+                        vm.saveProfileInfo()
                     } label: {
-                        Text("Готово")
+                        Text(vm.isSavingProfileInfo ? "Сохраняем..." : "Готово")
                             .foregroundStyle(.white)
                             .bold()
                             .padding(15)
@@ -113,6 +125,7 @@ struct AddProfileInfoView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .padding(.top, 5)
+                    .disabled(vm.isSavingProfileInfo)
                 }
                 .padding(.horizontal)
             }
@@ -120,20 +133,15 @@ struct AddProfileInfoView: View {
         .navigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
         .bottomAreaPadding()
+        .alert("Не удалось сохранить профиль", isPresented: $vm.showProfileInfoError) {
+            Button("ОК", role: .cancel) { }
+        } message: {
+            Text(vm.profileInfoErrorMessage ?? "Попробуйте еще раз")
+        }
     }
 }
 
 extension AddProfileInfoView {
-    private func header(_ emoji: String, _ text: String) -> some View {
-        HStack(spacing: 10) {
-            Text(emoji)
-            
-            Text(text)
-                .foregroundStyle(.deepGray)
-                .fontWeight(.medium)
-        }
-    }
-    
     private func option<T: Equatable>(_ emoji: String, _ title: String,
                                       _ value: T, _ selection: Binding<T?>) -> some View {
         let isSelected = selection.wrappedValue == value
@@ -142,57 +150,61 @@ extension AddProfileInfoView {
             Text(emoji)
             
             Text(title)
-                .font(.subheadline)
+                .font(.system(size: 14))
                 .foregroundStyle(isSelected ? .white : .black)
                 .bold()
         }
         .padding(12)
         .frame(maxWidth: .infinity)
-        .background(isSelected ? Color.softPurple : Color(.systemGray6))
+        .background(isSelected ? Color.deepBlue : Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture { selection.wrappedValue = value }
         .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
     
-    private func section<Content: View>(_ emoji: String, _ title: String,
+    private func section<Content: View>(_ title: String,
                                         @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            header(emoji, title)
+        VStack(alignment: .leading, spacing: 15) {
+            Text(title)
+                .foregroundStyle(.deepGray)
+                .fontWeight(.medium)
             
             content()
         }
-        .addProfileInfoSectionStyle()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .backgroundWithShape(15, false)
     }
 }
 
 enum AddProfileInfoCellType {
-    enum Gender: String {
+    enum Gender: String, Codable {
         case man, woman
     }
     
-    enum SocialType: String {
+    enum SocialType: String, Codable {
         case introvert, ambivert, extrovert
     }
     
-    enum ConflictStyle: String {
+    enum ConflictStyle: String, Codable {
         case mediator, direct, avoider
     }
 
-    enum EmotionalCore: String {
+    enum EmotionalCore: String, Codable {
         case logic, intuitive
     }
     
-    enum DecisionStyle: String, CaseIterable {
+    enum DecisionStyle: String, CaseIterable, Codable {
         case planner, spontaneous, procrastinator
     }
 
-    enum CoreRelationshipFocus: String, CaseIterable {
+    enum CoreRelationshipFocus: String, CaseIterable, Codable {
         case stability, growth, peace
     }
 }
 
 #Preview {
     NavigationStack {
-        AddProfileInfoView(vm: HomeViewModel())
+        AddProfileInfoView(vm: HomeViewModel(authService: AuthService()))
     }
 }

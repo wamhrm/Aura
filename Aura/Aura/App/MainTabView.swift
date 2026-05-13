@@ -8,12 +8,13 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject var authService: AuthService
     @State private var selectedTab: Tabs = .home
     
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(value: .home, role: .none) {
-                HomeView()
+                HomeView(authService: authService)
             } label: {
                 Image(systemName: Tabs.home.icon)
             }
@@ -31,7 +32,7 @@ struct MainTabView: View {
             }
             
             Tab(value: .profile, role: .none) {
-                ProfileView()
+                ProfileView(authService: authService)
             } label: {
                 Image(systemName: Tabs.profile.icon)
             }
@@ -59,5 +60,6 @@ fileprivate enum Tabs {
 
 #Preview {
     MainTabView()
+        .environmentObject(AuthService())
 }
     
