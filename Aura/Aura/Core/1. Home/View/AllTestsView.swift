@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AllTestsView: View {
     @ObservedObject var vm: HomeViewModel
-    let onTapHandler: (TestTypes) -> Void
+    let onTapHandler: (PersonalityTestTypes) -> Void
     
     var body: some View {
         ZStack {
@@ -17,7 +17,7 @@ struct AllTestsView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(TestTypes.allCases, id: \.self) { test in
+                    ForEach(PersonalityTestTypes.allCases, id: \.self) { test in
                         TestCellView(type: test,
                                      hasChosenTest: Binding(
                                         get: { vm.selectedTests.contains(test) },
@@ -29,12 +29,12 @@ struct AllTestsView: View {
                     }
                     
                     Components.classicButton("Проверить себя") {
-                        vm.generatePersonalityAnalysis()
+                        vm.generatePersonality()
                     }
-                    .disabled(vm.isGeneratingPersonalityAnalysis)
+                    .disabled(vm.isLoading)
                     .padding(.top, 10)
 
-                    if vm.isGeneratingPersonalityAnalysis {
+                    if vm.isLoading {
                         ProgressView("Готовим результат")
                             .frame(maxWidth: .infinity)
                     }
@@ -50,7 +50,7 @@ struct AllTestsView: View {
 
 #Preview {
     NavigationStack {
-        AllTestsView(vm: HomeViewModel(authService: AuthService())) { _ in
+        AllTestsView(vm: HomeViewModel(authService: AuthService(), psychologyService: PsychologyService())) { _ in
             
         }
     }

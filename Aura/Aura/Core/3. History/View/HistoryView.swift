@@ -12,16 +12,16 @@ struct HistoryView: View {
         NavigationStack {
             ZStack {
                 Components.backgroundColor()
-                
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 15) {
                         SelectionButtons<HistoryFilterTypes> { filter in
-                            
+
                         }
-                        
+
                         ForEach(0..<7) { _ in
                             HistoryCellView()
-                        }   
+                        }
                     }
                     .padding(.horizontal)
                 }

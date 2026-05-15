@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct CompabilityModel {
+struct CompabilityResultModel {
     
 }

@@ -29,7 +29,9 @@ struct CompatibilityTextFieldView: View {
                 }
         }
     }
-    
+}
+
+extension CompatibilityTextFieldView {
     private var keyboardType: UIKeyboardType {
         switch type {
             case .age: return .numberPad
