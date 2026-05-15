@@ -1,13 +1,11 @@
+.DS_Store
 .build/
 .swiftpm/
 .cursor/
 .vscode/
-.DS_Store
-*.xcodeproj
-*.xcworkspace/xcuserdata/
 *.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
 *.xcuserstate
-db.sqlite
 *.sqlite
 *.sqlite3
 .env

@@ -1,2 +1,7 @@
-.build/
-.swiftpm/
+.build
+.swiftpm
+.git
+.env
+.vscode
+Package.resolved
+**/.DS_Store

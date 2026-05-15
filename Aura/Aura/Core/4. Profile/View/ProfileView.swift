@@ -8,14 +8,18 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @StateObject private var vm: ProfileViewModel
+    @ObservedObject private var vm: ProfileViewModel
     private let authService: any AuthServiceProtocol
+    private let psychologyService: any PsychologyServiceProtocol
 
-    init(authService: any AuthServiceProtocol) {
+    init(vm: ProfileViewModel,
+         authService: any AuthServiceProtocol,
+         psychologyService: any PsychologyServiceProtocol) {
+        self.vm = vm
         self.authService = authService
-        _vm = StateObject(wrappedValue: ProfileViewModel(authService: authService))
+        self.psychologyService = psychologyService
     }
-    
+
     var body: some View {
         NavigationStack(path: $vm.profileRoutes) {
             Group {
@@ -55,7 +59,8 @@ extension ProfileView {
     private func destinationView(_ route: ProfileRoutes) -> some View {
         switch route {
             case .completeProfile:
-                AddProfileInfoView(vm: HomeViewModel(authService: authService))
+                AddProfileInfoView(vm: HomeViewModel(authService: authService,
+                                                     psychologyService: psychologyService))
             case .settings:
                 EmptyView()
         }
@@ -63,5 +68,11 @@ extension ProfileView {
 }
 
 #Preview {
-    ProfileView(authService: AuthService())
+    let authService = AuthService()
+    let psychologyService = PsychologyService()
+    
+    ProfileView(vm: ProfileViewModel(authService: authService,
+                                     psychologyService: psychologyService),
+                authService: authService,
+                psychologyService: psychologyService)
 }

@@ -1,18 +1,18 @@
 import Vapor
 import Foundation
 
-struct RegisterUserRequest: Content {
+struct CreateAccountRequest: Content {
     let name: String
     let email: String
     let password: String
 }
 
-struct LoginUserRequest: Content {
+struct SignInRequest: Content {
     let email: String
     let password: String
 }
 
-struct UserResponse: Content {
+struct UserDTO: Content {
     let id: UUID
     let name: String
     let email: String
@@ -26,9 +26,9 @@ struct UserResponse: Content {
     let coreFocus: String?
 }
 
-struct AuthResponse: Content {
+struct AuthDTO: Content {
     let token: String
-    let user: UserResponse
+    let user: UserDTO
 }
 
 struct UpdateProfileInfoRequest: Content {

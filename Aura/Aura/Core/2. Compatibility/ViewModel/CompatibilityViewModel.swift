@@ -22,30 +22,30 @@ final class CompatibilityViewModel: ObservableObject {
     @Published var partnerGender = ""
     @Published var selectedTests: [CompatibilityTestTypes] = []
     @Published var showMinTestsAlert = false
-    
+
     private let minSelectedTests = 2
-    
+
     init() {
         minimumSelectedTests()
     }
-    
+
     var disableAnalyzeButton: Bool {
         return !partnerName.isEmpty && !partnerGender.isEmpty
     }
-    
+
     func toggleTestSelection(_ test: CompatibilityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > minSelectedTests else {
                 showMinTestsAlert = true
                 return
             }
-            
+
             selectedTests.remove(at: index)
         } else {
             selectedTests.append(test)
         }
     }
-    
+
     func minimumSelectedTests() {
         if selectedTests.count < minSelectedTests {
             selectedTests = Array(CompatibilityTestTypes.allCases.prefix(minSelectedTests))
