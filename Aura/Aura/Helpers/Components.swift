@@ -169,61 +169,6 @@ struct Components {
         }
     }
     
-    enum EmotionalProfileTypes {
-        case temperament, thinking, organization, relationships, emotionalResonance, innerOpenness, soulAlignment, emotionalWarmth
-        
-        var leftSide: String {
-            switch self {
-                case .temperament:
-                    return "Интроверсия"
-                case .thinking:
-                    return "Логика"
-                case .organization:
-                    return "Хаос"
-                case .relationships:
-                    return "Независимость"
-                case .emotionalResonance:
-                    return "Дистанция"
-                case .innerOpenness:
-                    return "Закрытость"
-                case .soulAlignment:
-                    return "Недопонимание"
-                case .emotionalWarmth:
-                    return "Холодная дистанция"
-                }
-        }
-        
-        var rightSide: String {
-            switch self {
-                case .temperament:
-                    return "Экстраверсия"
-                case .thinking:
-                    return "Интуиция"
-                case .organization:
-                    return "Контроль"
-                case .relationships:
-                    return "Привязанность"
-                case .emotionalResonance:
-                    return "Близость"
-                case .innerOpenness:
-                    return "Душевная открытость"
-                case .soulAlignment:
-                    return "Взаимопонимание"
-                case .emotionalWarmth:
-                    return "Теплая привязанность"
-            }
-        }
-        
-        var colors: [Color] {
-            switch self {
-                case .temperament, .thinking, .organization, .relationships:
-                    return [.purple, .softPurple]
-                case .emotionalResonance, .innerOpenness, .soulAlignment, .emotionalWarmth:
-                    return [.blue, .softPurple]
-            }
-        }
-    }
-    
     static func resultsSection<Content: View>(_ title: String,
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -293,6 +238,68 @@ struct Components {
                 case .potentional:
                     return .yellow
             }
+        }
+    }
+}
+
+enum EmotionalProfileTypes: String, Decodable {
+    case temperament = "Темперамент"
+    case thinking = "Мышление"
+    case organization = "Организованность"
+    case relationships = "Отношения"
+    case emotionalResonance = "Эмоциональный резонанс"
+    case innerOpenness = "Внутренняя открытость"
+    case soulAlignment = "Гармония души"
+    case emotionalWarmth = "Эмоциональная теплота"
+    
+    var leftSide: String {
+        switch self {
+            case .temperament:
+                return "Интроверсия"
+            case .thinking:
+                return "Логика"
+            case .organization:
+                return "Хаос"
+            case .relationships:
+                return "Независимость"
+            case .emotionalResonance:
+                return "Дистанция"
+            case .innerOpenness:
+                return "Закрытость"
+            case .soulAlignment:
+                return "Недопонимание"
+            case .emotionalWarmth:
+                return "Холодная дистанция"
+            }
+    }
+    
+    var rightSide: String {
+        switch self {
+            case .temperament:
+                return "Экстраверсия"
+            case .thinking:
+                return "Интуиция"
+            case .organization:
+                return "Контроль"
+            case .relationships:
+                return "Привязанность"
+            case .emotionalResonance:
+                return "Близость"
+            case .innerOpenness:
+                return "Душевная открытость"
+            case .soulAlignment:
+                return "Взаимопонимание"
+            case .emotionalWarmth:
+                return "Теплая привязанность"
+        }
+    }
+    
+    var colors: [Color] {
+        switch self {
+            case .temperament, .thinking, .organization, .relationships:
+                return [.purple, .softPurple]
+            case .emotionalResonance, .innerOpenness, .soulAlignment, .emotionalWarmth:
+                return [.blue, .softPurple]
         }
     }
 }

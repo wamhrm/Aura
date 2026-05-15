@@ -34,7 +34,7 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
     }
 }
 
-enum PersonalityCellTypes: String, TestResultDisplayable {
+enum PersonalityCellTypes: String, TestResultDisplayable, Decodable {
     // Поведенческие паттерны
     case socialFilter = "Социальный фильтр"
     case energyDrain = "Источник истощения"

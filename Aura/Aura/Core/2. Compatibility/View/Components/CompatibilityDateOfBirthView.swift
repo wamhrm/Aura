@@ -24,7 +24,9 @@ struct CompatibilityDateOfBirthView: View {
                 formatInput(newValue)
             })
     }
-    
+}
+
+extension CompatibilityDateOfBirthView {
     private func formatInput(_ newValue: String) {
         let digits = newValue.filter { $0.isNumber }
         var formatted = ""

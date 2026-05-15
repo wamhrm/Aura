@@ -30,6 +30,12 @@ struct UserModel: Codable, Equatable, Identifiable {
         coreFocus != nil
     }
     
+    var profileInfo: ProfileInfoModel {
+        ProfileInfoModel(user: self)
+    }
+}
+
+extension UserModel {
     static let mock = UserModel(id: UUID(),
                                 name: "Дмитрий",
                                 email: "test@test.com",

@@ -15,127 +15,76 @@ enum AuthState {
 
 @MainActor
 protocol AuthServiceProtocol: AnyObject {
-    var authState: AuthState { get }
-    var authStatePublisher: AnyPublisher<AuthState, Never> { get }
+    var authState: CurrentValueSubject<AuthState, Never> { get }
 
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws
-    func updateProfileInfo(_ request: UpdateProfileInfoRequest) async throws -> UserModel
-    func restoreSession() async
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UserModel
     func signOut()
 }
 
 @MainActor
 final class AuthService: ObservableObject, AuthServiceProtocol {
-    @Published private(set) var authState: AuthState = .signedOut
+    var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
 
-    private let tokenStorage: TokenStorageProtocol
+    private let tokenPath = Constants.tokenPath
+    private let tokenKey = Constants.tokenKey
+    private let userKey = Constants.userKey
 
-    var authStatePublisher: AnyPublisher<AuthState, Never> {
-        $authState.eraseToAnyPublisher()
-    }
-
-    init(tokenStorage: (any TokenStorageProtocol)? = nil) {
-        self.tokenStorage = tokenStorage ?? KeychainTokenStorage()
-
-        Task {
-            await restoreSession()
-        }
+    init() {
+        autoSignIn()
     }
 
     func createAccount(name: String, email: String, password: String) async throws {
-        let body = AuthRequest(name: name, email: email, password: password)
-        let response: AuthResponse = try await NetworkHelper.request(endpoint: "/auth/createAccount",
-                                                                     method: .post,
-                                                                     body: body)
-        
-        try saveToken(response.token)
-        authState = .signedIn(response.user)
+        let normalizedEmail = normalizeEmail(email)
+        try await NetworkHelper.createAccount(name: name, email: normalizedEmail, password: password)
+        try await signIn(email: normalizedEmail, password: password)
     }
 
     func signIn(email: String, password: String) async throws {
-        let body = AuthRequest(email: email, password: password)
-        let response: AuthResponse = try await NetworkHelper.request(endpoint: "/auth/signIn",
-                                                                     method: .post,
-                                                                     body: body)
-        
-        try saveToken(response.token)
-        authState = .signedIn(response.user)
+        let response = try await NetworkHelper.signIn(email: normalizeEmail(email), password: password)
+
+        saveToken(response.token)
+        saveUserLocally(response.user)
+        authState.send(.signedIn(response.user))
     }
 
-    func updateProfileInfo(_ request: UpdateProfileInfoRequest) async throws -> UserModel {
-        guard let token = try tokenStorage.readToken() else {
-            throw AuthError.missingToken
-        }
-
-        let user: UserModel = try await NetworkHelper.request(endpoint: "/auth/profileInfo",
-                                                              method: .patch,
-                                                              body: request,
-                                                              token: token)
-        authState = .signedIn(user)
-
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UserModel {
+        let user = try await NetworkHelper.updateProfileInfo(request)
+        saveUserLocally(user)
+        authState.send(.signedIn(user))
         return user
     }
 
-    func restoreSession() async {
-        do {
-            guard let token = try tokenStorage.readToken() else {
-                authState = .signedOut
-                return
-            }
-
-            let user: UserModel = try await NetworkHelper.request(endpoint: "/auth/autoSignIn",
-                                                                  method: .get,
-                                                                  token: token)
-            
-            authState = .signedIn(user)
-        } catch {
-            if case NetworkError.unauthorized = error {
-                try? tokenStorage.deleteToken()
-            }
-
-            authState = .signedOut
-        }
-    }
-
     func signOut() {
-        try? tokenStorage.deleteToken()
-        authState = .signedOut
+        KeychainHelper.standard.delete(path: tokenPath, key: tokenKey)
+        UserDefaults.standard.removeObject(forKey: userKey)
+        authState.send(.signedOut)
     }
 
-    private func saveToken(_ token: String) throws {
-        try tokenStorage.saveToken(token)
-
-        guard try tokenStorage.readToken() != nil else {
-            throw KeychainError.invalidData
+    private func autoSignIn() {
+        if let _ = KeychainHelper.standard.read(path: tokenPath, key: tokenKey),
+           let userData = UserDefaults.standard.data(forKey: userKey),
+           let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
+            authState.send(.signedIn(user))
+        } else {
+            authState.send(.signedOut)
         }
     }
-}
 
-private struct AuthRequest: Encodable {
-    let name: String?
-    let email: String
-    let password: String
-
-    init(name: String? = nil, email: String, password: String) {
-        self.name = name
-        self.email = email
-        self.password = password
-    }
-}
-
-private struct AuthResponse: Decodable {
-    let token: String
-    let user: UserModel
-}
-
-enum AuthError: LocalizedError {
-    case missingToken
-
-    var errorDescription: String? {
-        switch self {
-            case .missingToken:
-                return "Войдите в аккаунт, чтобы сохранить профиль"
+    private func saveUserLocally(_ user: UserModel) {
+        if let data = try? JSONEncoder().encode(user) {
+            UserDefaults.standard.set(data, forKey: userKey)
         }
+    }
+
+    private func saveToken(_ token: String) {
+        if let data = token.data(using: .utf8) {
+            KeychainHelper.standard.save(data, path: tokenPath, key: tokenKey)
+        }
+    }
+
+    private func normalizeEmail(_ email: String) -> String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
