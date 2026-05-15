@@ -29,12 +29,12 @@ struct AllTestsView: View {
                     }
                     
                     Components.classicButton("Проверить себя") {
-                        vm.generatePersonalityAnalysis()
+                        vm.generatePersonality()
                     }
-                    .disabled(vm.isGeneratingPersonalityAnalysis)
+                    .disabled(vm.isLoading)
                     .padding(.top, 10)
 
-                    if vm.isGeneratingPersonalityAnalysis {
+                    if vm.isLoading {
                         ProgressView("Готовим результат")
                             .frame(maxWidth: .infinity)
                     }
@@ -50,7 +50,7 @@ struct AllTestsView: View {
 
 #Preview {
     NavigationStack {
-        AllTestsView(vm: HomeViewModel(authService: AuthService())) { _ in
+        AllTestsView(vm: HomeViewModel(authService: AuthService(), personalityService: PersonalityService())) { _ in
             
         }
     }

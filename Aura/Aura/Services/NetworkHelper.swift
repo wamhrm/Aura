@@ -10,10 +10,9 @@ import Foundation
 enum NetworkError: LocalizedError {
     case invalidURL
     case invalidResponse
-    case apiError(statusCode: Int, message: String)
     case decodingError
-    case unauthorized(message: String)
-    case conflict(message: String)
+    case unauthorized
+    case conflict
 
     var errorDescription: String? {
         switch self {
@@ -21,12 +20,12 @@ enum NetworkError: LocalizedError {
                 return "Некорректный URL"
             case .invalidResponse:
                 return "Некорректный ответ от сервера"
-            case .apiError(_, let message):
-                return message
             case .decodingError:
                 return "Не удалось обработать ответ сервера"
-            case .unauthorized(let message), .conflict(message: let message):
-                return message
+            case .unauthorized:
+                return "Неправильная почта или пароль"
+            case .conflict:
+                return "Пользователь уже зарегистрирован"
         }
     }
 }
@@ -38,45 +37,49 @@ enum HTTPMethod: String {
 }
 
 struct NetworkHelper {
-    static func request<Response: Decodable>(endpoint: String,
-                                             method: HTTPMethod,
-                                             token: String? = nil) async throws -> Response {
-        let request = try makeRequest(endpoint: endpoint, method: method, token: token)
-        
-        return try await perform(request)
+    private static let tokenPath = Constants.tokenPath
+    private static let tokenKey = Constants.tokenKey
+
+    static func createAccount(name: String, email: String, password: String) async throws {
+        let bodyData = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
+        _ = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData)
     }
 
-    static func request<Response: Decodable, Body: Encodable>(endpoint: String,
-                                                              method: HTTPMethod,
-                                                              body: Body,
-                                                              token: String? = nil) async throws -> Response {
-        var request = try makeRequest(endpoint: endpoint, method: method, token: token)
-        request.httpBody = try JSONEncoder().encode(body)
-        
-        return try await perform(request)
+    static func signIn(email: String, password: String) async throws -> AuthTokenResponse {
+        let bodyData = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
+        let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData)
+        return try decoder().decode(AuthTokenResponse.self, from: data)
     }
-    
-    private static func makeRequest(endpoint: String,
-                                    method: HTTPMethod,
-                                    token: String?) throws -> URLRequest {
+
+    static func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UserModel {
+        let bodyData = try JSONEncoder().encode(profileInfo)
+        let data = try await request(endpoint: "/auth/profileInfo", method: .patch, body: bodyData)
+        return try decoder().decode(UserModel.self, from: data)
+    }
+
+    static func generatePersonality(selectedTests: [TestTypes]) async throws -> PersonalityResult {
+        let bodyData = try JSONEncoder().encode(selectedTests)
+        let data = try await request(endpoint: "/personality/generate", method: .post, body: bodyData)
+        return try decoder().decode(PersonalityResult.self, from: data)
+    }
+
+    private static func request(endpoint: String, method: HTTPMethod, body: Data) async throws -> Data {
         guard let baseURL = URL(string: Constants.baseURL),
               let url = URL(string: endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
         }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = method.rawValue
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = method.rawValue
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpBody = body
 
-        if let token {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let tokenData = KeychainHelper.standard.read(path: tokenPath, key: tokenKey),
+           let token = String(data: tokenData, encoding: .utf8) {
+            urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        return request
-    }
-
-    private static func perform<Response: Decodable>(_ request: URLRequest) async throws -> Response {
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
@@ -84,30 +87,38 @@ struct NetworkHelper {
 
         switch httpResponse.statusCode {
             case 200...299:
-                do {
-                    return try JSONDecoder().decode(Response.self, from: data)
-                } catch {
-                    throw NetworkError.decodingError
-                }
+                return data
             case 401:
-                throw NetworkError.unauthorized(
-                    message: errorMessage(from: data) ?? "Неправильная почта или пароль"
-                )
+                throw NetworkError.unauthorized
             case 409:
-                throw NetworkError.conflict(
-                    message: errorMessage(from: data) ?? "Пользователь уже зарегистрирован"
-                )
+                throw NetworkError.conflict
             default:
-                let message = errorMessage(from: data) ?? "Ошибка сервера: \(httpResponse.statusCode)"
-                throw NetworkError.apiError(statusCode: httpResponse.statusCode, message: message)
+                throw NetworkError.invalidResponse
         }
     }
 
-    private static func errorMessage(from data: Data) -> String? {
-        try? JSONDecoder().decode(APIErrorResponse.self, from: data).reason
+    private static func decoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
     }
 }
 
+struct AuthTokenResponse: Decodable {
+    let token: String
+    let user: UserModel
+}
+
+private struct AuthSignUpBody: Encodable {
+    let name: String
+    let email: String
+    let password: String
+}
+
+private struct AuthSignInBody: Encodable {
+    let email: String
+    let password: String
+}
 
 private struct APIErrorResponse: Decodable {
     let reason: String

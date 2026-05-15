@@ -2,15 +2,17 @@ import Foundation
 import Vapor
 
 struct OpenAIPersonalityService {
-    private let model = "gpt-4o-mini"
+    private let model = "gpt-5.4-mini"
 
-    func generate(for user: User, selectedTests: [PersonalityTestID], req: Request) async throws -> PersonalityAnalysisResponse {
+    func generate(for user: User,
+                  selectedTests: [PersonalityTestID],
+                  req: Request) async throws -> PersonalityAnalysisResponse {
         let apiKey = try apiKey()
-        let request = OpenAIChatRequest(model: model,
-                                        messages: [OpenAIMessage(role: "system", content: systemPrompt),
-                                                   OpenAIMessage(role: "user", content: userPrompt(for: user, selectedTests: selectedTests))],
-            responseFormat: OpenAIResponseFormat(type: "json_object")
-        )
+        let request = OpenAIChatRequest(
+            model: model,
+            messages: [OpenAIMessage(role: "system", content: systemPrompt),
+                       OpenAIMessage(role: "user", content: userPrompt(for: user, selectedTests: selectedTests))],
+            responseFormat: OpenAIResponseFormat(type: "json_object"))
 
         let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
             clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
@@ -24,6 +26,7 @@ struct OpenAIPersonalityService {
         }
 
         let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+        
         guard let content = chatResponse.choices.first?.message.content,
               let data = content.data(using: .utf8) else {
             throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
@@ -118,7 +121,8 @@ struct OpenAIPersonalityService {
         """
     }
 
-    private func filteredSections(_ sections: [PersonalityResultSection], selectedTests: [PersonalityTestID]) -> [PersonalityResultSection] {
+    private func filteredSections(_ sections: [PersonalityResultSection],
+                                  selectedTests: [PersonalityTestID]) -> [PersonalityResultSection] {
         let selected = Set(selectedTests)
         return sections.filter { selected.contains($0.testID) }
     }
@@ -158,41 +162,4 @@ struct OpenAIPersonalityService {
                 return nil
         }
     }
-}
-
-private struct OpenAIChatRequest: Content {
-    let model: String
-    let messages: [OpenAIMessage]
-    let responseFormat: OpenAIResponseFormat
-
-    enum CodingKeys: String, CodingKey {
-        case model
-        case messages
-        case responseFormat = "response_format"
-    }
-}
-
-private struct OpenAIMessage: Content {
-    let role: String
-    let content: String
-}
-
-private struct OpenAIResponseFormat: Content {
-    let type: String
-}
-
-private struct OpenAIChatResponse: Content {
-    let choices: [OpenAIChoice]
-}
-
-private struct OpenAIChoice: Content {
-    let message: OpenAIMessage
-}
-
-private struct OpenAIErrorResponse: Content {
-    let error: OpenAIError
-}
-
-private struct OpenAIError: Content {
-    let message: String
 }

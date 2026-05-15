@@ -76,7 +76,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
     }
 }
 
-enum TestTypes: String, TestCellDisplayable {
+enum TestTypes: String, TestCellDisplayable, Codable {
     case astrology = "Астрология"
     case behavioralPatterns = "Поведенческие паттерны"
     case decisionMaking = "Стиль принятия решений"
@@ -85,42 +85,6 @@ enum TestTypes: String, TestCellDisplayable {
     case loveLanguage = "Язык любви"
 
     var title: String { rawValue }
-
-    var apiID: String {
-        switch self {
-            case .astrology:
-                return "astrology"
-            case .behavioralPatterns:
-                return "behavioralPatterns"
-            case .decisionMaking:
-                return "decisionMaking"
-            case .attachmentStyle:
-                return "attachmentStyle"
-            case .idealPartner:
-                return "idealPartner"
-            case .loveLanguage:
-                return "loveLanguage"
-        }
-    }
-
-    init?(apiID: String) {
-        switch apiID {
-            case "astrology":
-                self = .astrology
-            case "behavioralPatterns":
-                self = .behavioralPatterns
-            case "decisionMaking":
-                self = .decisionMaking
-            case "attachmentStyle":
-                self = .attachmentStyle
-            case "idealPartner":
-                self = .idealPartner
-            case "loveLanguage":
-                self = .loveLanguage
-            default:
-                return nil
-        }
-    }
 
     var description: String {
         switch self {
@@ -342,9 +306,9 @@ enum CompatibilityTestTypes: String, TestCellDisplayable {
 
 #Preview {
     TestCellView(type: CompatibilityTestTypes.astrology, hasChosenTest: .constant(false)) {
-        
+
     } onTapHandler: {
-        
+
     }
     .padding(.horizontal)
 }

@@ -13,93 +13,186 @@ enum ProfileRoutes: Hashable {
     case completeProfile, settings
 }
 
+private enum AuthInput {
+    static let minPasswordLength = 6
+    static let minNameLength = 2
+    static let authActionDelay = Duration.seconds(1)
+}
+
 @MainActor
 final class ProfileViewModel: ObservableObject {
-    @Published var profileRoutes: [ProfileRoutes] = []
-    
     @Published var name = ""
     @Published var email = ""
     @Published var password = ""
-    
-    @Published private(set) var authState: AuthState
+
+    @Published var profileRoutes: [ProfileRoutes] = []
+    @Published private(set) var authState = AuthState.signedOut
+    @Published private(set) var isLoading = false
+
     @Published var showSettings = false
-    @Published private(set) var isAuthLoading = false
-    @Published var authErrorMessage: String?
-    @Published var showAuthError = false
+    @Published var showError = false
+    @Published private(set) var errorMessage = ""
 
     private let authService: any AuthServiceProtocol
-    private var cancellables = Set<AnyCancellable>()
+    private let personalityService: any PersonalityServiceProtocol
     
+    private var cancellables = Set<AnyCancellable>()
+
     var isProfileCompleted: Bool {
         return false
     }
 
-    init(authService: any AuthServiceProtocol) {
+    init(authService: any AuthServiceProtocol,
+         personalityService: any PersonalityServiceProtocol) {
         self.authService = authService
-        self.authState = authService.authState
+        self.personalityService = personalityService
 
-        authService.authStatePublisher
-            .sink { [weak self] authState in
-                Task { @MainActor in
-                    self?.authState = authState
-                }
-            }
-            .store(in: &cancellables)
+        setupSubscriptions()
     }
-    
+
     deinit {
         cancellables.removeAll()
     }
 
-    func signIn(onSuccess: @escaping () -> Void) {
-        performAuthAction(onSuccess: onSuccess) { [weak self] in
-            guard let self else { return }
-            
-            try await authService.signIn(email: self.email,
-                                         password: self.password)
+    private func setupSubscriptions() {
+        authService.authState
+            .receive(on: RunLoop.main)
+            .sink { [weak self] authState in
+                self?.authState = authState
+            }
+            .store(in: &cancellables)
+    }
+
+    func createAccount() {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let message = validateCreateAccount(name: trimmedName, email: trimmedEmail, password: password) {
+            showError(message)
+            return
+        }
+
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            do {
+                try await Task.sleep(for: AuthInput.authActionDelay)
+                try await authService.createAccount(name: trimmedName, email: trimmedEmail, password: password)
+
+                profileRoutes = []
+                clearFields()
+            } catch {
+                showError(error.localizedDescription)
+            }
+
+            isLoading = false
         }
     }
 
-    func createAccount(onSuccess: @escaping () -> Void) {
-        performAuthAction(onSuccess: onSuccess) { [weak self] in
-            guard let self else { return }
-            
-            try await authService.createAccount(name: self.name,
-                                                email: self.email,
-                                                password: self.password)
+    func signIn() {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let message = validateSignIn(email: trimmedEmail, password: password) {
+            showError(message)
+            return
+        }
+
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            do {
+                try await Task.sleep(for: AuthInput.authActionDelay)
+                try await authService.signIn(email: trimmedEmail, password: password)
+
+                profileRoutes = []
+                clearFields()
+            } catch {
+                showError(error.localizedDescription)
+            }
+
+            isLoading = false
         }
     }
 
     func signOut() {
-        authService.signOut()
-        authState = authService.authState
-    }
+        guard !isLoading else { return }
 
-    
-    private func performAuthAction(onSuccess: @escaping () -> Void,
-                                   action: @escaping () async throws -> Void) {
-        guard !isAuthLoading else { return }
-
+        isLoading = true
+        
         Task {
-            isAuthLoading = true
-
-            do {
-                try await action()
-                authState = authService.authState
-                clearAuthFields()
-                onSuccess()
-            } catch {
-                authErrorMessage = error.localizedDescription
-                showAuthError = true
-            }
-
-            isAuthLoading = false
+            try? await Task.sleep(for: AuthInput.authActionDelay)
+            authService.signOut()
+            
+            profileRoutes = []
+            showSettings = false
+            isLoading = false
         }
     }
 
-    private func clearAuthFields() {
+    private func clearFields() {
         name = ""
         email = ""
         password = ""
+    }
+
+    private func showError(_ message: String) {
+        showError = true
+        errorMessage = message
+    }
+
+    private func validateSignIn(email: String, password: String) -> String? {
+        if email.isEmpty, password.isEmpty {
+            return "Заполните почту и пароль"
+        }
+        if email.isEmpty {
+            return "Укажите почту"
+        }
+        if password.isEmpty {
+            return "Укажите пароль"
+        }
+        if !Self.isValidEmail(email) {
+            return "Укажите корректный e-mail"
+        }
+        if password.count < AuthInput.minPasswordLength {
+            return "Пароль должен быть не короче \(AuthInput.minPasswordLength) символов"
+        }
+        return nil
+    }
+
+    private func validateCreateAccount(name: String, email: String, password: String) -> String? {
+        if name.isEmpty, email.isEmpty, password.isEmpty {
+            return "Заполните имя, почту и пароль"
+        }
+        if name.isEmpty {
+            return "Укажите имя"
+        }
+        if email.isEmpty {
+            return "Укажите почту"
+        }
+        if password.isEmpty {
+            return "Укажите пароль"
+        }
+        if name.count < AuthInput.minNameLength {
+            return "Имя должно содержать минимум \(AuthInput.minNameLength) символа"
+        }
+        if !Self.isValidEmail(email) {
+            return "Укажите корректный e-mail"
+        }
+        if password.count < AuthInput.minPasswordLength {
+            return "Пароль должен быть не короче \(AuthInput.minPasswordLength) символов"
+        }
+        return nil
+    }
+
+    private static func isValidEmail(_ email: String) -> Bool {
+        let parts = email.split(separator: "@", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return false }
+        let local = parts[0]
+        let domain = parts[1]
+        return !local.isEmpty && !domain.isEmpty
     }
 }

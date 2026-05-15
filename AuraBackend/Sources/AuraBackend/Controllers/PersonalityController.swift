@@ -1,28 +1,21 @@
 import Fluent
-import JWT
 import Vapor
 
 struct PersonalityController: RouteCollection {
-    private let minSelectedTests = 2
-
     func boot(routes: any RoutesBuilder) throws {
         let personality = routes.grouped("personality")
+            .grouped(UserAuthMiddleware())
+
         personality.post("generate", use: generate)
     }
 
-    @Sendable
-    func generate(req: Request) async throws -> PersonalityAnalysisResponse {
-        let payload = try await req.jwt.verify(as: AccessTokenPayload.self)
+    private func generate(_ req: Request) async throws -> PersonalityAnalysisResponse {
+        let user = try req.auth.require(User.self)
         let request = try req.content.decode(PersonalityAnalysisRequest.self)
         let selectedTests = uniqueTests(from: request.selectedTests)
 
-        guard selectedTests.count >= minSelectedTests else {
+        guard selectedTests.count >= 2 else {
             throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
-        }
-
-        guard let userID = UUID(uuidString: payload.subject.value),
-              let user = try await User.find(userID, on: req.db) else {
-            throw Abort(.unauthorized, reason: "Недействительный токен")
         }
 
         guard hasCompletedProfileInfo(user) else {

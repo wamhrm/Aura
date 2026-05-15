@@ -11,7 +11,7 @@ struct SignInCreateAccountView: View {
     @ObservedObject var vm: ProfileViewModel
     let type: SignInCreateAccountType
     @Binding var showSignInCreate: Bool
-    var onSwitchType: () -> Void
+    var onTapHandler: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 25) {
@@ -40,9 +40,7 @@ struct SignInCreateAccountView: View {
                     SignInCreateAccountTextFieldView(type: .email, field: $vm.email)
                     SignInCreateAccountTextFieldView(type: .password, field: $vm.password)
                     SignInCreateAccountButtonView(type: .signIn, signedOut: false) {
-                        vm.signIn {
-                            showSignInCreate = false
-                        }
+                        vm.signIn()
                     }
                     .padding(.top, 5)
                 }
@@ -52,9 +50,7 @@ struct SignInCreateAccountView: View {
                     SignInCreateAccountTextFieldView(type: .email, field: $vm.email)
                     SignInCreateAccountTextFieldView(type: .password, field: $vm.password)
                     SignInCreateAccountButtonView(type: .createAccount, signedOut: false) {
-                        vm.createAccount {
-                            showSignInCreate = false
-                        }
+                        vm.createAccount()
                     }
                     .padding(.top, 5)
                 }
@@ -83,11 +79,11 @@ struct SignInCreateAccountView: View {
             
             if type == .signIn {
                 SignInAlreadyHaveAccountView(type: .signIn) {
-                    onSwitchType()
+                    onTapHandler()
                 }
             } else {
                 SignInAlreadyHaveAccountView(type: .alreadyHaveAccount) {
-                    onSwitchType()
+                    onTapHandler()
                 }
             }
         }
@@ -96,10 +92,8 @@ struct SignInCreateAccountView: View {
         .padding(25)
         .background(RoundedRectangle(cornerRadius: 20) .fill(.white))
         .padding(.horizontal)
-        .alert("Ошибка авторизации", isPresented: $vm.showAuthError) {
+        .alert(vm.errorMessage, isPresented: $vm.showError) {
             Button("ОК", role: .cancel) { }
-        } message: {
-            Text(vm.authErrorMessage ?? "Попробуйте еще раз")
         }
     }
 }
@@ -110,6 +104,13 @@ enum SignInCreateAccountType: String {
 }
 
 #Preview {
-//    SignInCreateAccountView(vm: ProfileViewModel(authService: MockAuthService()),
-//                            type: .createAccount, showSignInCreate: .constant(false))
+    let authService = AuthService()
+    let personalityService = PersonalityService()
+    
+    SignInCreateAccountView(vm: ProfileViewModel(authService: authService,
+                                                 personalityService: personalityService),
+                            type: .createAccount,
+                            showSignInCreate: .constant(false)) {
+        
+    }
 }

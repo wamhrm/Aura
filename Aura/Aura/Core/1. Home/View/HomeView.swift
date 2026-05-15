@@ -8,29 +8,36 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject private var vm: HomeViewModel
+    @ObservedObject var vm: HomeViewModel
     
-    init(authService: any AuthServiceProtocol) {
-        _vm = StateObject(wrappedValue: HomeViewModel(authService: authService))
+    private let authService: AuthServiceProtocol
+    private let personalityService: PersonalityServiceProtocol
+
+    init(vm: HomeViewModel,
+         authService: any AuthServiceProtocol,
+         personalityService: any PersonalityServiceProtocol) {
+        self.vm = vm
+        self.authService = authService
+        self.personalityService = personalityService
     }
-    
+
     var body: some View {
         NavigationStack(path: $vm.homeRoutes) {
             ZStack {
                 Components.backgroundColor()
-                
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 15) {
                         HStack(spacing: 15) {
                             Components.logoImage(35)
-                                
+
                             Text("Здравствуйте, Дмитрий")
                                 .fontWeight(.semibold)
                                 .fontDesign(.monospaced)
-                            
+
                             Spacer()
                         }
-                        
+
                         if vm.hasProfileInfo {
                             VStack(alignment: .leading, spacing: 15) {
                                 Text("ИНСАЙТ ДНЯ")
@@ -45,27 +52,27 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(.softPurple)
                             .clipShape(RoundedRectangle(cornerRadius: 15))
-                            
+
                             VStack(alignment: .leading, spacing: 10) {
                                 headerText("Гороскоп на неделю", "Читать") {
                                     vm.homeRoutes.append(.horoscopeDetails)
                                 }
-                                
+
                                 HoroscopeCellView(horoscope: .mock) {
                                     vm.homeRoutes.append(.horoscopeDetails)
                                 }
                             }
                             .padding(.top, 15)
                         }
-                        
+
                         if !vm.hasProfileInfo {
                             Components.completeYourProfile {
                                 vm.homeRoutes.append(.addProfileInfo)
                             }
                         }
-                        
+
                         Button {
-                            
+
                         } label: {
                             HStack {
                                 Text("Проверить совместимость")
@@ -73,9 +80,9 @@ struct HomeView: View {
                                     .bold()
                                     .foregroundStyle(.white)
                                     .lineSpacing(8)
-                                
+
                                 Spacer()
-                                    
+
                                 Components.sparkImageWithBackground(.large, .white)
                             }
                             .padding(20)
@@ -85,12 +92,12 @@ struct HomeView: View {
                                                        endPoint: .trailing))
                             .clipShape(RoundedRectangle(cornerRadius: 15))
                         }
-                        
+
                         VStack(alignment: .leading, spacing: 10) {
                             headerText("Проверьте себя", "Все тесты") {
                                 vm.homeRoutes.append(.tests)
                             }
-                            
+
                             ForEach(Array(TestTypes.allCases[0...2]), id: \.self) { test in
                                 TestCellView(type: test,
                                              hasChosenTest: Binding(
@@ -101,14 +108,14 @@ struct HomeView: View {
                                     vm.homeRoutes.append(.testDetails(test))
                                 }
                             }
-                            
+
                             Components.classicButton("Проверить себя") {
-                                vm.generatePersonalityAnalysis()
+                                vm.generatePersonality()
                             }
-                            .disabled(vm.isGeneratingPersonalityAnalysis)
+                            .disabled(vm.isLoading)
                             .padding(.top, 10)
 
-                            if vm.isGeneratingPersonalityAnalysis {
+                            if vm.isLoading {
                                 ProgressView("Готовим результат")
                                     .frame(maxWidth: .infinity)
                             }
@@ -132,13 +139,8 @@ struct HomeView: View {
                 }
             }
         }
-        .alert("Нельзя выбрать меньше 2 тестов", isPresented: $vm.showMinTestsAlert) {
+        .alert(vm.errorMessage, isPresented: $vm.showError) {
             Button("OK", role: .cancel) {}
-        }
-        .alert("Не удалось получить результат", isPresented: $vm.showPersonalityAnalysisError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(vm.personalityAnalysisErrorMessage ?? "Попробуйте ещё раз")
         }
     }
 }
@@ -150,9 +152,9 @@ extension HomeView {
             Text(title)
                 .fontWeight(.semibold)
                 .padding(.leading, 4)
-            
+
             Spacer()
-            
+
             Button {
                 onTapHandler()
             } label: {
@@ -162,7 +164,7 @@ extension HomeView {
             }
         }
     }
-    
+
     @ViewBuilder
     private func destinationView(_ route: HomeRoutes) -> some View {
         switch route {
@@ -185,5 +187,11 @@ extension HomeView {
 }
 
 #Preview {
-    HomeView(authService: AuthService())
+    let authService = AuthService()
+    let personalityService = PersonalityService()
+    
+    HomeView(vm: HomeViewModel(authService: authService,
+                               personalityService: personalityService),
+             authService: authService,
+             personalityService: personalityService)
 }
