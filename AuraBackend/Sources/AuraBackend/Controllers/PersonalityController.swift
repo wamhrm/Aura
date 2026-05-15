@@ -1,35 +1,33 @@
 import Fluent
-import JWT
 import Vapor
 
 struct PersonalityController: RouteCollection {
-    private let minSelectedTests = 2
-
     func boot(routes: any RoutesBuilder) throws {
         let personality = routes.grouped("personality")
+            .grouped(UserAuthMiddleware())
+
         personality.post("generate", use: generate)
     }
 
-    @Sendable
-    func generate(req: Request) async throws -> PersonalityAnalysisResponse {
-        let payload = try await req.jwt.verify(as: AccessTokenPayload.self)
-        let request = try req.content.decode(PersonalityAnalysisRequest.self)
-        let selectedTests = uniqueTests(from: request.selectedTests)
+    private func generate(_ req: Request) async throws -> PersonalityAnalysisResponse {
+        let user = try req.auth.require(User.self)
+        let testTitles = try req.content.decode([String].self)
 
-        guard selectedTests.count >= minSelectedTests else {
-            throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
+        guard let selectedTests = PersonalityTestID.from(titles: testTitles) else {
+            throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
-        guard let userID = UUID(uuidString: payload.subject.value),
-              let user = try await User.find(userID, on: req.db) else {
-            throw Abort(.unauthorized, reason: "Недействительный токен")
+        let uniqueSelectedTests = uniqueTests(from: selectedTests)
+
+        guard uniqueSelectedTests.count >= 2 else {
+            throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
         }
 
         guard hasCompletedProfileInfo(user) else {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
-        return try await OpenAIPersonalityService().generate(for: user, selectedTests: selectedTests, req: req)
+        return try await OpenAIPersonalityService().generate(for: user, selectedTests: uniqueSelectedTests, req: req)
     }
 
     private func uniqueTests(from tests: [PersonalityTestID]) -> [PersonalityTestID] {

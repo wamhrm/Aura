@@ -1,7 +1,7 @@
 import Fluent
-import Foundation
+import Vapor
 
-final class User: Model, @unchecked Sendable {
+final class User: Model, Authenticatable, @unchecked Sendable {
     static let schema = "users"
 
     @ID(key: .id)
@@ -43,7 +43,7 @@ final class User: Model, @unchecked Sendable {
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
 
-    init() { }
+    init() {}
 
     init(id: UUID? = nil,
          name: String,
@@ -56,18 +56,20 @@ final class User: Model, @unchecked Sendable {
         self.dateOfBirth = dateOfBirth
         self.passwordHash = passwordHash
     }
+}
 
-    func toResponse() throws -> UserResponse {
-        UserResponse(id: try requireID(),
-                     name: name,
-                     email: email,
-                     dateOfBirth: dateOfBirth.map(UserDateFormatter.string(from:)),
-                     birthTime: birthTime,
-                     gender: gender,
-                     socialType: socialType,
-                     conflictStyle: conflictStyle,
-                     emotionalCore: emotionalCore,
-                     decisionStyle: decisionStyle,
-                     coreFocus: coreFocus)
+extension User {
+    func toDTO() throws -> UserDTO {
+        UserDTO(id: try requireID(),
+                name: name,
+                email: email,
+                dateOfBirth: dateOfBirth.map(UserDateFormatter.string(from:)),
+                birthTime: birthTime,
+                gender: gender,
+                socialType: socialType,
+                conflictStyle: conflictStyle,
+                emotionalCore: emotionalCore,
+                decisionStyle: decisionStyle,
+                coreFocus: coreFocus)
     }
 }

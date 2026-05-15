@@ -65,7 +65,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
 
 #Preview {
     NavigationStack {
-        TestDetailsView(type: TestTypes.astrology, isSelected: false) {
+        TestDetailsView(type: PersonalityTestTypes.astrology, isSelected: false) {
 
         }
     }

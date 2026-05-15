@@ -1,87 +1,37 @@
 import Foundation
 import Security
 
-protocol TokenStorageProtocol {
-    func saveToken(_ token: String) throws
-    func readToken() throws -> String?
-    func deleteToken() throws
-}
+final class KeychainHelper {
+    static let standard = KeychainHelper()
 
-enum KeychainError: LocalizedError {
-    case invalidData
-    case unexpectedStatus(OSStatus)
+    private init() {}
 
-    var errorDescription: String? {
-        switch self {
-            case .invalidData:
-                return "Не удалось обработать токен авторизации"
-            case .unexpectedStatus:
-                return "Не удалось обновить данные авторизации"
-        }
-    }
-}
+    func save(_ data: Data, path: String, key: String) {
+        let query = [kSecValueData: data,
+                     kSecClass: kSecClassGenericPassword,
+                     kSecAttrService: path,
+                     kSecAttrAccount: key] as CFDictionary
 
-final class KeychainTokenStorage: TokenStorageProtocol {
-    private let service: String
-    private let account: String
-
-    init(service: String = Bundle.main.bundleIdentifier ?? "Aura",
-         account: String = "accessToken") {
-        self.service = service
-        self.account = account
+        SecItemDelete(query)
+        SecItemAdd(query, nil)
     }
 
-    func saveToken(_ token: String) throws {
-        guard let data = token.data(using: .utf8) else {
-            throw KeychainError.invalidData
-        }
+    func read(path: String, key: String) -> Data? {
+        let query = [kSecAttrService: path,
+                     kSecAttrAccount: key,
+                     kSecClass: kSecClassGenericPassword,
+                     kSecReturnData: true] as CFDictionary
 
-        try deleteToken()
-
-        var query = baseQuery()
-        query[kSecValueData as String] = data
-
-        let status = SecItemAdd(query as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainError.unexpectedStatus(status)
-        }
+        var result: AnyObject?
+        SecItemCopyMatching(query, &result)
+        return result as? Data
     }
 
-    func readToken() throws -> String? {
-        var query = baseQuery()
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
+    func delete(path: String, key: String) {
+        let query = [kSecAttrService: path,
+                     kSecAttrAccount: key,
+                     kSecClass: kSecClassGenericPassword] as CFDictionary
 
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-
-        if status == errSecItemNotFound {
-            return nil
-        }
-
-        guard status == errSecSuccess else {
-            throw KeychainError.unexpectedStatus(status)
-        }
-
-        guard let data = item as? Data,
-              let token = String(data: data, encoding: .utf8) else {
-            throw KeychainError.invalidData
-        }
-
-        return token
-    }
-
-    func deleteToken() throws {
-        let status = SecItemDelete(baseQuery() as CFDictionary)
-
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.unexpectedStatus(status)
-        }
-    }
-
-    private func baseQuery() -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrService as String: service,
-         kSecAttrAccount as String: account]
+        SecItemDelete(query)
     }
 }

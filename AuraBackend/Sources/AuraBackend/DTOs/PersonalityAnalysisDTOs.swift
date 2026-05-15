@@ -1,9 +1,5 @@
 import Vapor
 
-struct PersonalityAnalysisRequest: Content {
-    let selectedTests: [PersonalityTestID]
-}
-
 enum PersonalityTestID: String, Content, CaseIterable {
     case astrology
     case behavioralPatterns
@@ -28,45 +24,85 @@ enum PersonalityTestID: String, Content, CaseIterable {
                 return "Язык любви"
         }
     }
+
+    static func from(title: String) -> PersonalityTestID? {
+        allCases.first { $0.title == title }
+    }
+
+    static func from(titles: [String]) -> [PersonalityTestID]? {
+        var mapped: [PersonalityTestID] = []
+
+        for title in titles {
+            guard let test = from(title: title) else { return nil }
+            mapped.append(test)
+        }
+
+        return mapped
+    }
 }
 
 struct PersonalityAnalysisResponse: Content {
-    let userName: String
-    let zodiacSign: String?
-    let selectedTests: [PersonalityTestID]
+    let name: String
+    let zodiacSign: String
+    let selectedTests: [String]
     let archetypeTitle: String
     let archetypeSubtitle: String
-    let overview: PersonalityTextSection
-    let scales: [PersonalityScale]
-    let sections: [PersonalityResultSection]
+    let overview: PersonalityOverviewSection
+    let emotionalBar: [PersonalityEmotionalBar]
+    let sections: [PersonalityAnalysisResultSection]
+}
+
+struct PersonalityOverviewSection: Content, Codable {
+    let title: String
+    let description: String
+}
+
+struct PersonalityEmotionalBar: Content, Codable {
+    let title: String
+    let value: Int
+}
+
+struct PersonalityAnalysisResultSection: Content, Codable {
+    let selectedTest: String
+    let description: String
+    let items: [PersonalityResultItem]
+}
+
+struct PersonalityResultItem: Content, Codable {
+    let title: String
+    let description: String
 }
 
 struct PersonalityAnalysisContent: Codable {
     let archetypeTitle: String
     let archetypeSubtitle: String
-    let overview: PersonalityTextSection
-    let scales: [PersonalityScale]
-    let sections: [PersonalityResultSection]
+    let overview: PersonalityOverviewSection
+    let emotionalBar: [PersonalityEmotionalBar]
+    let sections: [PersonalityAnalysisResultSection]
 }
 
-struct PersonalityTextSection: Content {
-    let title: String
-    let body: String
-}
+enum PersonalityItemTitles {
+    static let behavioralPatterns = ["Социальный фильтр", "Источник истощения"]
+    static let decisionMaking = ["Баланс логики", "Фактор интуиции"]
+    static let attachmentStyle = ["Потребность в автономии", "База безопасности"]
+    static let idealPartner = ["Интеллектуальная схожесть", "Глубина связи"]
+    static let astrology = ["Глубина связи", "Фактор интуиции"]
+    static let loveLanguage = ["Глубина связи", "Интеллектуальная схожесть"]
 
-struct PersonalityScale: Content {
-    let title: String
-    let value: Int
-}
-
-struct PersonalityResultSection: Content {
-    let testID: PersonalityTestID
-    let title: String
-    let body: String
-    let items: [PersonalityResultItem]
-}
-
-struct PersonalityResultItem: Content {
-    let title: String
-    let description: String
+    static func allowed(for test: PersonalityTestID) -> [String] {
+        switch test {
+            case .behavioralPatterns:
+                return behavioralPatterns
+            case .decisionMaking:
+                return decisionMaking
+            case .attachmentStyle:
+                return attachmentStyle
+            case .idealPartner:
+                return idealPartner
+            case .astrology:
+                return astrology
+            case .loveLanguage:
+                return loveLanguage
+        }
+    }
 }
