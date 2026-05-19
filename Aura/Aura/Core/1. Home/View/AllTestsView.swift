@@ -29,7 +29,7 @@ struct AllTestsView: View {
                     }
                     
                     Components.classicButton("Проверить себя") {
-                        vm.generatePersonality()
+                        vm.makePersonalityTest()
                     }
                     .disabled(vm.isLoading)
                     .padding(.top, 10)

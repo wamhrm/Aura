@@ -135,9 +135,9 @@ struct SignedInView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .backgroundWithShape(15, true)
                     }
-                    .blur(radius: !vm.isProfileCompleted ? 5 : 0)
+                    .blur(radius: !vm.hasCompletedTests ? 5 : 0)
                     .overlay {
-                        if !vm.isProfileCompleted {
+                        if !vm.hasCompletedTests {
                             Components.completeYourProfileLock("Пройдите тесты для получения результатов о себе")
                                 .padding(.bottom, 500)
                         }
@@ -145,7 +145,6 @@ struct SignedInView: View {
                 }
                 .padding(.horizontal)
             }
-            .scrollDisabled(!vm.isProfileCompleted)
             .scrollIndicators(.hidden)
             .navigationTitle("Профиль")
             .navigationBarTitleDisplayMode(.inline)
@@ -165,6 +164,8 @@ extension SignedInView {
 
 #Preview {
     NavigationStack {
-//        SignedInView(vm: ProfileViewModel(authService: MockAuthService(authState: .signedIn(.mock))), user: .mock)
+        SignedInView(vm: ProfileViewModel(authService: AuthService(),
+                                          psychologyService: PsychologyService()),
+                     user: .mock)
     }
 }

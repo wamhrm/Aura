@@ -8,7 +8,7 @@
 import Foundation
 
 enum Constants {
-    static let baseURL = "http://127.0.0.1:8080"
+    static let baseURL = "https://aura-mogr.onrender.com"
     static let tokenPath = "com.aura.auth.token"
     static let tokenKey = "tokenKey"
     static let userKey = "userKey"
