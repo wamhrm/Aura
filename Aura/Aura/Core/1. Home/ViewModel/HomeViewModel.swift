@@ -10,11 +10,11 @@ import Combine
 import Foundation
 
 enum HomeRoutes: Hashable {
-    case tests
+    case addProfileInfo
+    case horoscopeDetails
+    case allTests
     case testDetails(PersonalityTestTypes)
     case testResults
-    case horoscopeDetails
-    case addProfileInfo
 }
 
 @MainActor
@@ -42,7 +42,6 @@ final class HomeViewModel: ObservableObject {
         self.psychologyService = psychologyService
         
         setupSubscriptions()
-        applyAuthState(authService.authState.value)
     }
 
     deinit {
@@ -53,12 +52,12 @@ final class HomeViewModel: ObservableObject {
         authService.authState
             .receive(on: RunLoop.main)
             .sink { [weak self] authState in
-                self?.applyAuthState(authState)
+                self?.handleProfileInfo(authState)
             }
             .store(in: &cancellables)
     }
 
-    private func applyAuthState(_ authState: AuthState) {
+    private func handleProfileInfo(_ authState: AuthState) {
         switch authState {
             case .signedIn(let user):
                 profileInfo = user.profileInfo
@@ -81,7 +80,7 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func generatePersonality() {
+    func makePersonalityTest() {
         guard !isLoading else { return }
 
         Task {
@@ -105,10 +104,10 @@ final class HomeViewModel: ObservableObject {
             isLoading = true
 
             do {
-                try validateProfileForms()
+                try await Task.sleep(for: .seconds(1))
+                try validateProfileInfoForms()
                 let user = try await authService.updateProfileInfo(profileInfo)
                 profileInfo = user.profileInfo
-                hasProfileInfo = true
                 homeRoutes.removeAll()
             } catch {
                 showAlert(message: error.localizedDescription)
@@ -118,7 +117,7 @@ final class HomeViewModel: ObservableObject {
         }
     }
     
-    private func validateProfileForms() throws {
+    private func validateProfileInfoForms() throws {
         guard profileInfo.dateOfBirth.count == 10 else {
             throw ProfileInfoError.invalidDateOfBirth
         }

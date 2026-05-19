@@ -2,45 +2,68 @@
 //  HistoryView.swift
 //  Aura
 //
-//  Created by ddorsat on 04.05.2026.
+//  Created by ddorsat on 31.03.2026.
 //
 
 import SwiftUI
 
 struct HistoryView: View {
+    @ObservedObject var vm: HistoryViewModel
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $vm.historyRoutes) {
             ZStack {
                 Components.backgroundColor()
 
-                ScrollView {
+                if vm.isSignedIn {
                     VStack(alignment: .leading, spacing: 15) {
-                        SelectionButtons<HistoryFilterTypes> { filter in
-
-                        }
-
-                        ForEach(0..<7) { _ in
-                            HistoryCellView()
+                        if vm.historyCells.isEmpty {
+                            ContentUnavailableView {
+                                Label("История пуста", systemImage: "")
+                            }
+                        } else {
+                            ScrollView {
+                                ForEach(vm.historyCells) { item in
+                                    Button {
+                                        vm.openHistoryCellDetails(item)
+                                    } label: {
+                                        HistoryCellView(cell: item)
+                                    }
+                                }
+                            }
                         }
                     }
                     .padding(.horizontal)
+                } else {
+                    ContentUnavailableView {
+                        Label("Войдите в аккаунт, чтобы видеть историю", systemImage: "")
+                    }
                 }
-                .navigationTitle("История совместимостей")
-                .navigationBarTitleDisplayMode(.inline)
-                .bottomAreaPadding()
+            }
+            .navigationTitle("История тестов")
+            .navigationBarTitleDisplayMode(.inline)
+            .bottomAreaPadding()
+            .navigationDestination(for: HistoryRoutes.self) { route in
+                destinationView(route)
+            }
+            .alert(vm.errorMessage, isPresented: $vm.showError) {
+                Button("OK", role: .cancel) {}
             }
         }
     }
 }
 
-enum HistoryFilterTypes: String, CaseIterable {
-    case latest = "Последние"
-    case highest = "Высокие"
-    case lowest = "Низкие"
+extension HistoryView {
+    @ViewBuilder
+    private func destinationView(_ route: HistoryRoutes) -> some View {
+        switch route {
+            case .testResult(let result):
+                PersonalityResultView(result: result)
+        }
+    }
 }
 
 #Preview {
-    NavigationStack {
-        HistoryView()
-    }
+    HistoryView(vm: HistoryViewModel(authService: AuthService(),
+                                     psychologyService: PsychologyService()))
 }

@@ -1,6 +1,6 @@
 import Vapor
 
-struct OpenAIChatRequest: Content {
+struct OpenAIChatDTO: Content {
     let model: String
     let messages: [OpenAIMessage]
     let responseFormat: OpenAIResponseFormat

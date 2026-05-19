@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct CompatibilityResultsView: View {
+struct CompatibilityResultView: View {
     var body: some View {
         ZStack {
             Components.backgroundColor()
@@ -173,7 +173,7 @@ struct CompatibilityResultsView: View {
     }
 }
 
-extension CompatibilityResultsView {
+extension CompatibilityResultView {
     private func compatibilityScaleBar(_ value: Int) -> some View {
         ZStack {
             Circle()
@@ -204,6 +204,6 @@ extension CompatibilityResultsView {
 
 #Preview {
     NavigationStack {
-        CompatibilityResultsView()
+        CompatibilityResultView()
     }
 }

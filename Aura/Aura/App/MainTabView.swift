@@ -8,11 +8,12 @@
 import SwiftUI
 
 struct MainTabView: View {
-    let authService: AuthServiceProtocol
-    let psychologyService: PsychologyServiceProtocol
+    private let authService: AuthServiceProtocol
+    private let psychologyService: PsychologyServiceProtocol
     
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var profileViewModel: ProfileViewModel
+    @StateObject private var historyViewModel: HistoryViewModel
     
     @State private var selectedTab: Tabs = .home
     
@@ -25,6 +26,9 @@ struct MainTabView: View {
             authService: authService,
             psychologyService: psychologyService))
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
+            authService: authService,
+            psychologyService: psychologyService))
+        _historyViewModel = StateObject(wrappedValue: HistoryViewModel(
             authService: authService,
             psychologyService: psychologyService))
     }
@@ -46,15 +50,14 @@ struct MainTabView: View {
             }
 
             Tab(value: .history, role: .none) {
-                HistoryView()
+                HistoryView(vm: historyViewModel)
             } label: {
                 Image(systemName: Tabs.history.icon)
             }
 
             Tab(value: .profile, role: .none) {
                 ProfileView(vm: profileViewModel,
-                            authService: authService,
-                            psychologyService: psychologyService)
+                            homeViewModel: homeViewModel)
             } label: {
                 Image(systemName: Tabs.profile.icon)
             }

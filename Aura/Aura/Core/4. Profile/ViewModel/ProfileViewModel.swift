@@ -38,10 +38,7 @@ final class ProfileViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
 
-    var isProfileCompleted: Bool {
-        if case .signedIn(let user) = authState {
-            return user.hasCompletedProfileInfo
-        }
+    var hasCompletedTests: Bool {
         return false
     }
 

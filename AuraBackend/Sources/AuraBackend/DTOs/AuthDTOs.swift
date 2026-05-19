@@ -1,5 +1,4 @@
 import Vapor
-import Foundation
 
 struct CreateAccountRequest: Content {
     let name: String
