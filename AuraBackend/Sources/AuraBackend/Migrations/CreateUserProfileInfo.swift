@@ -1,6 +1,6 @@
 import Fluent
 
-struct AddUserProfileInfo: AsyncMigration {
+struct CreateUserProfileInfo: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(User.schema)
             .field("birth_time", .string)

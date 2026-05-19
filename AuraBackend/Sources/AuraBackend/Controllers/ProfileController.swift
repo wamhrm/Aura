@@ -5,7 +5,7 @@ struct ProfileController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
             .grouped(UserAuthMiddleware())
-            
+
         auth.patch("profileInfo", use: updateProfileInfo)
     }
 

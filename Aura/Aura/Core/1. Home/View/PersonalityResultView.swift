@@ -8,14 +8,13 @@
 import SwiftUI
 
 struct PersonalityResultView: View {
-    @ObservedObject var vm: HomeViewModel
-    
+    let result: PersonalityResultModel
+
     var body: some View {
         ZStack {
             Components.backgroundColor()
-            
-            if let result = vm.personalityResult {
-                ScrollView {
+
+            ScrollView {
                     VStack(alignment: .leading, spacing: 15) {
                         VStack {
                             HStack(spacing: 15) {
@@ -89,11 +88,6 @@ struct PersonalityResultView: View {
                         }
                     }
                     .padding(.horizontal)
-                }
-            } else {
-                ContentUnavailableView {
-                    Text("Результаты пока недоступны")
-                }
             }
         }
         .navigationTitle("Результаты теста")
@@ -119,7 +113,6 @@ extension PersonalityResultView {
 
 #Preview {
     NavigationStack {
-        PersonalityResultView(vm: HomeViewModel(authService: AuthService(),
-                                                 psychologyService: PsychologyService()))
+        PersonalityResultView(result: .mock)
     }
 }

@@ -1,13 +1,13 @@
 import Foundation
 import Vapor
 
-struct OpenAIPersonalityService {
+struct OpenAIService {
     private let model = "gpt-5.4-mini"
 
-    func generate(for user: User, selectedTests: [PersonalityTestID], req: Request) async throws -> PersonalityAnalysisResponse {
+    func generate(for user: User, selectedTests: [PersonalityTests], req: Request) async throws -> PersonalityResultDTO {
         let apiKey = try apiKey()
-        let request = OpenAIChatRequest(model: model,
-                                        messages: [OpenAIMessage(role: "system", content: systemPrompt),
+        let request = OpenAIChatDTO(model: model,
+                                    messages: [OpenAIMessage(role: "system", content: systemPrompt),
                       OpenAIMessage(role: "user",
                                     content: userPrompt(for: user, selectedTests: selectedTests))],
                                     responseFormat: OpenAIResponseFormat(type: "json_object"))
@@ -31,18 +31,17 @@ struct OpenAIPersonalityService {
         }
 
         do {
-            let analysis = try JSONDecoder().decode(PersonalityAnalysisContent.self, from: data)
+            let analysis = try JSONDecoder().decode(PersonalityTestContent.self, from: data)
             let selectedTitles = Set(selectedTests.map(\.title))
 
-            return PersonalityAnalysisResponse(name: user.name,
-                                               zodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
-                                               selectedTests: selectedTests.map(\.title),
-                                               archetypeTitle: analysis.archetypeTitle,
-                                               archetypeSubtitle: analysis.archetypeSubtitle,
-                                               overview: analysis.overview,
-                                               emotionalBar: analysis.emotionalBar,
-                                               sections: filteredSections(analysis.sections,
-                                                                          selectedTitles: selectedTitles))
+            return PersonalityResultDTO(name: user.name,
+                                        zodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
+                                        selectedTests: selectedTests.map(\.title),
+                                        archetypeTitle: analysis.archetypeTitle,
+                                        archetypeSubtitle: analysis.archetypeSubtitle,
+                                        overview: analysis.overview,
+                                        emotionalBar: analysis.emotionalBar,
+                                        sections: filteredSections(analysis.sections, selectedTitles: selectedTitles))
         } catch {
             throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
         }
@@ -53,22 +52,20 @@ struct OpenAIPersonalityService {
             return key
         }
 
-        if let key = Environment.get("OPENAI_API_KEY"), !key.isEmpty {
-            return key
-        }
-
         throw Abort(.serviceUnavailable, reason: "OPENAI_KEY не задан")
     }
 
-    private func userPrompt(for user: User, selectedTests: [PersonalityTestID]) -> String {
+    private func userPrompt(for user: User, selectedTests: [PersonalityTests]) -> String {
         let selectedTestLines = selectedTests
-            .map { "- \($0.title)" }
+            .map { "- " + $0.title }
             .joined(separator: "\n")
 
         let itemRules = selectedTests
             .map { test in
-                let titles = PersonalityItemTitles.allowed(for: test).map { "\"\($0)\"" }.joined(separator: ", ")
-                return "- \(unsafeRaw: test.title): ровно 2 пункта, title только из [\(unsafeRaw: titles)]"
+                let titles = PersonalityItems.allowed(for: test)
+                    .map { "\"" + $0 + "\"" }
+                    .joined(separator: ", ")
+                return "- " + test.title + ": ровно 2 пункта, title только из [" + titles + "]"
             }
             .joined(separator: "\n")
 
@@ -131,8 +128,8 @@ struct OpenAIPersonalityService {
         """
     }
 
-    private func filteredSections(_ sections: [PersonalityAnalysisResultSection],
-                                  selectedTitles: Set<String>) -> [PersonalityAnalysisResultSection] {
+    private func filteredSections(_ sections: [PersonalitySection],
+                                  selectedTitles: Set<String>) -> [PersonalitySection] {
         sections.filter { selectedTitles.contains($0.selectedTest) }
     }
 

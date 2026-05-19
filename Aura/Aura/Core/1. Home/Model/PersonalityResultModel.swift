@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PersonalityResultModel: Decodable {
+struct PersonalityResultModel: Decodable, Hashable {
     let name: String
     let zodiacSign: String
     let selectedTests: [PersonalityTestTypes]
@@ -18,7 +18,7 @@ struct PersonalityResultModel: Decodable {
     let sections: [PersonalitySection]
 }
 
-struct PersonalityOverview: Decodable {
+struct PersonalityOverview: Decodable, Hashable {
     let title: String
     let description: String
 }
