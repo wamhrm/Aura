@@ -5,6 +5,7 @@ struct AdminController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         routes.get("users", use: getUsers)
         routes.delete("users", use: deleteAllUsers)
+        routes.delete("history", use: deleteAllHistory)
     }
 
     private func getUsers(_ req: Request) async throws -> [UserDTO] {
@@ -14,6 +15,11 @@ struct AdminController: RouteCollection {
 
     private func deleteAllUsers(_ req: Request) async throws -> HTTPStatus {
         try await User.query(on: req.db).delete()
+        return .noContent
+    }
+
+    private func deleteAllHistory(_ req: Request) async throws -> HTTPStatus {
+        try await History.query(on: req.db).delete()
         return .noContent
     }
 }

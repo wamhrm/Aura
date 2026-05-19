@@ -59,11 +59,21 @@ struct NetworkHelper {
 
     static func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
         let bodyData = try JSONEncoder().encode(selectedTests)
-        let data = try await request(endpoint: "/personality/generate", method: .post, body: bodyData)
+        let data = try await request(endpoint: "/history/personality", method: .post, body: bodyData)
         return try decoder().decode(PersonalityResultModel.self, from: data)
     }
 
-    private static func request(endpoint: String, method: HTTPMethod, body: Data) async throws -> Data {
+    static func fetchPersonalityTests() async throws -> [HistoryCellModel] {
+        let data = try await request(endpoint: "/history", method: .get)
+        return try decoder().decode([HistoryCellModel].self, from: data)
+    }
+
+    static func fetchPersonalityTestDetails(id: UUID) async throws -> HistoryCellDetailsModel {
+        let data = try await request(endpoint: "/history/\(id.uuidString)", method: .get)
+        return try decoder().decode(HistoryCellDetailsModel.self, from: data)
+    }
+
+    private static func request(endpoint: String, method: HTTPMethod, body: Data? = nil) async throws -> Data {
         guard let baseURL = URL(string: Constants.baseURL),
               let url = URL(string: endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
@@ -72,7 +82,9 @@ struct NetworkHelper {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = method.rawValue
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.httpBody = body
+        if let body {
+            urlRequest.httpBody = body
+        }
 
         if let tokenData = KeychainHelper.standard.read(path: tokenPath, key: tokenKey),
            let token = String(data: tokenData, encoding: .utf8) {
@@ -118,8 +130,4 @@ private struct AuthSignUpBody: Encodable {
 private struct AuthSignInBody: Encodable {
     let email: String
     let password: String
-}
-
-private struct APIErrorResponse: Decodable {
-    let reason: String
 }

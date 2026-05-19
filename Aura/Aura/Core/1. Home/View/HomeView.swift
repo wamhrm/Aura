@@ -95,10 +95,10 @@ struct HomeView: View {
 
                         VStack(alignment: .leading, spacing: 10) {
                             headerText("Проверьте себя", "Все тесты") {
-                                vm.homeRoutes.append(.tests)
+                                vm.homeRoutes.append(.allTests)
                             }
 
-                            ForEach(Array(PersonalityTestTypes.allCases[0...2]), id: \.self) { test in
+                            ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
                                 TestCellView(type: test,
                                              hasChosenTest: Binding(
                                                 get: { vm.selectedTests.contains(test) },
@@ -110,7 +110,7 @@ struct HomeView: View {
                             }
 
                             Components.classicButton("Проверить себя") {
-                                vm.generatePersonality()
+                                vm.makePersonalityTest()
                             }
                             .disabled(vm.isLoading)
                             .padding(.top, 10)
@@ -168,7 +168,11 @@ extension HomeView {
     @ViewBuilder
     private func destinationView(_ route: HomeRoutes) -> some View {
         switch route {
-            case .tests:
+            case .addProfileInfo:
+                AddProfileInfoView(vm: vm)
+            case .horoscopeDetails:
+                HoroscopeDetailsView(horoscope: .mock)
+            case .allTests:
                 AllTestsView(vm: vm) { test in
                     vm.homeRoutes.append(.testDetails(test))
                 }
@@ -177,11 +181,9 @@ extension HomeView {
                     vm.toggleTestSelection(test)
                 }
             case .testResults:
-                PersonalityResultView(vm: vm)
-            case .horoscopeDetails:
-                HoroscopeDetailsView(horoscope: .mock)
-            case .addProfileInfo:
-                AddProfileInfoView(vm: vm)
+                if let result = vm.personalityResult {
+                    PersonalityResultView(result: result)
+                }
         }
     }
 }

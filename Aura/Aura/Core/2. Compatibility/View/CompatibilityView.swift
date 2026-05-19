@@ -163,7 +163,7 @@ extension CompatibilityView {
                     vm.toggleTestSelection(test)
                 }
             case .compatibilityResults:
-                CompatibilityResultsView()
+                CompatibilityResultView()
         }
     }
 }

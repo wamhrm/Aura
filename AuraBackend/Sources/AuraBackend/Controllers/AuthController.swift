@@ -1,5 +1,5 @@
-import Vapor
 import Fluent
+import Vapor
 
 struct AuthController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {

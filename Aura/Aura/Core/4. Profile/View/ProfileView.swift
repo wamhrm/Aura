@@ -9,15 +9,11 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject private var vm: ProfileViewModel
-    private let authService: any AuthServiceProtocol
-    private let psychologyService: any PsychologyServiceProtocol
+    @ObservedObject private var homeViewModel: HomeViewModel
 
-    init(vm: ProfileViewModel,
-         authService: any AuthServiceProtocol,
-         psychologyService: any PsychologyServiceProtocol) {
+    init(vm: ProfileViewModel, homeViewModel: HomeViewModel) {
         self.vm = vm
-        self.authService = authService
-        self.psychologyService = psychologyService
+        self.homeViewModel = homeViewModel
     }
 
     var body: some View {
@@ -48,7 +44,7 @@ struct ProfileView: View {
                 SettingsSheetView {
                     vm.signOut()
                 }
-                    .presentationDetents([.height(380)])
+                .presentationDetents([.height(380)])
             }
         }
     }
@@ -59,8 +55,7 @@ extension ProfileView {
     private func destinationView(_ route: ProfileRoutes) -> some View {
         switch route {
             case .completeProfile:
-                AddProfileInfoView(vm: HomeViewModel(authService: authService,
-                                                     psychologyService: psychologyService))
+                AddProfileInfoView(vm: homeViewModel)
             case .settings:
                 EmptyView()
         }
@@ -70,9 +65,9 @@ extension ProfileView {
 #Preview {
     let authService = AuthService()
     let psychologyService = PsychologyService()
-    
+    let homeViewModel = HomeViewModel(authService: authService, psychologyService: psychologyService)
+
     ProfileView(vm: ProfileViewModel(authService: authService,
                                      psychologyService: psychologyService),
-                authService: authService,
-                psychologyService: psychologyService)
+                homeViewModel: homeViewModel)
 }
