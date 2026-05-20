@@ -28,7 +28,7 @@ final class HomeViewModel: ObservableObject {
     @Published var personalityResult: PersonalityResultModel?
     
     @Published var showError = false
-    @Published var errorMessage = ""
+    @Published private(set) var errorMessage = ""
     @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol

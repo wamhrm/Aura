@@ -33,15 +33,15 @@ struct SignedInView: View {
                             .font(.title2)
                             .fontWeight(.bold)
 
-                        HStack {
+                        HStack(spacing: 10) {
                             Text(user.dateOfBirth ?? "Дата рождения не указана")
-                            
-                            if user.dateOfBirth != nil {
+
+                            if let zodiacSign = vm.personalityResult?.zodiacSign {
                                 Text("·")
                                     .font(.title3)
                                     .bold()
                                 
-                                Text("Козерог")
+                                Text(zodiacSign)
                             }
                         }
                         .font(.callout)
@@ -51,7 +51,7 @@ struct SignedInView: View {
                     .padding(22)
                     .frame(maxWidth: .infinity)
                     .backgroundWithShape(15, true)
-                    
+
                     VStack(alignment: .leading, spacing: 10) {
                         Text("СОВЕТ ДНЯ")
                             .fontWeight(.heavy)
@@ -68,27 +68,27 @@ struct SignedInView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.deepBlue)
                     .clipShape(RoundedRectangle(cornerRadius: 15))
-                    
+
                     VStack(alignment: .leading, spacing: 15) {
                         VStack(alignment: .leading, spacing: 15) {
                             Text("Лучшая совместимость")
                                 .foregroundStyle(.deepGray)
-                            
+
                             HStack(spacing: 10) {
                                 Text("♑️")
                                     .font(.title2)
                                     .padding(10)
                                     .background(Circle() .stroke(Color(.systemGray6), lineWidth: 5))
-                                    .background(LinearGradient(colors: [.softPurple,                                            .lightPurple],
+                                    .background(LinearGradient(colors: [.softPurple,                                      .lightPurple],
                                                                startPoint: .top,
                                                                endPoint: .bottom))
                                     .clipShape(Circle())
-                                
+
                                 Text("Мария")
                                     .fontWeight(.semibold)
-                                
+
                                 Spacer()
-                                
+
                                 Text("91%")
                                     .font(.title2)
                                     .foregroundStyle(.deepBlue)
@@ -97,37 +97,37 @@ struct SignedInView: View {
                         }
                         .padding(20)
                         .backgroundWithShape(15, true)
-                        
+
                         VStack(alignment: .leading, spacing: 10) {
                             Text("О вас")
                                 .bold()
-                            
-                            Text("Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню.")
+
+                            Text(vm.personalityOverview)
                                 .font(.callout)
                                 .foregroundStyle(.deepGray)
-                            
+
                             VStack {
-                                TestResultCellView(test: PersonalityCellTypes.socialFilter, description: "Обладает встроенным детектором на пустую болтовню.")
-                                
+                                TestResultCellView(test: PersonalityCellTypes.socialFilter, description: vm.personalitySocialFilter)
+
                                 Divider()
-                                
-                                TestResultCellView(test: PersonalityCellTypes.emotionalDepth, description: "Обладает встроенным детектором на пустую болтовню.")
+
+                                TestResultCellView(test: PersonalityCellTypes.emotionalDepth, description: vm.personalityEmotionalDepth)
                             }
                             .testTopicsModifier()
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .backgroundWithShape(15, true)
-                        
+
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Ваш психотип")
                                 .bold()
-                            
+
                             VStack(spacing: 15) {
-                                Components.emotionalProfileBar(.temperament, 5)
-                                Components.emotionalProfileBar(.thinking, 7)
-                                Components.emotionalProfileBar(.organization, 3)
-                                Components.emotionalProfileBar(.relationships, 6)
+                                Components.emotionalProfileBar(.temperament, vm.personalityTemperament)
+                                Components.emotionalProfileBar(.thinking, vm.personalityThinking)
+                                Components.emotionalProfileBar(.organization, vm.personalityOrganization)
+                                Components.emotionalProfileBar(.relationships, vm.personalityRelationships)
                             }
                             .padding(.top, 5)
                         }
@@ -135,9 +135,9 @@ struct SignedInView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .backgroundWithShape(15, true)
                     }
-                    .blur(radius: !vm.hasCompletedTests ? 5 : 0)
+                    .blur(radius: !vm.hasPersonalityTests ? 5 : 0)
                     .overlay {
-                        if !vm.hasCompletedTests {
+                        if !vm.hasPersonalityTests {
                             Components.completeYourProfileLock("Пройдите тесты для получения результатов о себе")
                                 .padding(.bottom, 500)
                         }
