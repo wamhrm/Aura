@@ -34,6 +34,7 @@ enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
     case patch = "PATCH"
+    case delete = "DELETE"
 }
 
 struct NetworkHelper {
@@ -63,14 +64,24 @@ struct NetworkHelper {
         return try decoder().decode(PersonalityResultModel.self, from: data)
     }
 
-    static func fetchPersonalityTests() async throws -> [HistoryCellModel] {
+    static func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel {
+        let bodyData = try JSONEncoder().encode(testRequest)
+        let data = try await request(endpoint: "/history/compatibility", method: .post, body: bodyData)
+        return try decoder().decode(CompabilityResultModel.self, from: data)
+    }
+
+    static func fetchHistory() async throws -> [HistoryCellModel] {
         let data = try await request(endpoint: "/history", method: .get)
         return try decoder().decode([HistoryCellModel].self, from: data)
     }
 
-    static func fetchPersonalityTestDetails(id: UUID) async throws -> HistoryCellDetailsModel {
+    static func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
         let data = try await request(endpoint: "/history/\(id.uuidString)", method: .get)
-        return try decoder().decode(HistoryCellDetailsModel.self, from: data)
+        return try decoder().decode(HistoryCellModel.self, from: data)
+    }
+
+    static func deleteHistory(id: UUID) async throws {
+        _ = try await request(endpoint: "/history/\(id.uuidString)", method: .delete)
     }
 
     private static func request(endpoint: String, method: HTTPMethod, body: Data? = nil) async throws -> Data {

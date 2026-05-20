@@ -1,41 +1,43 @@
 //
-//  CompatibilityResultsView.swift
+//  CompatibilityResultView.swift
 //  Aura
 //
-//  Created by ddorsat on 13.05.2026.
+//  Created by ddorsat on 18.05.2026.
 //
 
 import SwiftUI
 
 struct CompatibilityResultView: View {
+    let result: CompabilityResultModel
+
     var body: some View {
         ZStack {
             Components.backgroundColor()
 
             ScrollView {
                 VStack(spacing: 15) {
-                    compatibilityScaleBar(75)
+                    compatibilityScaleBar(result.compatibilityScore)
                         .padding(.vertical)
 
                     HStack(spacing: 75) {
                         VStack {
-                            Text("♑️")
+                            Text(result.userZodiacSign)
                                 .padding(10)
                                 .background(.deepBlue.opacity(0.25))
                                 .clipShape(Circle())
 
-                            Text("Роберт")
+                            Text(result.userName)
                                 .bold()
                         }
                         .frame(width: 150, alignment: .trailing)
 
                         VStack {
-                            Text("♑️")
+                            Text(result.partnerZodiacSign)
                                 .padding(10)
                                 .background(.purple.opacity(0.25))
                                 .clipShape(Circle())
 
-                            Text("Мария")
+                            Text(result.partnerName)
                                 .bold()
                         }
                         .frame(width: 150, alignment: .leading)
@@ -46,120 +48,67 @@ struct CompatibilityResultView: View {
                             .font(.title3)
                             .foregroundStyle(.red)
                     }
-                    
+
                     VStack(spacing: 10) {
-                        Text("Интенсивная, но стабильная связь")
+                        Text(result.title)
                             .foregroundStyle(.deepBlue)
                             .bold()
-                        
-                        Text("Вы ищете близость. Они защищают дистанцию.")
+
+                        Text(result.subtitle)
                             .font(.callout)
                             .foregroundStyle(.deepGray)
                     }
                     .multilineTextAlignment(.center)
                     .frame(width: 300)
                     .padding(.bottom, 10)
-                    
-                    Components.resultsSection("Основная динамика") {
-                        Text("Между вами нет хаоса ради эмоций — связь строится на ощущении надёжности, уважения и внутреннего спокойствия. Вы оба не любите дешёвую драму, но из-за этого иногда избегаете сложных разговоров, пока напряжение не накопится.")
+
+                    Components.resultsSection(result.overview.title) {
+                        Text(result.overview.description)
                             .font(.callout)
                             .foregroundStyle(.deepGray)
                     }
-                    
-                    Components.resultsSection("Поведенческие паттерны") {
-                        Text("Вы оба замечаете изменения в настроении партнёра раньше, чем он сам успевает об этом сказать.")
-                            .font(.callout)
-                            .foregroundStyle(.deepGray)
-                        
-                        VStack(spacing: 12) {
-                            TestResultCellView(test: CompatibilityCellTypes.dominanceDynamics, description: "В отношениях нет явного лидера — влияние постоянно переходит от одного к другому.")
-                            
-                            Divider()
-                            
-                            TestResultCellView(test: CompatibilityCellTypes.emotionalResonance, description: "Вы быстро считываете эмоциональное состояние друг друга даже в тишине.")
-                        }
-                        .testTopicsModifier()
-                    }
-                    
+
                     Components.resultsSection("Эмоциональная совместимость") {
                         VStack(spacing: 15) {
-                            Components.emotionalProfileBar(.emotionalResonance, 3)
-                            Components.emotionalProfileBar(.innerOpenness, 7)
-                            Components.emotionalProfileBar(.soulAlignment, 5)
-                            Components.emotionalProfileBar(.emotionalWarmth, 9)
+                            ForEach(result.emotionalBar, id: \.self) { bar in
+                                Components.emotionalProfileBar(bar.title, bar.value)
+                            }
                         }
                         .padding(.top, 5)
                     }
-                    
-                    Components.resultsSection("Стили привязанности") {
-                        Text("Привязанность между вами развивается медленно, но становится очень устойчивой со временем.")
-                            .font(.callout)
-                            .foregroundStyle(.deepGray)
-                        
-                        VStack(spacing: 12) {
-                            TestResultCellView(test: CompatibilityCellTypes.attachmentBond, description: "Оба стремятся к стабильности и плохо переносят эмоциональную неопределённость.")
-                            
-                            Divider()
-                            
-                            TestResultCellView(test: CompatibilityCellTypes.comfortDistance, description: "Вам комфортно рядом даже без постоянного общения или подтверждения чувств.")
+
+                    ForEach(result.sections, id: \.self) { section in
+                        Components.resultsSection(section.selectedTest.rawValue) {
+                            Text(section.description)
+                                .font(.callout)
+                                .foregroundStyle(.deepGray)
+
+                            VStack(spacing: 12) {
+                                ForEach(Array(section.items.enumerated()), id: \.element) { index, item in
+                                    TestResultCellView(test: item.title, description: item.description)
+
+                                    if index < section.items.count - 1 {
+                                        Divider()
+                                    }
+                                }
+                            }
+                            .testTopicsModifier()
                         }
-                        .testTopicsModifier()
                     }
-                    
-                    Components.resultsSection("Языки любви") {
-                        Text("Ваши способы проявлять любовь отличаются, но хорошо дополняют друг друга.")
-                            .font(.callout)
-                            .foregroundStyle(.deepGray)
-                        
-                        VStack(spacing: 12) {
-                            TestResultCellView(test: CompatibilityCellTypes.languageMatch, description: "Один показывает любовь через заботу и действия, другой — через внимание и эмоциональное присутствие.")
-                            
-                            Divider()
-                            
-                            TestResultCellView(test: CompatibilityCellTypes.translationNeeds, description: "Иногда вам нужно буквально проговаривать чувства, а не ожидать, что партнёр всё поймёт сам.")
-                        }
-                        .testTopicsModifier()
-                    }
-                    
-                    Components.resultsSection("Конфликты и примерение") {
-                        Text("Конфликты между вами редко бывают громкими, но могут затягиваться из-за упрямства.")
-                            .font(.callout)
-                            .foregroundStyle(.deepGray)
-                        
-                        VStack(spacing: 12) {
-                            TestResultCellView(test: CompatibilityCellTypes.conflictMechanics, description: "Во время ссор вы оба уходите в себя вместо того, чтобы обсуждать проблему сразу.")
-                            
-                            Divider()
-                            
-                            TestResultCellView(test: CompatibilityCellTypes.peaceRecovery, description: "После конфликтов связь восстанавливается через спокойный контакт, а не через бурные извинения.")
-                        }
-                        .testTopicsModifier()
-                    }
-                    
-                    Components.resultsSection("Сексуальная совместимость") {
-                        Text("Физическое притяжение строится не только на страсти, но и на чувстве эмоциональной безопасности.")
-                            .font(.callout)
-                            .foregroundStyle(.deepGray)
-                        
-                        VStack(spacing: 12) {
-                            TestResultCellView(test: CompatibilityCellTypes.sexualTemperament, description: "Ваш ритм близости совпадает: ни один не чувствует давления или эмоционального холода.")
-                            
-                            Divider()
-                            
-                            TestResultCellView(test: CompatibilityCellTypes.sexualChemistry, description: "Между вами сильная тактильная связь — прикосновения быстро снимают напряжение.")
-                        }
-                        .testTopicsModifier()
-                    }
-                    
+
                     Components.resultsSection("Прогноз будущего") {
-                        Text("Если вы научитесь обсуждать сложные вещи сразу, а не копить их внутри, эта связь может стать одной из самых стабильных в вашей жизни.")
-                            .font(.callout)
-                            .foregroundStyle(.deepGray)
-                        
                         VStack(spacing: 12) {
-                            Components.resultsWithNumbersSection(.spark, "Редкое узнавание", "С самого начала возникло ощущение, будто вы уже давно знакомы друг с другом.")
-                            
-                            Components.resultsWithNumbersSection(.potentional, "Стабильный союз", "У этой связи высокий потенциал для долгих отношений без эмоциональных качелей.")
+                            Components.resultsWithNumbersSection(
+                                .spark,
+                                result.forecast.recognitionTitle,
+                                result.forecast.recognitionDescription
+                            )
+
+                            Components.resultsWithNumbersSection(
+                                .potentional,
+                                result.forecast.potentialTitle,
+                                result.forecast.potentialDescription
+                            )
                         }
                     }
                 }
@@ -204,6 +153,6 @@ extension CompatibilityResultView {
 
 #Preview {
     NavigationStack {
-        CompatibilityResultView()
+        CompatibilityResultView(result: .mock)
     }
 }

@@ -190,7 +190,7 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
     }
 }
 
-enum CompatibilityTestTypes: String, TestCellDisplayable {
+enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
     case astrology = "Астрология пары"
     case behavioralPatterns = "Поведенческие паттерны"
     case attachmentCompatibility = "Стили привязанности"

@@ -36,6 +36,7 @@ extension Application {
         var tlsConfig = TLSConfiguration.makeClientConfiguration()
         tlsConfig.trustRoots = .file(certPath)
         tlsConfig.certificateVerification = .fullVerification
+        
         return try .require(NIOSSLContext(configuration: tlsConfig))
     }
 }

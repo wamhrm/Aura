@@ -12,10 +12,11 @@ struct MainTabView: View {
     private let psychologyService: PsychologyServiceProtocol
     
     @StateObject private var homeViewModel: HomeViewModel
+    @StateObject private var compatibilityViewModel: CompatibilityViewModel
     @StateObject private var profileViewModel: ProfileViewModel
     @StateObject private var historyViewModel: HistoryViewModel
     
-    @State private var selectedTab: Tabs = .home
+    @State private var selectedTab: Tabs = .history
     
     init(authService: AuthService,
          psychologyService: PsychologyService) {
@@ -24,6 +25,8 @@ struct MainTabView: View {
         
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(
             authService: authService,
+            psychologyService: psychologyService))
+        _compatibilityViewModel = StateObject(wrappedValue: CompatibilityViewModel(
             psychologyService: psychologyService))
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
             authService: authService,
@@ -44,7 +47,7 @@ struct MainTabView: View {
             }
 
             Tab(value: .compatibility, role: .none) {
-                CompatibilityView()
+                CompatibilityView(vm: compatibilityViewModel)
             } label: {
                 Image(systemName: Tabs.compatibility.icon)
             }
