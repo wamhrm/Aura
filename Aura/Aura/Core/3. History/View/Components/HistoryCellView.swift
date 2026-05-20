@@ -23,22 +23,53 @@ struct HistoryCellView: View {
                     .padding(.top, 5)
 
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(cell.archetypeTitle)
-                            .bold()
+                    if cell.kind == .personality {
+                        HStack {
+                            Text(cell.archetypeTitle)
+                                .font(.callout)
+                                .bold()
 
-                        Spacer()
+                            Spacer()
 
-                        Text(cell.formattedCreatedAt)
+                            Text(formattedDate)
+                                .font(.footnote)
+                                .foregroundStyle(.deepGray)
+                                .fontWeight(.medium)
+                        }
+                        .lineLimit(2)
+
+                        Text(cell.archetypeSubtitle)
                             .font(.footnote)
                             .foregroundStyle(.deepGray)
-                            .fontWeight(.medium)
-                    }
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(3)
+                    } else {
+                        HStack {
+                            Text(cell.compatibilityResult?.partnerName ?? "")
+                                .font(.callout)
+                                .bold()
+                            
+                            Spacer()
+                            
+                            Text("\(cell.compatibilityResult?.compatibilityScore ?? 0)%")
+                                .font(.footnote)
+                                .foregroundStyle(.white)
+                                .bold()
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(.softPurple.opacity(0.75))
+                                .clipShape(RoundedRectangle(cornerRadius: 11))
+                        }
+                        .lineLimit(2)
 
-                    Text(cell.archetypeSubtitle)
-                        .font(.callout)
-                        .foregroundStyle(.deepGray)
+                        Text(cell.compatibilityResult?.subtitle ?? "")
+                            .font(.footnote)
+                            .foregroundStyle(.deepGray)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(3)
+                    }
                 }
+                .multilineTextAlignment(.leading)
             }
         }
         .padding()
@@ -46,11 +77,11 @@ struct HistoryCellView: View {
     }
 }
 
-extension HistoryCellModel {
-    var formattedCreatedAt: String {
+extension HistoryCellView {
+    private var formattedDate: String {
         let parser = ISO8601DateFormatter()
         parser.formatOptions = [.withInternetDateTime]
-        guard let date = parser.date(from: createdAt) else { return createdAt }
+        guard let date = parser.date(from: cell.createdAt) else { return cell.createdAt }
 
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ru_RU")
@@ -61,9 +92,12 @@ extension HistoryCellModel {
 
 #Preview {
     HistoryCellView(cell: HistoryCellModel(id: UUID(),
-                                                      createdAt: "2026-05-19T12:00:00Z",
-                                                      selectedTests: ["Астрология"],
-                                                      archetypeTitle: "Интуитивный креатор",
-                                                      archetypeSubtitle: "Вы стремитесь к глубине",
-                                                      zodiacSign: "♒"))
+                                           kind: .personality,
+                                           createdAt: "2026-05-19T12:00:00Z",
+                                           selectedTests: ["Астрология"],
+                                           archetypeTitle: "Интуитивный креатор",
+                                           archetypeSubtitle: "Вы стремитесь к глубине",
+                                           zodiacSign: "♒",
+                                           personalityResult: nil,
+                                           compatibilityResult: nil))
 }

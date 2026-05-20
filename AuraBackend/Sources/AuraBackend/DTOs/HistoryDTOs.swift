@@ -9,13 +9,8 @@ struct HistoryItemDTO: Content {
     let archetypeTitle: String
     let archetypeSubtitle: String
     let zodiacSign: String
-}
-
-struct HistoryItemDetailsDTO: Content {
-    let id: UUID
-    let kind: TestKind
-    let createdAt: String
-    let result: PersonalityResultDTO
+    let personalityResult: PersonalityResultDTO?
+    let compatibilityResult: CompatibilityResultDTO?
 }
 
 enum HistoryDTOMapper {
@@ -37,23 +32,50 @@ enum HistoryDTOMapper {
                                       selectedTests: history.selectedTests,
                                       archetypeTitle: result.archetypeTitle,
                                       archetypeSubtitle: result.archetypeSubtitle,
-                                      zodiacSign: result.zodiacSign)
+                                      zodiacSign: result.zodiacSign,
+                                      personalityResult: nil,
+                                      compatibilityResult: nil)
             case .compatibility:
-                throw Abort(.notImplemented, reason: "История совместимости пока недоступна")
+                let result = try decodeCompatibilityResult(from: history.result)
+
+                return HistoryItemDTO(id: try history.requireID(),
+                                      kind: history.kind,
+                                      createdAt: createdAtString(from: history.createdAt),
+                                      selectedTests: history.selectedTests,
+                                      archetypeTitle: result.title,
+                                      archetypeSubtitle: result.subtitle,
+                                      zodiacSign: result.userZodiacSign,
+                                      personalityResult: nil,
+                                      compatibilityResult: result)
         }
     }
 
-    static func detail(from history: History) throws -> HistoryItemDetailsDTO {
+    static func detail(from history: History) throws -> HistoryItemDTO {
         switch history.kind {
             case .personality:
                 let result = try decodePersonalityResult(from: history.result)
 
-                return HistoryItemDetailsDTO(id: try history.requireID(),
-                                             kind: history.kind,
-                                             createdAt: createdAtString(from: history.createdAt),
-                                             result: result)
+                return HistoryItemDTO(id: try history.requireID(),
+                                      kind: history.kind,
+                                      createdAt: createdAtString(from: history.createdAt),
+                                      selectedTests: history.selectedTests,
+                                      archetypeTitle: result.archetypeTitle,
+                                      archetypeSubtitle: result.archetypeSubtitle,
+                                      zodiacSign: result.zodiacSign,
+                                      personalityResult: result,
+                                      compatibilityResult: nil)
             case .compatibility:
-                throw Abort(.notImplemented, reason: "История совместимости пока недоступна")
+                let result = try decodeCompatibilityResult(from: history.result)
+
+                return HistoryItemDTO(id: try history.requireID(),
+                                      kind: history.kind,
+                                      createdAt: createdAtString(from: history.createdAt),
+                                      selectedTests: history.selectedTests,
+                                      archetypeTitle: result.title,
+                                      archetypeSubtitle: result.subtitle,
+                                      zodiacSign: result.userZodiacSign,
+                                      personalityResult: nil,
+                                      compatibilityResult: result)
         }
     }
 
@@ -63,5 +85,13 @@ enum HistoryDTOMapper {
         }
 
         return try JSONDecoder().decode(PersonalityResultDTO.self, from: data)
+    }
+
+    private static func decodeCompatibilityResult(from resultJSON: String) throws -> CompatibilityResultDTO {
+        guard let data = resultJSON.data(using: .utf8) else {
+            throw Abort(.internalServerError, reason: "Некорректная запись истории")
+        }
+
+        return try JSONDecoder().decode(CompatibilityResultDTO.self, from: data)
     }
 }

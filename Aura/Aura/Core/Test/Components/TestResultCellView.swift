@@ -67,7 +67,7 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Decodable {
     }
 }
 
-enum CompatibilityCellTypes: String, TestResultDisplayable {
+enum CompatibilityCellTypes: String, TestResultDisplayable, Decodable {
     // Астрология пары
     case synastry = "Синастрия знаков"
     case karmicLesson = "Кармический урок"

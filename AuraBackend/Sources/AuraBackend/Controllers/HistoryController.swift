@@ -6,12 +6,12 @@ struct HistoryController: RouteCollection {
         let history = routes.grouped("history")
             .grouped(UserAuthMiddleware())
 
-        history.get(use: historyItemIndex)
-        history.get(":historyID", use: getHistoryItemByID)
-        history.post("personality", use: makePersonalityTest)
+        history.get(use: getHistory)
+        history.get(":historyID", use: getHistoryItemDetails)
+        history.delete(":historyID", use: deleteHistoryItem)
     }
 
-    private func historyItemIndex(_ req: Request) async throws -> [HistoryItemDTO] {
+    private func getHistory(_ req: Request) async throws -> [HistoryItemDTO] {
         let userID = try req.auth.require(User.self).requireID()
 
         let entries = try await History.query(on: req.db)
@@ -22,7 +22,7 @@ struct HistoryController: RouteCollection {
         return try entries.map { try HistoryDTOMapper.listItem(from: $0) }
     }
 
-    private func getHistoryItemByID(_ req: Request) async throws -> HistoryItemDetailsDTO {
+    private func getHistoryItemDetails(_ req: Request) async throws -> HistoryItemDTO {
         let userID = try req.auth.require(User.self).requireID()
 
         guard let historyID = req.parameters.get("historyID", as: UUID.self) else {
@@ -40,57 +40,22 @@ struct HistoryController: RouteCollection {
         return try HistoryDTOMapper.detail(from: entry)
     }
 
-    private func makePersonalityTest(_ req: Request) async throws -> PersonalityResultDTO {
-        let user = try req.auth.require(User.self)
-        let testTitles = try req.content.decode([String].self)
+    private func deleteHistoryItem(_ req: Request) async throws -> HTTPStatus {
+        let userID = try req.auth.require(User.self).requireID()
 
-        guard let selectedTests = PersonalityTests.from(titles: testTitles) else {
-            throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
+        guard let historyID = req.parameters.get("historyID", as: UUID.self) else {
+            throw Abort(.badRequest, reason: "Некорректный идентификатор записи")
         }
 
-        let uniqueSelectedTests = uniqueTests(from: selectedTests)
-
-        guard uniqueSelectedTests.count >= 2 else {
-            throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
+        guard let entry = try await History.query(on: req.db)
+            .filter(\.$id == historyID)
+            .filter(\.$user.$id == userID)
+            .first()
+        else {
+            throw Abort(.notFound, reason: "Запись не найдена")
         }
 
-        guard hasCompletedProfileInfo(user) else {
-            throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
-        }
-
-        let response = try await OpenAIService().generate(for: user,
-                                                          selectedTests: uniqueSelectedTests,
-                                                          req: req)
-
-        let resultData = try JSONEncoder().encode(response)
-        guard let result = String(data: resultData, encoding: .utf8) else {
-            throw Abort(.internalServerError, reason: "Не удалось сохранить результат теста")
-        }
-
-        let entry = History(userID: try user.requireID(),
-                            kind: .personality,
-                            selectedTests: response.selectedTests,
-                            result: result)
-        try await entry.save(on: req.db)
-
-        return response
-    }
-
-    private func uniqueTests(from tests: [PersonalityTests]) -> [PersonalityTests] {
-        var seen = Set<PersonalityTests>()
-
-        return tests.filter { test in
-            seen.insert(test).inserted
-        }
-    }
-
-    private func hasCompletedProfileInfo(_ user: User) -> Bool {
-        user.dateOfBirth != nil &&
-        user.gender != nil &&
-        user.socialType != nil &&
-        user.conflictStyle != nil &&
-        user.emotionalCore != nil &&
-        user.decisionStyle != nil &&
-        user.coreFocus != nil
+        try await entry.delete(on: req.db)
+        return .noContent
     }
 }
