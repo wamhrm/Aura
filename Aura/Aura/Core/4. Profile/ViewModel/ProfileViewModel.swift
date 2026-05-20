@@ -13,21 +13,18 @@ enum ProfileRoutes: Hashable {
     case completeProfile, settings
 }
 
-private enum AuthInput {
-    static let minPasswordLength = 6
-    static let minNameLength = 2
-    static let authActionDelay = Duration.seconds(1)
-}
-
 @MainActor
 final class ProfileViewModel: ObservableObject {
+    @Published var profileRoutes: [ProfileRoutes] = []
+
     @Published var name = ""
     @Published var email = ""
     @Published var password = ""
+    @Published var personalityResult: PersonalityResultModel?
 
-    @Published var profileRoutes: [ProfileRoutes] = []
     @Published private(set) var authState = AuthState.signedOut
     @Published private(set) var isLoading = false
+    @Published private(set) var hasPersonalityTests = false
 
     @Published var showSettings = false
     @Published var showError = false
@@ -35,13 +32,37 @@ final class ProfileViewModel: ObservableObject {
 
     private let authService: any AuthServiceProtocol
     private let psychologyService: any PsychologyServiceProtocol
-    
-    private var cancellables = Set<AnyCancellable>()
 
-    var hasCompletedTests: Bool {
-        return false
+    private var cancellables = Set<AnyCancellable>()
+    
+    var personalityOverview: String {
+        personalityResult?.overview.description ?? "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню."
+    }
+    
+    var personalitySocialFilter: String {
+        personalityResult?.sections.flatMap(\.items).first(where: { $0.title == .socialFilter })?.description ?? "Обладает встроенным детектором на пустую болтовню."
+    }
+    
+    var personalityEmotionalDepth: String {
+        personalityResult?.sections.flatMap(\.items).first(where: { $0.title == .emotionalDepth })?.description ?? "Чувства раскрываются постепенно, но очень надолго."
     }
 
+    var personalityTemperament: Int {
+        personalityResult?.emotionalBar.first(where: { $0.title == .temperament })?.value ?? 5
+    }
+
+    var personalityThinking: Int {
+        personalityResult?.emotionalBar.first(where: { $0.title == .thinking })?.value ?? 7
+    }
+
+    var personalityOrganization: Int {
+        personalityResult?.emotionalBar.first(where: { $0.title == .organization })?.value ?? 3
+    }
+
+    var personalityRelationships: Int {
+        personalityResult?.emotionalBar.first(where: { $0.title == .relationships })?.value ?? 6
+    }
+    
     init(authService: any AuthServiceProtocol,
          psychologyService: any PsychologyServiceProtocol) {
         self.authService = authService
@@ -58,16 +79,54 @@ final class ProfileViewModel: ObservableObject {
         authService.authState
             .receive(on: RunLoop.main)
             .sink { [weak self] authState in
-                self?.authState = authState
+                guard let self else { return }
+                self.authState = authState
+
+                switch authState {
+                    case .signedIn:
+                        listenToPersonalityTests()
+                    case .signedOut:
+                        hasPersonalityTests = false
+                        personalityResult = nil
+                }
+            }
+            .store(in: &cancellables)
+
+        psychologyService.historyDidChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
+                guard let self, case .signedIn = authState else { return }
+                listenToPersonalityTests()
             }
             .store(in: &cancellables)
     }
 
-    func createAccount() {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func listenToPersonalityTests() {
+        Task {
+            do {
+                let history = try await psychologyService.fetchHistory()
 
-        if let message = validateCreateAccount(name: trimmedName, email: trimmedEmail, password: password) {
+                guard let latest = history.first(where: { $0.kind == .personality }) else {
+                    hasPersonalityTests = false
+                    personalityResult = nil
+                    return
+                }
+
+                let detail = try await psychologyService.fetchHistoryDetails(id: latest.id)
+                personalityResult = detail.personalityResult
+                hasPersonalityTests = personalityResult != nil
+            } catch {
+                hasPersonalityTests = false
+                personalityResult = nil
+            }
+        }
+    }
+
+    func createAccount() {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let message = validateCreateAccount(name: name, email: email, password: password) {
             showError(message)
             return
         }
@@ -79,7 +138,7 @@ final class ProfileViewModel: ObservableObject {
         Task {
             do {
                 try await Task.sleep(for: AuthInput.authActionDelay)
-                try await authService.createAccount(name: trimmedName, email: trimmedEmail, password: password)
+                try await authService.createAccount(name: name, email: email, password: password)
 
                 profileRoutes = []
                 clearFields()
@@ -92,9 +151,9 @@ final class ProfileViewModel: ObservableObject {
     }
 
     func signIn() {
-        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let message = validateSignIn(email: trimmedEmail, password: password) {
+        if let message = validateSignIn(email: email, password: password) {
             showError(message)
             return
         }
@@ -106,7 +165,7 @@ final class ProfileViewModel: ObservableObject {
         Task {
             do {
                 try await Task.sleep(for: AuthInput.authActionDelay)
-                try await authService.signIn(email: trimmedEmail, password: password)
+                try await authService.signIn(email: email, password: password)
 
                 profileRoutes = []
                 clearFields()
@@ -122,11 +181,11 @@ final class ProfileViewModel: ObservableObject {
         guard !isLoading else { return }
 
         isLoading = true
-        
+
         Task {
             try? await Task.sleep(for: AuthInput.authActionDelay)
             authService.signOut()
-            
+
             profileRoutes = []
             showSettings = false
             isLoading = false
@@ -195,4 +254,10 @@ final class ProfileViewModel: ObservableObject {
         let domain = parts[1]
         return !local.isEmpty && !domain.isEmpty
     }
+}
+
+private enum AuthInput {
+    static let minPasswordLength = 6
+    static let minNameLength = 2
+    static let authActionDelay = Duration.seconds(1)
 }

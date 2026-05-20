@@ -49,6 +49,7 @@ struct PersonalityResultView: View {
                                     .multilineTextAlignment(.center)
                                     .fontWeight(.medium)
                             }
+                            .frame(maxWidth: 300, alignment: .center)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.bottom, 10)

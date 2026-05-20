@@ -2,13 +2,13 @@
 //  CompatibilityView.swift
 //  Aura
 //
-//  Created by ddorsat on 31.03.2026.
+//  Created by ddorsat on 18.05.2026.
 //
 
 import SwiftUI
 
 struct CompatibilityView: View {
-    @StateObject private var vm = CompatibilityViewModel()
+    @ObservedObject var vm: CompatibilityViewModel
 
     var body: some View {
         NavigationStack(path: $vm.compatibilityRoutes) {
@@ -38,7 +38,7 @@ struct CompatibilityView: View {
                                 headerText("Имя *")
 
                                 CompatibilityTextFieldView(title: "Введите имя",
-                                                           text: $vm.partnerName,
+                                                           text: $vm.partnerInfo.name,
                                                            type: .name(maxLength: 10))
                             }
 
@@ -46,7 +46,7 @@ struct CompatibilityView: View {
                                 headerText("Пол *")
 
                                 SelectionButtons<CompatibilityButtons.genderOptions> { button in
-
+                                    vm.partnerInfo.gender = button.rawValue
                                 }
                             }
 
@@ -54,21 +54,21 @@ struct CompatibilityView: View {
                                 headerText("Дата рождения")
 
                                 SelectionButtons<CompatibilityButtons.birthOptions> { button in
-                                    vm.exactDateOfBirth = button == .exactDate
+                                    vm.partnerInfo.exactDateOfBirth = button == .exactDate
                                 }
                                 .padding(.bottom, 10)
 
-                                if vm.exactDateOfBirth {
+                                if vm.partnerInfo.exactDateOfBirth {
                                     CompatibilityDateOfBirthView(title: "День/Месяц/Год",
-                                                                 text: $vm.partnerDateOfBirth,
+                                                                 text: $vm.partnerInfo.dateOfBirth,
                                                                  isTime: false)
 
                                     CompatibilityDateOfBirthView(title: "Время (необязательно)",
-                                                                 text: $vm.partnerTimeOfBirth,
+                                                                 text: $vm.partnerInfo.birthTime,
                                                                  isTime: true)
                                 } else {
                                     CompatibilityTextFieldView(title: "Возраст (лет)",
-                                                               text: $vm.partnerAge,
+                                                               text: $vm.partnerInfo.age,
                                                                type: .age(maxAge: 100))
                                 }
                             }
@@ -105,9 +105,14 @@ struct CompatibilityView: View {
                             }
 
                             Components.classicButton("Узнать совместимость") {
-                                vm.compatibilityRoutes.append(.compatibilityResults)
+                                vm.makeCompatibilityTest()
                             }
                             .padding(.top, 10)
+
+                            if vm.isLoading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
                     }
                     .padding(.horizontal)
@@ -115,11 +120,11 @@ struct CompatibilityView: View {
                 .navigationTitle("Проверить совместимость")
                 .navigationBarTitleDisplayMode(.inline)
                 .bottomAreaPadding()
-                .alert("Нельзя выбрать меньше 2 тестов", isPresented: $vm.showMinTestsAlert) {
-                    Button("OK", role: .cancel) {}
-                }
                 .navigationDestination(for: CompatibilityRoutes.self) { destination in
                     destinationView(destination)
+                }
+                .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+                    Button("OK", role: .cancel) {}
                 }
             }
         }
@@ -163,7 +168,9 @@ extension CompatibilityView {
                     vm.toggleTestSelection(test)
                 }
             case .compatibilityResults:
-                CompatibilityResultView()
+                if let result = vm.compatibilityResult {
+                    CompatibilityResultView(result: result)
+                }
         }
     }
 }
@@ -182,6 +189,6 @@ enum CompatibilityButtons {
 
 #Preview {
     NavigationStack {
-        CompatibilityView()
+        CompatibilityView(vm: CompatibilityViewModel(psychologyService: PsychologyService()))
     }
 }

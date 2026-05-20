@@ -5,11 +5,12 @@
 //  Created by ddorsat on 31.03.2026.
 //
 
-import Foundation
 import Combine
+import Foundation
 
 enum HistoryRoutes: Hashable {
-    case testResult(PersonalityResultModel)
+    case personalityResult(PersonalityResultModel)
+    case compatibilityResult(CompabilityResultModel)
 }
 
 @MainActor
@@ -17,6 +18,7 @@ final class HistoryViewModel: ObservableObject {
     @Published var historyRoutes: [HistoryRoutes] = []
     @Published private(set) var historyCells: [HistoryCellModel] = []
     @Published private(set) var isSignedIn = false
+    
     @Published var showError = false
     @Published private(set) var errorMessage = ""
 
@@ -29,14 +31,14 @@ final class HistoryViewModel: ObservableObject {
          psychologyService: any PsychologyServiceProtocol) {
         self.authService = authService
         self.psychologyService = psychologyService
-        
+
         setupSubscriptions()
     }
 
     deinit {
         cancellables.removeAll()
     }
-    
+
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)
@@ -53,19 +55,33 @@ final class HistoryViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        psychologyService.historyDidChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
+                guard let self, isSignedIn else { return }
+                fetchHistory()
+            }
+            .store(in: &cancellables)
     }
 
     private func fetchHistory() {
-        guard isSignedIn else {
-            historyCells = []
-            return
-        }
-
         Task {
             do {
-                historyCells = try await psychologyService.fetchPersonalityTests()
+                historyCells = try await psychologyService.fetchHistory()
             } catch {
                 showAlert(message: "Не удалось загрузить историю")
+            }
+        }
+    }
+
+    func deleteHistoryCell(_ item: HistoryCellModel) {
+        Task {
+            do {
+                try await psychologyService.deleteHistory(id: item.id)
+                historyCells.removeAll { $0.id == item.id }
+            } catch {
+                showAlert(message: "Не удалось удалить запись")
             }
         }
     }
@@ -73,8 +89,22 @@ final class HistoryViewModel: ObservableObject {
     func openHistoryCellDetails(_ item: HistoryCellModel) {
         Task {
             do {
-                let detail = try await psychologyService.fetchPersonalityTestDetails(id: item.id)
-                historyRoutes.append(.testResult(detail.result))
+                let detail = try await psychologyService.fetchHistoryDetails(id: item.id)
+
+                switch detail.kind {
+                    case .personality:
+                        guard let result = detail.personalityResult else {
+                            showAlert(message: "Не удалось открыть результат")
+                            return
+                        }
+                        historyRoutes.append(.personalityResult(result))
+                    case .compatibility:
+                        guard let result = detail.compatibilityResult else {
+                            showAlert(message: "Не удалось открыть результат")
+                            return
+                        }
+                        historyRoutes.append(.compatibilityResult(result))
+                }
             } catch {
                 showAlert(message: "Не удалось открыть результат")
             }

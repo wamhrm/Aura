@@ -10,26 +10,40 @@ import Foundation
 import Combine
 
 protocol PsychologyServiceProtocol: AnyObject {
+    var historyDidChange: PassthroughSubject<Void, Never> { get }
+
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
-    func makeCompatibilityTest(selectedTests: [PersonalityTestTypes]) async throws -> CompabilityResultModel
-    func fetchPersonalityTests() async throws -> [HistoryCellModel]
-    func fetchPersonalityTestDetails(id: UUID) async throws -> HistoryCellDetailsModel
+    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel
+    func fetchHistory() async throws -> [HistoryCellModel]
+    func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
+    func deleteHistory(id: UUID) async throws
 }
 
 final class PsychologyService: ObservableObject, PsychologyServiceProtocol {
+    let historyDidChange = PassthroughSubject<Void, Never>()
+
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
-        try await NetworkHelper.makePersonalityTest(selectedTests: selectedTests)
+        let result = try await NetworkHelper.makePersonalityTest(selectedTests: selectedTests)
+        historyDidChange.send(())
+        return result
     }
     
-    func makeCompatibilityTest(selectedTests: [PersonalityTestTypes]) async throws -> CompabilityResultModel {
-        return CompabilityResultModel()
+    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
+        let result = try await NetworkHelper.makeCompatibilityTest(request)
+        historyDidChange.send(())
+        return result
     }
 
-    func fetchPersonalityTests() async throws -> [HistoryCellModel] {
-        try await NetworkHelper.fetchPersonalityTests()
+    func fetchHistory() async throws -> [HistoryCellModel] {
+        try await NetworkHelper.fetchHistory()
     }
 
-    func fetchPersonalityTestDetails(id: UUID) async throws -> HistoryCellDetailsModel {
-        try await NetworkHelper.fetchPersonalityTestDetails(id: id)
+    func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
+        try await NetworkHelper.fetchHistoryDetails(id: id)
+    }
+
+    func deleteHistory(id: UUID) async throws {
+        try await NetworkHelper.deleteHistory(id: id)
+        historyDidChange.send(())
     }
 }

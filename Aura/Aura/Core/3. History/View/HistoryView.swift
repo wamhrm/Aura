@@ -24,16 +24,21 @@ struct HistoryView: View {
                         } else {
                             ScrollView {
                                 ForEach(vm.historyCells) { item in
-                                    Button {
-                                        vm.openHistoryCellDetails(item)
-                                    } label: {
-                                        HistoryCellView(cell: item)
-                                    }
+                                    HistoryCellView(cell: item)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            vm.openHistoryCellDetails(item)
+                                        }
+                                        .contextMenu {
+                                            Button("Удалить", role: .destructive) {
+                                                vm.deleteHistoryCell(item)
+                                            }
+                                        }
                                 }
+                                .padding(.horizontal)
                             }
                         }
                     }
-                    .padding(.horizontal)
                 } else {
                     ContentUnavailableView {
                         Label("Войдите в аккаунт, чтобы видеть историю", systemImage: "")
@@ -57,8 +62,10 @@ extension HistoryView {
     @ViewBuilder
     private func destinationView(_ route: HistoryRoutes) -> some View {
         switch route {
-            case .testResult(let result):
+            case .personalityResult(let result):
                 PersonalityResultView(result: result)
+            case .compatibilityResult(let result):
+                CompatibilityResultView(result: result)
         }
     }
 }
