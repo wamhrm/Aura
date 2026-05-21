@@ -13,10 +13,10 @@ struct HoroscopeModel: Identifiable, Hashable, Decodable {
     let dateStart: String
     let dateEnd: String
     let description: String
-    let items: [HoroscopeSphereItem]
+    let items: [HoroscopeItems]
 }
 
-struct HoroscopeSphereItem: Hashable, Decodable {
+struct HoroscopeItems: Hashable, Decodable {
     let title: HoroscopeDetailsCellType
     let description: String
 }
@@ -27,10 +27,10 @@ extension HoroscopeModel {
                                      dateStart: "21 мар",
                                      dateEnd: "5 мая",
                                      description: "Фортуна благоволит смелым на этой неделе. Сделайте тот шаг, о котором долго думали. Жизнь не стоит на месте, двигайтесь, гуляйте, проводите время с друзьями.",
-                                     items: [HoroscopeSphereItem(title: .love,
+                                     items: [HoroscopeItems(title: .love,
                                                                  description: "Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения."),
-                                             HoroscopeSphereItem(title: .health,
+                                             HoroscopeItems(title: .health,
                                                                  description: "Уделите внимание режиму сна и отдыху — организм попросит паузу."),
-                                             HoroscopeSphereItem(title: .work,
+                                             HoroscopeItems(title: .work,
                                                                  description: "На работе лучше двигаться размеренно и не брать лишних обязательств.")])
 }

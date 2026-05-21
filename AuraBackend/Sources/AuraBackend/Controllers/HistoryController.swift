@@ -26,7 +26,7 @@ struct HistoryController: RouteCollection {
             .sort(\.$createdAt, .descending)
             .all()
 
-        return try entries.map { try HistoryDTOMapper.listItem(from: $0) }
+        return try entries.map { try HistoryDTOMapper.getHistoryItem(from: $0) }
     }
 
     private func getHistoryItemDetails(_ req: Request) async throws -> HistoryItemDTO {
@@ -44,7 +44,7 @@ struct HistoryController: RouteCollection {
             throw Abort(.notFound, reason: "Запись не найдена")
         }
 
-        return try HistoryDTOMapper.detail(from: entry)
+        return try HistoryDTOMapper.getHistoryItemDetails(from: entry)
     }
 
     private func deleteHistoryItem(_ req: Request) async throws -> HTTPStatus {

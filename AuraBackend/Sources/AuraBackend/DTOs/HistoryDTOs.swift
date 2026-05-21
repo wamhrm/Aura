@@ -21,14 +21,7 @@ struct HistoryItemDTO: Content {
 }
 
 enum HistoryDTOMapper {
-    private static func createdAtString(from date: Date?) -> String {
-        guard let date else { return "" }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.string(from: date)
-    }
-
-    static func listItem(from history: History) throws -> HistoryItemDTO {
+    static func getHistoryItem(from history: History) throws -> HistoryItemDTO {
         switch history.kind {
             case .personality:
                 let result = try decodePersonalityResult(from: history.result)
@@ -57,7 +50,7 @@ enum HistoryDTOMapper {
         }
     }
 
-    static func detail(from history: History) throws -> HistoryItemDTO {
+    static func getHistoryItemDetails(from history: History) throws -> HistoryItemDTO {
         switch history.kind {
             case .personality:
                 let result = try decodePersonalityResult(from: history.result)
@@ -84,6 +77,13 @@ enum HistoryDTOMapper {
                                       personalityResult: nil,
                                       compatibilityResult: result)
         }
+    }
+
+    private static func createdAtString(from date: Date?) -> String {
+        guard let date else { return "" }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.string(from: date)
     }
 
     private static func decodePersonalityResult(from resultJSON: String) throws -> PersonalityResultDTO {
