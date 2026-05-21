@@ -30,7 +30,7 @@ final class Horoscope: Model, @unchecked Sendable {
     var description: String
 
     @Field(key: "items")
-    var items: [HoroscopeItem]
+    var items: String
 
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -43,13 +43,13 @@ final class Horoscope: Model, @unchecked Sendable {
          dateStart: String,
          dateEnd: String,
          description: String,
-         items: [HoroscopeItem]) {
+         itemsJSON: String) {
         self.id = id
         self.$user.id = userID
         self.sign = sign
         self.dateStart = dateStart
         self.dateEnd = dateEnd
         self.description = description
-        self.items = items
+        self.items = itemsJSON
     }
 }

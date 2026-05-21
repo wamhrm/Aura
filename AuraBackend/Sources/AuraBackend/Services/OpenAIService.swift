@@ -10,15 +10,25 @@ import Vapor
 
 struct OpenAIService {
     private let model = "gpt-5.4-mini"
+    
+    private func apiKey() throws -> String {
+        if let key = Environment.get("OPENAI_KEY"), !key.isEmpty {
+            return key
+        }
 
+        throw Abort(.serviceUnavailable, reason: "OPENAI_KEY не задан")
+    }
+
+    // MARK: - Personality
     func makePersonalityTest(for user: User,
                              selectedTests: [PersonalityTests],
                              req: Request) async throws -> PersonalityResultDTO {
         let apiKey = try apiKey()
         let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: systemPrompt),
-                      OpenAIMessage(role: "user",
-                                    content: userPrompt(for: user, selectedTests: selectedTests))],
+                                    messages: [OpenAIMessage(role: "system", content: personalitySystemPrompt),
+                                               OpenAIMessage(role: "user",
+                                                             content: personalityUserPrompt(for: user,
+                                                                                            selectedTests: selectedTests))],
                                     responseFormat: OpenAIResponseFormat(type: "json_object"))
 
         let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
@@ -50,106 +60,14 @@ struct OpenAIService {
                                         archetypeSubtitle: analysis.archetypeSubtitle,
                                         overview: analysis.overview,
                                         emotionalBar: analysis.emotionalBar,
-                                        sections: filteredSections(analysis.sections, selectedTitles: selectedTitles))
+                                        sections: filteredPersonalitySections(analysis.sections,
+                                                                              selectedTitles: selectedTitles))
         } catch {
             throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
         }
     }
 
-    func makeCompatibilityTest(for user: User,
-                               partner: CompatibilityTestRequest,
-                               selectedTests: [CompatibilityTests],
-                               req: Request) async throws -> CompatibilityResultDTO {
-        let apiKey = try apiKey()
-        let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: compatibilitySystemPrompt),
-                                               OpenAIMessage(role: "user", content: compatibilityUserPrompt(
-                                                                                              for: user,
-                                                                                              partner: partner,
-                                                                                              selectedTests: selectedTests))],
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
-
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
-        }
-
-        guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
-        }
-
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
-
-        guard let content = chatResponse.choices.first?.message.content,
-              let data = content.data(using: .utf8) else {
-            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
-        }
-
-        do {
-            let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
-            let selectedTitles = Set(selectedTests.map(\.title))
-            let partnerDate = partnerDateOfBirth(from: partner)
-
-            return CompatibilityResultDTO(userName: user.name,
-                                          userZodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
-                                          partnerName: partner.partnerName,
-                                          partnerZodiacSign: zodiacSign(from: partnerDate) ?? "",
-                                          compatibilityScore: min(max(analysis.compatibilityScore, 0), 100),
-                                          selectedTests: selectedTests.map(\.title),
-                                          title: analysis.title,
-                                          subtitle: analysis.subtitle,
-                                          overview: analysis.overview,
-                                          emotionalBar: analysis.emotionalBar,
-                                          sections: filteredCompatibilitySections(analysis.sections, selectedTitles: selectedTitles),
-                                          forecast: analysis.forecast)
-        } catch {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
-        }
-    }
-
-    func makeHoroscopeTest(for sign: HoroscopeSign, req: Request) async throws -> HoroscopeGeneratedContent {
-        let apiKey = try apiKey()
-        let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
-                                               OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
-
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
-        }
-
-        guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
-        }
-
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
-
-        guard let content = chatResponse.choices.first?.message.content,
-              let data = content.data(using: .utf8) else {
-            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
-        }
-
-        do {
-            return try JSONDecoder().decode(HoroscopeGeneratedContent.self, from: data)
-        } catch {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
-        }
-    }
-
-    private func apiKey() throws -> String {
-        if let key = Environment.get("OPENAI_KEY"), !key.isEmpty {
-            return key
-        }
-
-        throw Abort(.serviceUnavailable, reason: "OPENAI_KEY не задан")
-    }
-
-    private func userPrompt(for user: User, selectedTests: [PersonalityTests]) -> String {
+    private func personalityUserPrompt(for user: User, selectedTests: [PersonalityTests]) -> String {
         let selectedTestLines = selectedTests
             .map { "- " + $0.title }
             .joined(separator: "\n")
@@ -208,7 +126,7 @@ struct OpenAIService {
         """
     }
 
-    private var systemPrompt: String {
+    private var personalitySystemPrompt: String {
         """
         Ты аналитик приложения Aura. Пиши по-русски, мягко, глубоко и без категоричных диагнозов.
         Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
@@ -222,23 +140,64 @@ struct OpenAIService {
         """
     }
 
-    private func filteredSections(_ sections: [PersonalitySection],
-                                  selectedTitles: Set<String>) -> [PersonalitySection] {
+    private func filteredPersonalitySections(_ sections: [PersonalitySection],
+                                             selectedTitles: Set<String>) -> [PersonalitySection] {
         sections.filter { selectedTitles.contains($0.selectedTest) }
     }
 
-    private func filteredCompatibilitySections(_ sections: [CompatibilitySection],
-                                             selectedTitles: Set<String>) -> [CompatibilitySection] {
-        sections.filter { selectedTitles.contains($0.selectedTest) }
-    }
+    // MARK: - Compatibility
+    func makeCompatibilityTest(for user: User,
+                               partner: CompatibilityTestRequest,
+                               selectedTests: [CompatibilityTests],
+                               req: Request) async throws -> CompatibilityResultDTO {
+        let apiKey = try apiKey()
+        let request = OpenAIChatDTO(model: model,
+                                    messages: [OpenAIMessage(role: "system", content: compatibilitySystemPrompt),
+                                               OpenAIMessage(role: "user", content: compatibilityUserPrompt(
+                                                                                              for: user,
+                                                                                              partner: partner,
+                                                                                              selectedTests: selectedTests))],
+                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
 
-    private func partnerDateOfBirth(from partner: CompatibilityTestRequest) -> Date? {
-        guard partner.exactDateOfBirth,
-              let dateString = partner.partnerDateOfBirth else {
-            return nil
+        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
+            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
+            clientRequest.headers.contentType = .json
+            try clientRequest.content.encode(request)
         }
 
-        return UserDateFormatter.date(from: dateString)
+        guard response.status == .ok else {
+            let error = try? response.content.decode(OpenAIErrorResponse.self)
+            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
+        }
+
+        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+
+        guard let content = chatResponse.choices.first?.message.content,
+              let data = content.data(using: .utf8) else {
+            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
+        }
+
+        do {
+            let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
+            let selectedTitles = Set(selectedTests.map(\.title))
+            let partnerDate = compatibilityPartnerDateOfBirth(from: partner)
+
+            return CompatibilityResultDTO(userName: user.name,
+                                          userZodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
+                                          partnerName: partner.partnerName,
+                                          partnerZodiacSign: zodiacSign(from: partnerDate) ?? "",
+                                          compatibilityScore: min(max(analysis.compatibilityScore, 0), 100),
+                                          selectedTests: selectedTests.map(\.title),
+                                          title: analysis.title,
+                                          subtitle: analysis.subtitle,
+                                          overview: analysis.overview,
+                                          emotionalBar: analysis.emotionalBar,
+                                          sections: filteredCompatibilitySections(analysis.sections,
+                                                                                  selectedTitles: selectedTitles),
+                                          forecast: analysis.forecast)
+        } catch {
+            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+        }
     }
 
     private func compatibilityUserPrompt(for user: User,
@@ -319,16 +278,65 @@ struct OpenAIService {
         """
     }
 
-    func horoscopePeriod() -> (start: String, end: String) {
-        let calendar = Calendar(identifier: .gregorian)
-        let now = Date()
-        let startDate = calendar.startOfDay(for: now)
-        let endDate = calendar.date(byAdding: .day, value: 6, to: startDate) ?? now
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "d MMM"
-        return (formatter.string(from: startDate), formatter.string(from: endDate))
+    private var compatibilitySystemPrompt: String {
+        """
+        Ты аналитик совместимости приложения Aura. Пиши по-русски, мягко и без категоричных диагнозов.
+        Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
+        Не добавляй секции для тестов, которых нет в списке выбранных тестов.
+        Если выбрана часть тестов, верни только выбранные секции в том порядке, в котором они пришли.
+        В поле selectedTest используй только точное название теста из списка выбранных.
+        В emotionalBar используй только title: Эмоциональный резонанс, Внутренняя открытость, Гармония души, Эмоциональная теплота.
+        Значения emotionalBar.value и compatibilityScore должны быть целыми числами.
+        В каждой секции ровно 2 items. title каждого item должен быть строго из разрешённого списка для этого теста.
+        Не давай медицинских, юридических или финансовых советов.
+        """
+    }
+
+    private func filteredCompatibilitySections(_ sections: [CompatibilitySection],
+                                               selectedTitles: Set<String>) -> [CompatibilitySection] {
+        sections.filter { selectedTitles.contains($0.selectedTest) }
+    }
+
+    private func compatibilityPartnerDateOfBirth(from partner: CompatibilityTestRequest) -> Date? {
+        guard partner.exactDateOfBirth,
+              let dateString = partner.partnerDateOfBirth else {
+            return nil
+        }
+
+        return UserDateFormatter.date(from: dateString)
+    }
+
+    // MARK: - Horoscope
+    func makeHoroscopeTest(for sign: HoroscopeSign, req: Request) async throws -> HoroscopeContentResult {
+        let apiKey = try apiKey()
+        let request = OpenAIChatDTO(model: model,
+                                    messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
+                                               OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
+                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
+
+        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
+            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
+            clientRequest.headers.contentType = .json
+            try clientRequest.content.encode(request)
+        }
+
+        guard response.status == .ok else {
+            let error = try? response.content.decode(OpenAIErrorResponse.self)
+            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
+        }
+
+        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+
+        guard let content = chatResponse.choices.first?.message.content,
+              let data = content.data(using: .utf8) else {
+            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
+        }
+
+        do {
+            return try JSONDecoder().decode(HoroscopeContentResult.self, from: data)
+        } catch {
+            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+        }
     }
 
     private func horoscopeUserPrompt(for sign: HoroscopeSign) -> String {
@@ -360,19 +368,17 @@ struct OpenAIService {
         Не давай медицинских, юридических или финансовых советов.
         """
     }
-
-    private var compatibilitySystemPrompt: String {
-        """
-        Ты аналитик совместимости приложения Aura. Пиши по-русски, мягко и без категоричных диагнозов.
-        Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
-        Не добавляй секции для тестов, которых нет в списке выбранных тестов.
-        Если выбрана часть тестов, верни только выбранные секции в том порядке, в котором они пришли.
-        В поле selectedTest используй только точное название теста из списка выбранных.
-        В emotionalBar используй только title: Эмоциональный резонанс, Внутренняя открытость, Гармония души, Эмоциональная теплота.
-        Значения emotionalBar.value и compatibilityScore должны быть целыми числами.
-        В каждой секции ровно 2 items. title каждого item должен быть строго из разрешённого списка для этого теста.
-        Не давай медицинских, юридических или финансовых советов.
-        """
+    
+    func horoscopePeriod() -> (start: String, end: String) {
+        let calendar = Calendar(identifier: .gregorian)
+        let now = Date()
+        let startDate = calendar.startOfDay(for: now)
+        let endDate = calendar.date(byAdding: .day, value: 6, to: startDate) ?? now
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "d MMM"
+        return (formatter.string(from: startDate), formatter.string(from: endDate))
     }
 
     private func zodiacSign(from date: Date?) -> String? {

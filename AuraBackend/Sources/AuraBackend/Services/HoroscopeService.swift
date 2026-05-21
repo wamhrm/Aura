@@ -28,19 +28,21 @@ struct HoroscopeService {
             .filter(\.$user.$id == userID)
             .delete()
 
+        let itemsJSON = try HoroscopeDTOMapper.encodeItems(generated.items)
+
         let entry = Horoscope(userID: userID,
                               sign: sign.rawValue,
                               dateStart: period.start,
                               dateEnd: period.end,
                               description: generated.description,
-                              items: generated.items)
+                              itemsJSON: itemsJSON)
 
         try await entry.save(on: database)
 
         return try HoroscopeDTOMapper.map(entry)
     }
 
-    func currentHoroscopeTest(for user: User, on database: any Database) async throws -> HoroscopeDTO {
+    func getCurrentHoroscopeTest(for user: User, on database: any Database) async throws -> HoroscopeDTO {
         let userID = try user.requireID()
 
         guard let entry = try await Horoscope.query(on: database)
