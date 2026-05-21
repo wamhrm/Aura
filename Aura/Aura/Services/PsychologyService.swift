@@ -23,27 +23,27 @@ final class PsychologyService: ObservableObject, PsychologyServiceProtocol {
     let historyDidChange = PassthroughSubject<Void, Never>()
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
-        let result = try await NetworkHelper.makePersonalityTest(selectedTests: selectedTests)
+        let result = try await NetworkService.makePersonalityTest(selectedTests: selectedTests)
         historyDidChange.send(())
         return result
     }
     
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
-        let result = try await NetworkHelper.makeCompatibilityTest(request)
+        let result = try await NetworkService.makeCompatibilityTest(request)
         historyDidChange.send(())
         return result
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        try await NetworkHelper.fetchHistory()
+        try await NetworkService.fetchHistory()
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
-        try await NetworkHelper.fetchHistoryDetails(id: id)
+        try await NetworkService.fetchHistoryDetails(id: id)
     }
 
     func deleteHistory(id: UUID) async throws {
-        try await NetworkHelper.deleteHistory(id: id)
+        try await NetworkService.deleteHistory(id: id)
         historyDidChange.send(())
     }
 }

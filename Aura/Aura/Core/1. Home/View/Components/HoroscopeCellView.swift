@@ -22,7 +22,7 @@ struct HoroscopeCellView: View {
                         Text(horoscope.type.rawValue)
                             .fontWeight(.semibold)
                         
-                        Components.horoscopeDate(false)
+                        Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, false)
                     }
                 }
                 
@@ -46,7 +46,7 @@ struct HoroscopeCellView: View {
     }
 }
 
-enum HoroscopeType: String, CaseIterable {
+enum HoroscopeType: String, CaseIterable, Decodable {
     case aries = "Овен"
     case taurus = "Телец"
     case gemini = "Близнецы"

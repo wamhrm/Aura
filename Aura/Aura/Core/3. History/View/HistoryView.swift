@@ -24,16 +24,17 @@ struct HistoryView: View {
                         } else {
                             ScrollView {
                                 ForEach(vm.historyCells) { item in
-                                    HistoryCellView(cell: item)
-                                        .contentShape(Rectangle())
-                                        .onTapGesture {
-                                            vm.openHistoryCellDetails(item)
-                                        }
-                                        .contextMenu {
-                                            Button("Удалить", role: .destructive) {
-                                                vm.deleteHistoryCell(item)
+                                    Button {
+                                        vm.openHistoryCellDetails(item)
+                                    } label: {
+                                        HistoryCellView(cell: item)
+                                            .tint(.black)
+                                            .contextMenu {
+                                                Button("Удалить", role: .destructive) {
+                                                    vm.deleteHistoryCell(item)
+                                                }
                                             }
-                                        }
+                                    }
                                 }
                                 .padding(.horizontal)
                             }

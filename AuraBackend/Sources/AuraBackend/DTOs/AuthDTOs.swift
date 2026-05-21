@@ -1,3 +1,10 @@
+//
+//  AuthDTOs.swift
+//  AuraServer
+//
+//  Created by ddorsat on 13.05.2026.
+//
+
 import Vapor
 
 struct CreateAccountRequest: Content {
@@ -28,6 +35,11 @@ struct UserDTO: Content {
 struct AuthDTO: Content {
     let token: String
     let user: UserDTO
+}
+
+struct UpdateProfileInfoResponse: Content {
+    let user: UserDTO
+    let horoscope: HoroscopeDTO
 }
 
 struct UpdateProfileInfoRequest: Content {

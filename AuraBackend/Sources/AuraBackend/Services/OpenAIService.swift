@@ -1,3 +1,10 @@
+//
+//  OpenAIService.swift
+//  AuraServer
+//
+//  Created by ddorsat on 13.05.2026.
+//
+
 import Foundation
 import Vapor
 
@@ -97,6 +104,38 @@ struct OpenAIService {
                                           emotionalBar: analysis.emotionalBar,
                                           sections: filteredCompatibilitySections(analysis.sections, selectedTitles: selectedTitles),
                                           forecast: analysis.forecast)
+        } catch {
+            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+        }
+    }
+
+    func makeHoroscopeTest(for sign: HoroscopeSign, req: Request) async throws -> HoroscopeGeneratedContent {
+        let apiKey = try apiKey()
+        let request = OpenAIChatDTO(model: model,
+                                    messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
+                                               OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
+                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
+
+        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
+            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
+            clientRequest.headers.contentType = .json
+            try clientRequest.content.encode(request)
+        }
+
+        guard response.status == .ok else {
+            let error = try? response.content.decode(OpenAIErrorResponse.self)
+            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
+        }
+
+        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+
+        guard let content = chatResponse.choices.first?.message.content,
+              let data = content.data(using: .utf8) else {
+            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
+        }
+
+        do {
+            return try JSONDecoder().decode(HoroscopeGeneratedContent.self, from: data)
         } catch {
             throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
         }
@@ -277,6 +316,48 @@ struct OpenAIService {
 
         Разрешённые title для items по тестам:
         \(itemRules)
+        """
+    }
+
+    func horoscopePeriod() -> (start: String, end: String) {
+        let calendar = Calendar(identifier: .gregorian)
+        let now = Date()
+        let startDate = calendar.startOfDay(for: now)
+        let endDate = calendar.date(byAdding: .day, value: 6, to: startDate) ?? now
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "d MMM"
+        return (formatter.string(from: startDate), formatter.string(from: endDate))
+    }
+
+    private func horoscopeUserPrompt(for sign: HoroscopeSign) -> String {
+        let period = horoscopePeriod()
+
+        return """
+        Знак зодиака: \(sign.rawValue)
+        Текущий период прогноза: \(period.start) — \(period.end)
+
+        Верни JSON строго такой формы:
+        {
+          "description": "краткий гороскоп на период (35-50 слов)",
+          "items": [
+            { "title": "Любовь", "description": "прогноз по любви (20-30 слов)" },
+            { "title": "Здоровье", "description": "прогноз по здоровью и самочувствию (20-30 слов)" },
+            { "title": "Работа", "description": "прогноз по работе (20-30 слов)" }
+          ]
+        }
+
+        В items ровно 3 элемента. title каждого item должен быть строго: Любовь, Здоровье, Работа.
+        """
+    }
+
+    private var horoscopeSystemPrompt: String {
+        """
+        Ты астролог приложения Aura. Пиши по-русски, мягко и без категоричных предсказаний.
+        Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
+        В items ровно 3 элемента с title: Любовь, Здоровье, Работа.
+        Не давай медицинских, юридических или финансовых советов.
         """
     }
 

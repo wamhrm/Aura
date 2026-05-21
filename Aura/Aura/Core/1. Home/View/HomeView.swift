@@ -12,13 +12,19 @@ struct HomeView: View {
     
     private let authService: AuthServiceProtocol
     private let psychologyService: PsychologyServiceProtocol
+    let compatibilityButton: () -> Void
+    let profileButton: () -> Void
 
     init(vm: HomeViewModel,
          authService: any AuthServiceProtocol,
-         psychologyService: any PsychologyServiceProtocol) {
+         psychologyService: any PsychologyServiceProtocol,
+         compatibilityButton: @escaping () -> Void,
+         profileButton: @escaping () -> Void) {
         self.vm = vm
         self.authService = authService
         self.psychologyService = psychologyService
+        self.compatibilityButton = compatibilityButton
+        self.profileButton = profileButton
     }
 
     var body: some View {
@@ -31,7 +37,7 @@ struct HomeView: View {
                         HStack(spacing: 15) {
                             Components.logoImage(35)
 
-                            Text("Здравствуйте, Дмитрий")
+                            Text(vm.userName.isEmpty ? "Здравствуйте" : "Здравствуйте, \(vm.userName)")
                                 .fontWeight(.semibold)
                                 .fontDesign(.monospaced)
 
@@ -53,26 +59,28 @@ struct HomeView: View {
                             .background(.softPurple)
                             .clipShape(RoundedRectangle(cornerRadius: 15))
 
-                            VStack(alignment: .leading, spacing: 10) {
-                                headerText("Гороскоп на неделю", "Читать") {
-                                    vm.homeRoutes.append(.horoscopeDetails)
-                                }
+                            if let horoscope = vm.horoscope {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    headerText("Гороскоп на неделю", "Читать") {
+                                        vm.homeRoutes.append(.horoscopeDetails)
+                                    }
 
-                                HoroscopeCellView(horoscope: .mock) {
-                                    vm.homeRoutes.append(.horoscopeDetails)
+                                    HoroscopeCellView(horoscope: horoscope) {
+                                        vm.homeRoutes.append(.horoscopeDetails)
+                                    }
                                 }
+                                .padding(.top, 15)
                             }
-                            .padding(.top, 15)
                         }
 
                         if !vm.hasProfileInfo {
-                            Components.completeYourProfile {
+                            completeYourProfile(vm.isSignedIn) {
                                 vm.homeRoutes.append(.addProfileInfo)
                             }
                         }
 
                         Button {
-
+                            compatibilityButton()
                         } label: {
                             HStack {
                                 Text("Проверить совместимость")
@@ -171,7 +179,9 @@ extension HomeView {
             case .addProfileInfo:
                 AddProfileInfoView(vm: vm)
             case .horoscopeDetails:
-                HoroscopeDetailsView(horoscope: .mock)
+                if let horoscope = vm.horoscope {
+                    HoroscopeDetailsView(horoscope: horoscope)
+                }
             case .allTests:
                 AllTestsView(vm: vm) { test in
                     vm.homeRoutes.append(.testDetails(test))
@@ -186,6 +196,49 @@ extension HomeView {
                 }
         }
     }
+    
+    private func completeYourProfile(_ isSignedIn: Bool, _ completion: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 25) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(isSignedIn ? "Заполните свой профиль" : "Войдите или зарегистрируйтесь, чтобы заполнить свой профиль")
+                        .font(.system(size: 20))
+                        .bold()
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                
+                Text(isSignedIn ? "Расскажите о себе, чтобы получить детальный разбор вашего астрологического профиля" : "Вы сможете рассказать о себе, чтобы получить детальный разбор вашего астрологического профиля")
+                    .font(.callout)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+            }
+            
+            Button {
+                completion()
+            } label: {
+                Text(isSignedIn ? "Заполнить информацию" : "Войти или зарегистрироваться")
+                    .foregroundStyle(Color(red: 0.42, green: 0.27, blue: 0.93))
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(LinearGradient(colors: [Color(red: 0.42,
+                                                  green: 0.27,
+                                                  blue: 0.93),
+                                            Color(red: 0.62,
+                                                  green: 0.33,
+                                                  blue: 0.95)],
+                                   startPoint: .leading,
+                                   endPoint: .trailing))
+        .clipShape(RoundedRectangle(cornerRadius: 15))
+    }
 }
 
 #Preview {
@@ -195,5 +248,9 @@ extension HomeView {
     HomeView(vm: HomeViewModel(authService: authService,
                                psychologyService: psychologyService),
              authService: authService,
-             psychologyService: psychologyService)
+             psychologyService: psychologyService) {
+        
+    } profileButton: {
+        
+    }
 }

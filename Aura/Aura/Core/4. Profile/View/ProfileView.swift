@@ -42,9 +42,11 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $vm.showSettings) {
                 SettingsSheetView {
+                    vm.profileRoutes.append(.addProfileInfo)
+                } onSignOut: {
                     vm.signOut()
                 }
-                .presentationDetents([.height(380)])
+                .presentationDetents([.height(420)])
             }
         }
     }
@@ -54,10 +56,8 @@ extension ProfileView {
     @ViewBuilder
     private func destinationView(_ route: ProfileRoutes) -> some View {
         switch route {
-            case .completeProfile:
+            case .addProfileInfo:
                 AddProfileInfoView(vm: homeViewModel)
-            case .settings:
-                EmptyView()
         }
     }
 }

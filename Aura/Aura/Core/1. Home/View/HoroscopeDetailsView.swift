@@ -27,7 +27,7 @@ struct HoroscopeDetailsView: View {
                             .fontDesign(.monospaced)
                             .bold()
                         
-                        Components.horoscopeDate(true)
+                        Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, true)
                             .padding(10)
                             .background(Color(.systemGray6).opacity(0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -70,8 +70,8 @@ struct HoroscopeDetailsView: View {
                                 .fontWeight(.medium)
                         }
                         
-                        ForEach(HoroscopeDetailsCellType.allCases, id: \.self) { type in
-                            HoroscopeDetailsCellView(type: type, description: "Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения и принесет давно ожидаемое понимание.")
+                        ForEach(horoscope.items, id: \.self) { item in
+                            HoroscopeDetailsCellView(type: item.title, description: item.description)
                         }
                     }
                 }
