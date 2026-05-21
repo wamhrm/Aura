@@ -1,3 +1,10 @@
+//
+//  UserAuthMiddleware.swift
+//  AuraServer
+//
+//  Created by ddorsat on 13.05.2026.
+//
+
 import Fluent
 import Vapor
 

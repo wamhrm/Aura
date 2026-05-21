@@ -16,7 +16,7 @@ struct MainTabView: View {
     @StateObject private var profileViewModel: ProfileViewModel
     @StateObject private var historyViewModel: HistoryViewModel
     
-    @State private var selectedTab: Tabs = .history
+    @State private var selectedTab: Tabs = .home
     
     init(authService: AuthService,
          psychologyService: PsychologyService) {
@@ -41,7 +41,11 @@ struct MainTabView: View {
             Tab(value: .home, role: .none) {
                 HomeView(vm: homeViewModel,
                          authService: authService,
-                         psychologyService: psychologyService)
+                         psychologyService: psychologyService) {
+                    selectedTab = .compatibility
+                } profileButton: {
+                    selectedTab = .profile
+                }
             } label: {
                 Image(systemName: Tabs.home.icon)
             }

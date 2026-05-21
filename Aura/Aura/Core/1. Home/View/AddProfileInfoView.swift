@@ -9,6 +9,8 @@ import SwiftUI
 
 struct AddProfileInfoView: View {
     @ObservedObject var vm: HomeViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var isSaving = false
 
     var body: some View {
         ZStack {
@@ -75,9 +77,17 @@ struct AddProfileInfoView: View {
                     }
 
                     Button {
-                        vm.saveProfileInfo()
+                        Task {
+                            guard !isSaving else { return }
+                            isSaving = true
+                            defer { isSaving = false }
+
+                            guard await vm.saveProfileInfo() else { return }
+                            try? await Task.sleep(for: .seconds(1))
+                            dismiss()
+                        }
                     } label: {
-                        Text(vm.isLoading ? "Сохраняем..." : "Готово")
+                        Text(isSaving ? "Сохраняем..." : "Готово")
                             .foregroundStyle(.white)
                             .bold()
                             .padding(15)
@@ -93,7 +103,7 @@ struct AddProfileInfoView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .padding(.top, 5)
-                    .disabled(vm.isLoading)
+                    .disabled(isSaving)
                 }
                 .padding(.horizontal)
             }
