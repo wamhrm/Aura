@@ -17,7 +17,7 @@ struct CreateHoroscope: AsyncMigration {
             .field("date_start", .string, .required)
             .field("date_end", .string, .required)
             .field("description", .string, .required)
-            .field("items", .json)
+            .field("items", .string, .required)
             .field("created_at", .datetime)
             .create()
     }
