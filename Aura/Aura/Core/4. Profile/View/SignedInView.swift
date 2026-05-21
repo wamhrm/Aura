@@ -36,7 +36,7 @@ struct SignedInView: View {
                         HStack(spacing: 10) {
                             Text(user.dateOfBirth ?? "Дата рождения не указана")
 
-                            if let zodiacSign = vm.personalityResult?.zodiacSign {
+                            if let zodiacSign = vm.zodiacSignTitle {
                                 Text("·")
                                     .font(.title3)
                                     .bold()
@@ -97,7 +97,7 @@ struct SignedInView: View {
                         }
                         .padding(20)
                         .backgroundWithShape(15, true)
-
+                        
                         VStack(alignment: .leading, spacing: 10) {
                             Text("О вас")
                                 .bold()

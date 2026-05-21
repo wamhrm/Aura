@@ -19,7 +19,7 @@ protocol AuthServiceProtocol: AnyObject {
 
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws
-    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UserModel
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
     func signOut()
 }
 
@@ -37,23 +37,23 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func createAccount(name: String, email: String, password: String) async throws {
         let normalizedEmail = normalizeEmail(email)
-        try await NetworkHelper.createAccount(name: name, email: normalizedEmail, password: password)
+        try await NetworkService.createAccount(name: name, email: normalizedEmail, password: password)
         try await signIn(email: normalizedEmail, password: password)
     }
 
     func signIn(email: String, password: String) async throws {
-        let response = try await NetworkHelper.signIn(email: normalizeEmail(email), password: password)
+        let response = try await NetworkService.signIn(email: normalizeEmail(email), password: password)
 
         saveToken(response.token)
         saveUserLocally(response.user)
         authState.send(.signedIn(response.user))
     }
 
-    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UserModel {
-        let user = try await NetworkHelper.updateProfileInfo(request)
-        saveUserLocally(user)
-        authState.send(.signedIn(user))
-        return user
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+        let response = try await NetworkService.updateProfileInfo(request)
+        saveUserLocally(response.user)
+        authState.send(.signedIn(response.user))
+        return response
     }
 
     func signOut() {

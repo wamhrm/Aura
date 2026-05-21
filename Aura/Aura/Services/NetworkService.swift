@@ -13,6 +13,7 @@ enum NetworkError: LocalizedError {
     case decodingError
     case unauthorized
     case conflict
+    case notFound
 
     var errorDescription: String? {
         switch self {
@@ -26,6 +27,8 @@ enum NetworkError: LocalizedError {
                 return "Неправильная почта или пароль"
             case .conflict:
                 return "Пользователь уже зарегистрирован"
+            case .notFound:
+                return "Данные не найдены"
         }
     }
 }
@@ -37,7 +40,7 @@ enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-struct NetworkHelper {
+struct NetworkService {
     private static let tokenPath = Constants.tokenPath
     private static let tokenKey = Constants.tokenKey
 
@@ -52,10 +55,15 @@ struct NetworkHelper {
         return try decoder().decode(AuthTokenResponse.self, from: data)
     }
 
-    static func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UserModel {
+    static func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         let bodyData = try JSONEncoder().encode(profileInfo)
         let data = try await request(endpoint: "/auth/profileInfo", method: .patch, body: bodyData)
-        return try decoder().decode(UserModel.self, from: data)
+        return try decoder().decode(UpdateProfileInfoResponse.self, from: data)
+    }
+
+    static func fetchCurrentHoroscope() async throws -> HoroscopeModel {
+        let data = try await request(endpoint: "/horoscope/current", method: .get)
+        return try decoder().decode(HoroscopeModel.self, from: data)
     }
 
     static func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
@@ -115,6 +123,8 @@ struct NetworkHelper {
                 throw NetworkError.unauthorized
             case 409:
                 throw NetworkError.conflict
+            case 404:
+                throw NetworkError.notFound
             default:
                 throw NetworkError.invalidResponse
         }
@@ -130,6 +140,11 @@ struct NetworkHelper {
 struct AuthTokenResponse: Decodable {
     let token: String
     let user: UserModel
+}
+
+struct UpdateProfileInfoResponse: Decodable {
+    let user: UserModel
+    let horoscope: HoroscopeModel
 }
 
 private struct AuthSignUpBody: Encodable {
