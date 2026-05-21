@@ -18,7 +18,7 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
-        let uniqueSelectedTests = uniqueTests(from: selectedTests)
+        let uniqueSelectedTests = uniquePersonalityTests(from: selectedTests)
 
         guard uniqueSelectedTests.count >= 2 else {
             throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
@@ -82,7 +82,7 @@ struct PsychologyService {
                                                              req: req)
     }
 
-    private func uniqueTests(from tests: [PersonalityTests]) -> [PersonalityTests] {
+    private func uniquePersonalityTests(from tests: [PersonalityTests]) -> [PersonalityTests] {
         var seen = Set<PersonalityTests>()
 
         return tests.filter { test in

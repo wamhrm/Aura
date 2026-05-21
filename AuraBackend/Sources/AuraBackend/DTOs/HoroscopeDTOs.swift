@@ -5,6 +5,7 @@
 //  Created by ddorsat on 21.05.2026.
 //
 
+import Foundation
 import Vapor
 
 struct HoroscopeDTO: Content {
@@ -13,24 +14,20 @@ struct HoroscopeDTO: Content {
     let dateStart: String
     let dateEnd: String
     let description: String
-    let items: [HoroscopeItem]
+    let items: [HoroscopeItems]
 }
 
-struct HoroscopeItem: Content, Codable {
+struct HoroscopeItems: Content, Codable {
     let title: String
     let description: String
 }
 
-struct CreateHoroscopeRequest: Content {
-    let sign: String
-}
-
-struct HoroscopeGeneratedContent: Codable {
+struct HoroscopeContentResult: Codable {
     let description: String
-    let items: [HoroscopeItem]
+    let items: [HoroscopeItems]
 }
 
-enum HoroscopeSign: String, Codable, CaseIterable {
+enum HoroscopeSign: String {
     case aries = "Овен"
     case taurus = "Телец"
     case gemini = "Близнецы"
@@ -43,11 +40,6 @@ enum HoroscopeSign: String, Codable, CaseIterable {
     case capricorn = "Козерог"
     case aquarius = "Водолей"
     case pisces = "Рыбы"
-
-    static func from(title: String) -> HoroscopeSign? {
-        let normalized = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return HoroscopeSign(rawValue: normalized)
-    }
 
     static func from(dateOfBirth: Date) -> HoroscopeSign? {
         let calendar = Calendar(identifier: .gregorian)
@@ -86,6 +78,8 @@ enum HoroscopeSign: String, Codable, CaseIterable {
 }
 
 enum HoroscopeDTOMapper {
+    private static let sphereTitles = ["Любовь", "Здоровье", "Работа"]
+
     static func map(_ horoscope: Horoscope) throws -> HoroscopeDTO {
         guard let id = horoscope.id else {
             throw Abort(.internalServerError, reason: "Гороскоп без идентификатора")
@@ -96,6 +90,58 @@ enum HoroscopeDTOMapper {
                             dateStart: horoscope.dateStart,
                             dateEnd: horoscope.dateEnd,
                             description: horoscope.description,
-                            items: horoscope.items)
+                            items: try decodeItems(from: horoscope.items))
+    }
+
+    static func encodeItems(_ items: [HoroscopeItems]) throws -> String {
+        let data = try JSONEncoder().encode(try normalizeItems(items))
+        guard let json = String(data: data, encoding: .utf8) else {
+            throw Abort(.internalServerError, reason: "Не удалось сохранить сферы гороскопа")
+        }
+        return json
+    }
+
+    private static func decodeItems(from json: String) throws -> [HoroscopeItems] {
+        guard let data = json.data(using: .utf8) else {
+            throw Abort(.internalServerError, reason: "Не удалось прочитать сферы гороскопа")
+        }
+        return try normalizeItems(try JSONDecoder().decode([HoroscopeItems].self, from: data))
+    }
+
+    private static func canonicalTitle(_ title: String) -> String? {
+        switch title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "любовь", "love":
+                return "Любовь"
+            case "здоровье", "health":
+                return "Здоровье"
+            case "работа", "work":
+                return "Работа"
+            default:
+                return sphereTitles.first { $0.compare(title, options: .caseInsensitive) == .orderedSame }
+        }
+    }
+
+    private static func normalizeItems(_ items: [HoroscopeItems]) throws -> [HoroscopeItems] {
+        var descriptions: [String: String] = [:]
+
+        for item in items {
+            guard let title = canonicalTitle(item.title) else { continue }
+
+            let description = item.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !description.isEmpty else { continue }
+
+            descriptions[title] = description
+        }
+
+        let normalized = sphereTitles.compactMap { title -> HoroscopeItems? in
+            guard let description = descriptions[title] else { return nil }
+            return HoroscopeItems(title: title, description: description)
+        }
+
+        guard normalized.count == sphereTitles.count else {
+            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+        }
+
+        return normalized
     }
 }
