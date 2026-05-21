@@ -11,6 +11,7 @@ struct SettingsSheetView: View {
     @State private var isLightTheme = true
     @State private var selectedAccent = 0
     @Environment(\.dismiss) private var dismiss
+    let onUpdateInfo: () -> Void
     let onSignOut: () -> Void
     
     let colors: [Color] = [.deepBlue, .softPurple, .red, .teal, .orange]
@@ -46,22 +47,16 @@ struct SettingsSheetView: View {
                     }
                 }
                 
-                Button {
-                    onSignOut()
-                    dismiss()
-                } label: {
-                    VStack(alignment: .center) {
-                        Text("Выйти")
-                            .bold()
-                            .foregroundStyle(.red)
+                VStack(spacing: 15) {
+                    customButton(.updateInfo) {
+                        onUpdateInfo()
+                        dismiss()
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .background(.red.opacity(0.155))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 15) .stroke(.red.opacity(0.25), lineWidth: 2)
+                    
+                    customButton(.signOut) {
+                        onSignOut()
+                        dismiss()
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 15))
                 }
             }
             .padding(.horizontal)
@@ -80,14 +75,69 @@ struct SettingsSheetView: View {
     }
 }
 
+enum SettingsSheetButtonType: String {
+    case updateInfo = "Обновить информацию о себе"
+    case signOut = "Выйти"
+    
+    var backgroundColor: Color {
+        switch self {
+            case .updateInfo:
+                .blue.opacity(0.155)
+            case .signOut:
+                .red.opacity(0.155)
+        }
+    }
+    
+    var foregroundColor: Color {
+        switch self {
+            case .updateInfo:
+                .blue
+            case .signOut:
+                .red
+        }
+    }
+    
+    var stroke: Color {
+        switch self {
+            case .updateInfo:
+                .blue.opacity(0.25)
+            case .signOut:
+                .red.opacity(0.25)
+        }
+    }
+}
+
 extension SettingsSheetView {
     private func headerText(_ title: String) -> some View {
         Text(title)
             .font(.subheadline)
             .foregroundStyle(.secondary)
     }
+    
+    private func customButton(_ type: SettingsSheetButtonType, _ completion: @escaping () -> Void) -> some View {
+        Button {
+            completion()
+        } label: {
+            VStack(alignment: .center) {
+                Text(type.rawValue)
+                    .bold()
+                    .foregroundStyle(type.foregroundColor)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(type.backgroundColor)
+            .overlay {
+                RoundedRectangle(cornerRadius: 15) .stroke(type.stroke, lineWidth: 2)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 15))
+        }
+    }
 }
 
 #Preview {
-    SettingsSheetView {}
+    SettingsSheetView {
+        
+    } onSignOut: {
+        
+    }
 }

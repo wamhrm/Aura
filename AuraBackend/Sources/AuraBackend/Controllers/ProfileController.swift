@@ -1,7 +1,16 @@
+//
+//  ProfileController.swift
+//  AuraServer
+//
+//  Created by ddorsat on 13.05.2026.
+//
+
 import Fluent
 import Vapor
 
 struct ProfileController: RouteCollection {
+    private let horoscopeService = HoroscopeService()
+
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
             .grouped(UserAuthMiddleware())
@@ -9,7 +18,7 @@ struct ProfileController: RouteCollection {
         auth.patch("profileInfo", use: updateProfileInfo)
     }
 
-    private func updateProfileInfo(_ req: Request) async throws -> UserDTO {
+    private func updateProfileInfo(_ req: Request) async throws -> UpdateProfileInfoResponse {
         let user = try req.auth.require(User.self)
         let profileInfo = try req.content.decode(UpdateProfileInfoRequest.self)
 
@@ -27,7 +36,10 @@ struct ProfileController: RouteCollection {
         user.coreFocus = profileInfo.coreFocus
 
         try await user.save(on: req.db)
-        return try user.toDTO()
+
+        let horoscope = try await horoscopeService.makeHoroscopeTest(for: user, req: req, on: req.db)
+
+        return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }
 
     private func emptyStringToNil(_ string: String?) -> String? {

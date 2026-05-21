@@ -13,14 +13,14 @@ struct Components {
         return Color(uiColor: .appBackground).ignoresSafeArea()
     }
     
-    static func horoscopeDate(_ isCellDetails: Bool) -> some View {
+    static func horoscopeDate(_ dateStart: String, _ dateEnd: String, _ isCellDetails: Bool) -> some View {
         HStack(spacing: 7) {
-            Text("5 мая")
+            Text(dateStart)
             
             Rectangle()
                 .frame(width: isCellDetails ? 10 : 5, height: 1)
             
-            Text("12 мая")
+            Text(dateEnd)
         }
         .font(.footnote)
         .fontWeight(isCellDetails ? .bold : .medium)
@@ -52,47 +52,6 @@ struct Components {
             .frame(width: size, height: size)
             .clipShape(Circle())
             .clipped()
-    }
-    
-    static func completeYourProfile(_ completion: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 25) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Заполните свой профиль")
-                        .font(.system(size: 20))
-                        .bold()
-                        .foregroundStyle(.white)
-                }
-                
-                Text("Расскажите о себе, чтобы получить детальный разбор вашего астрологического профиля")
-                    .font(.callout)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white)
-            }
-            
-            Button {
-                completion()
-            } label: {
-                Text("Заполнить информацию")
-                    .foregroundStyle(Color(red: 0.42, green: 0.27, blue: 0.93))
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(LinearGradient(colors: [Color(red: 0.42,
-                                                  green: 0.27,
-                                                  blue: 0.93),
-                                            Color(red: 0.62,
-                                                  green: 0.33,
-                                                  blue: 0.95)],
-                                   startPoint: .leading,
-                                   endPoint: .trailing))
-        .clipShape(RoundedRectangle(cornerRadius: 15))
     }
     
     static func classicButton(_ title: String, _ completion: @escaping () -> Void) -> some View {

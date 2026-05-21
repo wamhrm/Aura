@@ -22,7 +22,10 @@ final class HomeViewModel: ObservableObject {
     @Published var homeRoutes: [HomeRoutes] = []
     
     @Published var profileInfo = ProfileInfoModel()
+    @Published var userName = ""
+    @Published var isSignedIn = false
     @Published private(set) var hasProfileInfo = false
+    @Published private(set) var horoscope: HoroscopeModel?
     
     @Published var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
     @Published var personalityResult: PersonalityResultModel?
@@ -35,7 +38,7 @@ final class HomeViewModel: ObservableObject {
     private let psychologyService: any PsychologyServiceProtocol
 
     private var cancellables = Set<AnyCancellable>()
-
+    
     init(authService: any AuthServiceProtocol,
          psychologyService: any PsychologyServiceProtocol) {
         self.authService = authService
@@ -55,17 +58,6 @@ final class HomeViewModel: ObservableObject {
                 self?.handleProfileInfo(authState)
             }
             .store(in: &cancellables)
-    }
-
-    private func handleProfileInfo(_ authState: AuthState) {
-        switch authState {
-            case .signedIn(let user):
-                profileInfo = user.profileInfo
-                hasProfileInfo = user.hasCompletedProfileInfo
-            case .signedOut:
-                profileInfo = ProfileInfoModel()
-                hasProfileInfo = false
-        }
     }
 
     func toggleTestSelection(_ test: PersonalityTestTypes) {
@@ -97,23 +89,48 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func saveProfileInfo() {
-        guard !isLoading else { return }
-        
-        Task {
-            isLoading = true
-
-            do {
-                try await Task.sleep(for: .seconds(1))
-                try validateProfileInfoForms()
-                let user = try await authService.updateProfileInfo(profileInfo)
+    func saveProfileInfo() async -> Bool {
+        do {
+            try validateProfileInfoForms()
+            let response = try await authService.updateProfileInfo(profileInfo)
+            profileInfo = response.user.profileInfo
+            hasProfileInfo = response.user.hasCompletedProfileInfo
+            horoscope = response.horoscope
+            return true
+        } catch {
+            showAlert(message: error.localizedDescription)
+            return false
+        }
+    }
+    
+    private func handleProfileInfo(_ authState: AuthState) {
+        switch authState {
+            case .signedIn(let user):
                 profileInfo = user.profileInfo
-                homeRoutes.removeAll()
-            } catch {
-                showAlert(message: error.localizedDescription)
-            }
+                hasProfileInfo = user.hasCompletedProfileInfo
+                userName = user.name
+                isSignedIn = true
+            
+                if user.hasCompletedProfileInfo {
+                    loadCurrentHoroscope()
+                } else {
+                    horoscope = nil
+                }
+            case .signedOut:
+                profileInfo = ProfileInfoModel()
+                hasProfileInfo = false
+                horoscope = nil
+                isSignedIn = false
+        }
+    }
 
-            isLoading = false
+    private func loadCurrentHoroscope() {
+        Task {
+            do {
+                horoscope = try await NetworkService.fetchCurrentHoroscope()
+            } catch {
+                horoscope = nil
+            }
         }
     }
     

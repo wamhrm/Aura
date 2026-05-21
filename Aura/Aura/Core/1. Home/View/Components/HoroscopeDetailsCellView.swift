@@ -37,7 +37,7 @@ struct HoroscopeDetailsCellView: View {
     }
 }
 
-enum HoroscopeDetailsCellType: String, CaseIterable {
+enum HoroscopeDetailsCellType: String, CaseIterable, Decodable {
     case love = "Любовь"
     case health = "Здоровье"
     case work = "Работа"

@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 enum ProfileRoutes: Hashable {
-    case completeProfile, settings
+    case addProfileInfo
 }
 
 @MainActor
@@ -62,7 +62,13 @@ final class ProfileViewModel: ObservableObject {
     var personalityRelationships: Int {
         personalityResult?.emotionalBar.first(where: { $0.title == .relationships })?.value ?? 6
     }
-    
+
+    var zodiacSignTitle: String? {
+        guard let sign = personalityResult?.zodiacSign else { return nil }
+        return HoroscopeType.allCases
+            .first { $0.icon.contains(sign) || sign.contains($0.icon) }?.rawValue
+    }
+
     init(authService: any AuthServiceProtocol,
          psychologyService: any PsychologyServiceProtocol) {
         self.authService = authService
