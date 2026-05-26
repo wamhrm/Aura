@@ -16,14 +16,14 @@ struct HoroscopeDetailsView: View {
             
             ScrollView {
                 VStack(spacing: 25) {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 12) {
                         Text(horoscope.type.icon)
-                            .font(.system(size: 40))
-                            .padding(.top, 6)
+                            .font(.system(size: Components.isRegular(30, 32)))
+                            .padding(.top, 8)
                             .padding(.vertical, 18)
                         
                         Text(horoscope.type.rawValue)
-                            .font(.title2)
+                            .font(.title3)
                             .fontDesign(.monospaced)
                             .bold()
                         
@@ -37,25 +37,26 @@ struct HoroscopeDetailsView: View {
                     .background(LinearGradient(colors: [.softPurple, .libra],
                                                startPoint: .topLeading,
                                                endPoint: .bottomTrailing))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .addSparkles()
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text("На этой неделе")
+                            .font(Components.isRegular(.callout, .default))
                             .fontWeight(.semibold)
                         
                         Text("""
                             "\(horoscope.description)"
                             """)
-                            .font(.callout)
+                            .font(Components.isRegular(.system(size: 14), .system(size: 16)))
+                            .italic()
                             .foregroundStyle(.deepGray)
                             .fontWeight(.medium)
-                            .italic()
                     }
                     .padding(23)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.appBackground)
-                    .backgroundWithShape(20, true)
+                    .backgroundWithShape(12, .white, true)
                     
                     VStack(spacing: 12) {
                         HStack {
@@ -69,6 +70,7 @@ struct HoroscopeDetailsView: View {
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
+                        .font(Components.isRegular(.callout, .default))
                         
                         ForEach(horoscope.items, id: \.self) { item in
                             HoroscopeDetailsCellView(type: item.title, description: item.description)
@@ -77,10 +79,10 @@ struct HoroscopeDetailsView: View {
                 }
                 .padding(.horizontal)
             }
-            .navigationTitle("Мой гороскоп")
-            .navigationBarTitleDisplayMode(.inline)
-            .bottomAreaPadding()
+            .scrollIndicators(.hidden)
         }
+        .navigationTitle("Мой гороскоп")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

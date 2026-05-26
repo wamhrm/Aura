@@ -8,6 +8,7 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 enum HomeRoutes: Hashable {
     case addProfileInfo
@@ -26,23 +27,26 @@ final class HomeViewModel: ObservableObject {
     @Published var isSignedIn = false
     @Published private(set) var hasProfileInfo = false
     @Published private(set) var horoscope: HoroscopeModel?
+    @Published private(set) var dailyInsight: DailyContentModel?
     
     @Published var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
     @Published var personalityResult: PersonalityResultModel?
     
-    @Published var showError = false
-    @Published private(set) var errorMessage = ""
+    @Published var showAlert = false
+    @Published private(set) var alertMessage = ""
     @Published private(set) var isLoading = false
+    @Published private(set) var isServerWakingUp = false
+    @Published private(set) var isLoadingScreen = true
 
     private let authService: any AuthServiceProtocol
-    private let psychologyService: any PsychologyServiceProtocol
+    private let contentService: any ContentServiceProtocol
 
     private var cancellables = Set<AnyCancellable>()
     
     init(authService: any AuthServiceProtocol,
-         psychologyService: any PsychologyServiceProtocol) {
+         contentService: any ContentServiceProtocol) {
         self.authService = authService
-        self.psychologyService = psychologyService
+        self.contentService = contentService
         
         setupSubscriptions()
     }
@@ -50,20 +54,93 @@ final class HomeViewModel: ObservableObject {
     deinit {
         cancellables.removeAll()
     }
+    
+    var dailyInsightHandler: String {
+        return dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
+    }
 
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)
-            .sink { [weak self] authState in
-                self?.handleProfileInfo(authState)
+            .sink { [weak self] in
+                guard let self else { return }
+                handleProfileInfo($0)
             }
             .store(in: &cancellables)
     }
+    
+    private func handleProfileInfo(_ authState: AuthState) {
+        switch authState {
+            case .signedIn(let user):
+                isLoadingScreen = true
+                profileInfo = user.profileInfo
+                hasProfileInfo = user.hasCompletedProfileInfo
+                userName = user.name
+                isSignedIn = true
 
+                if user.hasCompletedProfileInfo {
+                    horoscope = UserDefaultsHelper.getLocalHoroscope(for: user.id)
+                    dailyInsight = UserDefaultsHelper.getLocalDailyInsight(for: user.id)
+                    Task { await refreshHomeContent(for: user.id) }
+                } else {
+                    horoscope = nil
+                    dailyInsight = nil
+                    UserDefaultsHelper.deleteLocalHoroscope(for: user.id)
+                    UserDefaultsHelper.deleteLocalDailyInsight(for: user.id)
+                }
+
+                isLoadingScreen = false
+            case .signedOut:
+                isLoadingScreen = false
+                profileInfo = ProfileInfoModel()
+                hasProfileInfo = false
+                horoscope = nil
+                dailyInsight = nil
+                personalityResult = nil
+                homeRoutes = []
+                isSignedIn = false
+        }
+    }
+
+    func saveProfileInfo() {
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            let loadedTask = Task {
+                try await Task.sleep(for: .seconds(7))
+
+                if !Task.isCancelled {
+                    withAnimation { isServerWakingUp = true }
+                }
+            }
+
+            defer { loadedTask.cancel() }
+
+            do {
+                try validateProfileInfoForms()
+
+                let response = try await authService.updateProfileInfo(profileInfo)
+                profileInfo = response.user.profileInfo
+                hasProfileInfo = response.user.hasCompletedProfileInfo
+                horoscope = response.horoscope
+                UserDefaultsHelper.saveHoroscopeLocally(response.horoscope, for: response.user.id)
+                Task { await loadDailyInsight(for: response.user.id) }
+                homeRoutes = []
+            } catch {
+                showAlert(error.localizedDescription)
+            }
+
+            withAnimation { isServerWakingUp = false }
+            isLoading = false
+        }
+    }
+    
     func toggleTestSelection(_ test: PersonalityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > 2 else {
-                showAlert(message: "Нельзя выбрать меньше 2 тестов")
+                showAlert("Нельзя выбрать меньше 2 тестов")
                 return
             }
             selectedTests.remove(at: index)
@@ -78,60 +155,55 @@ final class HomeViewModel: ObservableObject {
         Task {
             isLoading = true
 
-            do {
-                personalityResult = try await psychologyService.makePersonalityTest(selectedTests: selectedTests)
-                homeRoutes.append(.testResults)
-            } catch {
-                showAlert(message: "Не удалось получить результат")
+            let loadedTask = Task {
+                try await Task.sleep(for: .seconds(7))
+
+                if !Task.isCancelled {
+                    withAnimation { isServerWakingUp = true }
+                }
             }
 
+            defer { loadedTask.cancel() }
+
+            do {
+                personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
+                homeRoutes.append(.testResults)
+            } catch {
+                showAlert("Не удалось получить результат")
+            }
+
+            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
     }
-
-    func saveProfileInfo() async -> Bool {
+    
+    private func loadHoroscope(for userId: UUID, showErrorOnFailure: Bool) async {
         do {
-            try validateProfileInfoForms()
-            let response = try await authService.updateProfileInfo(profileInfo)
-            profileInfo = response.user.profileInfo
-            hasProfileInfo = response.user.hasCompletedProfileInfo
-            horoscope = response.horoscope
-            return true
+            let fetched = try await contentService.fetchCurrentHoroscope()
+            horoscope = fetched
+            UserDefaultsHelper.saveHoroscopeLocally(fetched, for: userId)
         } catch {
-            showAlert(message: error.localizedDescription)
-            return false
+            if showErrorOnFailure {
+                showAlert(error.localizedDescription)
+            }
+        }
+    }
+
+    private func loadDailyInsight(for userId: UUID, showErrorOnFailure: Bool = true) async {
+        do {
+            let insight = try await contentService.fetchDailyInsight()
+            dailyInsight = insight
+            UserDefaultsHelper.saveDailyInsightLocally(insight, for: userId)
+        } catch {
+            if showErrorOnFailure {
+                showAlert(error.localizedDescription)
+            }
         }
     }
     
-    private func handleProfileInfo(_ authState: AuthState) {
-        switch authState {
-            case .signedIn(let user):
-                profileInfo = user.profileInfo
-                hasProfileInfo = user.hasCompletedProfileInfo
-                userName = user.name
-                isSignedIn = true
-            
-                if user.hasCompletedProfileInfo {
-                    loadCurrentHoroscope()
-                } else {
-                    horoscope = nil
-                }
-            case .signedOut:
-                profileInfo = ProfileInfoModel()
-                hasProfileInfo = false
-                horoscope = nil
-                isSignedIn = false
-        }
-    }
-
-    private func loadCurrentHoroscope() {
-        Task {
-            do {
-                horoscope = try await NetworkService.fetchCurrentHoroscope()
-            } catch {
-                horoscope = nil
-            }
-        }
+    private func refreshHomeContent(for userId: UUID) async {
+        await loadHoroscope(for: userId, showErrorOnFailure: false)
+        await loadDailyInsight(for: userId, showErrorOnFailure: false)
     }
     
     private func validateProfileInfoForms() throws {
@@ -149,8 +221,22 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    private func showAlert(message: String) {
-        errorMessage = message
-        showError = true
+    private func showAlert(_ message: String) {
+        alertMessage = message
+        showAlert = true
+    }
+}
+
+enum ProfileInfoError: LocalizedError {
+    case invalidDateOfBirth
+    case incompleteProfileInfo
+
+    var errorDescription: String {
+        switch self {
+            case .invalidDateOfBirth:
+                return "Укажите дату рождения в формате ДД.ММ.ГГГГ"
+            case .incompleteProfileInfo:
+                return "Заполните все обязательные поля профиля"
+        }
     }
 }

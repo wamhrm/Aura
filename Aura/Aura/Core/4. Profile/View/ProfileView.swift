@@ -22,8 +22,10 @@ struct ProfileView: View {
                 switch vm.authState {
                     case .signedIn(let user):
                         SignedInView(vm: vm, user: user)
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
                     case .signedOut:
                         SignedOutView(vm: vm)
+                            .transition(.opacity.combined(with: .move(edge: .leading)))
                 }
             }
             .navigationTitle("Профиль")
@@ -32,21 +34,10 @@ struct ProfileView: View {
                 destinationView(destination)
             }
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        vm.showSettings.toggle()
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
-                }
+                toolbarItem()
             }
             .sheet(isPresented: $vm.showSettings) {
-                SettingsSheetView {
-                    vm.profileRoutes.append(.addProfileInfo)
-                } onSignOut: {
-                    vm.signOut()
-                }
-                .presentationDetents([.height(420)])
+                sheetView()
             }
         }
     }
@@ -60,14 +51,35 @@ extension ProfileView {
                 AddProfileInfoView(vm: homeViewModel)
         }
     }
+    
+    @ToolbarContentBuilder
+    private func toolbarItem() -> some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                vm.showSettings.toggle()
+            } label: {
+                Image(systemName: "gearshape")
+            }
+        }
+    }
+    
+    private func sheetView() -> some View {
+        SettingsSheetView(vm: vm, isSignedOut: vm.isSignedOut) {
+            vm.profileRoutes.append(.addProfileInfo)
+        } onSignOut: {
+            vm.signOut()
+        }
+        .presentationDetents([.height(vm.isSignedOut ? Components.isRegular(260, 280) : Components.isRegular(370, 390))])
+    }
 }
 
 #Preview {
     let authService = AuthService()
-    let psychologyService = PsychologyService()
-    let homeViewModel = HomeViewModel(authService: authService, psychologyService: psychologyService)
+    let contentService = ContentService()
+    let homeViewModel = HomeViewModel(authService: authService,
+                                      contentService: contentService)
 
     ProfileView(vm: ProfileViewModel(authService: authService,
-                                     psychologyService: psychologyService),
+                                     contentService: contentService),
                 homeViewModel: homeViewModel)
 }

@@ -15,29 +15,29 @@ struct HoroscopeDetailsCellView: View {
         VStack(alignment: .leading, spacing: 13) {
             HStack(alignment: .center, spacing: 15) {
                 Image(systemName: type.icon)
-                    .font(.title2)
+                    .font(Components.isRegular(.title3, .title2))
                     .foregroundStyle(Color(type.color))
                     .padding(10)
-                    .frame(width: 38, height: 38)
-                    .background(RoundedRectangle(cornerRadius: 10) .fill(Color(type.color).opacity(0.2)))
+                    .frame(width: Components.isRegular(35, 35), height: Components.isRegular(35, 35))
+                    .background(RoundedRectangle(cornerRadius: 8) .fill(Color(type.color).opacity(0.2)))
                 
                 Text(type.rawValue)
+                    .font(Components.isRegular(.callout, .default))
                     .bold()
             }
         
             Text(description)
-                .font(.callout)
-                .fontWeight(.medium)
+                .font(Components.isRegular(.system(size: 14), .callout))
                 .foregroundStyle(.deepGray)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(15, true)
+        .backgroundWithShape(12, .white, true)
         .shadow(color: Color(type.color).opacity(0.15), radius: 2)
     }
 }
 
-enum HoroscopeDetailsCellType: String, CaseIterable, Decodable {
+enum HoroscopeDetailsCellType: String, CaseIterable, Codable {
     case love = "Любовь"
     case health = "Здоровье"
     case work = "Работа"

@@ -20,21 +20,22 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(test.icon)
+                    .font(Components.isRegular(.default, .system(size: 19)))
                 
                 Text(test.title)
-                    .font(.callout)
+                    .font(Components.isRegular(.system(size: 14), .callout))
                     .fontWeight(.semibold)
             }
             
             Text(description)
+                .font(Components.isRegular(.footnote, .callout))
                 .foregroundStyle(.deepGray)
-                .font(.callout)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-enum PersonalityCellTypes: String, TestResultDisplayable, Decodable {
+enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
     // Поведенческие паттерны
     case socialFilter = "Социальный фильтр"
     case energyDrain = "Источник истощения"
@@ -67,7 +68,7 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Decodable {
     }
 }
 
-enum CompatibilityCellTypes: String, TestResultDisplayable, Decodable {
+enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
     // Астрология пары
     case synastry = "Синастрия знаков"
     case karmicLesson = "Кармический урок"
@@ -113,6 +114,7 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Decodable {
 }
 
 #Preview {
-    TestResultCellView(test: CompatibilityCellTypes.comfortDistance, description: "Понятная работа настала")
+    TestResultCellView(test: CompatibilityCellTypes.comfortDistance,
+                       description: "Понятная работа настала")
         .padding(.horizontal)
 }

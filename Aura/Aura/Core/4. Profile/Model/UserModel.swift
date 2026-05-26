@@ -19,6 +19,10 @@ struct UserModel: Codable, Equatable, Identifiable {
     let emotionalCore: String?
     let decisionStyle: String?
     let coreFocus: String?
+    
+    var nameCapitalized: String {
+        return name.capitalized
+    }
 
     var hasCompletedProfileInfo: Bool {
         dateOfBirth != nil &&

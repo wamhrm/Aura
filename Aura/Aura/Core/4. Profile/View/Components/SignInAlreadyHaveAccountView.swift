@@ -25,7 +25,7 @@ struct SignInAlreadyHaveAccountView: View {
                 
                 Spacer()
             }
-            .font(.callout)
+            .font(Components.isRegular(.footnote, .callout))
         }
     }
 }

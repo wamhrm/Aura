@@ -13,8 +13,7 @@ enum AuthState {
     case signedOut
 }
 
-@MainActor
-protocol AuthServiceProtocol: AnyObject {
+protocol AuthServiceProtocol {
     var authState: CurrentValueSubject<AuthState, Never> { get }
 
     func createAccount(name: String, email: String, password: String) async throws
@@ -57,13 +56,21 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func signOut() {
-        KeychainHelper.standard.delete(path: tokenPath, key: tokenKey)
+        if let userData = UserDefaults.standard.data(forKey: userKey),
+           let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
+            UserDefaultsHelper.deleteLocalHoroscope(for: user.id)
+            UserDefaultsHelper.deleteLocalPersonality(for: user.id)
+            UserDefaultsHelper.deleteLocalDailyInsight(for: user.id)
+            UserDefaultsHelper.deleteLocalDailyTip(for: user.id)
+        }
+
+        KeychainHelper.standard.deleteToken(path: tokenPath, key: tokenKey)
         UserDefaults.standard.removeObject(forKey: userKey)
         authState.send(.signedOut)
     }
 
     private func autoSignIn() {
-        if let _ = KeychainHelper.standard.read(path: tokenPath, key: tokenKey),
+        if let _ = KeychainHelper.standard.getToken(path: tokenPath, key: tokenKey),
            let userData = UserDefaults.standard.data(forKey: userKey),
            let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
             authState.send(.signedIn(user))
@@ -80,11 +87,11 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private func saveToken(_ token: String) {
         if let data = token.data(using: .utf8) {
-            KeychainHelper.standard.save(data, path: tokenPath, key: tokenKey)
+            KeychainHelper.standard.saveToken(data, path: tokenPath, key: tokenKey)
         }
     }
 
     private func normalizeEmail(_ email: String) -> String {
-        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }

@@ -9,7 +9,7 @@ import Foundation
 import Vapor
 
 struct OpenAIService {
-    private let model = "gpt-5.4-mini"
+    private let model = "gpt-5.4"
     
     private func apiKey() throws -> String {
         if let key = Environment.get("OPENAI_KEY"), !key.isEmpty {
@@ -99,7 +99,7 @@ struct OpenAIService {
         Верни JSON строго такой формы:
         {
           "archetypeTitle": "короткое название архетипа (1-2 слова)",
-          "archetypeSubtitle": "1 предложение общего вывода",
+          "archetypeSubtitle": "1 предложение общего вывода (8-10 слов)",
           "overview": {
             "title": "Основная характеристика",
             "description": "общий персональный вывод (20-25 слов)"
@@ -113,9 +113,9 @@ struct OpenAIService {
           "sections": [
             {
               "selectedTest": "точное название одного из тестов из списка выбранных",
-              "description": "основной текст секции (8-10 слов)",
+              "description": "основной текст секции (12-15 слов)",
               "items": [
-                { "title": "один из разрешённых title для этого теста", "description": "описание (5-10 слов)" }
+                { "title": "один из разрешённых title для этого теста", "description": "описание (7-10 слов)" }
               ]
             }
           ]
@@ -128,7 +128,14 @@ struct OpenAIService {
 
     private var personalitySystemPrompt: String {
         """
-        Ты аналитик приложения Aura. Пиши по-русски, мягко, глубоко и без категоричных диагнозов.
+        Ты аналитик приложения Aura. Пиши по-русски, глубоко, честно и прямо, без искусственного смягчения формулировок.
+        Давай реалистичные выводы, даже если они звучат жёстко или неудобно.
+        Не льсти пользователю и не пытайся делать выводы позитивнее, чем они выглядят по данным.
+        Избегай пустой мотивации, шаблонной поддержки и расплывчатых формулировок.
+        Обращайся напрямую к пользователю во втором лице: используй формулировки вроде «у вас», «вы», «вам».
+        Никогда не описывай пользователя в третьем лице и не используй его имя в выводах.
+        Текст должен ощущаться как персональный разбор, обращённый напрямую к человеку.
+        Строго соблюдай указанные диапазоны количества слов для каждого текстового поля — не меньше и не больше.
         Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
         Не добавляй секции для тестов, которых нет в списке выбранных тестов.
         Если выбрана часть тестов, верни только выбранные секции в том порядке, в котором они пришли.
@@ -142,7 +149,7 @@ struct OpenAIService {
 
     private func filteredPersonalitySections(_ sections: [PersonalitySection],
                                              selectedTitles: Set<String>) -> [PersonalitySection] {
-        sections.filter { selectedTitles.contains($0.selectedTest) }
+        return sections.filter { selectedTitles.contains($0.selectedTest) }
     }
 
     // MARK: - Compatibility
@@ -243,8 +250,8 @@ struct OpenAIService {
 
         Верни JSON строго такой формы:
         {
-          "title": "короткий вывод о паре (3-5 слов)",
-          "subtitle": "1 предложение о динамике пары",
+          "title": "короткий вывод о паре (2-3 слова)",
+          "subtitle": "1 предложение о динамике пары (8-10 слов)",
           "compatibilityScore": целое число от 0 до 100,
           "overview": {
             "title": "Основная динамика",
@@ -259,17 +266,17 @@ struct OpenAIService {
           "sections": [
             {
               "selectedTest": "точное название одного из тестов из списка выбранных",
-              "description": "основной текст секции (8-10 слов)",
+              "description": "основной текст секции (12-15 слов)",
               "items": [
-                { "title": "один из разрешённых title для этого теста", "description": "описание (5-10 слов)" }
+                { "title": "один из разрешённых title для этого теста", "description": "описание (7-10 слов)" }
               ]
             }
           ],
           "forecast": {
             "recognitionTitle": "короткий заголовок (2-4 слова)",
-            "recognitionDescription": "описание (10-15 слов)",
+            "recognitionDescription": "описание (15-20 слов)",
             "potentialTitle": "короткий заголовок (2-4 слова)",
-            "potentialDescription": "описание (10-15 слов)"
+            "potentialDescription": "описание (15-20 слов)"
           }
         }
 
@@ -280,7 +287,22 @@ struct OpenAIService {
 
     private var compatibilitySystemPrompt: String {
         """
-        Ты аналитик совместимости приложения Aura. Пиши по-русски, мягко и без категоричных диагнозов.
+        Ты аналитик совместимости приложения Aura. Пиши по-русски, глубоко, честно и прямо, без искусственного смягчения формулировок.
+        Давай реалистичные выводы о динамике пары, даже если они звучат жёстко или неудобно.
+        Не романтизируй отношения и не завышай уровень совместимости ради «красивого результата».
+        compatibilityScore должен быть реалистичным и строго зависеть от входных данных, а не стремиться к высоким значениям.
+        Используй весь диапазон оценок от 0 до 100:
+        0-25 — тяжёлая и конфликтная совместимость,
+        26-45 — слабая совместимость с постоянными трудностями,
+        46-65 — нестабильная или средняя совместимость,
+        66-80 — хорошая совместимость с отдельными проблемами,
+        81-100 — действительно редкая и сильная совместимость.
+        Не ставь высокий compatibilityScore без действительно сильных совпадений по нескольким параметрам одновременно.
+        Избегай пустой мотивации, шаблонной поддержки и расплывчатых формулировок.
+        Обращайся напрямую к пользователю во втором лице: используй формулировки вроде «у вас», «вы», «вам», «в ваших отношениях».
+        Никогда не описывай пользователя или пару со стороны и не используй имена в выводах.
+        Текст должен ощущаться как личный разбор отношений, обращённый напрямую к человеку.
+        Строго соблюдай указанные диапазоны количества слов для каждого текстового поля — не меньше и не больше.
         Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
         Не добавляй секции для тестов, которых нет в списке выбранных тестов.
         Если выбрана часть тестов, верни только выбранные секции в том порядке, в котором они пришли.
@@ -294,7 +316,7 @@ struct OpenAIService {
 
     private func filteredCompatibilitySections(_ sections: [CompatibilitySection],
                                                selectedTitles: Set<String>) -> [CompatibilitySection] {
-        sections.filter { selectedTitles.contains($0.selectedTest) }
+        return sections.filter { selectedTitles.contains($0.selectedTest) }
     }
 
     private func compatibilityPartnerDateOfBirth(from partner: CompatibilityTestRequest) -> Date? {
@@ -362,7 +384,12 @@ struct OpenAIService {
 
     private var horoscopeSystemPrompt: String {
         """
-        Ты астролог приложения Aura. Пиши по-русски, мягко и без категоричных предсказаний.
+        Ты астролог приложения Aura. Пиши по-русски, атмосферно, глубоко и без шаблонных формулировок.
+        Делай прогнозы реалистичными, эмоционально точными и местами жёсткими, если энергия периода напряжённая.
+        Не пытайся делать каждый прогноз позитивным или обнадёживающим.
+        Избегай пустой мотивации, банальных фраз и универсальных предсказаний, подходящих всем сразу.
+        Прогноз должен ощущаться персональным, живым и правдоподобным.
+        Строго соблюдай указанные диапазоны количества слов для каждого текстового поля — не меньше и не больше.
         Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
         В items ровно 3 элемента с title: Любовь, Здоровье, Работа.
         Не давай медицинских, юридических или финансовых советов.
@@ -379,6 +406,139 @@ struct OpenAIService {
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
         formatter.dateFormat = "d MMM"
         return (formatter.string(from: startDate), formatter.string(from: endDate))
+    }
+    
+    // MARK: - Daily Content
+    func makeDailyInsight(for user: User, req: Request) async throws -> String {
+        try await makeDailyContent(for: user,
+                                   systemPrompt: dailyInsightSystemPrompt,
+                                   userPrompt: dailyInsightUserPrompt(for: user),
+                                   wordRange: 8...10,
+                                   req: req)
+    }
+
+    func makeDailyTip(for user: User, req: Request) async throws -> String {
+        try await makeDailyContent(for: user,
+                                   systemPrompt: dailyTipSystemPrompt,
+                                   userPrompt: dailyTipUserPrompt(for: user),
+                                   wordRange: 15...20,
+                                   req: req)
+    }
+
+    private func makeDailyContent(for user: User,
+                                  systemPrompt: String,
+                                  userPrompt: String,
+                                  wordRange: ClosedRange<Int>,
+                                  req: Request) async throws -> String {
+        let apiKey = try apiKey()
+        let request = OpenAIChatDTO(model: model,
+                                    messages: [OpenAIMessage(role: "system", content: systemPrompt),
+                                               OpenAIMessage(role: "user", content: userPrompt)],
+                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
+
+        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
+            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
+            clientRequest.headers.contentType = .json
+            try clientRequest.content.encode(request)
+        }
+
+        guard response.status == .ok else {
+            let error = try? response.content.decode(OpenAIErrorResponse.self)
+            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
+        }
+
+        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+
+        guard let content = chatResponse.choices.first?.message.content,
+              let data = content.data(using: .utf8) else {
+            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
+        }
+
+        do {
+            let result = try JSONDecoder().decode(DailyContentResult.self, from: data)
+            let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard !text.isEmpty else {
+                throw Abort(.badGateway, reason: "OpenAI вернул пустой текст")
+            }
+
+            let wordCount = text.split(whereSeparator: \.isWhitespace).count
+            guard wordRange.contains(wordCount) else {
+                throw Abort(.badGateway, reason: "OpenAI вернул текст с неверным количеством слов")
+            }
+
+            return text
+        } catch let error as Abort {
+            throw error
+        } catch {
+            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+        }
+    }
+
+    private func dailyInsightUserPrompt(for user: User) -> String {
+        return """
+        Данные пользователя:
+        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
+        - время рождения: \(user.birthTime ?? "не указано")
+        - пол: \(user.gender ?? "не указано")
+        - социальный тип: \(user.socialType ?? "не указано")
+        - стиль конфликта: \(user.conflictStyle ?? "не указано")
+        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
+        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
+        - фокус в отношениях: \(user.coreFocus ?? "не указано")
+        - знак зодиака: \(user.dateOfBirth.flatMap { zodiacSign(from: $0) } ?? "не указан")
+        - сегодня: \(DailyDateHelper.todayString())
+
+        Верни JSON строго такой формы:
+        {
+          "text": "инсайт дня (8-10 слов)"
+        }
+        """
+    }
+
+    private var dailyInsightSystemPrompt: String {
+        """
+        Ты аналитик приложения Aura. Пиши по-русски, глубоко, честно и прямо, без искусственного смягчения формулировок.
+        Сформулируй один короткий инсайт дня — наблюдение о текущем дне и внутреннем состоянии пользователя.
+        Обращайся напрямую к пользователю во втором лице: используй формулировки вроде «у вас», «вы», «вам».
+        Никогда не описывай пользователя в третьем лице и не используй его имя в выводе.
+        Строго соблюдай диапазон 8-10 слов — не меньше и не больше.
+        Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
+        Не давай медицинских, юридических или финансовых советов.
+        """
+    }
+
+    private func dailyTipUserPrompt(for user: User) -> String {
+        return """
+        Данные пользователя:
+        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
+        - время рождения: \(user.birthTime ?? "не указано")
+        - пол: \(user.gender ?? "не указано")
+        - социальный тип: \(user.socialType ?? "не указано")
+        - стиль конфликта: \(user.conflictStyle ?? "не указано")
+        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
+        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
+        - фокус в отношениях: \(user.coreFocus ?? "не указано")
+        - знак зодиака: \(user.dateOfBirth.flatMap { zodiacSign(from: $0) } ?? "не указан")
+        - сегодня: \(DailyDateHelper.todayString())
+
+        Верни JSON строго такой формы:
+        {
+          "text": "совет дня (15-20 слов)"
+        }
+        """
+    }
+
+    private var dailyTipSystemPrompt: String {
+        """
+        Ты аналитик приложения Aura. Пиши по-русски, глубоко, честно и прямо, без искусственного смягчения формулировок.
+        Сформулируй один практичный совет дня — конкретное направление для поведения и внутренней работы пользователя сегодня.
+        Обращайся напрямую к пользователю во втором лице: используй формулировки вроде «у вас», «вы», «вам».
+        Никогда не описывай пользователя в третьем лице и не используй его имя в выводе.
+        Строго соблюдай диапазон 15-20 слов — не меньше и не больше.
+        Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
+        Не давай медицинских, юридических или финансовых советов.
+        """
     }
 
     private func zodiacSign(from date: Date?) -> String? {

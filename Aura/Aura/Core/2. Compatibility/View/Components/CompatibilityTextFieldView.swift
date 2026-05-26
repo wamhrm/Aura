@@ -12,15 +12,14 @@ struct CompatibilityTextFieldView: View {
     @Binding var text: String
     let type: InputFieldType
     
-    @State private var suggestions: [String] = []
-    @State private var showSuggestions = false
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             TextField(title, text: $text)
+                .font(Components.isRegular(.footnote, .callout))
                 .foregroundStyle(.gray)
                 .fontWeight(.medium)
-                .padding(12)
+                .frame(height: 50)
+                .padding(.leading)
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .keyboardType(keyboardType)
@@ -63,5 +62,5 @@ enum InputFieldType {
 }
 
 #Preview {
-    CompatibilityTextFieldView(title: "Введите имя", text: .constant(""), type: .name(maxLength: 10))
+    CompatibilityTextFieldView(title: "Введите имя", text: .constant(""), type: .age(maxAge: 20))
 }

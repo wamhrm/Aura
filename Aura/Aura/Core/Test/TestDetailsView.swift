@@ -17,15 +17,16 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
             Components.backgroundColor()
             
             VStack(alignment: .leading, spacing: 20) {
-                Components.testCellImage(type.icon, type.color, .title, 60, false)
+                Components.testCellImage(type.icon, type.color, .title, Components.isRegular(55, 57), false)
                 
                 Text(type.deepDescription)
-                    .font(.callout)
+                    .font(Components.isRegular(.system(size: 15), .system(size: 17)))
                     .foregroundStyle(.deepGray)
                     .fontWeight(.medium)
                 
                 VStack(alignment: .leading, spacing: 15) {
                     Text("Что включено")
+                        .font(Components.isRegular(.callout, .default))
                         .bold()
                         .padding(.bottom, 5)
                     
@@ -33,13 +34,14 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark")
                                 .foregroundStyle(.deepGray)
-                                .imageScale(.small)
-                                .fontWeight(.medium)
-                                .padding(8)
+                                .font(Components.isRegular(.footnote, .callout))
+                                .bold()
+                                .padding(7)
                                 .background(.blue.opacity(0.1))
                                 .clipShape(Circle())
                             
                             Text(item)
+                                .font(Components.isRegular(.footnote, .callout))
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
@@ -47,7 +49,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .backgroundWithShape(15, true)
+                .backgroundWithShape(12, .white, true)
                 
                 Components.classicButton(isSelected ? "Убрать" : "Выбрать") {
                     onTapHandler()
@@ -59,7 +61,6 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
         }
         .navigationTitle(type.title)
         .navigationBarTitleDisplayMode(.inline)
-        .scrollIndicators(.hidden)
     }
 }
 

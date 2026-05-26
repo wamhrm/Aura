@@ -15,5 +15,6 @@ extension Application {
         self.migrations.add(CreateUserProfileInfo())
         self.migrations.add(CreateHistory())
         self.migrations.add(CreateHoroscope())
+        self.migrations.add(CreateDailyContent())
     }
 }
