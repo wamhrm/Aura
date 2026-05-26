@@ -17,20 +17,21 @@ enum HistoryRoutes: Hashable {
 final class HistoryViewModel: ObservableObject {
     @Published var historyRoutes: [HistoryRoutes] = []
     @Published private(set) var historyCells: [HistoryCellModel] = []
+
+    @Published var showAlert = false
+    @Published private(set) var alertMessage = ""
     @Published private(set) var isSignedIn = false
-    
-    @Published var showError = false
-    @Published private(set) var errorMessage = ""
 
     private let authService: any AuthServiceProtocol
-    private let psychologyService: any PsychologyServiceProtocol
+    private let contentService: any ContentServiceProtocol
 
+    private var currentUserId: UUID?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         psychologyService: any PsychologyServiceProtocol) {
+         contentService: any ContentServiceProtocol) {
         self.authService = authService
-        self.psychologyService = psychologyService
+        self.contentService = contentService
 
         setupSubscriptions()
     }
@@ -42,44 +43,64 @@ final class HistoryViewModel: ObservableObject {
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)
-            .sink { [weak self] authState in
+            .sink { [weak self] in
                 guard let self else { return }
-                switch authState {
-                    case .signedIn:
-                        isSignedIn = true
-                        fetchHistory()
-                    case .signedOut:
-                        isSignedIn = false
-                        historyCells = []
-                        historyRoutes = []
-                }
+                handleAuthState($0)
             }
             .store(in: &cancellables)
 
-        psychologyService.historyDidChange
+        contentService.historyDidChange
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                guard let self, isSignedIn else { return }
-                fetchHistory()
+                guard let self, let userId = currentUserId else { return }
+                Task { await self.loadHistory(for: userId, ignoreCache: true) }
             }
             .store(in: &cancellables)
     }
 
-    private func fetchHistory() {
-        Task {
-            do {
-                historyCells = try await psychologyService.fetchHistory()
-            } catch {
-                showAlert(message: "Не удалось загрузить историю")
-            }
+    private func handleAuthState(_ state: AuthState) {
+        switch state {
+            case .signedIn(let user):
+                currentUserId = user.id
+                historyCells = UserDefaultsHelper.getLocalHistory(for: user.id) ?? []
+                isSignedIn = true
+                Task { await loadHistory(for: user.id, ignoreCache: true) }
+            case .signedOut:
+                currentUserId = nil
+                isSignedIn = false
+                historyCells = []
+                historyRoutes = []
+        }
+    }
+
+    func fetchHistory() {
+        guard let userId = currentUserId else { return }
+        Task { await loadHistory(for: userId, ignoreCache: true) }
+    }
+
+    private func loadHistory(for userId: UUID, ignoreCache: Bool = false) async {
+        if !ignoreCache, let cached = UserDefaultsHelper.getLocalHistory(for: userId) {
+            historyCells = cached
+            return
+        }
+
+        do {
+            let history = try await contentService.fetchHistory()
+            historyCells = history
+            UserDefaultsHelper.saveHistoryLocally(history, for: userId)
+        } catch {
+            showAlert(message: "Не удалось загрузить историю")
         }
     }
 
     func deleteHistoryCell(_ item: HistoryCellModel) {
         Task {
             do {
-                try await psychologyService.deleteHistory(id: item.id)
+                try await contentService.deleteHistory(id: item.id)
                 historyCells.removeAll { $0.id == item.id }
+                if let userId = currentUserId {
+                    UserDefaultsHelper.saveHistoryLocally(historyCells, for: userId)
+                }
             } catch {
                 showAlert(message: "Не удалось удалить запись")
             }
@@ -89,17 +110,17 @@ final class HistoryViewModel: ObservableObject {
     func openHistoryCellDetails(_ item: HistoryCellModel) {
         Task {
             do {
-                let detail = try await psychologyService.fetchHistoryDetails(id: item.id)
+                let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
 
-                switch detail.kind {
+                switch historyDetails.kind {
                     case .personality:
-                        guard let result = detail.personalityResult else {
+                        guard let result = historyDetails.personalityResult else {
                             showAlert(message: "Не удалось открыть результат")
                             return
                         }
                         historyRoutes.append(.personalityResult(result))
                     case .compatibility:
-                        guard let result = detail.compatibilityResult else {
+                        guard let result = historyDetails.compatibilityResult else {
                             showAlert(message: "Не удалось открыть результат")
                             return
                         }
@@ -112,7 +133,7 @@ final class HistoryViewModel: ObservableObject {
     }
 
     private func showAlert(message: String) {
-        errorMessage = message
-        showError = true
+        alertMessage = message
+        showAlert = true
     }
 }

@@ -14,15 +14,17 @@ struct CompatibilityDateOfBirthView: View {
     
     var body: some View {
         TextField(title, text: $text)
+            .font(Components.isRegular(.footnote, .callout))
             .foregroundStyle(.gray)
             .fontWeight(.medium)
-            .padding(12)
+            .frame(height: 50)
+            .padding(.leading)
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .keyboardType(.numberPad)
-            .onChange(of: text, { _, newValue in
+            .onChange(of: text) { _, newValue in
                 formatInput(newValue)
-            })
+            }
     }
 }
 
@@ -40,14 +42,12 @@ extension CompatibilityDateOfBirthView {
                 let minutes = digits.dropFirst(2).prefix(2)
                 formatted += minutes
             }
-            
             if let h = Int(hours), h > 23 {
                 formatted = "23" + (formatted.count > 2 ? formatted.dropFirst(2) : "")
             }
             if let m = Int(digits.dropFirst(2).prefix(2)), m > 59 {
                 formatted = String(formatted.prefix(3)) + "59"
             }
-            
         } else {
             let day = digits.prefix(2)
             formatted += day
@@ -62,7 +62,6 @@ extension CompatibilityDateOfBirthView {
                 let year = digits.dropFirst(4).prefix(4)
                 formatted += year
             }
-            
             if let d = Int(day), d > 31 {
                 formatted = "31" + formatted.dropFirst(2)
             }
@@ -90,4 +89,5 @@ extension CompatibilityDateOfBirthView {
 
 #Preview {
     CompatibilityDateOfBirthView(title: "123", text: .constant(""))
+        .padding(.horizontal)
 }

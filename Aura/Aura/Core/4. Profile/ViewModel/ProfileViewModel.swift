@@ -24,55 +24,25 @@ final class ProfileViewModel: ObservableObject {
 
     @Published private(set) var authState = AuthState.signedOut
     @Published private(set) var isLoading = false
+    @Published private(set) var isServerWakingUp = false
     @Published private(set) var hasPersonalityTests = false
+    @Published private(set) var isSignedOut = false
+    @Published private(set) var dailyTip: DailyContentModel?
+    @Published private(set) var profileDisplay: ProfileDisplayModel?
 
     @Published var showSettings = false
-    @Published var showError = false
-    @Published private(set) var errorMessage = ""
+    @Published var showAlert = false
+    @Published private(set) var alertMessage = ""
 
-    private let authService: any AuthServiceProtocol
-    private let psychologyService: any PsychologyServiceProtocol
+    let authService: any AuthServiceProtocol
+    private let contentService: any ContentServiceProtocol
 
     private var cancellables = Set<AnyCancellable>()
-    
-    var personalityOverview: String {
-        personalityResult?.overview.description ?? "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню."
-    }
-    
-    var personalitySocialFilter: String {
-        personalityResult?.sections.flatMap(\.items).first(where: { $0.title == .socialFilter })?.description ?? "Обладает встроенным детектором на пустую болтовню."
-    }
-    
-    var personalityEmotionalDepth: String {
-        personalityResult?.sections.flatMap(\.items).first(where: { $0.title == .emotionalDepth })?.description ?? "Чувства раскрываются постепенно, но очень надолго."
-    }
-
-    var personalityTemperament: Int {
-        personalityResult?.emotionalBar.first(where: { $0.title == .temperament })?.value ?? 5
-    }
-
-    var personalityThinking: Int {
-        personalityResult?.emotionalBar.first(where: { $0.title == .thinking })?.value ?? 7
-    }
-
-    var personalityOrganization: Int {
-        personalityResult?.emotionalBar.first(where: { $0.title == .organization })?.value ?? 3
-    }
-
-    var personalityRelationships: Int {
-        personalityResult?.emotionalBar.first(where: { $0.title == .relationships })?.value ?? 6
-    }
-
-    var zodiacSignTitle: String? {
-        guard let sign = personalityResult?.zodiacSign else { return nil }
-        return HoroscopeType.allCases
-            .first { $0.icon.contains(sign) || sign.contains($0.icon) }?.rawValue
-    }
 
     init(authService: any AuthServiceProtocol,
-         psychologyService: any PsychologyServiceProtocol) {
+         contentService: any ContentServiceProtocol) {
         self.authService = authService
-        self.psychologyService = psychologyService
+        self.contentService = contentService
 
         setupSubscriptions()
     }
@@ -84,47 +54,96 @@ final class ProfileViewModel: ObservableObject {
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)
-            .sink { [weak self] authState in
-                guard let self else { return }
-                self.authState = authState
-
-                switch authState {
-                    case .signedIn:
-                        listenToPersonalityTests()
-                    case .signedOut:
-                        hasPersonalityTests = false
-                        personalityResult = nil
-                }
+            .sink { [weak self] in
+                self?.handleAuthState($0)
             }
             .store(in: &cancellables)
 
-        psychologyService.historyDidChange
+        contentService.historyDidChange
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                guard let self, case .signedIn = authState else { return }
-                listenToPersonalityTests()
+                guard let self, case .signedIn(let user) = authState else { return }
+                Task { await self.loadPersonality(for: user.id, ignoreCache: true) }
             }
             .store(in: &cancellables)
     }
 
-    private func listenToPersonalityTests() {
-        Task {
-            do {
-                let history = try await psychologyService.fetchHistory()
-
-                guard let latest = history.first(where: { $0.kind == .personality }) else {
+    private func handleAuthState(_ state: AuthState) {
+        switch state {
+            case .signedIn(let user):
+                if let cached = UserDefaultsHelper.getLocalPersonality(for: user.id) {
+                    applyPersonality(result: cached)
+                } else {
                     hasPersonalityTests = false
                     personalityResult = nil
-                    return
                 }
 
-                let detail = try await psychologyService.fetchHistoryDetails(id: latest.id)
-                personalityResult = detail.personalityResult
-                hasPersonalityTests = personalityResult != nil
-            } catch {
-                hasPersonalityTests = false
-                personalityResult = nil
+                if user.hasCompletedProfileInfo {
+                    dailyTip = UserDefaultsHelper.getLocalDailyTip(for: user.id)
+                } else {
+                    dailyTip = nil
+                    UserDefaultsHelper.deleteLocalDailyTip(for: user.id)
+                }
+
+                updateProfileDisplay()
+                withAnimation(.easeInOut(duration: 0.25)) { authState = .signedIn(user) }
+                isSignedOut = false
+
+                Task {
+                    if user.hasCompletedProfileInfo {
+                        await loadDailyTip(for: user.id, showErrorOnFailure: false)
+                    }
+                    await loadPersonality(for: user.id, ignoreCache: true)
+                }
+            case .signedOut:
+                withAnimation(.easeInOut(duration: 0.25)) { authState = .signedOut }
+                profileRoutes = []
+            
+                Task {
+                    try? await Task.sleep(for: .seconds(1))
+                    hasPersonalityTests = false
+                    personalityResult = nil
+                    dailyTip = nil
+                    profileDisplay = nil
+                    isSignedOut = true
+                }
+        }
+    }
+
+    private func loadDailyTip(for userId: UUID, showErrorOnFailure: Bool = true) async {
+        do {
+            let tip = try await contentService.fetchDailyTip()
+            dailyTip = tip
+            UserDefaultsHelper.saveDailyTipLocally(tip, for: userId)
+            updateProfileDisplay()
+        } catch {
+            if showErrorOnFailure {
+                showError(error.localizedDescription)
             }
+        }
+    }
+
+    private func loadPersonality(for userId: UUID, ignoreCache: Bool = false) async {
+        if !ignoreCache, let cached = UserDefaultsHelper.getLocalPersonality(for: userId) {
+            applyPersonality(result: cached)
+            return
+        }
+
+        do {
+            let history = try await contentService.fetchHistory()
+            guard let latest = history.first(where: { $0.kind == .personality }) else {
+                return clearPersonality(for: userId)
+            }
+
+            let historyDetails = try await contentService.fetchHistoryDetails(id: latest.id)
+            guard let result = historyDetails.personalityResult else {
+                return clearPersonality(for: userId)
+            }
+
+            applyPersonality(result: result)
+            UserDefaultsHelper.savePersonalityLocally(result, for: userId)
+        } catch {
+            showError(error.localizedDescription)
         }
     }
 
@@ -142,16 +161,26 @@ final class ProfileViewModel: ObservableObject {
         isLoading = true
 
         Task {
+            let loadedTask = Task {
+                try await Task.sleep(for: .seconds(7))
+                
+                if !Task.isCancelled {
+                    withAnimation { isServerWakingUp = true }
+                }
+            }
+            
+            defer { loadedTask.cancel() }
+            
             do {
-                try await Task.sleep(for: AuthInput.authActionDelay)
                 try await authService.createAccount(name: name, email: email, password: password)
-
+                loadedTask.cancel()
                 profileRoutes = []
-                clearFields()
             } catch {
                 showError(error.localizedDescription)
             }
 
+            withAnimation { isServerWakingUp = false }
+            try? await Task.sleep(for: .seconds(1.5))
             isLoading = false
         }
     }
@@ -169,44 +198,60 @@ final class ProfileViewModel: ObservableObject {
         isLoading = true
 
         Task {
+            let loadedTask = Task {
+                try await Task.sleep(for: .seconds(7))
+                
+                if !Task.isCancelled {
+                    withAnimation { isServerWakingUp = true }
+                }
+            }
+            
+            defer { loadedTask.cancel() }
+            
             do {
-                try await Task.sleep(for: AuthInput.authActionDelay)
                 try await authService.signIn(email: email, password: password)
-
                 profileRoutes = []
-                clearFields()
             } catch {
                 showError(error.localizedDescription)
             }
 
+            withAnimation { isServerWakingUp = false }
+            try? await Task.sleep(for: .seconds(1.5))
             isLoading = false
         }
     }
 
     func signOut() {
-        guard !isLoading else { return }
-
-        isLoading = true
-
-        Task {
-            try? await Task.sleep(for: AuthInput.authActionDelay)
-            authService.signOut()
-
-            profileRoutes = []
-            showSettings = false
-            isLoading = false
-        }
+        showSettings = false
+        authService.signOut()
     }
 
-    private func clearFields() {
+    func clearTextFields() {
         name = ""
         email = ""
         password = ""
     }
+    
+    private func updateProfileDisplay() {
+        profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult, dailyTip: dailyTip)
+    }
+    
+    private func applyPersonality(result: PersonalityResultModel) {
+        personalityResult = result
+        hasPersonalityTests = true
+        updateProfileDisplay()
+    }
 
     private func showError(_ message: String) {
-        showError = true
-        errorMessage = message
+        showAlert = true
+        alertMessage = message
+    }
+
+    private func clearPersonality(for userId: UUID) {
+        hasPersonalityTests = false
+        personalityResult = nil
+        UserDefaultsHelper.deleteLocalPersonality(for: userId)
+        updateProfileDisplay()
     }
 
     private func validateSignIn(email: String, password: String) -> String? {
@@ -265,5 +310,4 @@ final class ProfileViewModel: ObservableObject {
 private enum AuthInput {
     static let minPasswordLength = 6
     static let minNameLength = 2
-    static let authActionDelay = Duration.seconds(1)
 }

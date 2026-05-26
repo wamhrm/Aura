@@ -16,9 +16,9 @@ struct SettingsAccentColorView: View {
         Button(action: onTapHandler) {
             Circle()
                 .fill(color)
-                .frame(width: 40, height: 40)
+                .frame(width: Components.isRegular(30, 32), height: Components.isRegular(30, 32))
                 .overlay(Circle() .stroke(Color.white, lineWidth: 1))
-                .overlay(Circle() .stroke(isSelected ? Color(.systemGray2) : Color.clear, lineWidth: 5))
+                .overlay(Circle() .stroke(isSelected ? Color(.systemGray2) : Color.clear, lineWidth: 4))
                 .shadow(color: .black.opacity(0.1), radius: 2)
         }
     }

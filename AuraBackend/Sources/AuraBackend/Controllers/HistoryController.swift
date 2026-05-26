@@ -63,6 +63,7 @@ struct HistoryController: RouteCollection {
         }
 
         try await entry.delete(on: req.db)
+        
         return .noContent
     }
 }

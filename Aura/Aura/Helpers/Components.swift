@@ -12,39 +12,21 @@ struct Components {
     static func backgroundColor() -> some View {
         return Color(uiColor: .appBackground).ignoresSafeArea()
     }
-    
+
     static func horoscopeDate(_ dateStart: String, _ dateEnd: String, _ isCellDetails: Bool) -> some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 4) {
             Text(dateStart)
-            
+
             Rectangle()
-                .frame(width: isCellDetails ? 10 : 5, height: 1)
-            
+                .frame(width: isCellDetails ? 10 : 6, height: 1)
+
             Text(dateEnd)
         }
-        .font(.footnote)
+        .font(.caption)
         .fontWeight(isCellDetails ? .bold : .medium)
         .foregroundStyle(.deepGray)
-        .frame(maxWidth: isCellDetails ? 115 : .infinity, alignment: isCellDetails ? .center : .leading)
     }
-    
-    static func sparkleImage(_ size: Image.Scale, _ padding: CGFloat) -> some View {
-        Image(systemName: "sparkles")
-            .imageScale(size)
-            .padding(.top, 10)
-            .foregroundStyle(.white)
-            .padding(padding)
-    }
-    
-    static func sparkImageWithBackground(_ size: Image.Scale, _ color: Color) -> some View {
-        Image(systemName: "sparkles")
-            .imageScale(size)
-            .foregroundStyle(color)
-            .padding(8)
-            .background(Color(.systemGray6).opacity(0.15))
-            .clipShape(Circle())
-    }
-    
+
     static func logoImage(_ size: CGFloat) -> some View {
         Image("logo")
             .resizable()
@@ -53,12 +35,13 @@ struct Components {
             .clipShape(Circle())
             .clipped()
     }
-    
+
     static func classicButton(_ title: String, _ completion: @escaping () -> Void) -> some View {
         Button {
             completion()
         } label: {
             Text(title)
+                .font(Components.isRegular(.system(size: 14), .system(size: 16)))
                 .foregroundStyle(.white)
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -69,16 +52,16 @@ struct Components {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
-    
+
     static func testCellImage(_ title: String, _ color: UIColor, _ imgSize: Font, _ backgroundSize: CGFloat, _ isResults: Bool) -> some View {
         Image(systemName: title)
             .font(imgSize)
             .foregroundStyle(Color(color))
             .padding(10)
             .frame(width: backgroundSize, height: backgroundSize)
-            .background(RoundedRectangle(cornerRadius: isResults ? 10 : 15) .fill(Color(color).opacity(0.2)))
+            .background(RoundedRectangle(cornerRadius: isResults ? 8 : 15) .fill(Color(color).opacity(0.2)))
     }
-    
+
     static func completeYourProfileLock(_ title: String) -> some View {
         VStack(spacing: 15) {
             Image(systemName: "lock")
@@ -89,7 +72,7 @@ struct Components {
                 .background(Color(.systemGray6).opacity(0.75))
                 .clipShape(Circle())
                 .overlay(Circle() .stroke(Color(.systemGray5), lineWidth: 1))
-            
+
             Text(title)
                 .font(.callout)
                 .fontDesign(.monospaced)
@@ -98,25 +81,25 @@ struct Components {
         }
         .padding()
     }
-    
+
     static func emotionalProfileBar(_ type: EmotionalProfileTypes, _ value: Int) -> some View {
         VStack(spacing: 10) {
             HStack {
                 Text(type.leftSide)
-                
+
                 Spacer()
-                
+
                 Text(type.rightSide)
             }
-            .font(.system(size: 14))
+            .font(Components.isRegular(.system(size: 12), .system(size: 14)))
             .fontWeight(.semibold)
             .foregroundStyle(.deepGray)
-            
+
             GeometryReader { bar in
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(Color(.systemGray6))
-                    
+
                     Capsule()
                         .fill(LinearGradient(colors: type.colors,
                                              startPoint: .leading,
@@ -124,84 +107,34 @@ struct Components {
                         .frame(width: bar.size.width * (CGFloat(value) / CGFloat(10)))
                 }
             }
-            .frame(height: 10)
+            .frame(height: Components.isRegular(8, 10))
         }
     }
     
-    static func resultsSection<Content: View>(_ title: String,
-                                        @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .bold()
+    static func isServerWakingUpView(_ value: Bool) -> some View {
+        VStack(spacing: 30) {
+            ProgressView()
             
-            content()
+            VStack(spacing: 20) {
+                Text("Сервер просыпается. Первый запуск может занять до 40 секунд.")
+                    .lineSpacing(3)
+
+                Text("Пожалуйста, ожидайте.")
+            }
+            .font(.callout)
+            .bold()
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 55)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .backgroundWithShape(15, true)
+        .animation(.easeInOut(duration: 0.25), value: value)
     }
-    
-    static func resultsWithNumbersSection(_ type: LoveLanguageTypes, _ title: String, _ description: String) -> some View {
-        HStack(alignment: .top) {
-            Text(type.number)
-                .font(.callout)
-                .fontWeight(.semibold)
-                .foregroundStyle(type.numberColor)
-                .padding(10)
-                .background(type.numberColor.opacity(0.15))
-                .clipShape(Circle())
-                .frame(width: 35, alignment: .leading)
-            
-            VStack(alignment: .leading, spacing: 7) {
-                Text(type.rawValue.uppercased())
-                    .font(.footnote)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.gray)
-                
-                Text(title)
-                    .font(.callout)
-                    .bold()
-                
-                Text(description)
-                    .font(.footnote)
-                    .foregroundStyle(.deepGray)
-            }
-            .padding(.top, 5)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    enum LoveLanguageTypes: String {
-        case main = "Основной"
-        case additional = "Дополнительный"
-        case spark = "Искра"
-        case potentional = "Потенциал"
-        
-        var number: String {
-            switch self {
-                case .main, .spark:
-                    return "1"
-                case .additional, .potentional:
-                    return "2"
-            }
-        }
-        
-        var numberColor: Color {
-            switch self {
-                case .main:
-                    return .red
-                case .additional:
-                    return .blue
-                case .spark:
-                    return .blue
-                case .potentional:
-                    return .yellow
-            }
-        }
+
+    static func isRegular<T>(_ regular: T, _ proMax: T) -> T {
+        return UIDevice.isProMax ? proMax : regular
     }
 }
 
-enum EmotionalProfileTypes: String, Decodable {
+enum EmotionalProfileTypes: String, Codable {
     case temperament = "Темперамент"
     case thinking = "Мышление"
     case organization = "Организованность"
@@ -210,7 +143,7 @@ enum EmotionalProfileTypes: String, Decodable {
     case innerOpenness = "Внутренняя открытость"
     case soulAlignment = "Гармония души"
     case emotionalWarmth = "Эмоциональная теплота"
-    
+
     var leftSide: String {
         switch self {
             case .temperament:
@@ -231,7 +164,7 @@ enum EmotionalProfileTypes: String, Decodable {
                 return "Холодная дистанция"
             }
     }
-    
+
     var rightSide: String {
         switch self {
             case .temperament:
@@ -252,88 +185,13 @@ enum EmotionalProfileTypes: String, Decodable {
                 return "Теплая привязанность"
         }
     }
-    
+
     var colors: [Color] {
         switch self {
             case .temperament, .thinking, .organization, .relationships:
                 return [.purple, .softPurple]
             case .emotionalResonance, .innerOpenness, .soulAlignment, .emotionalWarmth:
                 return [.blue, .softPurple]
-        }
-    }
-}
-
-struct SelectionButtons<T: RawRepresentable & CaseIterable & Hashable>: View where T.RawValue == String {
-    @State private var selected: T
-    let onTapHandler: (T) -> Void
-    
-    init(selected: T = T.allCases.first!, onTapHandler: @escaping (T) -> Void) {
-        self._selected = State(initialValue: selected)
-        self.onTapHandler = onTapHandler
-    }
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            ForEach(Array(T.allCases), id: \.self) { item in
-                Button {
-                    selected = item
-                    onTapHandler(item)
-                } label: {
-                    Text(item.rawValue)
-                        .font(.callout)
-                        .foregroundStyle(selected == item ? .white : .deepGray)
-                        .bold()
-                        .frame(width: 110, height: 37)
-                        .background(selected == item ? .deepBlue : .clear)
-                        .overlay(RoundedRectangle(cornerRadius: 10) .stroke(.gray, lineWidth: 1))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-            }
-        }
-    }
-}
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews,
-                      cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 0
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
-
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-
-            if x + size.width > width {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-        }
-
-        return CGSize(width: width, height: y + rowHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize,
-                       subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
-
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-
-            if x + size.width > bounds.maxX {
-                x = bounds.minX
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-
-            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
         }
     }
 }
