@@ -28,6 +28,7 @@ struct HistoryView: View {
                                         vm.openHistoryCellDetails(item)
                                     } label: {
                                         HistoryCellView(cell: item)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
                                             .tint(.black)
                                             .contextMenu {
                                                 Button("Удалить", role: .destructive) {
@@ -35,24 +36,29 @@ struct HistoryView: View {
                                                 }
                                             }
                                     }
+                                    .buttonStyle(.plain)
                                 }
                                 .padding(.horizontal)
                             }
+                            .refreshable {
+                                vm.fetchHistory()
+                            }
+                            .scrollIndicators(.hidden)
                         }
                     }
                 } else {
                     ContentUnavailableView {
                         Label("Войдите в аккаунт, чтобы видеть историю", systemImage: "")
                     }
+                    .padding(.bottom, 35)
                 }
             }
             .navigationTitle("История тестов")
             .navigationBarTitleDisplayMode(.inline)
-            .bottomAreaPadding()
             .navigationDestination(for: HistoryRoutes.self) { route in
                 destinationView(route)
             }
-            .alert(vm.errorMessage, isPresented: $vm.showError) {
+            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }
         }
@@ -73,5 +79,5 @@ extension HistoryView {
 
 #Preview {
     HistoryView(vm: HistoryViewModel(authService: AuthService(),
-                                     psychologyService: PsychologyService()))
+                                     contentService: ContentService()))
 }

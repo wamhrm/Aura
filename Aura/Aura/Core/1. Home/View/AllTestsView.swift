@@ -15,42 +15,42 @@ struct AllTestsView: View {
         ZStack {
             Components.backgroundColor()
             
-            ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(PersonalityTestTypes.allCases, id: \.self) { test in
-                        TestCellView(type: test,
-                                     hasChosenTest: Binding(
-                                        get: { vm.selectedTests.contains(test) },
-                                        set: { _ in })) {
-                            vm.toggleTestSelection(test)
-                        } onTapHandler: {
-                            onTapHandler(test)
+            if vm.isServerWakingUp {
+                Components.isServerWakingUpView(vm.isServerWakingUp)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(PersonalityTestTypes.allCases, id: \.self) { test in
+                            TestCellView(type: test,
+                                         hasChosenTest: Binding(
+                                            get: { vm.selectedTests.contains(test) },
+                                            set: { _ in })) {
+                                vm.toggleTestSelection(test)
+                            } onTapHandler: {
+                                onTapHandler(test)
+                            }
                         }
+                        
+                        Components.classicButton(vm.isLoading ? "Готовим результат..." : "Проверить себя") {
+                            vm.makePersonalityTest()
+                        }
+                        .disabled(vm.isLoading)
+                        .padding(.top, 10)
                     }
-                    
-                    Components.classicButton("Проверить себя") {
-                        vm.makePersonalityTest()
-                    }
-                    .disabled(vm.isLoading)
-                    .padding(.top, 10)
-
-                    if vm.isLoading {
-                        ProgressView("Готовим результат")
-                            .frame(maxWidth: .infinity)
-                    }
+                    .padding(.horizontal)
                 }
+                .scrollIndicators(.hidden)
             }
-            .navigationTitle("Проверить себя")
-            .navigationBarTitleDisplayMode(.inline)
-            .scrollIndicators(.hidden)
-            .padding(.horizontal)
         }
+        .navigationTitle("Проверить себя")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview {
     NavigationStack {
-        AllTestsView(vm: HomeViewModel(authService: AuthService(), psychologyService: PsychologyService())) { _ in
+        AllTestsView(vm: HomeViewModel(authService: AuthService(),
+                                       contentService: ContentService())) { _ in
             
         }
     }

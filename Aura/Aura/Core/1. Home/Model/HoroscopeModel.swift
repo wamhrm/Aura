@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct HoroscopeModel: Identifiable, Hashable, Decodable {
+struct HoroscopeModel: Identifiable, Hashable, Codable {
     let id: UUID
     let type: HoroscopeType
     let dateStart: String
@@ -16,7 +16,7 @@ struct HoroscopeModel: Identifiable, Hashable, Decodable {
     let items: [HoroscopeItems]
 }
 
-struct HoroscopeItems: Hashable, Decodable {
+struct HoroscopeItems: Hashable, Codable {
     let title: HoroscopeDetailsCellType
     let description: String
 }
@@ -27,10 +27,13 @@ extension HoroscopeModel {
                                      dateStart: "21 мар",
                                      dateEnd: "5 мая",
                                      description: "Фортуна благоволит смелым на этой неделе. Сделайте тот шаг, о котором долго думали. Жизнь не стоит на месте, двигайтесь, гуляйте, проводите время с друзьями.",
-                                     items: [HoroscopeItems(title: .love,
-                                                                 description: "Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения."),
-                                             HoroscopeItems(title: .health,
-                                                                 description: "Уделите внимание режиму сна и отдыху — организм попросит паузу."),
-                                             HoroscopeItems(title: .work,
-                                                                 description: "На работе лучше двигаться размеренно и не брать лишних обязательств.")])
+                                     items: [HoroscopeItems(
+                                        title: .love,
+                                        description: "Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения."),
+                                             HoroscopeItems(
+                                        title: .health,
+                                        description: "Уделите внимание режиму сна и отдыху — организм попросит паузу."),
+                                             HoroscopeItems(
+                                        title: .work,
+                                        description: "На работе лучше двигаться размеренно и не брать лишних обязательств.")])
 }

@@ -9,11 +9,11 @@ import Foundation
 
 struct PartnerInfoModel {
     var name = ""
+    var gender = "Мужской"
     var exactDateOfBirth = true
     var dateOfBirth = ""
     var birthTime = ""
     var age = ""
-    var gender = ""
 
     init() {}
     
@@ -32,19 +32,5 @@ struct PartnerInfoModel {
             partnerGender: gender,
             exactDateOfBirth: exactDateOfBirth,
             selectedTests: selectedTests.map(\.rawValue))
-    }
-}
-
-enum PartnerInfoError: LocalizedError {
-    case noName
-    case invalidDateOfBirth
-
-    var errorDescription: String {
-        switch self {
-            case .noName:
-                return "Введите имя партнера"
-            case .invalidDateOfBirth:
-                return "Укажите дату рождения в формате ДД.ММ.ГГГГ"
-        }
     }
 }

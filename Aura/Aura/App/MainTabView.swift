@@ -8,9 +8,6 @@
 import SwiftUI
 
 struct MainTabView: View {
-    private let authService: AuthServiceProtocol
-    private let psychologyService: PsychologyServiceProtocol
-    
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var compatibilityViewModel: CompatibilityViewModel
     @StateObject private var profileViewModel: ProfileViewModel
@@ -18,30 +15,33 @@ struct MainTabView: View {
     
     @State private var selectedTab: Tabs = .home
     
+    private let authService: AuthServiceProtocol
+    private let contentService: ContentServiceProtocol
+    
     init(authService: AuthService,
-         psychologyService: PsychologyService) {
+         contentService: ContentService) {
         self.authService = authService
-        self.psychologyService = psychologyService
+        self.contentService = contentService
         
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(
             authService: authService,
-            psychologyService: psychologyService))
+            contentService: contentService))
         _compatibilityViewModel = StateObject(wrappedValue: CompatibilityViewModel(
-            psychologyService: psychologyService))
+            authService: authService,
+            contentService: contentService))
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
             authService: authService,
-            psychologyService: psychologyService))
+            contentService: contentService))
         _historyViewModel = StateObject(wrappedValue: HistoryViewModel(
             authService: authService,
-            psychologyService: psychologyService))
+            contentService: contentService))
     }
-
+    
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(value: .home, role: .none) {
                 HomeView(vm: homeViewModel,
-                         authService: authService,
-                         psychologyService: psychologyService) {
+                         authService: authService) {
                     selectedTab = .compatibility
                 } profileButton: {
                     selectedTab = .profile
@@ -91,6 +91,6 @@ fileprivate enum Tabs {
 }
 
 #Preview {
-    MainTabView(authService: AuthService(), psychologyService: PsychologyService())
+    MainTabView(authService: AuthService(),
+                contentService: ContentService())
 }
-

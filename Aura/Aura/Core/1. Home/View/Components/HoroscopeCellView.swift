@@ -16,10 +16,11 @@ struct HoroscopeCellView: View {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 18) {
                     Text(horoscope.type.icon)
-                        .font(.title2)
+                        .font(Components.isRegular(.title3, .title2))
                     
                     VStack(alignment: .leading, spacing: 5) {
                         Text(horoscope.type.rawValue)
+                            .font(Components.isRegular(.callout, .default))
                             .fontWeight(.semibold)
                         
                         Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, false)
@@ -29,7 +30,7 @@ struct HoroscopeCellView: View {
                 Text("""
                      "\(horoscope.description)"
                      """)
-                .font(.system(size: 15))
+                .font(Components.isRegular(.footnote, .callout))
                 .italic()
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
@@ -40,13 +41,13 @@ struct HoroscopeCellView: View {
             .padding(22)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.lightBlue)
-            .clipShape(RoundedRectangle(cornerRadius: 15))
-            .overlay(RoundedRectangle(cornerRadius: 15) .stroke(Color(.systemGray6), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12) .stroke(Color(.systemGray6), lineWidth: 1))
         }
     }
 }
 
-enum HoroscopeType: String, CaseIterable, Decodable {
+enum HoroscopeType: String, CaseIterable, Codable {
     case aries = "Овен"
     case taurus = "Телец"
     case gemini = "Близнецы"

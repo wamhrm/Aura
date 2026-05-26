@@ -16,48 +16,61 @@ struct SignedOutView: View {
         ZStack {
             Components.backgroundColor()
             
-            VStack(spacing: 100) {
-                VStack(spacing: 15) {
-                    Components.logoImage(65)
-                    
-                    Text("Добро пожаловать")
-                        .fontDesign(.monospaced)
-                        .bold()
-                }
-                
-                VStack(spacing: 15) {
-                    SignedOutButtonView(type: .signIn) {
-                        withAnimation(.spring) {
-                            showSignIn.toggle()
-                        }
+            if vm.isServerWakingUp {
+                Components.isServerWakingUpView(vm.isServerWakingUp)
+            } else {
+                VStack(spacing: 100) {
+                    VStack(spacing: 15) {
+                        Components.logoImage(65)
+                        
+                        Text("Добро пожаловать")
+                            .fontDesign(.monospaced)
+                            .bold()
                     }
                     
-                    SignedOutButtonView(type: .createAccout) {
-                        withAnimation(.spring) {
-                            showCreateAccount.toggle()
+                    VStack(spacing: 15) {
+                        SignInCreateAccountButtonView(type: .signIn, isSignedOut: true) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                showSignIn.toggle()
+                            }
+                        }
+                        
+                        SignInCreateAccountButtonView(type: .createAccount, isSignedOut: true) {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                showCreateAccount.toggle()
+                            }
                         }
                     }
+                    .padding(.bottom, 165)
                 }
-                .padding(.bottom, 165)
+                .padding(.horizontal)
+                .overlay {
+                    overlayView()
+                }
             }
-            .padding(.horizontal)
-            .overlay {
-                if showSignIn {
-                    SignInCreateAccountView(vm: vm, type: .signIn,
-                                            showSignInCreate: $showSignIn) {
-                        withAnimation(.spring) {
-                            showSignIn = false
-                            showCreateAccount = true
-                        }
-                    }
-                } else if showCreateAccount {
-                    SignInCreateAccountView(vm: vm, type: .createAccount,
-                                            showSignInCreate: $showCreateAccount) {
-                        withAnimation(.spring) {
-                            showCreateAccount = false
-                            showSignIn = true
-                        }
-                    }
+        }
+    }
+}
+
+extension SignedOutView {
+    @ViewBuilder
+    private func overlayView() -> some View {
+        if showSignIn {
+            SignInCreateAccountView(vm: vm, type: .signIn,
+                                    showSignInCreate: $showSignIn) {
+                withAnimation(.spring) {
+                    showSignIn = false
+                    showCreateAccount = true
+                    vm.clearTextFields()
+                }
+            }
+        } else if showCreateAccount {
+            SignInCreateAccountView(vm: vm, type: .createAccount,
+                                    showSignInCreate: $showCreateAccount) {
+                withAnimation(.spring) {
+                    showCreateAccount = false
+                    showSignIn = true
+                    vm.clearTextFields()
                 }
             }
         }
@@ -65,5 +78,6 @@ struct SignedOutView: View {
 }
 
 #Preview {
-//    SignedOutView(vm: ProfileViewModel(authService: MockAuthService()))
+    SignedOutView(vm: ProfileViewModel(authService: AuthService(),
+                                       contentService: ContentService()))
 }

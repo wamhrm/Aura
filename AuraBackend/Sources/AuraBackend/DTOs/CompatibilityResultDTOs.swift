@@ -96,7 +96,7 @@ enum CompatibilityTests: String, CaseIterable {
     }
 
     private static func from(title: String) -> CompatibilityTests? {
-        allCases.first { $0.title == title }
+        return allCases.first { $0.title == title }
     }
 
     static func from(titles: [String]) -> [CompatibilityTests]? {

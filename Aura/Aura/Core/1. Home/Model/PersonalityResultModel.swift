@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PersonalityResultModel: Decodable, Hashable {
+struct PersonalityResultModel: Codable, Hashable {
     let name: String
     let zodiacSign: String
     let selectedTests: [PersonalityTestTypes]
@@ -18,23 +18,23 @@ struct PersonalityResultModel: Decodable, Hashable {
     let sections: [PersonalitySection]
 }
 
-struct PersonalityOverview: Decodable, Hashable {
+struct PersonalityOverview: Codable, Hashable {
     let title: String
     let description: String
 }
 
-struct PersonalityEmotionalBar: Decodable, Hashable {
+struct PersonalityEmotionalBar: Codable, Hashable {
     let title: EmotionalProfileTypes
     let value: Int
 }
 
-struct PersonalitySection: Hashable, Decodable {
+struct PersonalitySection: Hashable, Codable {
     let selectedTest: PersonalityTestTypes
     let description: String
     let items: [PersonalitySectionItems]
 }
 
-struct PersonalitySectionItems: Hashable, Decodable {
+struct PersonalitySectionItems: Hashable, Codable {
     let title: PersonalityCellTypes
     let description: String
 }

@@ -18,14 +18,14 @@ struct SettingsSheetThemesButtonView: View {
                 Image(systemName: type.icon)
                 
                 Text(type.rawValue)
-                    .font(.callout)
             }
-            .padding(.vertical, 15)
+            .padding(.vertical, 13)
+            .font(Components.isRegular(.footnote, .callout))
             .frame(maxWidth: .infinity)
             .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
             .foregroundStyle(isSelected ? .blue : .primary)
-            .clipShape(RoundedRectangle(cornerRadius: 15))
-            .overlay(RoundedRectangle(cornerRadius: 15)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10)
                 .stroke(isSelected ? Color.blue : Color.gray.opacity(0.25), lineWidth: 1))
         }
     }
@@ -49,4 +49,5 @@ enum SettingsSheetThemesButtonTypes: String {
     SettingsSheetThemesButtonView(type: .bright, isSelected: false) {
         
     }
+    .padding(.horizontal)
 }

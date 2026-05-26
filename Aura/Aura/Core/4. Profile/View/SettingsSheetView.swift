@@ -8,34 +8,38 @@
 import SwiftUI
 
 struct SettingsSheetView: View {
+    @ObservedObject var vm: ProfileViewModel
+    let isSignedOut: Bool
     @State private var isLightTheme = true
     @State private var selectedAccent = 0
     @Environment(\.dismiss) private var dismiss
     let onUpdateInfo: () -> Void
     let onSignOut: () -> Void
-    
+
     let colors: [Color] = [.deepBlue, .softPurple, .red, .teal, .orange]
-    
+
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 30) {
                 VStack(alignment: .leading, spacing: 15) {
                     headerText("Оформление")
-                    
+
                     HStack(spacing: 15) {
-                        SettingsSheetThemesButtonView(type: .bright, isSelected: isLightTheme) {
+                        SettingsSheetThemesButtonView(type: .bright,
+                                                      isSelected: isLightTheme) {
                             isLightTheme = true
                         }
-                        
-                        SettingsSheetThemesButtonView(type: .dark, isSelected: !isLightTheme) {
+
+                        SettingsSheetThemesButtonView(type: .dark,
+                                                      isSelected: !isLightTheme) {
                             isLightTheme = false
                         }
                     }
                 }
-                
+
                 VStack(alignment: .leading, spacing: 15) {
                     headerText("Акцентный цвет")
-                    
+
                     HStack {
                         ForEach(0..<colors.count, id: \.self) { index in
                             SettingsAccentColorView(color: colors[index],
@@ -46,16 +50,17 @@ struct SettingsSheetView: View {
                         }
                     }
                 }
-                
-                VStack(spacing: 15) {
-                    customButton(.updateInfo) {
-                        onUpdateInfo()
-                        dismiss()
-                    }
-                    
-                    customButton(.signOut) {
-                        onSignOut()
-                        dismiss()
+
+                if !isSignedOut {
+                    VStack(spacing: 15) {
+                        customButton(.updateInfo) {
+                            onUpdateInfo()
+                            dismiss()
+                        }
+
+                        customButton(.signOut) {
+                            vm.showAlert.toggle()
+                        }
                     }
                 }
             }
@@ -63,22 +68,68 @@ struct SettingsSheetView: View {
             .navigationTitle("Настройки")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(role: .cancel) {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
-                }
+                toolbarItem()
+            }
+            .alert("Выйти из аккаунта?", isPresented: $vm.showAlert) {
+                alertView()
             }
         }
+    }
+}
+
+extension SettingsSheetView {
+    private func headerText(_ title: String) -> some View {
+        Text(title)
+            .font(Components.isRegular(.footnote, .callout))
+            .foregroundStyle(.secondary)
+    }
+
+    private func customButton(_ type: SettingsSheetButtonType, _ completion: @escaping () -> Void) -> some View {
+        Button {
+            completion()
+        } label: {
+            VStack(alignment: .center) {
+                Text(type.rawValue)
+                    .font(Components.isRegular(.footnote, .callout))
+                    .bold()
+                    .foregroundStyle(type.foregroundColor)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(type.backgroundColor)
+            .overlay {
+                RoundedRectangle(cornerRadius: 10) .stroke(type.stroke, lineWidth: 2)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private func toolbarItem() -> some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button(role: .cancel) {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func alertView() -> some View {
+        Button("Отмена", role: .cancel) {}
+        Button("Выйти", role: .destructive) {
+            onSignOut()
+            dismiss()
+        }
+        .disabled(vm.isLoading)
     }
 }
 
 enum SettingsSheetButtonType: String {
     case updateInfo = "Обновить информацию о себе"
     case signOut = "Выйти"
-    
+
     var backgroundColor: Color {
         switch self {
             case .updateInfo:
@@ -87,7 +138,7 @@ enum SettingsSheetButtonType: String {
                 .red.opacity(0.155)
         }
     }
-    
+
     var foregroundColor: Color {
         switch self {
             case .updateInfo:
@@ -96,7 +147,7 @@ enum SettingsSheetButtonType: String {
                 .red
         }
     }
-    
+
     var stroke: Color {
         switch self {
             case .updateInfo:
@@ -107,37 +158,11 @@ enum SettingsSheetButtonType: String {
     }
 }
 
-extension SettingsSheetView {
-    private func headerText(_ title: String) -> some View {
-        Text(title)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-    }
-    
-    private func customButton(_ type: SettingsSheetButtonType, _ completion: @escaping () -> Void) -> some View {
-        Button {
-            completion()
-        } label: {
-            VStack(alignment: .center) {
-                Text(type.rawValue)
-                    .bold()
-                    .foregroundStyle(type.foregroundColor)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .center)
-            .background(type.backgroundColor)
-            .overlay {
-                RoundedRectangle(cornerRadius: 15) .stroke(type.stroke, lineWidth: 2)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 15))
-        }
-    }
-}
-
 #Preview {
-    SettingsSheetView {
-        
+    SettingsSheetView(vm: ProfileViewModel(authService: AuthService(),
+                                           contentService: ContentService()), isSignedOut: false) {
+
     } onSignOut: {
-        
+
     }
 }

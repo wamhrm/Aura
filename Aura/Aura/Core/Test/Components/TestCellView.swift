@@ -36,16 +36,16 @@ struct TestCellView<Test: TestCellDisplayable>: View {
         Button(action: onTapHandler) {
             HStack(spacing: 15) {
                 HStack(spacing: 15) {
-                    Components.testCellImage(type.icon, type.color, .title2, 45, false)
+                    Components.testCellImage(type.icon, type.color, .title2, Components.isRegular(43, 45), false)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(type.title)
-                            .font(.callout)
+                            .font(Components.isRegular(.system(size: 13), .system(size: 15)))
                             .fontWeight(.semibold)
                             .multilineTextAlignment(.leading)
 
                         Text(type.description)
-                            .font(.footnote)
+                            .font(Components.isRegular(.system(size: 12), .system(size: 14)))
                             .fontWeight(.medium)
                             .foregroundStyle(.deepGray)
                             .multilineTextAlignment(.leading)
@@ -71,7 +71,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, true)
+        .backgroundWithShape(12, .white, true)
         .foregroundStyle(.black)
     }
 }
