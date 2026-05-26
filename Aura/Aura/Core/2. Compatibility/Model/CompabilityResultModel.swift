@@ -17,7 +17,7 @@ struct CompatibilityTestRequest: Encodable {
     let selectedTests: [String]
 }
 
-struct CompabilityResultModel: Decodable, Hashable {
+struct CompabilityResultModel: Codable, Hashable {
     let userName: String
     let userZodiacSign: String
     let partnerName: String
@@ -30,30 +30,38 @@ struct CompabilityResultModel: Decodable, Hashable {
     let emotionalBar: [CompatibilityEmotionalBar]
     let sections: [CompatibilitySection]
     let forecast: CompatibilityForecast
+    
+    var userNameCapitalized: String {
+        return userName.capitalized
+    }
+    
+    var partnerNameCapitalized: String {
+        return partnerName.capitalized
+    }
 }
 
-struct CompatibilityOverview: Decodable, Hashable {
+struct CompatibilityOverview: Codable, Hashable {
     let title: String
     let description: String
 }
 
-struct CompatibilityEmotionalBar: Decodable, Hashable {
+struct CompatibilityEmotionalBar: Codable, Hashable {
     let title: EmotionalProfileTypes
     let value: Int
 }
 
-struct CompatibilitySection: Decodable, Hashable {
+struct CompatibilitySection: Codable, Hashable {
     let selectedTest: CompatibilityTestTypes
     let description: String
     let items: [CompatibilitySectionItem]
 }
 
-struct CompatibilitySectionItem: Decodable, Hashable {
+struct CompatibilitySectionItem: Codable, Hashable {
     let title: CompatibilityCellTypes
     let description: String
 }
 
-struct CompatibilityForecast: Decodable, Hashable {
+struct CompatibilityForecast: Codable, Hashable {
     let recognitionTitle: String
     let recognitionDescription: String
     let potentialTitle: String
@@ -72,35 +80,25 @@ extension CompabilityResultModel {
         subtitle: "Вы ищете близость. Они защищают дистанцию.",
         overview: CompatibilityOverview(
             title: "Основная динамика",
-            description: "Между вами нет хаоса ради эмоций — связь строится на ощущении надёжности, уважения и внутреннего спокойствия."
-        ),
+            description: "Между вами нет хаоса ради эмоций — связь строится на ощущении надёжности, уважения и внутреннего спокойствия."),
         emotionalBar: [
             CompatibilityEmotionalBar(title: .emotionalResonance, value: 3),
             CompatibilityEmotionalBar(title: .innerOpenness, value: 7),
             CompatibilityEmotionalBar(title: .soulAlignment, value: 5),
-            CompatibilityEmotionalBar(title: .emotionalWarmth, value: 9)
-        ],
+            CompatibilityEmotionalBar(title: .emotionalWarmth, value: 9)],
         sections: [
             CompatibilitySection(
                 selectedTest: .behavioralPatterns,
                 description: "Вы оба замечаете изменения в настроении партнёра раньше, чем он сам успевает об этом сказать.",
-                items: [
+                items: [CompatibilitySectionItem(
+                    title: .dominanceDynamics,
+                    description: "В отношениях нет явного лидера — влияние постоянно переходит от одного к другому."),
                     CompatibilitySectionItem(
-                        title: .dominanceDynamics,
-                        description: "В отношениях нет явного лидера — влияние постоянно переходит от одного к другому."
-                    ),
-                    CompatibilitySectionItem(
-                        title: .emotionalResonance,
-                        description: "Вы быстро считываете эмоциональное состояние друг друга даже в тишине."
-                    )
-                ]
-            )
-        ],
-        forecast: CompatibilityForecast(
-            recognitionTitle: "Редкое узнавание",
-            recognitionDescription: "С самого начала возникло ощущение, будто вы уже давно знакомы друг с другом.",
-            potentialTitle: "Стабильный союз",
-            potentialDescription: "У этой связи высокий потенциал для долгих отношений без эмоциональных качелей."
-        )
-    )
+                    title: .emotionalResonance,
+                    description: "Вы быстро считываете эмоциональное состояние друг друга даже в тишине.")])],
+                forecast: CompatibilityForecast(
+                    recognitionTitle: "Редкое узнавание",
+                    recognitionDescription: "С самого начала возникло ощущение, будто вы уже давно знакомы друг с другом.",
+                    potentialTitle: "Стабильный союз",
+                    potentialDescription: "У этой связи высокий потенциал для долгих отношений без эмоциональных качелей."))
 }

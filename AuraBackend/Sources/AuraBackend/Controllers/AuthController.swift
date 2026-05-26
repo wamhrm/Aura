@@ -66,7 +66,7 @@ struct AuthController: RouteCollection {
     }
 
     private func normalizedEmail(_ email: String) -> String {
-        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private func isValidEmail(_ email: String) -> Bool {

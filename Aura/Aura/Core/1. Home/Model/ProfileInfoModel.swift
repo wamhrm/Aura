@@ -31,16 +31,3 @@ struct ProfileInfoModel: Codable {
     }
 }
 
-enum ProfileInfoError: LocalizedError {
-    case invalidDateOfBirth
-    case incompleteProfileInfo
-
-    var errorDescription: String {
-        switch self {
-            case .invalidDateOfBirth:
-                return "Укажите дату рождения в формате ДД.ММ.ГГГГ"
-            case .incompleteProfileInfo:
-                return "Заполните все обязательные поля профиля"
-        }
-    }
-}

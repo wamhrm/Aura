@@ -7,12 +7,7 @@
 
 import Foundation
 
-enum HistoryTestKind: String, Decodable, Hashable {
-    case personality
-    case compatibility
-}
-
-struct HistoryCellModel: Decodable, Identifiable, Hashable {
+struct HistoryCellModel: Codable, Identifiable, Hashable {
     let id: UUID
     let kind: HistoryTestKind
     let createdAt: String
@@ -22,4 +17,35 @@ struct HistoryCellModel: Decodable, Identifiable, Hashable {
     let zodiacSign: String
     let personalityResult: PersonalityResultModel?
     let compatibilityResult: CompabilityResultModel?
+}
+
+enum HistoryTestKind: String, Codable, Hashable {
+    case personality
+    case compatibility
+}
+
+extension HistoryCellModel {
+    static let personalityPlaceholder = HistoryCellModel(
+        id: UUID(),
+        kind: .personality,
+        createdAt: "2026-05-19T12:00:00Z",
+        selectedTests: ["Астрология", "Стиль привязанности"],
+        archetypeTitle: PersonalityResultModel.mock.archetypeTitle,
+        archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
+        zodiacSign: PersonalityResultModel.mock.zodiacSign,
+        personalityResult: nil,
+        compatibilityResult: nil
+    )
+
+    static let compatibilityPlaceholder = HistoryCellModel(
+        id: UUID(),
+        kind: .compatibility,
+        createdAt: "2026-05-19T12:00:00Z",
+        selectedTests: ["Поведенческие паттерны"],
+        archetypeTitle: CompabilityResultModel.mock.title,
+        archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
+        zodiacSign: PersonalityResultModel.mock.zodiacSign,
+        personalityResult: nil,
+        compatibilityResult: CompabilityResultModel.mock
+    )
 }

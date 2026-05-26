@@ -24,8 +24,8 @@ struct PersonalityResultView: View {
                                     .background(.lightPurple)
                                     .clipShape(Circle())
                                 
-                                Text(result.name)
-                                    .font(.title2)
+                                Text(result.name.capitalized)
+                                    .font(Components.isRegular(.title3, .title2))
                                     .fontDesign(.rounded)
                                     .bold()
                             }
@@ -39,12 +39,12 @@ struct PersonalityResultView: View {
                                 }
                                 
                                 Text(result.archetypeTitle)
-                                    .font(.title3)
+                                    .font(Components.isRegular(.default, .system(size: 19)))
                                     .foregroundStyle(.blue)
                                     .fontWeight(.semibold)
                                 
                                 Text(result.archetypeSubtitle)
-                                    .font(.footnote)
+                                    .font(Components.isRegular(.footnote, .system(size: 15)))
                                     .foregroundStyle(.deepGray)
                                     .multilineTextAlignment(.center)
                                     .fontWeight(.medium)
@@ -56,7 +56,7 @@ struct PersonalityResultView: View {
                         
                         section(result.overview.title) {
                             Text(result.overview.description)
-                                .font(.callout)
+                                .font(Components.isRegular(.system(size: 14), .system(size: 16)))
                                 .foregroundStyle(.deepGray)
                         }
                         
@@ -72,7 +72,7 @@ struct PersonalityResultView: View {
                         ForEach(result.sections, id: \.self) { test in
                             section(test.selectedTest.rawValue) {
                                 Text(test.description)
-                                    .font(.callout)
+                                    .font(Components.isRegular(.system(size: 14), .system(size: 16)))
                                     .foregroundStyle(.deepGray)
                                 
                                 VStack(spacing: 15) {
@@ -90,10 +90,10 @@ struct PersonalityResultView: View {
                     }
                     .padding(.horizontal)
             }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("Результаты теста")
         .navigationBarTitleDisplayMode(.inline)
-        .bottomAreaPadding()
     }
 }
 
@@ -102,13 +102,14 @@ extension PersonalityResultView {
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
+                .font(Components.isRegular(.callout, .default))
                 .bold()
             
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .backgroundWithShape(15, true)
+        .backgroundWithShape(12, .white, true)
     }
 }
 

@@ -1,15 +1,14 @@
 //
-//  PersonalityService.swift
+//  ContentService.swift
 //  Aura
 //
-//  Created by ddorsat on 12.04.2026.
+//  Created by ddorsat on 26.05.2026.
 //
 
-
-import Foundation
 import Combine
+import Foundation
 
-protocol PsychologyServiceProtocol: AnyObject {
+protocol ContentServiceProtocol {
     var historyDidChange: PassthroughSubject<Void, Never> { get }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
@@ -17,17 +16,32 @@ protocol PsychologyServiceProtocol: AnyObject {
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
+    func fetchDailyInsight() async throws -> DailyContentModel
+    func fetchDailyTip() async throws -> DailyContentModel
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel
 }
 
-final class PsychologyService: ObservableObject, PsychologyServiceProtocol {
+final class ContentService: ObservableObject, ContentServiceProtocol {
     let historyDidChange = PassthroughSubject<Void, Never>()
+    
+    func fetchDailyInsight() async throws -> DailyContentModel {
+        try await NetworkService.fetchDailyInsight()
+    }
+
+    func fetchDailyTip() async throws -> DailyContentModel {
+        try await NetworkService.fetchDailyTip()
+    }
+
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel {
+        try await NetworkService.fetchCurrentHoroscope()
+    }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
         let result = try await NetworkService.makePersonalityTest(selectedTests: selectedTests)
         historyDidChange.send(())
         return result
     }
-    
+
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
         let result = try await NetworkService.makeCompatibilityTest(request)
         historyDidChange.send(())

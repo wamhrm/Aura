@@ -11,73 +11,60 @@ struct HistoryCellView: View {
     let cell: HistoryCellModel
 
     var body: some View {
-        VStack {
-            HStack(alignment: .top, spacing: 15) {
-                Text(cell.zodiacSign)
-                    .font(.title2)
-                    .padding(10)
-                    .background(LinearGradient(colors: [.softPurple, .idealPartnerType1], startPoint: .top, endPoint: .bottom))
-                    .overlay(Circle().stroke(.white, lineWidth: 2))
-                    .clipShape(Circle())
-                    .shadow(radius: 1)
-                    .padding(.top, 5)
+        HStack(spacing: 15) {
+            Text(cell.zodiacSign)
+                .font(.title2)
+                .padding(10)
+                .background(LinearGradient(colors: [.softPurple,
+                                                    .idealPartnerType1],
+                                           startPoint: .top,
+                                           endPoint: .bottom))
+                .overlay(Circle().stroke(.white, lineWidth: 2))
+                .clipShape(Circle())
+                .shadow(radius: 1)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    if cell.kind == .personality {
-                        HStack {
-                            Text(cell.archetypeTitle)
-                                .font(.callout)
-                                .bold()
+            VStack(alignment: .leading, spacing: 7) {
+                Text(titleText)
+                    .font(Components.isRegular(.footnote, .callout))
+                    .bold()
 
-                            Spacer()
-
-                            Text(formattedDate)
-                                .font(.footnote)
-                                .foregroundStyle(.deepGray)
-                                .fontWeight(.medium)
-                        }
-                        .lineLimit(2)
-
-                        Text(cell.archetypeSubtitle)
-                            .font(.footnote)
-                            .foregroundStyle(.deepGray)
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(3)
-                    } else {
-                        HStack {
-                            Text(cell.compatibilityResult?.partnerName ?? "")
-                                .font(.callout)
-                                .bold()
-                            
-                            Spacer()
-                            
-                            Text("\(cell.compatibilityResult?.compatibilityScore ?? 0)%")
-                                .font(.footnote)
-                                .foregroundStyle(.white)
-                                .bold()
-                                .padding(.vertical, 4)
-                                .padding(.horizontal, 8)
-                                .background(.softPurple.opacity(0.75))
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
-                        }
-                        .lineLimit(2)
-
-                        Text(cell.compatibilityResult?.subtitle ?? "")
-                            .font(.footnote)
-                            .foregroundStyle(.deepGray)
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(3)
-                    }
+                Text(cell.archetypeSubtitle)
+                    .font(Components.isRegular(.caption, .footnote))
+                    .foregroundStyle(.deepGray)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .topTrailing) {
+                if cell.kind == .compatibility {
+                    Text("\(cell.compatibilityResult?.compatibilityScore ?? 0)%")
+                        .font(Components.isRegular(.caption2, .caption))
+                        .foregroundStyle(.white)
+                        .bold()
+                        .padding(.vertical, 2)
+                        .padding(.horizontal, 6)
+                        .background(.softPurple.opacity(0.75))
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
-                .multilineTextAlignment(.leading)
             }
         }
-        .padding()
-        .backgroundWithShape(15, true)
+        .padding(.horizontal)
+        .frame(height: Components.isRegular(84, 88))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .backgroundWithShape(12, .white, true)
     }
 }
 
 extension HistoryCellView {
+    private var titleText: String {
+        switch cell.kind {
+            case .personality:
+                return cell.archetypeTitle
+            case .compatibility:
+                return cell.compatibilityResult?.partnerName ?? ""
+        }
+    }
+
     private var formattedDate: String {
         let parser = ISO8601DateFormatter()
         parser.formatOptions = [.withInternetDateTime]
@@ -91,13 +78,9 @@ extension HistoryCellView {
 }
 
 #Preview {
-    HistoryCellView(cell: HistoryCellModel(id: UUID(),
-                                           kind: .personality,
-                                           createdAt: "2026-05-19T12:00:00Z",
-                                           selectedTests: ["Астрология"],
-                                           archetypeTitle: "Интуитивный креатор",
-                                           archetypeSubtitle: "Вы стремитесь к глубине",
-                                           zodiacSign: "♒",
-                                           personalityResult: nil,
-                                           compatibilityResult: nil))
+    VStack {
+        HistoryCellView(cell: .personalityPlaceholder)
+        HistoryCellView(cell: .compatibilityPlaceholder)
+    }
+    .padding(.horizontal)
 }

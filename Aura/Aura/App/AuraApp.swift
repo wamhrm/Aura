@@ -10,12 +10,12 @@ import SwiftUI
 @main
 struct AuraApp: App {
     @StateObject private var authService = AuthService()
-    @StateObject private var psychologyService = PsychologyService()
+    @StateObject private var contentService = ContentService()
 
     var body: some Scene {
         WindowGroup {
             MainTabView(authService: authService,
-                        psychologyService: psychologyService)
+                        contentService: contentService)
         }
     }
 }

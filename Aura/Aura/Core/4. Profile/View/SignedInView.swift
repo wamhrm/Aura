@@ -11,6 +11,10 @@ struct SignedInView: View {
     @ObservedObject var vm: ProfileViewModel
     let user: UserModel
 
+    private var profileDisplay: ProfileDisplayModel {
+        vm.profileDisplay ?? .placeholder
+    }
+
     var body: some View {
         ZStack {
             Components.backgroundColor()
@@ -19,64 +23,64 @@ struct SignedInView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .center, spacing: 10) {
                         Text(user.name.prefix(2).uppercased())
-                            .font(.title)
+                            .font(Components.isRegular(.title3, .title2))
                             .foregroundStyle(.white)
                             .fontWeight(.heavy)
-                            .padding(25)
+                            .padding(22)
                             .background(LinearGradient(colors: [.purple,
                                                                 .pink.opacity(0.7)],
                                                        startPoint: .top,
                                                        endPoint: .bottom))
                             .clipShape(Circle())
 
-                        Text(user.name)
-                            .font(.title2)
+                        Text(user.nameCapitalized)
+                            .font(Components.isRegular(.title3, .title2))
                             .fontWeight(.bold)
 
-                        HStack(spacing: 10) {
+                        HStack(alignment: .center, spacing: 5) {
                             Text(user.dateOfBirth ?? "Дата рождения не указана")
 
-                            if let zodiacSign = vm.zodiacSignTitle {
+                            if let zodiacSign = profileDisplay.zodiacSignTitle {
                                 Text("·")
                                     .font(.title3)
                                     .bold()
-                                
+
                                 Text(zodiacSign)
                             }
                         }
-                        .font(.callout)
+                        .font(Components.isRegular(.footnote, .callout))
                         .foregroundStyle(.gray)
                         .fontWeight(.semibold)
                     }
                     .padding(22)
                     .frame(maxWidth: .infinity)
-                    .backgroundWithShape(15, true)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("СОВЕТ ДНЯ")
-                            .fontWeight(.heavy)
-
-                        Text("""
-                             "Работа, которую вы выполняете, тяжелая. Луна находится в транзите, что говорит о том, что сейчас время для внутреннего размышления, а не для внешних завоеваний"
-                             """)
-                        .font(.callout)
-                        .italic()
-                        .fontWeight(.medium)
-                    }
-                    .foregroundStyle(.white)
-                    .padding(20)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.deepBlue)
-                    .clipShape(RoundedRectangle(cornerRadius: 15))
+                    .backgroundWithShape(12, .white, true)
 
                     VStack(alignment: .leading, spacing: 15) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("СОВЕТ ДНЯ")
+                                .font(Components.isRegular(.callout, .default))
+                                .fontWeight(.heavy)
+
+                            Text(profileDisplay.dailyTip)
+                                .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+                                .fontWeight(.medium)
+                                .italic()
+                        }
+                        .foregroundStyle(.white)
+                        .padding(20)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.deepBlue)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
                         VStack(alignment: .leading, spacing: 15) {
                             Text("Лучшая совместимость")
+                                .font(Components.isRegular(.system(size: 15), .system(size: 17)))
                                 .foregroundStyle(.deepGray)
 
                             HStack(spacing: 10) {
                                 Text("♑️")
-                                    .font(.title2)
+                                    .font(Components.isRegular(.default, .title3))
                                     .padding(10)
                                     .background(Circle() .stroke(Color(.systemGray6), lineWidth: 5))
                                     .background(LinearGradient(colors: [.softPurple,                                      .lightPurple],
@@ -85,55 +89,58 @@ struct SignedInView: View {
                                     .clipShape(Circle())
 
                                 Text("Мария")
+                                    .font(Components.isRegular(.callout, .default))
                                     .fontWeight(.semibold)
 
                                 Spacer()
 
                                 Text("91%")
-                                    .font(.title2)
+                                    .font(Components.isRegular(.title3, .title2))
                                     .foregroundStyle(.deepBlue)
                                     .bold()
                             }
                         }
                         .padding(20)
-                        .backgroundWithShape(15, true)
-                        
+                        .backgroundWithShape(12, .white, true)
+
                         VStack(alignment: .leading, spacing: 10) {
                             Text("О вас")
+                                .font(Components.isRegular(.callout, .default))
                                 .bold()
 
-                            Text(vm.personalityOverview)
-                                .font(.callout)
+                            Text(profileDisplay.overview)
+                                .font(Components.isRegular(.footnote, .callout))
                                 .foregroundStyle(.deepGray)
 
                             VStack {
-                                TestResultCellView(test: PersonalityCellTypes.socialFilter, description: vm.personalitySocialFilter)
+                                TestResultCellView(test: PersonalityCellTypes.socialFilter, description: profileDisplay.socialFilter)
 
                                 Divider()
 
-                                TestResultCellView(test: PersonalityCellTypes.emotionalDepth, description: vm.personalityEmotionalDepth)
+                                TestResultCellView(test: PersonalityCellTypes.emotionalDepth, description: profileDisplay.emotionalDepth)
                             }
                             .testTopicsModifier()
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .backgroundWithShape(15, true)
+                        .backgroundWithShape(12, .white, true)
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Ваш психотип")
+                                .font(Components.isRegular(.callout, .default))
                                 .bold()
 
                             VStack(spacing: 15) {
-                                Components.emotionalProfileBar(.temperament, vm.personalityTemperament)
-                                Components.emotionalProfileBar(.thinking, vm.personalityThinking)
-                                Components.emotionalProfileBar(.organization, vm.personalityOrganization)
-                                Components.emotionalProfileBar(.relationships, vm.personalityRelationships)
+                                Components.emotionalProfileBar(.temperament, profileDisplay.temperament)
+                                Components.emotionalProfileBar(.thinking, profileDisplay.thinking)
+                                Components.emotionalProfileBar(.organization, profileDisplay.organization)
+                                Components.emotionalProfileBar(.relationships, profileDisplay.relationships)
                             }
                             .padding(.top, 5)
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .backgroundWithShape(15, true)
+                        .backgroundWithShape(12, .white, true)
                     }
                     .blur(radius: !vm.hasPersonalityTests ? 5 : 0)
                     .overlay {
@@ -146,11 +153,9 @@ struct SignedInView: View {
                 .padding(.horizontal)
             }
             .scrollIndicators(.hidden)
-            .navigationTitle("Профиль")
-            .navigationBarTitleDisplayMode(.inline)
-            .scrollContentBackground(.hidden)
-            .bottomAreaPadding()
         }
+        .navigationTitle("Профиль")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -165,7 +170,7 @@ extension SignedInView {
 #Preview {
     NavigationStack {
         SignedInView(vm: ProfileViewModel(authService: AuthService(),
-                                          psychologyService: PsychologyService()),
+                                          contentService: ContentService()),
                      user: .mock)
     }
 }

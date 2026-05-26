@@ -8,12 +8,13 @@
 import SwiftUI
 
 struct SignInCreateAccountTextFieldView: View {
-    let type: SignInCreateAccountTextFieldType
+    let type: SignInCreateAccountTextFieldTypes
     @Binding var field: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(type.rawValue)
+                .font(Components.isRegular(.footnote, .callout))
                 .foregroundStyle(.signInCreateAccountField)
                 .fontWeight(.semibold)
                 
@@ -26,16 +27,17 @@ struct SignInCreateAccountTextFieldView: View {
                         .keyboardType(type == .email ? .emailAddress : .default)
                 }
             }
+            .font(Components.isRegular(.footnote, .callout))
             .autocorrectionDisabled(type == .email || type == .password)
-            .padding(.vertical, 15)
-            .padding(.horizontal, 20)
+            .frame(height: 48)
+            .padding(.leading)
             .background(.signInCreateAccountFieldButton)
-            .clipShape(RoundedRectangle(cornerRadius: 15))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
 }
 
-enum SignInCreateAccountTextFieldType: String {
+enum SignInCreateAccountTextFieldTypes: String {
     case name = "Имя"
     case email = "Почта"
     case password = "Пароль"
@@ -55,4 +57,5 @@ enum SignInCreateAccountTextFieldType: String {
 
 #Preview {
     SignInCreateAccountTextFieldView(type: .email, field: .constant(""))
+        .padding(.horizontal)
 }

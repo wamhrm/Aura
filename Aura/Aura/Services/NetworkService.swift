@@ -7,32 +7,6 @@
 
 import Foundation
 
-enum NetworkError: LocalizedError {
-    case invalidURL
-    case invalidResponse
-    case decodingError
-    case unauthorized
-    case conflict
-    case notFound
-
-    var errorDescription: String? {
-        switch self {
-            case .invalidURL:
-                return "Некорректный URL"
-            case .invalidResponse:
-                return "Некорректный ответ от сервера"
-            case .decodingError:
-                return "Не удалось обработать ответ сервера"
-            case .unauthorized:
-                return "Неправильная почта или пароль"
-            case .conflict:
-                return "Пользователь уже зарегистрирован"
-            case .notFound:
-                return "Данные не найдены"
-        }
-    }
-}
-
 enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
@@ -64,6 +38,16 @@ struct NetworkService {
     static func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         let data = try await request(endpoint: "/horoscope/current", method: .get)
         return try decoder().decode(HoroscopeModel.self, from: data)
+    }
+
+    static func fetchDailyInsight() async throws -> DailyContentModel {
+        let data = try await request(endpoint: "/daily/insight", method: .get)
+        return try decoder().decode(DailyContentModel.self, from: data)
+    }
+
+    static func fetchDailyTip() async throws -> DailyContentModel {
+        let data = try await request(endpoint: "/daily/tip", method: .get)
+        return try decoder().decode(DailyContentModel.self, from: data)
     }
 
     static func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
@@ -105,7 +89,7 @@ struct NetworkService {
             urlRequest.httpBody = body
         }
 
-        if let tokenData = KeychainHelper.standard.read(path: tokenPath, key: tokenKey),
+        if let tokenData = KeychainHelper.standard.getToken(path: tokenPath, key: tokenKey),
            let token = String(data: tokenData, encoding: .utf8) {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -122,7 +106,7 @@ struct NetworkService {
             case 401:
                 throw NetworkError.unauthorized
             case 409:
-                throw NetworkError.conflict
+                throw NetworkError.userExists
             case 404:
                 throw NetworkError.notFound
             default:
@@ -156,4 +140,30 @@ private struct AuthSignUpBody: Encodable {
 private struct AuthSignInBody: Encodable {
     let email: String
     let password: String
+}
+
+enum NetworkError: LocalizedError {
+    case invalidURL
+    case invalidResponse
+    case decodingError
+    case unauthorized
+    case userExists
+    case notFound
+
+    var errorDescription: String? {
+        switch self {
+            case .invalidURL:
+                return "Некорректный URL"
+            case .invalidResponse:
+                return "Некорректный ответ от сервера"
+            case .decodingError:
+                return "Не удалось обработать ответ сервера"
+            case .unauthorized:
+                return "Неправильная почта или пароль"
+            case .userExists:
+                return "Пользователь уже зарегистрирован"
+            case .notFound:
+                return "Пользователь не найден"
+        }
+    }
 }
