@@ -34,6 +34,8 @@ final class ProfileViewModel: ObservableObject {
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
 
+    private var compatibilityHistory: [HistoryCellModel] = []
+
     let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
 
@@ -78,6 +80,8 @@ final class ProfileViewModel: ObservableObject {
                     personalityResult = nil
                 }
 
+                compatibilityHistory = UserDefaultsHelper.getLocalHistory(for: user.id) ?? []
+
                 if user.hasCompletedProfileInfo {
                     dailyTip = UserDefaultsHelper.getLocalDailyTip(for: user.id)
                 } else {
@@ -86,25 +90,42 @@ final class ProfileViewModel: ObservableObject {
                 }
 
                 updateProfileDisplay()
-                withAnimation(.easeInOut(duration: 0.25)) { authState = .signedIn(user) }
                 isSignedOut = false
 
-                Task {
-                    if user.hasCompletedProfileInfo {
-                        await loadDailyTip(for: user.id, showErrorOnFailure: false)
+                if isLoading {
+                    Task {
+                        if user.hasCompletedProfileInfo {
+                            await loadDailyTip(for: user.id, showErrorOnFailure: false)
+                        }
+                        await loadPersonality(for: user.id, ignoreCache: true)
+                        try? await Task.sleep(for: .seconds(1.5))
+
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            authState = .signedIn(user)
+                        }
                     }
-                    await loadPersonality(for: user.id, ignoreCache: true)
+                } else {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        authState = .signedIn(user)
+                    }
+
+                    Task {
+                        if user.hasCompletedProfileInfo {
+                            await loadDailyTip(for: user.id, showErrorOnFailure: false)
+                        }
+                        await loadPersonality(for: user.id, ignoreCache: true)
+                    }
                 }
             case .signedOut:
                 withAnimation(.easeInOut(duration: 0.25)) { authState = .signedOut }
-                profileRoutes = []
-            
+
                 Task {
-                    try? await Task.sleep(for: .seconds(1))
+                    try? await Task.sleep(for: .seconds(1.5))
                     hasPersonalityTests = false
                     personalityResult = nil
                     dailyTip = nil
                     profileDisplay = nil
+                    compatibilityHistory = []
                     isSignedOut = true
                 }
         }
@@ -131,6 +152,10 @@ final class ProfileViewModel: ObservableObject {
 
         do {
             let history = try await contentService.fetchHistory()
+            compatibilityHistory = history
+            UserDefaultsHelper.saveHistoryLocally(history, for: userId)
+            updateProfileDisplay()
+
             guard let latest = history.first(where: { $0.kind == .personality }) else {
                 return clearPersonality(for: userId)
             }
@@ -162,25 +187,23 @@ final class ProfileViewModel: ObservableObject {
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(7))
-                
+                try await Task.sleep(for: .seconds(8))
+
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
                 }
             }
-            
+
             defer { loadedTask.cancel() }
-            
+
             do {
                 try await authService.createAccount(name: name, email: email, password: password)
-                loadedTask.cancel()
-                profileRoutes = []
             } catch {
                 showError(error.localizedDescription)
             }
 
             withAnimation { isServerWakingUp = false }
-            try? await Task.sleep(for: .seconds(1.5))
+            try? await Task.sleep(for: .seconds(2))
             isLoading = false
         }
     }
@@ -199,24 +222,23 @@ final class ProfileViewModel: ObservableObject {
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(7))
-                
+                try await Task.sleep(for: .seconds(8))
+
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
                 }
             }
-            
+
             defer { loadedTask.cancel() }
-            
+
             do {
                 try await authService.signIn(email: email, password: password)
-                profileRoutes = []
             } catch {
                 showError(error.localizedDescription)
             }
 
             withAnimation { isServerWakingUp = false }
-            try? await Task.sleep(for: .seconds(1.5))
+            try? await Task.sleep(for: .seconds(2))
             isLoading = false
         }
     }
@@ -231,11 +253,13 @@ final class ProfileViewModel: ObservableObject {
         email = ""
         password = ""
     }
-    
+
     private func updateProfileDisplay() {
-        profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult, dailyTip: dailyTip)
+        profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult,
+                                                  dailyTip: dailyTip,
+                                                  history: compatibilityHistory)
     }
-    
+
     private func applyPersonality(result: PersonalityResultModel) {
         personalityResult = result
         hasPersonalityTests = true

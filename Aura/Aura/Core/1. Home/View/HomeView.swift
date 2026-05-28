@@ -33,7 +33,7 @@ struct HomeView: View {
                     ProgressView()
                 } else {
                     if vm.isServerWakingUp {
-                        Components.isServerWakingUpView(vm.isServerWakingUp)
+                        Components.serverWakingUpView(vm.isServerWakingUp)
                     } else {
                         ScrollView {
                             VStack(alignment: .leading, spacing: 15) {
@@ -140,6 +140,7 @@ struct HomeView: View {
                                     }
                                 }
                             }
+                            .disabled(vm.isLoading)
                             .padding(.horizontal)
                         }
                         .bottomAreaPadding()

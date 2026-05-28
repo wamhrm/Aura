@@ -7,6 +7,7 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 enum HistoryRoutes: Hashable {
     case personalityResult(PersonalityResultModel)
@@ -18,9 +19,10 @@ final class HistoryViewModel: ObservableObject {
     @Published var historyRoutes: [HistoryRoutes] = []
     @Published private(set) var historyCells: [HistoryCellModel] = []
 
+    @Published private(set) var isSignedIn = false
+    @Published private(set) var isServerWakingUp = false
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
-    @Published private(set) var isSignedIn = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -68,6 +70,7 @@ final class HistoryViewModel: ObservableObject {
             case .signedOut:
                 currentUserId = nil
                 isSignedIn = false
+                isServerWakingUp = false
                 historyCells = []
                 historyRoutes = []
         }
@@ -108,7 +111,19 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func openHistoryCellDetails(_ item: HistoryCellModel) {
+        guard !isServerWakingUp else { return }
+
         Task {
+            let loadedTask = Task {
+                try await Task.sleep(for: .seconds(20))
+
+                if !Task.isCancelled {
+                    withAnimation { isServerWakingUp = true }
+                }
+            }
+
+            defer { loadedTask.cancel() }
+
             do {
                 let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
 
@@ -129,6 +144,8 @@ final class HistoryViewModel: ObservableObject {
             } catch {
                 showAlert(message: "Не удалось открыть результат")
             }
+
+            withAnimation { isServerWakingUp = false }
         }
     }
 
