@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 extension UIDevice {
-    static var isProMax: Bool {
+    static var isPlus: Bool {
         guard let screen = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first?.screen

@@ -12,17 +12,17 @@ struct MainTabView: View {
     @StateObject private var compatibilityViewModel: CompatibilityViewModel
     @StateObject private var profileViewModel: ProfileViewModel
     @StateObject private var historyViewModel: HistoryViewModel
-    
+
     @State private var selectedTab: Tabs = .home
-    
+
     private let authService: AuthServiceProtocol
     private let contentService: ContentServiceProtocol
-    
+
     init(authService: AuthService,
          contentService: ContentService) {
         self.authService = authService
         self.contentService = contentService
-        
+
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(
             authService: authService,
             contentService: contentService))
@@ -36,7 +36,7 @@ struct MainTabView: View {
             authService: authService,
             contentService: contentService))
     }
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(value: .home, role: .none) {
@@ -69,6 +69,7 @@ struct MainTabView: View {
                 Image(systemName: Tabs.profile.icon)
             }
         }
+        .disabled(profileViewModel.isLoading)
         .tabBarMinimizeBehavior(.never)
     }
 }

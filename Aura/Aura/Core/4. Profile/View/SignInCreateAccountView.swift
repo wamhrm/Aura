@@ -9,38 +9,50 @@ import SwiftUI
 
 struct SignInCreateAccountView: View {
     @ObservedObject var vm: ProfileViewModel
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+
     let type: SignInCreateAccountType
     @Binding var showSignInCreate: Bool
-    var onTapHandler: () -> Void
+    private let onTapHandler: () -> Void
+
+    init(vm: ProfileViewModel,
+         type: SignInCreateAccountType,
+         showSignInCreate: Binding<Bool>,
+         onTapHandler: @escaping () -> Void) {
+        self.vm = vm
+        self.type = type
+        self._showSignInCreate = showSignInCreate
+        self.onTapHandler = onTapHandler
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 25) {
             HStack {
                 Text(type == .signIn ? "Войти" : "Создать аккаунт")
-                    .font(Components.isRegular(.title3, .title2))
+                    .font(Components.displaySize(.title3, .title2))
                     .fontWeight(.semibold)
 
                 Spacer()
 
                 Button {
-                    withAnimation(.easeIn(duration: 0.25)) {
+                    withAnimation(.easeInOut(duration: 0.25)) {
                         showSignInCreate.toggle()
                     }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(Components.isRegular(.callout, .default))
+                        .font(Components.displaySize(.callout, .default))
                         .fontWeight(.medium)
-                        .foregroundStyle(.deepBlue)
-                        .padding(Components.isRegular(8, 10))
-                        .background(Color(.systemGray6))
+                        .foregroundStyle(Components.handleAccentColor(accentColor))
+                        .padding(Components.displaySize(8, 10))
+                        .background(Color.fieldBackground)
                         .clipShape(Circle())
                 }
             }
 
             if type == .signIn {
                 VStack(spacing: 10) {
-                    SignInCreateAccountTextFieldView(type: .email, field: $vm.email)
-                    SignInCreateAccountTextFieldView(type: .password, field: $vm.password)
+                    textFieldView(type: .email, field: $vm.email)
+                    textFieldView(type: .password, field: $vm.password)
                     SignInCreateAccountButtonView(type: .signIn,
                                                   isSignedOut: false,
                                                   isLoading: vm.isLoading) {
@@ -50,9 +62,9 @@ struct SignInCreateAccountView: View {
                 }
             } else {
                 VStack(spacing: 10) {
-                    SignInCreateAccountTextFieldView(type: .name, field: $vm.name)
-                    SignInCreateAccountTextFieldView(type: .email, field: $vm.email)
-                    SignInCreateAccountTextFieldView(type: .password, field: $vm.password)
+                    textFieldView(type: .name, field: $vm.name)
+                    textFieldView(type: .email, field: $vm.email)
+                    textFieldView(type: .password, field: $vm.password)
                     SignInCreateAccountButtonView(type: .createAccount,
                                                   isSignedOut: false,
                                                   isLoading: vm.isLoading) {
@@ -74,35 +86,78 @@ struct SignInCreateAccountView: View {
             .foregroundStyle(.gray)
 
             VStack(spacing: 10) {
-                SignInCreateAccountButtonView(type: .google, isSignedOut: false) {
-
-                }
-
-                SignInCreateAccountButtonView(type: .apple, isSignedOut: false) {
-
-                }
+                SignInCreateAccountButtonView(type: .google, isSignedOut: false) {}
+                SignInCreateAccountButtonView(type: .apple, isSignedOut: false) {}
             }
 
             if type == .signIn {
-                SignInAlreadyHaveAccountView(type: .signIn) {
+                alreadyHaveAccountButtonsView(type: .signIn) {
                     onTapHandler()
                 }
             } else {
-                SignInAlreadyHaveAccountView(type: .alreadyHaveAccount) {
+                alreadyHaveAccountButtonsView(type: .alreadyHaveAccount) {
                     onTapHandler()
                 }
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: type == .signIn ? Components.isRegular(470, 490) : Components.isRegular(550, 570))
+        .frame(height: type == .signIn ? Components.displaySize(470, 490) : Components.displaySize(550, 570))
         .padding(25)
-        .background(RoundedRectangle(cornerRadius: 12) .fill(.white))
+        .background(RoundedRectangle(cornerRadius: 12) .fill(.cardBackground))
         .padding(.horizontal)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-            Button("ОК", role: .cancel) { }
-        }
+        .disabled(vm.isLoading)
+        .dismissKeyboardOnTap()
+        .scrollDismissesKeyboard(.interactively)
         .onDisappear {
             vm.clearTextFields()
+        }
+    }
+}
+
+extension SignInCreateAccountView {
+    private func alreadyHaveAccountButtonsView(type: AlreadyHaveAccountButtonTypes,
+                                               onTapHandler: @escaping () -> Void) -> some View {
+        Button(action: onTapHandler) {
+            HStack {
+                Spacer()
+
+                Text(type.rawValue)
+                    .foregroundStyle(.signInCreateAccountField)
+
+                Text(type.buttonTitle)
+                    .foregroundStyle(.blue)
+                    .bold()
+
+                Spacer()
+            }
+            .font(Components.displaySize(.footnote, .callout))
+        }
+    }
+
+    private func textFieldView(type: TextFieldTypes,
+                               field: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: Components.displaySize(5, 6)) {
+            Text(type.rawValue)
+                .font(Components.displaySize(.footnote, .callout))
+                .foregroundStyle(.signInCreateAccountField)
+                .fontWeight(.semibold)
+
+            Group {
+                if type == .password {
+                    SecureField(type.textField, text: field)
+                        .textInputAutocapitalization(.never)
+                } else {
+                    TextField(type.textField, text: field)
+                        .keyboardType(type == .email ? .emailAddress : .default)
+                        .textInputAutocapitalization(type == .email ? .never : .words)
+                }
+            }
+            .font(Components.displaySize(.footnote, .callout))
+            .frame(height: 48)
+            .padding(.leading)
+            .background(.signInCreateAccountFieldButton)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .autocorrectionDisabled(type == .email || type == .password)
         }
     }
 }
@@ -110,6 +165,37 @@ struct SignInCreateAccountView: View {
 enum SignInCreateAccountType: String {
     case signIn = "Войти"
     case createAccount = "Создать аккаунт"
+}
+
+fileprivate enum AlreadyHaveAccountButtonTypes: String {
+    case signIn = "Нет аккаунта?"
+    case alreadyHaveAccount = "Уже есть аккаунт?"
+
+    var buttonTitle: String {
+        switch self {
+            case .signIn:
+                return "Создать аккаунт"
+            case .alreadyHaveAccount:
+                return "Войти"
+        }
+    }
+}
+
+fileprivate enum TextFieldTypes: String {
+    case name = "Имя"
+    case email = "Почта"
+    case password = "Пароль"
+
+    var textField: String {
+        switch self {
+            case .name:
+                return "Введите ваше имя"
+            case .email:
+                return "Введите вашу почту"
+            case .password:
+                return "Введите ваш пароль"
+        }
+    }
 }
 
 #Preview {

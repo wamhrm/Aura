@@ -11,16 +11,16 @@ struct CompatibilityTextFieldView: View {
     let title: String
     @Binding var text: String
     let type: InputFieldType
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             TextField(title, text: $text)
-                .font(Components.isRegular(.footnote, .callout))
+                .font(Components.displaySize(.footnote, .system(size: 14)))
                 .foregroundStyle(.gray)
                 .fontWeight(.medium)
-                .frame(height: 50)
+                .frame(height: Components.displaySize(46, 48))
                 .padding(.leading)
-                .background(Color(.systemGray6))
+                .background(Color.fieldBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .keyboardType(keyboardType)
                 .onChange(of: text) { _, newValue in
@@ -37,16 +37,16 @@ extension CompatibilityTextFieldView {
             default: return .default
         }
     }
-    
+
     private func handleInputChange(_ newValue: String) {
         switch type {
             case .name(let max):
                 let filtered = newValue.filter { $0.isLetter || $0.isWhitespace }
                 text = String(filtered.prefix(max))
-                
+
             case .age(let max):
                 let filtered = newValue.filter { $0.isNumber }
-            
+
                 if let age = Int(filtered), age > max {
                     text = String(max)
                 } else {

@@ -15,24 +15,25 @@ struct HoroscopeDetailsCellView: View {
         VStack(alignment: .leading, spacing: 13) {
             HStack(alignment: .center, spacing: 15) {
                 Image(systemName: type.icon)
-                    .font(Components.isRegular(.title3, .title2))
+                    .font(Components.displaySize(.title3, .title2))
                     .foregroundStyle(Color(type.color))
                     .padding(10)
-                    .frame(width: Components.isRegular(35, 35), height: Components.isRegular(35, 35))
+                    .frame(width: Components.displaySize(35, 35),
+                           height: Components.displaySize(35, 35))
                     .background(RoundedRectangle(cornerRadius: 8) .fill(Color(type.color).opacity(0.2)))
                 
                 Text(type.rawValue)
-                    .font(Components.isRegular(.callout, .default))
+                    .font(Components.displaySize(.callout, .default))
                     .bold()
             }
         
             Text(description)
-                .font(Components.isRegular(.system(size: 14), .callout))
+                .font(.system(size: Components.displaySize(14, 15)))
                 .foregroundStyle(.deepGray)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, .white, true)
+        .backgroundWithShape(12, .cardBackground, true)
         .shadow(color: Color(type.color).opacity(0.15), radius: 2)
     }
 }

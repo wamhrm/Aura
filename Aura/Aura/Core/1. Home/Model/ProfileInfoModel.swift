@@ -22,12 +22,12 @@ struct ProfileInfoModel: Codable {
     init(user: UserModel) {
         self.dateOfBirth = user.dateOfBirth ?? ""
         self.birthTime = user.birthTime ?? ""
-        self.gender = user.gender
-        self.socialType = user.socialType
-        self.conflictStyle = user.conflictStyle
-        self.emotionalCore = user.emotionalCore
-        self.decisionStyle = user.decisionStyle
-        self.coreFocus = user.coreFocus
+        self.gender = ProfileInfoOption.normalizedKey(user.gender)
+        self.socialType = ProfileInfoOption.normalizedKey(user.socialType)
+        self.conflictStyle = ProfileInfoOption.normalizedKey(user.conflictStyle)
+        self.emotionalCore = ProfileInfoOption.normalizedKey(user.emotionalCore)
+        self.decisionStyle = ProfileInfoOption.normalizedKey(user.decisionStyle)
+        self.coreFocus = ProfileInfoOption.normalizedKey(user.coreFocus)
     }
 }
 
