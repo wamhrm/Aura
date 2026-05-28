@@ -53,17 +53,17 @@ extension PersonalityResultModel {
                        PersonalityEmotionalBar(title: .organization, value: 6),
                        PersonalityEmotionalBar(title: .relationships, value: 4)],
         sections: [PersonalitySection(
+            selectedTest: .astrology,
+            description: "Ваш знак задаёт глубину чувствительности и способ воспринимать близость.",
+            items: [PersonalitySectionItems(title: .natalChart,
+                                            description: "В натальной карте сильны интуиция и потребность в смысле."),
+                    PersonalitySectionItems(title: .planetaryAspects,
+                                            description: "Планетарные акценты усиливают внутренние перепады настроения.")]),
+                   PersonalitySection(
             selectedTest: .attachmentStyle,
             description: "Вы стремитесь к надёжной связи, но сохраняете личное пространство.",
             items: [PersonalitySectionItems(title: .autonomyNeed,
                                             description: "Вам важно чувствовать эмоциональную вовлечённость партнёра."),
-                    PersonalitySectionItems(title: .energyDrain,
-                                            description: "Вы комфортно чувствуете себя, когда есть время на себя.")]),
-                   PersonalitySection(
-            selectedTest: .behavioralPatterns,
-            description: "Вы стремитесь к надёжной связи, но сохраняете личное пространство.",
-            items: [PersonalitySectionItems(title: .securityBase,
-                                            description: "Вам важно чувствовать эмоциональную вовлечённость партнёра."),
-                    PersonalitySectionItems(title: .intellectualMatch,
+                    PersonalitySectionItems(title: .securityBase,
                                             description: "Вы комфортно чувствуете себя, когда есть время на себя.")])])
 }

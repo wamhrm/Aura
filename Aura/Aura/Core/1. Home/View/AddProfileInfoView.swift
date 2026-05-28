@@ -15,7 +15,7 @@ struct AddProfileInfoView: View {
             Components.backgroundColor()
 
             if vm.isServerWakingUp {
-                Components.isServerWakingUpView(vm.isServerWakingUp)
+                Components.serverWakingUpView(vm.isServerWakingUp)
             } else {
                 ScrollView {
                     VStack(spacing: 16) {
@@ -83,6 +83,7 @@ struct AddProfileInfoView: View {
                         .padding(.top, 5)
                         .disabled(vm.isLoading)
                     }
+                    .disabled(vm.isLoading)
                     .padding(.horizontal)
                 }
                 .bottomAreaPadding()

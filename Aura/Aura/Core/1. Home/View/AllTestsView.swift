@@ -16,7 +16,7 @@ struct AllTestsView: View {
             Components.backgroundColor()
             
             if vm.isServerWakingUp {
-                Components.isServerWakingUpView(vm.isServerWakingUp)
+                Components.serverWakingUpView(vm.isServerWakingUp)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
@@ -37,6 +37,7 @@ struct AllTestsView: View {
                         .disabled(vm.isLoading)
                         .padding(.top, 10)
                     }
+                    .disabled(vm.isLoading)
                     .padding(.horizontal)
                 }
                 .scrollIndicators(.hidden)

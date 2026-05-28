@@ -17,7 +17,7 @@ struct SignedOutView: View {
             Components.backgroundColor()
             
             if vm.isServerWakingUp {
-                Components.isServerWakingUpView(vm.isServerWakingUp)
+                Components.serverWakingUpView(vm.isServerWakingUp)
             } else {
                 VStack(spacing: 100) {
                     VStack(spacing: 15) {
