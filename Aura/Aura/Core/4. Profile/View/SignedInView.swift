@@ -63,7 +63,7 @@ struct SignedInView: View {
                                 .fontWeight(.heavy)
 
                             Text(profileDisplay.dailyTip)
-                                .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+                                .font(Components.isRegular(.system(size: 14), .callout))
                                 .fontWeight(.medium)
                                 .italic()
                         }
@@ -75,32 +75,39 @@ struct SignedInView: View {
                         
                         VStack(alignment: .leading, spacing: 15) {
                             Text("Лучшая совместимость")
-                                .font(Components.isRegular(.system(size: 15), .system(size: 17)))
-                                .foregroundStyle(.deepGray)
+                                .font(Components.isRegular(.callout, .default))
+                                .bold()
 
-                            HStack(spacing: 10) {
-                                Text("♑️")
-                                    .font(Components.isRegular(.default, .title3))
-                                    .padding(10)
-                                    .background(Circle() .stroke(Color(.systemGray6), lineWidth: 5))
-                                    .background(LinearGradient(colors: [.softPurple,                                      .lightPurple],
-                                                               startPoint: .top,
-                                                               endPoint: .bottom))
-                                    .clipShape(Circle())
+                            if let best = profileDisplay.bestCompatibility {
+                                HStack(spacing: 10) {
+                                    Text(best.partnerZodiacSign)
+                                        .font(Components.isRegular(.system(size: 14), .callout))
+                                        .padding(10)
+                                        .background(Circle() .stroke(Color(.systemGray6), lineWidth: 5))
+                                        .background(LinearGradient(colors: [.softPurple,                                     .lightPurple],
+                                                                   startPoint: .top,
+                                                                   endPoint: .bottom))
+                                        .clipShape(Circle())
 
-                                Text("Мария")
-                                    .font(Components.isRegular(.callout, .default))
+                                    Text(best.partnerName)
+                                        .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+                                        .fontWeight(.semibold)
+
+                                    Spacer()
+
+                                    Text("\(best.score)%")
+                                        .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+                                        .foregroundStyle(.deepBlue)
+                                        .bold()
+                                }
+                            } else {
+                                Text("Нет пройденных тестов на совместимость")
+                                    .font(Components.isRegular(.system(size: 14), .callout))
                                     .fontWeight(.semibold)
-
-                                Spacer()
-
-                                Text("91%")
-                                    .font(Components.isRegular(.title3, .title2))
-                                    .foregroundStyle(.deepBlue)
-                                    .bold()
                             }
                         }
                         .padding(20)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .backgroundWithShape(12, .white, true)
 
                         VStack(alignment: .leading, spacing: 10) {

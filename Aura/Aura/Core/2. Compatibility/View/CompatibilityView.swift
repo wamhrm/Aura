@@ -16,7 +16,7 @@ struct CompatibilityView: View {
                 Components.backgroundColor()
 
                 if vm.isServerWakingUp {
-                    Components.isServerWakingUpView(vm.isServerWakingUp)
+                    Components.serverWakingUpView(vm.isServerWakingUp)
                 } else {
                     ScrollView {
                         VStack(spacing: 25) {
@@ -119,6 +119,7 @@ struct CompatibilityView: View {
                                 .padding(.top, 10)
                             }
                         }
+                        .disabled(vm.isLoading)
                         .padding(.horizontal)
                     }
                     .scrollIndicators(.hidden)

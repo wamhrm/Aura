@@ -17,11 +17,11 @@ enum CompatibilityRoutes: Hashable {
 @MainActor
 final class CompatibilityViewModel: ObservableObject {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
-    
+
     @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
     @Published var partnerInfo = PartnerInfoModel()
     @Published var compatibilityResult: CompabilityResultModel?
-    
+
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
     @Published private(set) var isLoading = false
@@ -48,7 +48,7 @@ final class CompatibilityViewModel: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 guard let self else { return }
-                
+
                 if case .signedOut = $0 {
                     compatibilityRoutes = []
                     compatibilityResult = nil
@@ -74,10 +74,10 @@ final class CompatibilityViewModel: ObservableObject {
         guard !isLoading else { return }
 
         isLoading = true
-        
+
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(7))
+                try await Task.sleep(for: .seconds(20))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
