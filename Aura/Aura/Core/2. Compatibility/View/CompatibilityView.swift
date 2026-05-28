@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CompatibilityView: View {
     @ObservedObject var vm: CompatibilityViewModel
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         NavigationStack(path: $vm.compatibilityRoutes) {
@@ -21,54 +22,56 @@ struct CompatibilityView: View {
                     ScrollView {
                         VStack(spacing: 25) {
                             headerView()
-                            
+
                             VStack(alignment: .leading, spacing: 25) {
                                 HStack(spacing: 10) {
                                     Image(systemName: "heart")
-                                        .font(Components.isRegular(.callout, .default))
-                                        .foregroundStyle(.deepBlue)
+                                        .font(Components.displaySize(.callout, .default))
+                                        .foregroundStyle(Components.handleAccentColor(accentColor))
                                         .fontWeight(.semibold)
-                                        .padding(Components.isRegular(7, 9))
+                                        .padding(Components.displaySize(7, 9))
                                         .background(.capsuleBackground)
                                         .clipShape(Circle())
-                                    
+
                                     Text("Детали партнера")
-                                        .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+                                        .font(Components.displaySize(.system(size: 15), .default))
                                         .bold()
-                                    
+
                                     Spacer()
                                 }
-                                
+
                                 VStack(alignment: .leading) {
                                     headerText("Имя *")
-                                    
+
                                     CompatibilityTextFieldView(title: "Введите имя",
                                                                text: $vm.partnerInfo.name,
                                                                type: .name(maxLength: 10))
                                 }
-                                
+
                                 VStack(alignment: .leading) {
                                     headerText("Пол *")
-                                    
+
                                     SelectionButtons<CompatibilityButtons.genderOptions> { button in
                                         vm.partnerInfo.gender = button.rawValue
                                     }
                                 }
-                                
+
                                 VStack(alignment: .leading) {
                                     headerText("Дата рождения")
-                                    
+
                                     SelectionButtons<CompatibilityButtons.birthOptions> { button in
                                         vm.partnerInfo.exactDateOfBirth = button == .exactDate
                                     }
                                     .padding(.bottom, 10)
-                                    
+
                                     if vm.partnerInfo.exactDateOfBirth {
                                         CompatibilityDateOfBirthView(
                                             title: "День/Месяц/Год",
                                             text: $vm.partnerInfo.dateOfBirth,
-                                            isTime: false)
-                                        
+                                            isTime: false) {
+                                                vm.showInvalidDateOfBirthday()
+                                            }
+
                                         CompatibilityDateOfBirthView(
                                             title: "Время (необязательно)",
                                             text: $vm.partnerInfo.birthTime,
@@ -81,26 +84,26 @@ struct CompatibilityView: View {
                                 }
                             }
                             .padding(20)
-                            .backgroundWithShape(12, .white, true)
-                            
+                            .backgroundWithShape(12, .cardBackground, true)
+
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack {
                                     Text("Выберите тесты")
                                         .fontWeight(.semibold)
                                         .padding(.leading, 4)
-                                    
+
                                     Spacer()
-                                    
+
                                     Button {
                                         vm.selectedTests = CompatibilityTestTypes.allCases
                                     } label: {
                                         Text("Выбрать все")
-                                            .foregroundStyle(.blue)
+                                            .foregroundStyle(Components.handleAccentColor(accentColor))
                                             .fontWeight(.medium)
                                     }
                                 }
-                                .font(Components.isRegular(.system(size: 15), .system(size: 17)))
-                                
+                                .font(Components.displaySize(.system(size: 15), .default))
+
                                 ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
                                     TestCellView(type: test,
                                                  hasChosenTest: Binding(
@@ -111,7 +114,7 @@ struct CompatibilityView: View {
                                                         vm.compatibilityRoutes.append(.testDetails(test))
                                                     }
                                 }
-                                
+
                                 Components.classicButton(vm.isLoading ? "Готовим результат..." : "Узнать совместимость") {
                                     vm.makeCompatibilityTest()
                                 }
@@ -123,14 +126,17 @@ struct CompatibilityView: View {
                         .padding(.horizontal)
                     }
                     .scrollIndicators(.hidden)
+                    .dismissKeyboardOnTap()
+                    .scrollDismissesKeyboard(.interactively)
                 }
             }
-            .bottomAreaPadding()
+            .bottomAreaPadding(50)
             .navigationTitle("Узнать совместимость")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: CompatibilityRoutes.self) { destination in
                 destinationView(destination)
             }
+            .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
             .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }
@@ -141,7 +147,7 @@ struct CompatibilityView: View {
 extension CompatibilityView {
     private func headerText(_ title: String) -> some View {
         Text(title)
-            .font(Components.isRegular(.footnote, .callout))
+            .font(Components.displaySize(.footnote, .system(size: 14)))
             .foregroundStyle(.deepGray)
             .fontWeight(.medium)
     }
@@ -149,7 +155,7 @@ extension CompatibilityView {
     private func headerView() -> some View {
         VStack(alignment: .center, spacing: 7) {
             Image(systemName: "heart")
-                .font(Components.isRegular(.title2, .title3))
+                .font(Components.displaySize(.title2, .title3))
                 .fontWeight(.semibold)
                 .foregroundStyle(.white)
                 .padding(15)
@@ -160,11 +166,11 @@ extension CompatibilityView {
                 .padding(.vertical, 12)
 
             Text("Анализ партнера")
-                .font(Components.isRegular(.default, .title3))
+                .font(Components.displaySize(.default, .title3))
                 .bold()
 
             Text("Введите информацию о партнере")
-                .font(Components.isRegular(.system(size: 14), .callout))
+                .font(Components.displaySize(.system(size: 14), .callout))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
         }
@@ -184,30 +190,32 @@ extension CompatibilityView {
                 }
         }
     }
-    
+
     private struct SelectionButtons<T: RawRepresentable & CaseIterable & Hashable>: View where T.RawValue == String {
         @State private var selected: T
+        @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+
         let onTapHandler: (T) -> Void
-        
+
         init(selected: T = T.allCases.first!, onTapHandler: @escaping (T) -> Void) {
             self._selected = State(initialValue: selected)
             self.onTapHandler = onTapHandler
         }
-        
+
         var body: some View {
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 ForEach(Array(T.allCases), id: \.self) { item in
                     Button {
                         selected = item
                         onTapHandler(item)
                     } label: {
                         Text(item.rawValue)
-                            .font(Components.isRegular(.footnote, .system(size: 15)))
+                            .font(Components.displaySize(.footnote, .system(size: 14)))
                             .foregroundStyle(selected == item ? .white : .deepGray)
                             .bold()
-                            .padding(.vertical, Components.isRegular(10, 12))
-                            .padding(.horizontal, Components.isRegular(20, 22))
-                            .background(selected == item ? .deepBlue : .clear)
+                            .padding(.vertical, Components.displaySize(10, 11))
+                            .padding(.horizontal, Components.displaySize(20, 21))
+                            .background(selected == item ? Components.handleAccentColor(accentColor) : .clear)
                             .overlay(RoundedRectangle(cornerRadius: 10) .stroke(.gray, lineWidth: 1))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
@@ -217,12 +225,12 @@ extension CompatibilityView {
     }
 }
 
-enum CompatibilityButtons {
+fileprivate enum CompatibilityButtons {
     enum genderOptions: String, CaseIterable {
         case male = "Мужской"
         case female = "Женский"
     }
-    
+
     enum birthOptions: String, CaseIterable {
         case exactDate = "Точная"
         case approximateDate = "Примерная"

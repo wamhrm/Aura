@@ -12,7 +12,9 @@ struct SignInCreateAccountButtonView: View {
     let isSignedOut: Bool
     let isLoading: Bool
     let onTapHandler: () -> Void
-    
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+
+
     init(type: SignInCreateAccountButtonTypes,
          isSignedOut: Bool,
          isLoading: Bool = false,
@@ -21,10 +23,6 @@ struct SignInCreateAccountButtonView: View {
         self.isSignedOut = isSignedOut
         self.isLoading = isLoading
         self.onTapHandler = onTapHandler
-    }
-    
-    private var buttonTitle: String {
-        return isLoading ? type.loadingTitle : type.rawValue
     }
     
     var body: some View {
@@ -43,16 +41,33 @@ struct SignInCreateAccountButtonView: View {
                 }
                 
                 Text(buttonTitle)
-                    .font(Components.isRegular(.system(size: 12), .system(size: 14)))
+                    .font(Components.displaySize(.caption, .system(size: 14)))
                     .foregroundStyle(isSignedOut ? (type == .signIn ? .white : .black) : type.foregroundColor)
                     .padding(.leading, type == .apple ? 3 : 0)
             }
             .bold()
             .padding()
             .frame(maxWidth: .infinity)
-            .background(isSignedOut && type == .createAccount ? .white : type.backgroundColor)
+            .background(isSignedOut && type == .createAccount ? .white : buttonBackgroundColor)
             .overlay(RoundedRectangle(cornerRadius: 10) .stroke(.black, lineWidth: type == .google ? 0.3 : 0.3))
             .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+}
+
+extension SignInCreateAccountButtonView {
+    private var buttonTitle: String {
+        return isLoading ? type.loadingTitle : type.rawValue
+    }
+
+    private var buttonBackgroundColor: Color {
+        switch type {
+            case .signIn, .createAccount:
+                return Components.handleAccentColor(accentColor)
+            case .apple:
+                return .black
+            case .google:
+                return .white
         }
     }
 }
@@ -71,17 +86,6 @@ enum SignInCreateAccountButtonTypes: String {
                 return "Создаем аккаунт..."
             case .apple, .google:
                 return rawValue
-        }
-    }
-    
-    var backgroundColor: Color {
-        switch self {
-            case .signIn, .createAccount:
-                return .deepBlue
-            case .apple:
-                return .black
-            case .google:
-                return .white
         }
     }
     

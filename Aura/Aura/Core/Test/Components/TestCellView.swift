@@ -21,6 +21,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
     @Binding var hasChosenTest: Bool
     let onSelectionToggle: () -> Void
     let onTapHandler: () -> Void
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     init(type: Test,
          hasChosenTest: Binding<Bool>,
@@ -36,16 +37,16 @@ struct TestCellView<Test: TestCellDisplayable>: View {
         Button(action: onTapHandler) {
             HStack(spacing: 15) {
                 HStack(spacing: 15) {
-                    Components.testCellImage(type.icon, type.color, .title2, Components.isRegular(43, 45), false)
+                    Components.testCellImage(type.icon, type.color, .title2, Components.displaySize(43, 45), false)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(type.title)
-                            .font(Components.isRegular(.system(size: 13), .system(size: 15)))
+                            .font(Components.displaySize(.footnote, .system(size: 14)))
                             .fontWeight(.semibold)
                             .multilineTextAlignment(.leading)
 
                         Text(type.description)
-                            .font(Components.isRegular(.system(size: 12), .system(size: 14)))
+                            .font(Components.displaySize(.caption, .footnote))
                             .fontWeight(.medium)
                             .foregroundStyle(.deepGray)
                             .multilineTextAlignment(.leading)
@@ -58,21 +59,23 @@ struct TestCellView<Test: TestCellDisplayable>: View {
                 onSelectionToggle()
             } label: {
                 Circle()
-                    .fill(hasChosenTest ? .blue : .clear)
-                    .frame(width: 25, height: 25)
-                    .overlay(Circle().stroke(Color(.systemGray6), lineWidth: 2))
+                    .fill(hasChosenTest ? Components.handleAccentColor(accentColor).opacity(0.85) : .clear)
+                    .frame(width: Components.displaySize(23, 25),
+                           height: Components.displaySize(23, 25))
+                    .overlay(Circle().stroke(Color.fieldBackground, lineWidth: 2))
                     .overlay {
                         Circle()
-                            .fill(.white)
-                            .frame(width: 10, height: 10)
+                            .fill(.cardBackground)
+                            .frame(width: Components.displaySize(8, 10),
+                                   height: Components.displaySize(8, 10))
                     }
                     .padding(.trailing, 5)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, .white, true)
-        .foregroundStyle(.black)
+        .backgroundWithShape(12, .cardBackground, true)
+        .foregroundStyle(.primaryText)
     }
 }
 

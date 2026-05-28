@@ -23,14 +23,14 @@ final class HomeViewModel: ObservableObject {
     @Published var homeRoutes: [HomeRoutes] = []
 
     @Published var profileInfo = ProfileInfoModel()
-    @Published var userName = ""
-    @Published var isSignedIn = false
+    @Published private(set) var userName = ""
+    @Published private(set) var isSignedIn = false
     @Published private(set) var hasProfileInfo = false
     @Published private(set) var horoscope: HoroscopeModel?
     @Published private(set) var dailyInsight: DailyContentModel?
 
     @Published var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
-    @Published var personalityResult: PersonalityResultModel?
+    @Published private(set) var personalityResult: PersonalityResultModel?
 
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
@@ -102,7 +102,7 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    func saveProfileInfo() {
+    func saveProfileInfo(onSuccess: @escaping () -> Void) {
         guard !isLoading else { return }
 
         isLoading = true
@@ -128,7 +128,7 @@ final class HomeViewModel: ObservableObject {
                 UserDefaultsHelper.saveHoroscopeLocally(response.horoscope, for: response.user.id)
                 await loadDailyInsight(for: response.user.id)
                 try await Task.sleep(for: .seconds(1.5))
-                homeRoutes = []
+                onSuccess()
             } catch {
                 showAlert(error.localizedDescription)
             }
@@ -228,7 +228,7 @@ final class HomeViewModel: ObservableObject {
     }
 }
 
-enum ProfileInfoError: LocalizedError {
+fileprivate enum ProfileInfoError: LocalizedError {
     case invalidDateOfBirth
     case incompleteProfileInfo
 

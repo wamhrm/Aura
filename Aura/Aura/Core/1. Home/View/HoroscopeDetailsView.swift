@@ -18,7 +18,7 @@ struct HoroscopeDetailsView: View {
                 VStack(spacing: 25) {
                     VStack(spacing: 12) {
                         Text(horoscope.type.icon)
-                            .font(.system(size: Components.isRegular(30, 32)))
+                            .font(.system(size: Components.displaySize(30, 32)))
                             .padding(.top, 8)
                             .padding(.vertical, 18)
                         
@@ -29,7 +29,7 @@ struct HoroscopeDetailsView: View {
                         
                         Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, true)
                             .padding(10)
-                            .background(Color(.systemGray6).opacity(0.45))
+                            .background(Color.fieldBackground.opacity(0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .padding(.vertical, 20)
@@ -42,13 +42,13 @@ struct HoroscopeDetailsView: View {
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text("На этой неделе")
-                            .font(Components.isRegular(.callout, .default))
+                            .font(Components.displaySize(.callout, .default))
                             .fontWeight(.semibold)
                         
                         Text("""
                             "\(horoscope.description)"
                             """)
-                            .font(Components.isRegular(.system(size: 14), .system(size: 16)))
+                            .font(.system(size: Components.displaySize(14, 15)))
                             .italic()
                             .foregroundStyle(.deepGray)
                             .fontWeight(.medium)
@@ -56,7 +56,7 @@ struct HoroscopeDetailsView: View {
                     .padding(23)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.appBackground)
-                    .backgroundWithShape(12, .white, true)
+                    .backgroundWithShape(12, .cardBackground, true)
                     
                     VStack(spacing: 12) {
                         HStack {
@@ -70,13 +70,14 @@ struct HoroscopeDetailsView: View {
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
-                        .font(Components.isRegular(.callout, .default))
+                        .font(Components.displaySize(.system(size: 15), .default))
                         
                         ForEach(horoscope.items, id: \.self) { item in
                             HoroscopeDetailsCellView(type: item.title, description: item.description)
                         }
                     }
                 }
+                .bottomAreaPadding(15)
                 .padding(.horizontal)
             }
             .scrollIndicators(.hidden)

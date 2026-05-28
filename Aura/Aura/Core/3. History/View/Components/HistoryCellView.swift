@@ -12,24 +12,16 @@ struct HistoryCellView: View {
 
     var body: some View {
         HStack(spacing: 15) {
-            Text(cell.zodiacSign)
-                .font(.title2)
-                .padding(10)
-                .background(LinearGradient(colors: [.softPurple,
-                                                    .idealPartnerType1],
-                                           startPoint: .top,
-                                           endPoint: .bottom))
-                .overlay(Circle().stroke(.white, lineWidth: 2))
-                .clipShape(Circle())
-                .shadow(radius: 1)
+            Text(iconHandler)
+                .zodiacSingModifier()
 
             VStack(alignment: .leading, spacing: 7) {
                 Text(titleText)
-                    .font(Components.isRegular(.footnote, .callout))
+                    .font(Components.displaySize(.callout, .default))
                     .bold()
 
                 Text(cell.archetypeSubtitle)
-                    .font(Components.isRegular(.caption, .footnote))
+                    .font(.system(size: Components.displaySize(14, 15)))
                     .foregroundStyle(.deepGray)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -38,10 +30,10 @@ struct HistoryCellView: View {
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
                     Text("\(cell.compatibilityResult?.compatibilityScore ?? 0)%")
-                        .font(Components.isRegular(.caption2, .caption))
+                        .font(Components.displaySize(.footnote, .system(size: 14)))
                         .foregroundStyle(.white)
                         .bold()
-                        .padding(.vertical, 2)
+                        .padding(.vertical, 3)
                         .padding(.horizontal, 6)
                         .background(.softPurple.opacity(0.75))
                         .clipShape(RoundedRectangle(cornerRadius: 7))
@@ -49,13 +41,23 @@ struct HistoryCellView: View {
             }
         }
         .padding(.horizontal)
-        .frame(height: Components.isRegular(84, 88))
+        .frame(height: Components.displaySize(93, 97))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, .white, true)
+        .backgroundWithShape(12, .cardBackground, true)
     }
 }
 
 extension HistoryCellView {
+    private var iconHandler: String {
+        switch cell.kind {
+            case .personality:
+                return cell.zodiacSign
+            case .compatibility:
+                let sign = cell.compatibilityResult?.partnerZodiacSign ?? ""
+                return sign.isEmpty ? "👤" : sign
+        }
+    }
+
     private var titleText: String {
         switch cell.kind {
             case .personality:

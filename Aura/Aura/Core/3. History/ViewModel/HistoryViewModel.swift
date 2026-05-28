@@ -23,6 +23,7 @@ final class HistoryViewModel: ObservableObject {
     @Published private(set) var isServerWakingUp = false
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
+    @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -111,11 +112,13 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func openHistoryCellDetails(_ item: HistoryCellModel) {
-        guard !isServerWakingUp else { return }
+        guard !isServerWakingUp && !isLoading else { return }
+        
+        isLoading = true
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(20))
+                try await Task.sleep(for: .seconds(12))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
@@ -144,8 +147,9 @@ final class HistoryViewModel: ObservableObject {
             } catch {
                 showAlert(message: "Не удалось открыть результат")
             }
-
+            
             withAnimation { isServerWakingUp = false }
+            isLoading = false
         }
     }
 

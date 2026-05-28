@@ -22,7 +22,7 @@ struct Components {
 
             Text(dateEnd)
         }
-        .font(.caption)
+        .font(Components.displaySize(.caption, .footnote))
         .fontWeight(isCellDetails ? .bold : .medium)
         .foregroundStyle(.deepGray)
     }
@@ -37,21 +37,30 @@ struct Components {
     }
 
     static func classicButton(_ title: String, _ completion: @escaping () -> Void) -> some View {
-        Button {
-            completion()
-        } label: {
+        ClassicButton(title: title, action: completion)
+    }
+}
+
+private struct ClassicButton: View {
+    let title: String
+    let action: () -> Void
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+
+    var body: some View {
+        Button(action: action) {
             Text(title)
-                .font(Components.isRegular(.system(size: 14), .system(size: 16)))
+                .font(.system(size: Components.displaySize(14, 15)))
                 .foregroundStyle(.white)
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
-                .background(LinearGradient(colors: [.blue, .blue.opacity(0.65)],
-                                           startPoint: .leading,
-                                           endPoint: .trailing))
+                .background(Components.handleAccentColor(accentColor))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
+}
+
+extension Components {
 
     static func testCellImage(_ title: String, _ color: UIColor, _ imgSize: Font, _ backgroundSize: CGFloat, _ isResults: Bool) -> some View {
         Image(systemName: title)
@@ -69,12 +78,12 @@ struct Components {
                 .fontWeight(.semibold)
                 .foregroundStyle(.deepGray)
                 .padding()
-                .background(Color(.systemGray6).opacity(0.75))
+                .background(Color.fieldBackground.opacity(0.75))
                 .clipShape(Circle())
-                .overlay(Circle() .stroke(Color(.systemGray5), lineWidth: 1))
+                .overlay(Circle() .stroke(Color.fieldBorder, lineWidth: 1))
 
             Text(title)
-                .font(.callout)
+                .font(Components.displaySize(.system(size: 15), .callout))
                 .fontDesign(.monospaced)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.center)
@@ -91,14 +100,14 @@ struct Components {
 
                 Text(type.rightSide)
             }
-            .font(Components.isRegular(.system(size: 12), .system(size: 14)))
+            .font(Components.displaySize(.caption, .system(size: 14)))
             .fontWeight(.semibold)
             .foregroundStyle(.deepGray)
 
             GeometryReader { bar in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color(.systemGray6))
+                        .fill(Color.fieldBackground)
 
                     Capsule()
                         .fill(LinearGradient(colors: type.colors,
@@ -107,7 +116,7 @@ struct Components {
                         .frame(width: bar.size.width * (CGFloat(value) / CGFloat(10)))
                 }
             }
-            .frame(height: Components.isRegular(8, 10))
+            .frame(height: Components.displaySize(8, 10))
         }
     }
     
@@ -116,7 +125,7 @@ struct Components {
             ProgressView()
             
             VStack(spacing: 20) {
-                Text("Сервер просыпается. Первый запуск может занять до 40 секунд.")
+                Text("Сервер просыпается. Первый запуск может занять до 50 секунд.")
                     .lineSpacing(3)
 
                 Text("Пожалуйста, ожидайте.")
@@ -129,8 +138,12 @@ struct Components {
         .animation(.easeInOut(duration: 0.25), value: value)
     }
 
-    static func isRegular<T>(_ regular: T, _ proMax: T) -> T {
-        return UIDevice.isProMax ? proMax : regular
+    static func displaySize<T>(_ base: T, _ plus: T) -> T {
+        return !UIDevice.isPlus ? base : plus
+    }
+
+    static func handleAccentColor(_ value: String) -> Color {
+        AccentColorOption.color(value)
     }
 }
 

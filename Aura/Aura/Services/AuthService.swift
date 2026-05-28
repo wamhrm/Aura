@@ -24,7 +24,7 @@ protocol AuthServiceProtocol {
 
 @MainActor
 final class AuthService: ObservableObject, AuthServiceProtocol {
-    var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
+    private(set) var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
 
     private let tokenPath = Constants.tokenPath
     private let tokenKey = Constants.tokenKey

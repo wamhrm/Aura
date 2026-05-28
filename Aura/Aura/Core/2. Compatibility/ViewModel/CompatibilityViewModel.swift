@@ -20,7 +20,7 @@ final class CompatibilityViewModel: ObservableObject {
 
     @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
     @Published var partnerInfo = PartnerInfoModel()
-    @Published var compatibilityResult: CompabilityResultModel?
+    @Published private(set) var compatibilityResult: CompabilityResultModel?
 
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
@@ -118,6 +118,10 @@ final class CompatibilityViewModel: ObservableObject {
             }
         }
     }
+    
+    func showInvalidDateOfBirthday() {
+        showAlert("Укажите корректную дату рождения")
+    }
 
     private func showAlert(_ message: String) {
         alertMessage = message
@@ -125,7 +129,7 @@ final class CompatibilityViewModel: ObservableObject {
     }
 }
 
-enum PartnerInfoError: LocalizedError {
+fileprivate enum PartnerInfoError: LocalizedError {
     case invalidName
     case invalidDateOfBirth
     case invalidAge

@@ -9,8 +9,13 @@ import SwiftUI
 
 struct AllTestsView: View {
     @ObservedObject var vm: HomeViewModel
-    let onTapHandler: (PersonalityTestTypes) -> Void
-    
+    private let onTapHandler: (PersonalityTestTypes) -> Void
+
+    init(vm: HomeViewModel, onTapHandler: @escaping (PersonalityTestTypes) -> Void) {
+        self.vm = vm
+        self.onTapHandler = onTapHandler
+    }
+
     var body: some View {
         ZStack {
             Components.backgroundColor()
@@ -45,6 +50,7 @@ struct AllTestsView: View {
         }
         .navigationTitle("Проверить себя")
         .navigationBarTitleDisplayMode(.inline)
+        .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
     }
 }
 
