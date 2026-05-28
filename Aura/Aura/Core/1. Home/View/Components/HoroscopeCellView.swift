@@ -8,19 +8,24 @@
 import SwiftUI
 
 struct HoroscopeCellView: View {
-    let horoscope: HoroscopeModel
-    let onTapHandler: () -> Void
-    
+    private let horoscope: HoroscopeModel
+    private let onTapHandler: () -> Void
+
+    init(horoscope: HoroscopeModel, onTapHandler: @escaping () -> Void) {
+        self.horoscope = horoscope
+        self.onTapHandler = onTapHandler
+    }
+
     var body: some View {
         Button(action: onTapHandler) {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 18) {
                     Text(horoscope.type.icon)
-                        .font(Components.isRegular(.title3, .title2))
+                        .font(Components.displaySize(.title3, .title2))
                     
                     VStack(alignment: .leading, spacing: 5) {
                         Text(horoscope.type.rawValue)
-                            .font(Components.isRegular(.callout, .default))
+                            .font(Components.displaySize(.callout, .default))
                             .fontWeight(.semibold)
                         
                         Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, false)
@@ -30,19 +35,19 @@ struct HoroscopeCellView: View {
                 Text("""
                      "\(horoscope.description)"
                      """)
-                .font(Components.isRegular(.footnote, .callout))
+                .font(Components.displaySize(.footnote, .system(size: 15)))
                 .italic()
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
                 .lineLimit(3)
                 .multilineTextAlignment(.leading)
             }
-            .foregroundStyle(.black)
+            .foregroundStyle(.primaryText)
             .padding(22)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.lightBlue)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12) .stroke(Color(.systemGray6), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12) .stroke(Color.fieldBackground, lineWidth: 1))
         }
     }
 }

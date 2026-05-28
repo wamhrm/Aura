@@ -10,13 +10,22 @@ import SwiftUI
 struct SettingsSheetView: View {
     @ObservedObject var vm: ProfileViewModel
     let isSignedOut: Bool
-    @State private var isLightTheme = true
-    @State private var selectedAccent = 0
     @Environment(\.dismiss) private var dismiss
-    let onUpdateInfo: () -> Void
-    let onSignOut: () -> Void
+    private let onUpdateInfo: () -> Void
+    private let onSignOut: () -> Void
+    
+    @AppStorage(Constants.selectedThemeKey) private var selectedTheme = AppTheme.light
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
-    let colors: [Color] = [.deepBlue, .softPurple, .red, .teal, .orange]
+    init(vm: ProfileViewModel,
+         isSignedOut: Bool,
+         onUpdateInfo: @escaping () -> Void,
+         onSignOut: @escaping () -> Void) {
+        self.vm = vm
+        self.isSignedOut = isSignedOut
+        self.onUpdateInfo = onUpdateInfo
+        self.onSignOut = onSignOut
+    }
 
     var body: some View {
         NavigationStack {
@@ -25,14 +34,14 @@ struct SettingsSheetView: View {
                     headerText("Оформление")
 
                     HStack(spacing: 15) {
-                        SettingsSheetThemesButtonView(type: .bright,
-                                                      isSelected: isLightTheme) {
-                            isLightTheme = true
+                        themeButtonsView(type: .bright,
+                                         isSelected: selectedTheme == .light) {
+                            selectedTheme = .light
                         }
 
-                        SettingsSheetThemesButtonView(type: .dark,
-                                                      isSelected: !isLightTheme) {
-                            isLightTheme = false
+                        themeButtonsView(type: .dark,
+                                         isSelected: selectedTheme == .dark) {
+                            selectedTheme = .dark
                         }
                     }
                 }
@@ -41,10 +50,10 @@ struct SettingsSheetView: View {
                     headerText("Акцентный цвет")
 
                     HStack {
-                        ForEach(0..<colors.count, id: \.self) { index in
-                            SettingsAccentColorView(color: colors[index],
-                                                    isSelected: selectedAccent == index) {
-                                selectedAccent = index
+                        ForEach(AccentColorOption.allCases) { option in
+                            accentColorView(color: option.color,
+                                            isSelected: accentColor == option.rawValue) {
+                                accentColor = option.rawValue
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -78,32 +87,6 @@ struct SettingsSheetView: View {
 }
 
 extension SettingsSheetView {
-    private func headerText(_ title: String) -> some View {
-        Text(title)
-            .font(Components.isRegular(.footnote, .callout))
-            .foregroundStyle(.secondary)
-    }
-
-    private func customButton(_ type: SettingsSheetButtonType, _ completion: @escaping () -> Void) -> some View {
-        Button {
-            completion()
-        } label: {
-            VStack(alignment: .center) {
-                Text(type.rawValue)
-                    .font(Components.isRegular(.footnote, .callout))
-                    .bold()
-                    .foregroundStyle(type.foregroundColor)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .background(type.backgroundColor)
-            .overlay {
-                RoundedRectangle(cornerRadius: 10) .stroke(type.stroke, lineWidth: 2)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-        }
-    }
-    
     @ToolbarContentBuilder
     private func toolbarItem() -> some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
@@ -124,9 +107,69 @@ extension SettingsSheetView {
         }
         .disabled(vm.isLoading)
     }
+    
+    private func headerText(_ title: String) -> some View {
+        Text(title)
+            .font(Components.displaySize(.system(size: 15), .default))
+            .foregroundStyle(.secondary)
+    }
+
+    private func customButton(_ type: ButtonTypes,
+                              _ completion: @escaping () -> Void) -> some View {
+        Button {
+            completion()
+        } label: {
+            VStack(alignment: .center) {
+                Text(type.rawValue)
+                    .font(Components.displaySize(.footnote, .system(size: 15)))
+                    .bold()
+                    .foregroundStyle(type.foregroundColor)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(type.backgroundColor)
+            .overlay {
+                RoundedRectangle(cornerRadius: 10) .stroke(type.stroke, lineWidth: 2)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+    
+    private func themeButtonsView(type: ThemeButtonTypes,
+                                  isSelected: Bool,
+                                  onTapHandler: @escaping () -> Void) -> some View {
+        Button(action: onTapHandler) {
+            HStack(spacing: 10) {
+                Image(systemName: type.icon)
+                
+                Text(type.rawValue)
+            }
+            .padding(.vertical, 13)
+            .font(Components.displaySize(.footnote, .system(size: 15)))
+            .frame(maxWidth: .infinity)
+            .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+            .foregroundStyle(isSelected ? .blue : .primary)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10)
+                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.25), lineWidth: 1))
+        }
+    }
+    
+    private func accentColorView(color: Color,
+                                 isSelected: Bool,
+                                 onTapHandler: @escaping () -> Void) -> some View {
+        Button(action: onTapHandler) {
+            Circle()
+                .fill(color)
+                .frame(width: Components.displaySize(30, 32), height: Components.displaySize(30, 32))
+                .overlay(Circle() .stroke(Color.white, lineWidth: 1))
+                .overlay(Circle() .stroke(isSelected ? Color(.systemGray2) : Color.clear, lineWidth: 4))
+                .shadow(color: .black.opacity(0.1), radius: 2)
+        }
+    }
 }
 
-enum SettingsSheetButtonType: String {
+fileprivate enum ButtonTypes: String {
     case updateInfo = "Обновить информацию о себе"
     case signOut = "Выйти"
 
@@ -154,6 +197,20 @@ enum SettingsSheetButtonType: String {
                 .blue.opacity(0.25)
             case .signOut:
                 .red.opacity(0.25)
+        }
+    }
+}
+
+fileprivate enum ThemeButtonTypes: String {
+    case bright = "Светлая"
+    case dark = "Темная"
+    
+    var icon: String {
+        switch self {
+            case .bright:
+                return "sun.max.fill"
+            case .dark:
+                return "moon.fill"
         }
     }
 }

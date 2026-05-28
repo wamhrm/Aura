@@ -11,15 +11,16 @@ struct CompatibilityDateOfBirthView: View {
     let title: String
     @Binding var text: String
     var isTime: Bool = false
+    var onInvalidDateOfBirth: (() -> Void)?
     
     var body: some View {
         TextField(title, text: $text)
-            .font(Components.isRegular(.footnote, .callout))
+            .font(Components.displaySize(.footnote, .system(size: 14)))
             .foregroundStyle(.gray)
             .fontWeight(.medium)
-            .frame(height: 50)
+            .frame(height: Components.displaySize(46, 48))
             .padding(.leading)
-            .background(Color(.systemGray6))
+            .background(Color.fieldBackground)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .keyboardType(.numberPad)
             .onChange(of: text) { _, newValue in
@@ -69,21 +70,66 @@ extension CompatibilityDateOfBirthView {
                 let dayStr = String(formatted.prefix(2))
                 formatted = dayStr + ".12" + formatted.dropFirst(5)
             }
-            if let y = Int(digits.dropFirst(4).prefix(4)), y > 2026 {
+            let currentYear = Calendar.current.component(.year, from: Date())
+            if let y = Int(digits.dropFirst(4).prefix(4)), y > currentYear {
                 let prefix = String(formatted.prefix(5))
-                formatted = prefix + "2026"
+                formatted = prefix + String(currentYear)
             }
         }
-        
+
         if isTime {
             if formatted.count > 5 { formatted = String(formatted.prefix(5)) }
         } else {
             if formatted.count > 10 { formatted = String(formatted.prefix(10)) }
         }
-        
+
+        if !isTime, formatted.count == 10, !Self.isValidBirthDate(formatted) {
+            text.removeLast(4)
+            onInvalidDateOfBirth?()
+            return
+        }
+
         if formatted != newValue {
             text = formatted
         }
+    }
+
+    private static func isValidBirthDate(_ value: String) -> Bool {
+        let parts = value.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              let day = Int(parts[0]),
+              let month = Int(parts[1]),
+              let year = Int(parts[2]) else {
+            return false
+        }
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let currentYear = calendar.component(.year, from: today)
+        let minYear = currentYear - 100
+
+        guard year >= minYear, year <= currentYear else { return false }
+
+        var components = DateComponents()
+        components.day = day
+        components.month = month
+        components.year = year
+
+        guard let date = calendar.date(from: components),
+              calendar.component(.day, from: date) == day,
+              calendar.component(.month, from: date) == month,
+              calendar.component(.year, from: date) == year else {
+            return false
+        }
+
+        let birthDate = calendar.startOfDay(for: date)
+        guard birthDate <= today else { return false }
+
+        guard let earliestBirthDate = calendar.date(byAdding: .year, value: -100, to: today) else {
+            return false
+        }
+
+        return birthDate >= calendar.startOfDay(for: earliestBirthDate)
     }
 }
 

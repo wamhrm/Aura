@@ -20,23 +20,27 @@ final class ProfileViewModel: ObservableObject {
     @Published var name = ""
     @Published var email = ""
     @Published var password = ""
-    @Published var personalityResult: PersonalityResultModel?
 
     @Published private(set) var authState = AuthState.signedOut
+    @Published private(set) var profileDisplay: ProfileDisplayModel?
+    @Published private(set) var dailyTip: DailyContentModel?
+    
     @Published private(set) var isLoading = false
     @Published private(set) var isServerWakingUp = false
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
-    @Published private(set) var dailyTip: DailyContentModel?
-    @Published private(set) var profileDisplay: ProfileDisplayModel?
 
     @Published var showSettings = false
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
+    
+    @Published var showSignIn = false
+    @Published var showCreateAccount = false
 
+    private var personalityResult: PersonalityResultModel?
     private var compatibilityHistory: [HistoryCellModel] = []
 
-    let authService: any AuthServiceProtocol
+    private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
 
     private var cancellables = Set<AnyCancellable>()
@@ -94,12 +98,8 @@ final class ProfileViewModel: ObservableObject {
 
                 if isLoading {
                     Task {
-                        if user.hasCompletedProfileInfo {
-                            await loadDailyTip(for: user.id, showErrorOnFailure: false)
-                        }
-                        await loadPersonality(for: user.id, ignoreCache: true)
+                        await refreshContent(for: user)
                         try? await Task.sleep(for: .seconds(1.5))
-
                         withAnimation(.easeInOut(duration: 0.25)) {
                             authState = .signedIn(user)
                         }
@@ -109,12 +109,7 @@ final class ProfileViewModel: ObservableObject {
                         authState = .signedIn(user)
                     }
 
-                    Task {
-                        if user.hasCompletedProfileInfo {
-                            await loadDailyTip(for: user.id, showErrorOnFailure: false)
-                        }
-                        await loadPersonality(for: user.id, ignoreCache: true)
-                    }
+                    Task { await refreshContent(for: user) }
                 }
             case .signedOut:
                 withAnimation(.easeInOut(duration: 0.25)) { authState = .signedOut }
@@ -130,6 +125,13 @@ final class ProfileViewModel: ObservableObject {
                 }
         }
     }
+    
+    private func refreshContent(for user: UserModel) async {
+        if user.hasCompletedProfileInfo {
+            await loadDailyTip(for: user.id, showErrorOnFailure: false)
+        }
+        await loadPersonality(for: user.id, ignoreCache: true, showErrorOnFailure: false)
+    }
 
     private func loadDailyTip(for userId: UUID, showErrorOnFailure: Bool = true) async {
         do {
@@ -144,7 +146,9 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
-    private func loadPersonality(for userId: UUID, ignoreCache: Bool = false) async {
+    private func loadPersonality(for userId: UUID,
+                                 ignoreCache: Bool = false,
+                                 showErrorOnFailure: Bool = true) async {
         if !ignoreCache, let cached = UserDefaultsHelper.getLocalPersonality(for: userId) {
             applyPersonality(result: cached)
             return
@@ -168,7 +172,9 @@ final class ProfileViewModel: ObservableObject {
             applyPersonality(result: result)
             UserDefaultsHelper.savePersonalityLocally(result, for: userId)
         } catch {
-            showError(error.localizedDescription)
+            if showErrorOnFailure {
+                showError(error.localizedDescription)
+            }
         }
     }
 
@@ -187,7 +193,7 @@ final class ProfileViewModel: ObservableObject {
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(8))
+                try await Task.sleep(for: .seconds(12))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
@@ -200,10 +206,11 @@ final class ProfileViewModel: ObservableObject {
                 try await authService.createAccount(name: name, email: email, password: password)
             } catch {
                 showError(error.localizedDescription)
+                isLoading = false
             }
 
+            try? await Task.sleep(for: .seconds(2.5))
             withAnimation { isServerWakingUp = false }
-            try? await Task.sleep(for: .seconds(2))
             isLoading = false
         }
     }
@@ -222,7 +229,7 @@ final class ProfileViewModel: ObservableObject {
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(8))
+                try await Task.sleep(for: .seconds(12))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
@@ -235,10 +242,11 @@ final class ProfileViewModel: ObservableObject {
                 try await authService.signIn(email: email, password: password)
             } catch {
                 showError(error.localizedDescription)
+                isLoading = false
             }
 
+            try? await Task.sleep(for: .seconds(2.5))
             withAnimation { isServerWakingUp = false }
-            try? await Task.sleep(for: .seconds(2))
             isLoading = false
         }
     }
@@ -253,7 +261,12 @@ final class ProfileViewModel: ObservableObject {
         email = ""
         password = ""
     }
-
+    
+    func closeSignInCreateViews() {
+        showSignIn = false
+        showCreateAccount = false
+    }
+    
     private func updateProfileDisplay() {
         profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult,
                                                   dailyTip: dailyTip,

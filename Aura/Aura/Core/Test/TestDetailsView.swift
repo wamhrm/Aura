@@ -17,16 +17,16 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
             Components.backgroundColor()
             
             VStack(alignment: .leading, spacing: 20) {
-                Components.testCellImage(type.icon, type.color, .title, Components.isRegular(55, 57), false)
+                Components.testCellImage(type.icon, type.color, .title, Components.displaySize(55, 58), false)
                 
                 Text(type.deepDescription)
-                    .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+                    .font(Components.displaySize(.system(size: 15), .callout))
                     .foregroundStyle(.deepGray)
                     .fontWeight(.medium)
                 
                 VStack(alignment: .leading, spacing: 15) {
                     Text("Что включено")
-                        .font(Components.isRegular(.callout, .default))
+                        .font(Components.displaySize(.system(size: 15), .default))
                         .bold()
                         .padding(.bottom, 5)
                     
@@ -34,14 +34,14 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark")
                                 .foregroundStyle(.deepGray)
-                                .font(Components.isRegular(.footnote, .callout))
+                                .font(Components.displaySize(.footnote, .system(size: 14)))
                                 .bold()
                                 .padding(7)
                                 .background(.blue.opacity(0.1))
                                 .clipShape(Circle())
                             
                             Text(item)
-                                .font(Components.isRegular(.footnote, .callout))
+                                .font(Components.displaySize(.footnote, .system(size: 14)))
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
@@ -49,7 +49,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .backgroundWithShape(12, .white, true)
+                .backgroundWithShape(12, .cardBackground, true)
                 
                 Components.classicButton(isSelected ? "Убрать" : "Выбрать") {
                     onTapHandler()
