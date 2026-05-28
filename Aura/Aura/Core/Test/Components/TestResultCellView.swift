@@ -36,6 +36,10 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
 }
 
 enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
+    // Астрология
+    case natalChart = "Анализ натальной карты"
+    case planetaryAspects = "Планетарные аспекты"
+    
     // Поведенческие паттерны
     case socialFilter = "Социальный фильтр"
     case energyDrain = "Источник истощения"
@@ -51,7 +55,11 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
     // Идеальный партнер
     case intellectualMatch = "Интеллектуальная схожесть"
     case emotionalDepth = "Глубина связи"
-    
+
+    // Язык любви
+    case loveExpression = "Способы проявления чувств"
+    case emotionalNeeds = "Эмоциональные потребности"
+
     var title: String { return rawValue }
 
     var icon: String {
@@ -64,6 +72,10 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
             case .securityBase: return "⚓"
             case .intellectualMatch: return "🧠"
             case .emotionalDepth: return "🌊"
+            case .natalChart: return "✨"
+            case .planetaryAspects: return "🪐"
+            case .loveExpression: return "💝"
+            case .emotionalNeeds: return "💗"
         }
     }
 }

@@ -21,17 +21,17 @@ enum HomeRoutes: Hashable {
 @MainActor
 final class HomeViewModel: ObservableObject {
     @Published var homeRoutes: [HomeRoutes] = []
-    
+
     @Published var profileInfo = ProfileInfoModel()
     @Published var userName = ""
     @Published var isSignedIn = false
     @Published private(set) var hasProfileInfo = false
     @Published private(set) var horoscope: HoroscopeModel?
     @Published private(set) var dailyInsight: DailyContentModel?
-    
+
     @Published var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
     @Published var personalityResult: PersonalityResultModel?
-    
+
     @Published var showAlert = false
     @Published private(set) var alertMessage = ""
     @Published private(set) var isLoading = false
@@ -42,19 +42,19 @@ final class HomeViewModel: ObservableObject {
     private let contentService: any ContentServiceProtocol
 
     private var cancellables = Set<AnyCancellable>()
-    
+
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
-        
+
         setupSubscriptions()
     }
 
     deinit {
         cancellables.removeAll()
     }
-    
+
     var dailyInsightHandler: String {
         return dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
     }
@@ -68,7 +68,7 @@ final class HomeViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
     private func handleProfileInfo(_ authState: AuthState) {
         switch authState {
             case .signedIn(let user):
@@ -109,7 +109,7 @@ final class HomeViewModel: ObservableObject {
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(7))
+                try await Task.sleep(for: .seconds(20))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
@@ -126,7 +126,8 @@ final class HomeViewModel: ObservableObject {
                 hasProfileInfo = response.user.hasCompletedProfileInfo
                 horoscope = response.horoscope
                 UserDefaultsHelper.saveHoroscopeLocally(response.horoscope, for: response.user.id)
-                Task { await loadDailyInsight(for: response.user.id) }
+                await loadDailyInsight(for: response.user.id)
+                try await Task.sleep(for: .seconds(1.5))
                 homeRoutes = []
             } catch {
                 showAlert(error.localizedDescription)
@@ -136,7 +137,7 @@ final class HomeViewModel: ObservableObject {
             isLoading = false
         }
     }
-    
+
     func toggleTestSelection(_ test: PersonalityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > 2 else {
@@ -156,7 +157,7 @@ final class HomeViewModel: ObservableObject {
             isLoading = true
 
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(7))
+                try await Task.sleep(for: .seconds(20))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
@@ -176,7 +177,7 @@ final class HomeViewModel: ObservableObject {
             isLoading = false
         }
     }
-    
+
     private func loadHoroscope(for userId: UUID, showErrorOnFailure: Bool) async {
         do {
             let fetched = try await contentService.fetchCurrentHoroscope()
@@ -200,12 +201,12 @@ final class HomeViewModel: ObservableObject {
             }
         }
     }
-    
+
     private func refreshHomeContent(for userId: UUID) async {
         await loadHoroscope(for: userId, showErrorOnFailure: false)
         await loadDailyInsight(for: userId, showErrorOnFailure: false)
     }
-    
+
     private func validateProfileInfoForms() throws {
         guard profileInfo.dateOfBirth.count == 10 else {
             throw ProfileInfoError.invalidDateOfBirth

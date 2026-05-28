@@ -111,7 +111,7 @@ struct Components {
         }
     }
     
-    static func isServerWakingUpView(_ value: Bool) -> some View {
+    static func serverWakingUpView(_ value: Bool) -> some View {
         VStack(spacing: 30) {
             ProgressView()
             

@@ -89,12 +89,12 @@ enum PersonalityTests: String, CaseIterable {
 }
 
 enum PersonalityItems {
+    private static let astrology = ["Анализ натальной карты", "Планетарные аспекты"]
     private static let behavioralPatterns = ["Социальный фильтр", "Источник истощения"]
     private static let decisionMaking = ["Баланс логики", "Фактор интуиции"]
     private static let attachmentStyle = ["Потребность в автономии", "База безопасности"]
     private static let idealPartner = ["Интеллектуальная схожесть", "Глубина связи"]
-    private static let astrology = ["Глубина связи", "Фактор интуиции"]
-    private static let loveLanguage = ["Глубина связи", "Интеллектуальная схожесть"]
+    private static let loveLanguage = ["Способы проявления чувств", "Эмоциональные потребности"]
 
     static func allowed(for test: PersonalityTests) -> [String] {
         switch test {

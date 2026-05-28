@@ -7,6 +7,12 @@
 
 import Foundation
 
+struct BestCompatibilityDisplay: Equatable {
+    let partnerZodiacSign: String
+    let partnerName: String
+    let score: Int
+}
+
 struct ProfileDisplayModel: Equatable {
     let dailyTip: String
     let overview: String
@@ -17,27 +23,44 @@ struct ProfileDisplayModel: Equatable {
     let organization: Int
     let relationships: Int
     let zodiacSignTitle: String?
-
-    static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
+    let bestCompatibility: BestCompatibilityDisplay?
 
     static func make(personalityResult: PersonalityResultModel?,
-                     dailyTip: DailyContentModel?) -> ProfileDisplayModel {
+                     dailyTip: DailyContentModel?,
+                     history: [HistoryCellModel] = []) -> ProfileDisplayModel {
         ProfileDisplayModel(
             dailyTip: dailyTip?.text ?? ProfileDisplayPlaceholder.dailyTip,
             overview: personalityResult?.overview.description ?? ProfileDisplayPlaceholder.overview,
-            socialFilter: personalityResult?.sections.flatMap(\.items)
-                .first(where: { $0.title == .socialFilter })?.description ?? ProfileDisplayPlaceholder.socialFilter,
-            emotionalDepth: personalityResult?.sections.flatMap(\.items)
-                .first(where: { $0.title == .emotionalDepth })?.description ?? ProfileDisplayPlaceholder.emotionalDepth,
-            temperament: personalityResult?.emotionalBar.first(where: { $0.title == .temperament })?.value
-                ?? ProfileDisplayPlaceholder.temperament,
-            thinking: personalityResult?.emotionalBar.first(where: { $0.title == .thinking })?.value
-                ?? ProfileDisplayPlaceholder.thinking,
-            organization: personalityResult?.emotionalBar.first(where: { $0.title == .organization })?.value
-                ?? ProfileDisplayPlaceholder.organization,
-            relationships: personalityResult?.emotionalBar.first(where: { $0.title == .relationships })?.value
-                ?? ProfileDisplayPlaceholder.relationships,
-            zodiacSignTitle: zodiacSignTitle(from: personalityResult?.zodiacSign))
+            socialFilter: sectionItem(.socialFilter, from: personalityResult) ?? ProfileDisplayPlaceholder.socialFilter,
+            emotionalDepth: sectionItem(.emotionalDepth, from: personalityResult) ?? ProfileDisplayPlaceholder.emotionalDepth,
+            temperament: barValue(.temperament, from: personalityResult) ?? ProfileDisplayPlaceholder.temperament,
+            thinking: barValue(.thinking, from: personalityResult) ?? ProfileDisplayPlaceholder.thinking,
+            organization: barValue(.organization, from: personalityResult) ?? ProfileDisplayPlaceholder.organization,
+            relationships: barValue(.relationships, from: personalityResult) ?? ProfileDisplayPlaceholder.relationships,
+            zodiacSignTitle: zodiacSignTitle(from: personalityResult?.zodiacSign),
+            bestCompatibility: bestCompatibility(from: history))
+    }
+
+    private static func sectionItem(_ title: PersonalityCellTypes,
+                                    from result: PersonalityResultModel?) -> String? {
+        result?.sections.flatMap(\.items).first(where: { $0.title == title })?.description
+    }
+
+    private static func barValue(_ title: EmotionalProfileTypes,
+                                 from result: PersonalityResultModel?) -> Int? {
+        result?.emotionalBar.first(where: { $0.title == title })?.value
+    }
+
+    static func bestCompatibility(from history: [HistoryCellModel]) -> BestCompatibilityDisplay? {
+        return history
+            .filter { $0.kind == .compatibility }
+            .compactMap(\.compatibilityResult)
+            .max(by: { $0.compatibilityScore < $1.compatibilityScore })
+            .map {
+                BestCompatibilityDisplay(partnerZodiacSign: $0.partnerZodiacSign,
+                                         partnerName: $0.partnerNameCapitalized,
+                                         score: $0.compatibilityScore)
+            }
     }
 
     private static func zodiacSignTitle(from sign: String?) -> String? {
@@ -45,6 +68,8 @@ struct ProfileDisplayModel: Equatable {
         return HoroscopeType.allCases
             .first { $0.icon.contains(sign) || sign.contains($0.icon) }?.rawValue
     }
+
+    static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
 }
 
 enum ProfileDisplayPlaceholder {

@@ -15,7 +15,9 @@ struct HistoryView: View {
             ZStack {
                 Components.backgroundColor()
 
-                if vm.isSignedIn {
+                if vm.isServerWakingUp {
+                    Components.serverWakingUpView(vm.isServerWakingUp)
+                } else if vm.isSignedIn {
                     VStack(alignment: .leading, spacing: 15) {
                         if vm.historyCells.isEmpty {
                             ContentUnavailableView {
@@ -36,7 +38,6 @@ struct HistoryView: View {
                                                 }
                                             }
                                     }
-                                    .buttonStyle(.plain)
                                 }
                                 .padding(.horizontal)
                             }
@@ -46,7 +47,7 @@ struct HistoryView: View {
                             .scrollIndicators(.hidden)
                         }
                     }
-                } else {
+                } else if !vm.isSignedIn {
                     ContentUnavailableView {
                         Label("Войдите в аккаунт, чтобы видеть историю", systemImage: "")
                     }
