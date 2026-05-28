@@ -51,7 +51,7 @@ struct ProfileDisplayModel: Equatable {
         result?.emotionalBar.first(where: { $0.title == title })?.value
     }
 
-    static func bestCompatibility(from history: [HistoryCellModel]) -> BestCompatibilityDisplay? {
+    private static func bestCompatibility(from history: [HistoryCellModel]) -> BestCompatibilityDisplay? {
         return history
             .filter { $0.kind == .compatibility }
             .compactMap(\.compatibilityResult)
@@ -72,7 +72,7 @@ struct ProfileDisplayModel: Equatable {
     static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
 }
 
-enum ProfileDisplayPlaceholder {
+fileprivate enum ProfileDisplayPlaceholder {
     static let dailyTip = "Не пытайся быть продуктивным весь день. Сделай одну реально важную вещь без отвлечений — остальное шум и самообман."
     static let overview = "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню."
     static let socialFilter = "Обладает встроенным детектором на пустую болтовню."

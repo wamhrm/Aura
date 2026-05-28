@@ -9,10 +9,11 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var vm: HomeViewModel
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     private let authService: AuthServiceProtocol
-    let compatibilityButton: () -> Void
-    let profileButton: () -> Void
+    private let compatibilityButton: () -> Void
+    private let profileButton: () -> Void
 
     init(vm: HomeViewModel,
          authService: any AuthServiceProtocol,
@@ -28,7 +29,7 @@ struct HomeView: View {
         NavigationStack(path: $vm.homeRoutes) {
             ZStack {
                 Components.backgroundColor()
-                
+
                 if vm.isLoadingScreen {
                     ProgressView()
                 } else {
@@ -39,37 +40,37 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 15) {
                                 HStack(spacing: 15) {
                                     Components.logoImage(32)
-                                    
-                                    Text(vm.userName.isEmpty ? "Здравствуйте" : "Здравствуйте, \(vm.userName.capitalized)")
-                                        .font(.callout)
+
+                                    Text(vm.userName.isEmpty ? "Добро пожаловать" : "Здравствуйте, \(vm.userName.capitalized)")
+                                        .font(Components.displaySize(.callout, .default))
                                         .fontWeight(.semibold)
                                         .fontDesign(.monospaced)
-                                    
+
                                     Spacer()
                                 }
-                                
+
                                 if vm.hasProfileInfo {
                                     VStack(alignment: .leading, spacing: 15) {
                                         Text("ИНСАЙТ ДНЯ")
-                                            .font(Components.isRegular(.callout, .default))
+                                            .font(Components.displaySize(.callout, .default))
                                             .fontWeight(.heavy)
-                                        
+
                                         Text(vm.dailyInsightHandler)
-                                            .font(Components.isRegular(.system(size: 14), .callout))
+                                            .font(.system(size: Components.displaySize(14, 15))).italic()
                                             .fontWeight(.medium)
                                     }
                                     .foregroundStyle(.white)
-                                    .padding(22)
+                                    .padding(20)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(.softPurple)
+                                    .background(Components.handleAccentColor(accentColor).opacity(0.85))
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    
+
                                     if let horoscope = vm.horoscope {
                                         VStack(alignment: .leading, spacing: 10) {
                                             headerText("Гороскоп на неделю", "Читать") {
                                                 vm.homeRoutes.append(.horoscopeDetails)
                                             }
-                                            
+
                                             HoroscopeCellView(horoscope: horoscope) {
                                                 vm.homeRoutes.append(.horoscopeDetails)
                                             }
@@ -77,7 +78,7 @@ struct HomeView: View {
                                         .padding(.top, 15)
                                     }
                                 }
-                                
+
                                 if !vm.hasProfileInfo {
                                     completeYourProfile(vm.isSignedIn) {
                                         if vm.isSignedIn {
@@ -87,31 +88,34 @@ struct HomeView: View {
                                         }
                                     }
                                 }
-                                
+
                                 Button {
                                     compatibilityButton()
                                 } label: {
-                                    HStack(spacing: Components.isRegular(80, 82)) {
+                                    HStack {
                                         Text("Проверить совместимость")
-                                            .font(.system(size: Components.isRegular(15, 17)))
+                                            .font(Components.displaySize(.system(size: 18), .title3))
                                             .bold()
                                             .foregroundStyle(.white)
                                         
-                                        sparkImageWithBackground(Components.isRegular(.medium, .large), .white)
+                                        Spacer()
+
+                                        sparkImageWithBackground(Components.displaySize(.medium, .large), .white)
                                     }
-                                    .padding(Components.isRegular(18, 20))
+                                    .padding(.horizontal, 7)
+                                    .padding(18)
                                     .frame(maxWidth: .infinity)
                                     .background(LinearGradient(colors: [.purple, .blue],
                                                                startPoint: .leading,
                                                                endPoint: .trailing))
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
-                                
+
                                 VStack(alignment: .leading, spacing: 10) {
                                     headerText("Проверьте себя", "Все тесты") {
                                         vm.homeRoutes.append(.allTests)
                                     }
-                                    
+
                                     ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
                                         TestCellView(type: test,
                                                      hasChosenTest: Binding(
@@ -123,7 +127,7 @@ struct HomeView: View {
                                                         }
                                     }
                                     .disabled(!vm.hasProfileInfo)
-                                    
+
                                     Components.classicButton(vm.isLoading ? "Готовим результат..." : "Проверить себя") {
                                         vm.makePersonalityTest()
                                     }
@@ -143,7 +147,7 @@ struct HomeView: View {
                             .disabled(vm.isLoading)
                             .padding(.horizontal)
                         }
-                        .bottomAreaPadding()
+                        .bottomAreaPadding(50)
                         .scrollIndicators(.hidden)
                         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                             Button("OK", role: .cancel) {}
@@ -156,6 +160,7 @@ struct HomeView: View {
             .navigationDestination(for: HomeRoutes.self) { destination in
                 destinationView(destination)
             }
+            .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
         }
     }
 }
@@ -175,11 +180,11 @@ extension HomeView {
                 onTapHandler()
             } label: {
                 Text(buttonTitle)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Components.handleAccentColor(accentColor))
                     .fontWeight(.medium)
             }
         }
-        .font(Components.isRegular(.system(size: 15), .system(size: 17)))
+        .font(Components.displaySize(.system(size: 15), .default))
     }
 
     @ViewBuilder
@@ -208,10 +213,10 @@ extension HomeView {
 
     private func completeYourProfile(_ isSignedIn: Bool,
                                      _ addProfileInfo: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: Components.isRegular(10, 12)) {
+        VStack(alignment: .leading, spacing: Components.displaySize(10, 12)) {
             HStack {
                 Text(isSignedIn ? "Заполните свой профиль" : "Войдите или зарегистрируйтесь, чтобы заполнить свой профиль")
-                    .font(Components.isRegular(.callout, .default))
+                    .font(Components.displaySize(.default, .system(size: 19)))
                     .bold()
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.leading)
@@ -219,7 +224,7 @@ extension HomeView {
             }
 
             Text(isSignedIn ? "Расскажите о себе, чтобы получить детальный разбор вашего астрологического профиля" : "Вы можете рассказать о себе, чтобы получить детальный разбор вашего астрологического профиля")
-                .font(Components.isRegular(.footnote, .system(size: 15)))
+                .font(Components.displaySize(.footnote, .system(size: 15)))
                 .fontWeight(.medium)
                 .foregroundStyle(.white)
                 .padding(.bottom, 13)
@@ -228,7 +233,7 @@ extension HomeView {
                 addProfileInfo()
             } label: {
                 Text(isSignedIn ? "Заполнить информацию" : "Войти или зарегистрироваться")
-                    .font(.system(size: Components.isRegular(15, 17)))
+                    .font(Components.displaySize(.system(size: 15), .default))
                     .foregroundStyle(Color(red: 0.42, green: 0.27, blue: 0.93))
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
@@ -255,9 +260,10 @@ extension HomeView {
             .imageScale(size)
             .foregroundStyle(color)
             .padding(8)
-            .background(Color(.systemGray6).opacity(0.15))
+            .background(Color.fieldBackground.opacity(0.15))
             .clipShape(Circle())
     }
+
 }
 
 #Preview {

@@ -31,7 +31,7 @@ struct HistoryView: View {
                                     } label: {
                                         HistoryCellView(cell: item)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                            .tint(.black)
+                                            .tint(.primaryText)
                                             .contextMenu {
                                                 Button("Удалить", role: .destructive) {
                                                     vm.deleteHistoryCell(item)
@@ -39,14 +39,20 @@ struct HistoryView: View {
                                             }
                                     }
                                 }
+                                .disabled(vm.isLoading)
                                 .padding(.horizontal)
                             }
                             .refreshable {
                                 vm.fetchHistory()
                             }
-                            .scrollIndicators(.hidden)
+                            .overlay {
+                                if vm.isLoading {
+                                    ProgressView()
+                                }
+                            }
                         }
                     }
+                    .bottomAreaPadding(15)
                 } else if !vm.isSignedIn {
                     ContentUnavailableView {
                         Label("Войдите в аккаунт, чтобы видеть историю", systemImage: "")
@@ -59,6 +65,7 @@ struct HistoryView: View {
             .navigationDestination(for: HistoryRoutes.self) { route in
                 destinationView(route)
             }
+            .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
             .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }

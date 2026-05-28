@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum HTTPMethod: String {
+fileprivate enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
     case patch = "PATCH"
@@ -76,7 +76,21 @@ struct NetworkService {
         _ = try await request(endpoint: "/history/\(id.uuidString)", method: .delete)
     }
 
-    private static func request(endpoint: String, method: HTTPMethod, body: Data? = nil) async throws -> Data {
+    private static func request(endpoint: String,
+                                method: HTTPMethod,
+                                body: Data? = nil,
+                                attempt: Int = 0) async throws -> Data {
+        do {
+            return try await performRequest(endpoint: endpoint, method: method, body: body)
+        } catch let urlError as URLError where urlError.code == .networkConnectionLost && attempt < 2 {
+            try await Task.sleep(for: .milliseconds(500))
+            return try await request(endpoint: endpoint, method: method, body: body, attempt: attempt + 1)
+        }
+    }
+
+    private static func performRequest(endpoint: String,
+                                       method: HTTPMethod,
+                                       body: Data? = nil) async throws -> Data {
         guard let baseURL = URL(string: Constants.baseURL),
               let url = URL(string: endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
@@ -142,7 +156,7 @@ private struct AuthSignInBody: Encodable {
     let password: String
 }
 
-enum NetworkError: LocalizedError {
+fileprivate enum NetworkError: LocalizedError {
     case invalidURL
     case invalidResponse
     case decodingError

@@ -69,7 +69,7 @@ extension ProfileView {
         } onSignOut: {
             vm.signOut()
         }
-        .presentationDetents([.height(vm.isSignedOut ? Components.isRegular(260, 280) : Components.isRegular(370, 390))])
+        .presentationDetents([.height(vm.isSignedOut ? Components.displaySize(260, 280) : Components.displaySize(370, 390))])
     }
 }
 

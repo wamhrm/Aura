@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct AddProfileInfoView: View {
     @ObservedObject var vm: HomeViewModel
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         ZStack {
@@ -78,7 +81,9 @@ struct AddProfileInfoView: View {
                         }
 
                         Components.classicButton(vm.isLoading ? "Сохраняем..." : "Готово") {
-                            vm.saveProfileInfo()
+                            vm.saveProfileInfo {
+                                dismiss()
+                            }
                         }
                         .padding(.top, 5)
                         .disabled(vm.isLoading)
@@ -86,12 +91,15 @@ struct AddProfileInfoView: View {
                     .disabled(vm.isLoading)
                     .padding(.horizontal)
                 }
-                .bottomAreaPadding()
+                .bottomAreaPadding(50)
                 .scrollIndicators(.hidden)
+                .dismissKeyboardOnTap()
+                .scrollDismissesKeyboard(.interactively)
             }
         }
         .navigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
+        .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }
@@ -103,7 +111,7 @@ extension AddProfileInfoView {
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 15) {
             Text(title)
-                .font(Components.isRegular(.system(size: 14), .callout))
+                .font(Components.displaySize(.system(size: 15), .default))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
 
@@ -111,29 +119,29 @@ extension AddProfileInfoView {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .backgroundWithShape(12, .white, false)
+        .backgroundWithShape(12, .cardBackground, false)
     }
-    
+
     private func option(_ type: ProfileInfoOption, _ selection: Binding<String?>) -> some View {
         let isSelected = selection.wrappedValue == type.rawValue
 
         return HStack {
             Text(type.icon)
-                .font(Components.isRegular(.footnote, .callout))
+                .font(Components.displaySize(.footnote, .system(size: 15)))
 
-            Text(type.rawValue)
-                .font(Components.isRegular(.footnote, .callout))
-                .foregroundStyle(isSelected ? .white : .black)
+            Text(type.title)
+                .font(Components.displaySize(.footnote, .system(size: 14)))
+                .foregroundStyle(isSelected ? .white : .primaryText)
                 .bold()
         }
         .padding(12)
         .frame(maxWidth: .infinity)
-        .background(isSelected ? Color.deepBlue : Color(.systemGray6))
+        .background(isSelected ? Components.handleAccentColor(accentColor) : Color.fieldBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture { selection.wrappedValue = type.rawValue }
         .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
-    
+
     private struct FlowLayout: Layout {
         func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews,
                           cache: inout ()) -> CGSize {
@@ -178,24 +186,56 @@ extension AddProfileInfoView {
     }
 }
 
-enum ProfileInfoOption: String {
-    case man = "Мужской"
-    case woman = "Женский"
-    case introvert = "Интроверт"
-    case ambivert = "Амбиверт"
-    case extrovert = "Экстраверт"
-    case mediator = "Миротворец"
-    case direct = "Прямой"
-    case avoider = "Избегающий"
-    case logic = "Рациональный"
-    case intuitive = "Интуитивный"
-    case planner = "Планируете"
-    case spontaneous = "По ситуации"
-    case procrastinator = "Откладываете"
-    case stability = "Стабильность"
-    case growth = "Рост"
-    case peace = "Спокойствие"
-    
+enum ProfileInfoOption: String, CaseIterable {
+    case man
+    case woman
+    case introvert
+    case ambivert
+    case extrovert
+    case mediator
+    case direct
+    case avoider
+    case logic
+    case intuitive
+    case planner
+    case spontaneous
+    case procrastinator
+    case stability
+    case growth
+    case peace
+
+    var title: String {
+        switch self {
+            case .man: return "Мужской"
+            case .woman: return "Женский"
+            case .introvert: return "Интроверт"
+            case .ambivert: return "Амбиверт"
+            case .extrovert: return "Экстраверт"
+            case .mediator: return "Миротворец"
+            case .direct: return "Прямой"
+            case .avoider: return "Избегающий"
+            case .logic: return "Рациональный"
+            case .intuitive: return "Интуитивный"
+            case .planner: return "Планируете"
+            case .spontaneous: return "По ситуации"
+            case .procrastinator: return "Откладываете"
+            case .stability: return "Стабильность"
+            case .growth: return "Рост"
+            case .peace: return "Спокойствие"
+        }
+    }
+
+    static func normalizedKey(_ stored: String?) -> String? {
+        guard let stored, !stored.isEmpty else { return nil }
+        if let match = Self.allCases.first(where: { $0.rawValue == stored }) {
+            return match.rawValue
+        }
+        if let match = Self.allCases.first(where: { $0.title == stored }) {
+            return match.rawValue
+        }
+        return stored
+    }
+
     var icon: String {
         switch self {
             case .man: return "👱🏻‍♂️"
