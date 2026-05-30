@@ -30,18 +30,21 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private let tokenKey = Constants.tokenKey
     private let userKey = Constants.userKey
 
-    init() {
+    private let networkService: any NetworkServiceProtocol
+
+    init(networkService: any NetworkServiceProtocol = NetworkService()) {
+        self.networkService = networkService
         autoSignIn()
     }
 
     func createAccount(name: String, email: String, password: String) async throws {
         let normalizedEmail = normalizeEmail(email)
-        try await NetworkService.createAccount(name: name, email: normalizedEmail, password: password)
+        try await networkService.createAccount(name: name, email: normalizedEmail, password: password)
         try await signIn(email: normalizedEmail, password: password)
     }
 
     func signIn(email: String, password: String) async throws {
-        let response = try await NetworkService.signIn(email: normalizeEmail(email), password: password)
+        let response = try await networkService.signIn(email: normalizeEmail(email), password: password)
 
         saveToken(response.token)
         saveUserLocally(response.user)
@@ -49,7 +52,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
-        let response = try await NetworkService.updateProfileInfo(request)
+        let response = try await networkService.updateProfileInfo(request)
         saveUserLocally(response.user)
         authState.send(.signedIn(response.user))
         return response

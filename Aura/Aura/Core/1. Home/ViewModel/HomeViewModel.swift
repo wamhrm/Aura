@@ -109,7 +109,7 @@ final class HomeViewModel: ObservableObject {
 
         Task {
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(20))
+                try await Task.sleep(for: .seconds(25))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
@@ -157,7 +157,7 @@ final class HomeViewModel: ObservableObject {
             isLoading = true
 
             let loadedTask = Task {
-                try await Task.sleep(for: .seconds(20))
+                try await Task.sleep(for: .seconds(25))
 
                 if !Task.isCancelled {
                     withAnimation { isServerWakingUp = true }
