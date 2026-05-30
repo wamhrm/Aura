@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum Constants {
+nonisolated enum Constants {
     static let baseURL = "https://aura-mogr.onrender.com"
     static let tokenPath = "com.aura.auth.token"
     
