@@ -23,41 +23,47 @@ protocol ContentServiceProtocol {
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
     let historyDidChange = PassthroughSubject<Void, Never>()
-    
+
+    private let networkService: any NetworkServiceProtocol
+
+    init(networkService: any NetworkServiceProtocol = NetworkService()) {
+        self.networkService = networkService
+    }
+
     func fetchDailyInsight() async throws -> DailyContentModel {
-        try await NetworkService.fetchDailyInsight()
+        try await networkService.fetchDailyInsight()
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
-        try await NetworkService.fetchDailyTip()
+        try await networkService.fetchDailyTip()
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        try await NetworkService.fetchCurrentHoroscope()
+        try await networkService.fetchCurrentHoroscope()
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
-        let result = try await NetworkService.makePersonalityTest(selectedTests: selectedTests)
+        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests)
         historyDidChange.send(())
         return result
     }
 
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
-        let result = try await NetworkService.makeCompatibilityTest(request)
+        let result = try await networkService.makeCompatibilityTest(request)
         historyDidChange.send(())
         return result
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        try await NetworkService.fetchHistory()
+        try await networkService.fetchHistory()
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
-        try await NetworkService.fetchHistoryDetails(id: id)
+        try await networkService.fetchHistoryDetails(id: id)
     }
 
     func deleteHistory(id: UUID) async throws {
-        try await NetworkService.deleteHistory(id: id)
+        try await networkService.deleteHistory(id: id)
         historyDidChange.send(())
     }
 }

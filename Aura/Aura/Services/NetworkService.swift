@@ -14,84 +14,119 @@ fileprivate enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-struct NetworkService {
-    private static let tokenPath = Constants.tokenPath
-    private static let tokenKey = Constants.tokenKey
+protocol NetworkServiceProtocol: Sendable {
+    func createAccount(name: String, email: String, password: String) async throws
+    func signIn(email: String, password: String) async throws -> AuthTokenResponse
+    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel
+    func fetchDailyInsight() async throws -> DailyContentModel
+    func fetchDailyTip() async throws -> DailyContentModel
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel
+    func fetchHistory() async throws -> [HistoryCellModel]
+    func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
+    func deleteHistory(id: UUID) async throws
+}
 
-    static func createAccount(name: String, email: String, password: String) async throws {
+nonisolated final class NetworkService: NetworkServiceProtocol {
+    private let baseURL: String
+    private let session: URLSession
+
+    private let tokenPath = Constants.tokenPath
+    private let tokenKey = Constants.tokenKey
+
+    private let maxRetryCount = 2
+
+    init(baseURL: String = Constants.baseURL,
+         session: URLSession = NetworkService.makeSession()) {
+        self.baseURL = baseURL
+        self.session = session
+    }
+
+    private static func makeSession() -> URLSession {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 120
+        configuration.timeoutIntervalForResource = 300
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration)
+    }
+
+    func createAccount(name: String, email: String, password: String) async throws {
         let bodyData = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
         _ = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData)
     }
 
-    static func signIn(email: String, password: String) async throws -> AuthTokenResponse {
+    func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
         let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData)
         return try decoder().decode(AuthTokenResponse.self, from: data)
     }
 
-    static func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         let bodyData = try JSONEncoder().encode(profileInfo)
         let data = try await request(endpoint: "/auth/profileInfo", method: .patch, body: bodyData)
         return try decoder().decode(UpdateProfileInfoResponse.self, from: data)
     }
 
-    static func fetchCurrentHoroscope() async throws -> HoroscopeModel {
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         let data = try await request(endpoint: "/horoscope/current", method: .get)
         return try decoder().decode(HoroscopeModel.self, from: data)
     }
 
-    static func fetchDailyInsight() async throws -> DailyContentModel {
+    func fetchDailyInsight() async throws -> DailyContentModel {
         let data = try await request(endpoint: "/daily/insight", method: .get)
         return try decoder().decode(DailyContentModel.self, from: data)
     }
 
-    static func fetchDailyTip() async throws -> DailyContentModel {
+    func fetchDailyTip() async throws -> DailyContentModel {
         let data = try await request(endpoint: "/daily/tip", method: .get)
         return try decoder().decode(DailyContentModel.self, from: data)
     }
 
-    static func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
         let bodyData = try JSONEncoder().encode(selectedTests)
         let data = try await request(endpoint: "/history/personality", method: .post, body: bodyData)
         return try decoder().decode(PersonalityResultModel.self, from: data)
     }
 
-    static func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel {
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel {
         let bodyData = try JSONEncoder().encode(testRequest)
         let data = try await request(endpoint: "/history/compatibility", method: .post, body: bodyData)
         return try decoder().decode(CompabilityResultModel.self, from: data)
     }
 
-    static func fetchHistory() async throws -> [HistoryCellModel] {
+    func fetchHistory() async throws -> [HistoryCellModel] {
         let data = try await request(endpoint: "/history", method: .get)
         return try decoder().decode([HistoryCellModel].self, from: data)
     }
 
-    static func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
+    func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
         let data = try await request(endpoint: "/history/\(id.uuidString)", method: .get)
         return try decoder().decode(HistoryCellModel.self, from: data)
     }
 
-    static func deleteHistory(id: UUID) async throws {
+    func deleteHistory(id: UUID) async throws {
         _ = try await request(endpoint: "/history/\(id.uuidString)", method: .delete)
     }
 
-    private static func request(endpoint: String,
-                                method: HTTPMethod,
-                                body: Data? = nil,
-                                attempt: Int = 0) async throws -> Data {
+    private func request(endpoint: String,
+                         method: HTTPMethod,
+                         body: Data? = nil,
+                         attempt: Int = 0) async throws -> Data {
         do {
             return try await performRequest(endpoint: endpoint, method: method, body: body)
-        } catch let urlError as URLError where urlError.code == .networkConnectionLost && attempt < 2 {
-            try await Task.sleep(for: .milliseconds(500))
+        } catch let urlError as URLError where Self.isRetryable(urlError) && attempt < maxRetryCount {
+            try await Task.sleep(for: Self.retryDelay(for: attempt))
             return try await request(endpoint: endpoint, method: method, body: body, attempt: attempt + 1)
+        } catch let urlError as URLError {
+            throw NetworkError(urlError: urlError)
         }
     }
 
-    private static func performRequest(endpoint: String,
-                                       method: HTTPMethod,
-                                       body: Data? = nil) async throws -> Data {
-        guard let baseURL = URL(string: Constants.baseURL),
+    private func performRequest(endpoint: String,
+                                method: HTTPMethod,
+                                body: Data? = nil) async throws -> Data {
+        guard let baseURL = URL(string: baseURL),
               let url = URL(string: endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
         }
@@ -108,7 +143,7 @@ struct NetworkService {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
@@ -128,7 +163,25 @@ struct NetworkService {
         }
     }
 
-    private static func decoder() -> JSONDecoder {
+    private static func isRetryable(_ error: URLError) -> Bool {
+        switch error.code {
+            case .timedOut,
+                 .networkConnectionLost,
+                 .cannotConnectToHost,
+                 .cannotFindHost,
+                 .dnsLookupFailed,
+                 .notConnectedToInternet:
+                return true
+            default:
+                return false
+        }
+    }
+
+    private static func retryDelay(for attempt: Int) -> Duration {
+        .seconds(Double(attempt) + 0.5)
+    }
+
+    private func decoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder
@@ -163,6 +216,22 @@ fileprivate enum NetworkError: LocalizedError {
     case unauthorized
     case userExists
     case notFound
+    case timedOut
+    case noConnection
+    case cannotReachServer
+
+    init(urlError: URLError) {
+        switch urlError.code {
+            case .timedOut:
+                self = .timedOut
+            case .notConnectedToInternet, .networkConnectionLost:
+                self = .noConnection
+            case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
+                self = .cannotReachServer
+            default:
+                self = .invalidResponse
+        }
+    }
 
     var errorDescription: String? {
         switch self {
@@ -178,6 +247,12 @@ fileprivate enum NetworkError: LocalizedError {
                 return "Пользователь уже зарегистрирован"
             case .notFound:
                 return "Пользователь не найден"
+            case .timedOut:
+                return "Сервер просыпается дольше обычного. Попробуйте ещё раз через минуту"
+            case .noConnection:
+                return "Нет подключения к интернету"
+            case .cannotReachServer:
+                return "Не удалось связаться с сервером. Попробуйте позже"
         }
     }
 }
