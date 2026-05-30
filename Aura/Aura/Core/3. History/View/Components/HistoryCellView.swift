@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HistoryCellView: View {
     let cell: HistoryCellModel
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         HStack(spacing: 15) {
@@ -35,7 +36,7 @@ struct HistoryCellView: View {
                         .bold()
                         .padding(.vertical, 3)
                         .padding(.horizontal, 6)
-                        .background(.softPurple.opacity(0.75))
+                        .background(Components.handleAccentColor(accentColor).opacity(0.75))
                         .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
             }

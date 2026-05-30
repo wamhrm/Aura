@@ -3,6 +3,7 @@
 .swiftpm/
 .cursor/
 .vscode/
+CLAUDE.md
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
 *.xcuserstate

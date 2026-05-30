@@ -149,9 +149,6 @@ struct HomeView: View {
                         }
                         .bottomAreaPadding(50)
                         .scrollIndicators(.hidden)
-                        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-                            Button("OK", role: .cancel) {}
-                        }
                     }
                 }
             }
@@ -161,6 +158,9 @@ struct HomeView: View {
                 destinationView(destination)
             }
             .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
+            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+                Button("OK", role: .cancel) {}
+            }
         }
     }
 }

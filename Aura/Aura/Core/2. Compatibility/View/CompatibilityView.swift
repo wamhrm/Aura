@@ -124,13 +124,13 @@ struct CompatibilityView: View {
                         }
                         .disabled(vm.isLoading)
                         .padding(.horizontal)
+                        .bottomAreaPadding(50)
                     }
                     .scrollIndicators(.hidden)
                     .dismissKeyboardOnTap()
                     .scrollDismissesKeyboard(.interactively)
                 }
             }
-            .bottomAreaPadding(50)
             .navigationTitle("Узнать совместимость")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: CompatibilityRoutes.self) { destination in
