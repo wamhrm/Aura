@@ -19,7 +19,7 @@ enum HomeRoutes: Hashable {
 }
 
 @MainActor
-final class HomeViewModel: ObservableObject {
+final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     @Published var homeRoutes: [HomeRoutes] = []
 
     @Published var profileInfo = ProfileInfoModel()
@@ -33,9 +33,9 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var personalityResult: PersonalityResultModel?
 
     @Published var showAlert = false
-    @Published private(set) var alertMessage = ""
+    @Published var alertMessage = ""
     @Published private(set) var isLoading = false
-    @Published private(set) var isServerWakingUp = false
+    @Published var isServerWakingUp = false
     @Published private(set) var isLoadingScreen = true
 
     private let authService: any AuthServiceProtocol
@@ -49,10 +49,6 @@ final class HomeViewModel: ObservableObject {
         self.contentService = contentService
 
         setupSubscriptions()
-    }
-
-    deinit {
-        cancellables.removeAll()
     }
 
     var dailyInsightHandler: String {
@@ -108,32 +104,22 @@ final class HomeViewModel: ObservableObject {
         isLoading = true
 
         Task {
-            let loadedTask = Task {
-                try await Task.sleep(for: .seconds(25))
+            await withServerWakeUpIndicator(after: .seconds(25)) {
+                do {
+                    try validateProfileInfoForms()
 
-                if !Task.isCancelled {
-                    withAnimation { isServerWakingUp = true }
+                    let response = try await authService.updateProfileInfo(profileInfo)
+                    profileInfo = response.user.profileInfo
+                    hasProfileInfo = response.user.hasCompletedProfileInfo
+                    horoscope = response.horoscope
+                    UserDefaultsHelper.saveHoroscopeLocally(response.horoscope, for: response.user.id)
+                    await loadDailyInsight(for: response.user.id)
+                    try await Task.sleep(for: .seconds(1.5))
+                    onSuccess()
+                } catch {
+                    presentAlert(error.localizedDescription)
                 }
             }
-
-            defer { loadedTask.cancel() }
-
-            do {
-                try validateProfileInfoForms()
-
-                let response = try await authService.updateProfileInfo(profileInfo)
-                profileInfo = response.user.profileInfo
-                hasProfileInfo = response.user.hasCompletedProfileInfo
-                horoscope = response.horoscope
-                UserDefaultsHelper.saveHoroscopeLocally(response.horoscope, for: response.user.id)
-                await loadDailyInsight(for: response.user.id)
-                try await Task.sleep(for: .seconds(1.5))
-                onSuccess()
-            } catch {
-                showAlert(error.localizedDescription)
-            }
-
-            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
     }
@@ -141,7 +127,7 @@ final class HomeViewModel: ObservableObject {
     func toggleTestSelection(_ test: PersonalityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > 2 else {
-                showAlert("Нельзя выбрать меньше 2 тестов")
+                presentAlert("Нельзя выбрать меньше 2 тестов")
                 return
             }
             selectedTests.remove(at: index)
@@ -156,24 +142,15 @@ final class HomeViewModel: ObservableObject {
         Task {
             isLoading = true
 
-            let loadedTask = Task {
-                try await Task.sleep(for: .seconds(25))
-
-                if !Task.isCancelled {
-                    withAnimation { isServerWakingUp = true }
+            await withServerWakeUpIndicator(after: .seconds(25)) {
+                do {
+                    personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
+                    homeRoutes.append(.testResults)
+                } catch {
+                    presentAlert("Не удалось получить результат")
                 }
             }
 
-            defer { loadedTask.cancel() }
-
-            do {
-                personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
-                homeRoutes.append(.testResults)
-            } catch {
-                showAlert("Не удалось получить результат")
-            }
-
-            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
     }
@@ -185,7 +162,7 @@ final class HomeViewModel: ObservableObject {
             UserDefaultsHelper.saveHoroscopeLocally(fetched, for: userId)
         } catch {
             if showErrorOnFailure {
-                showAlert(error.localizedDescription)
+                presentAlert(error.localizedDescription)
             }
         }
     }
@@ -197,7 +174,7 @@ final class HomeViewModel: ObservableObject {
             UserDefaultsHelper.saveDailyInsightLocally(insight, for: userId)
         } catch {
             if showErrorOnFailure {
-                showAlert(error.localizedDescription)
+                presentAlert(error.localizedDescription)
             }
         }
     }
@@ -222,10 +199,6 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    private func showAlert(_ message: String) {
-        alertMessage = message
-        showAlert = true
-    }
 }
 
 fileprivate enum ProfileInfoError: LocalizedError {

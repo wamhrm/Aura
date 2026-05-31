@@ -49,7 +49,7 @@ struct CompatibilityResultView: View {
                     }
 
                     VStack(spacing: Components.displaySize(12, 13)) {
-                        Text(result.title.capitalized)
+                        Text(result.title)
                             .font(Components.displaySize(.callout, .default))
                             .foregroundStyle(Components.handleAccentColor(accentColor))
                             .bold()

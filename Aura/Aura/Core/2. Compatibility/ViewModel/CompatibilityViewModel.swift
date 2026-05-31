@@ -15,7 +15,7 @@ enum CompatibilityRoutes: Hashable {
 }
 
 @MainActor
-final class CompatibilityViewModel: ObservableObject {
+final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
 
     @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
@@ -23,9 +23,9 @@ final class CompatibilityViewModel: ObservableObject {
     @Published private(set) var compatibilityResult: CompabilityResultModel?
 
     @Published var showAlert = false
-    @Published private(set) var alertMessage = ""
+    @Published var alertMessage = ""
     @Published private(set) var isLoading = false
-    @Published private(set) var isServerWakingUp = false
+    @Published var isServerWakingUp = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -37,10 +37,6 @@ final class CompatibilityViewModel: ObservableObject {
         self.contentService = contentService
 
         setupSubscriptions()
-    }
-
-    deinit {
-        cancellables.removeAll()
     }
 
     private func setupSubscriptions() {
@@ -60,7 +56,7 @@ final class CompatibilityViewModel: ObservableObject {
     func toggleTestSelection(_ test: CompatibilityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > 3 else {
-                showAlert("Нельзя выбрать меньше 3 тестов")
+                presentAlert("Нельзя выбрать меньше 3 тестов")
                 return
             }
 
@@ -76,26 +72,16 @@ final class CompatibilityViewModel: ObservableObject {
         isLoading = true
 
         Task {
-            let loadedTask = Task {
-                try await Task.sleep(for: .seconds(25))
-
-                if !Task.isCancelled {
-                    withAnimation { isServerWakingUp = true }
+            await withServerWakeUpIndicator(after: .seconds(25)) {
+                do {
+                    try validatePartnerInfoForms()
+                    let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
+                    compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
+                    compatibilityRoutes.append(.compatibilityResults)
+                } catch {
+                    presentAlert(error.localizedDescription)
                 }
             }
-
-            defer { loadedTask.cancel() }
-
-            do {
-                try validatePartnerInfoForms()
-                let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
-                compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
-                compatibilityRoutes.append(.compatibilityResults)
-            } catch {
-                showAlert(error.localizedDescription)
-            }
-
-            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
     }
@@ -120,12 +106,7 @@ final class CompatibilityViewModel: ObservableObject {
     }
     
     func showInvalidDateOfBirthday() {
-        showAlert("Укажите корректную дату рождения")
-    }
-
-    private func showAlert(_ message: String) {
-        alertMessage = message
-        showAlert = true
+        presentAlert("Укажите корректную дату рождения")
     }
 }
 

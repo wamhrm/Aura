@@ -35,8 +35,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private let tokenPath = Constants.tokenPath
     private let tokenKey = Constants.tokenKey
 
-    private let maxRetryCount = 2
-
     init(baseURL: String = Constants.baseURL,
          session: URLSession = NetworkService.makeSession()) {
         self.baseURL = baseURL
@@ -115,7 +113,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                          attempt: Int = 0) async throws -> Data {
         do {
             return try await performRequest(endpoint: endpoint, method: method, body: body)
-        } catch let urlError as URLError where Self.isRetryable(urlError) && attempt < maxRetryCount {
+        } catch let urlError as URLError where Self.isRetryable(urlError) && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(for: attempt))
             return try await request(endpoint: endpoint, method: method, body: body, attempt: attempt + 1)
         } catch let urlError as URLError {
