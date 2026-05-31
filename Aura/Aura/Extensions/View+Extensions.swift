@@ -17,8 +17,8 @@ extension View {
     
     func backgroundWithShape(_ amount: CGFloat, _ color: Color, _ stroke: Bool) -> some View {
         self
-            .background(RoundedRectangle(cornerRadius: amount) .fill(color))
-            .overlay(RoundedRectangle(cornerRadius: amount) .stroke(.cardStroke, lineWidth: stroke ? 0.2 : 0))
+            .background(RoundedRectangle(cornerRadius: amount).fill(color))
+            .overlay(RoundedRectangle(cornerRadius: amount).stroke(.cardStroke, lineWidth: stroke ? 0.2 : 0))
             .clipShape(RoundedRectangle(cornerRadius: amount))
             .shadow(color: .gray.opacity(0.1), radius: 3)
     }
@@ -54,7 +54,7 @@ extension View {
             .padding(10)
             .background(Color.fieldBackground.opacity(0.55))
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12) .stroke(Color.fieldBackground, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.fieldBackground, lineWidth: 1))
             .padding(.top, 5)
     }
     
@@ -64,7 +64,7 @@ extension View {
 
     func zodiacSingModifier() -> some View {
         self
-            .font(Components.displaySize(.title2, .system(size: 24)))
+            .font(Adaptive.size(.title2, .system(size: 24)))
             .padding(10)
             .background(LinearGradient(colors: [.softPurple,
                                                 .idealPartnerType1],
@@ -100,9 +100,9 @@ private struct CompatibilityResultZodiacsModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .font(Components.displaySize(.callout, .default))
-            .padding(Components.displaySize(10, 12))
-            .background(Components.handleAccentColor(accentColor).opacity(0.25))
+            .font(Adaptive.size(.callout, .default))
+            .padding(Adaptive.size(10, 12))
+            .background(AccentColorOption.color(accentColor).opacity(0.25))
             .clipShape(Circle())
     }
 }

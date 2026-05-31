@@ -67,7 +67,7 @@ struct UserDefaultsHelper {
     static func deleteLocalHistory(for userId: UUID) {
         UserDefaults.standard.removeObject(forKey: historyStorageKey(for: userId))
     }
-    
+
     static func saveDailyInsightLocally(_ insight: DailyContentModel, for userId: UUID) {
         let key = dailyInsightStorageKey(for: userId)
         UserDefaults.standard.removeObject(forKey: key)

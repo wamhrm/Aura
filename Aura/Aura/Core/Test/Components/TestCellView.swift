@@ -21,32 +21,23 @@ struct TestCellView<Test: TestCellDisplayable>: View {
     @Binding var hasChosenTest: Bool
     let onSelectionToggle: () -> Void
     let onTapHandler: () -> Void
+    
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
-
-    init(type: Test,
-         hasChosenTest: Binding<Bool>,
-         onSelectionToggle: @escaping () -> Void,
-         onTapHandler: @escaping () -> Void) {
-        self.type = type
-        self._hasChosenTest = hasChosenTest
-        self.onSelectionToggle = onSelectionToggle
-        self.onTapHandler = onTapHandler
-    }
 
     var body: some View {
         Button(action: onTapHandler) {
             HStack(spacing: 15) {
                 HStack(spacing: 15) {
-                    Components.testCellImage(type.icon, type.color, .title2, Components.displaySize(43, 45), false)
+                    TestCellImage(icon: type.icon, color: type.color, iconSize: .title2, backgroundSize: Adaptive.size(43, 45), isResults: false)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(type.title)
-                            .font(Components.displaySize(.footnote, .system(size: 14)))
+                            .font(Adaptive.size(.footnote, .system(size: 14)))
                             .fontWeight(.semibold)
                             .multilineTextAlignment(.leading)
 
                         Text(type.description)
-                            .font(Components.displaySize(.caption, .footnote))
+                            .font(Adaptive.size(.caption, .footnote))
                             .fontWeight(.medium)
                             .foregroundStyle(.deepGray)
                             .multilineTextAlignment(.leading)
@@ -59,15 +50,15 @@ struct TestCellView<Test: TestCellDisplayable>: View {
                 onSelectionToggle()
             } label: {
                 Circle()
-                    .fill(hasChosenTest ? Components.handleAccentColor(accentColor).opacity(0.85) : .clear)
-                    .frame(width: Components.displaySize(23, 25),
-                           height: Components.displaySize(23, 25))
+                    .fill(hasChosenTest ? AccentColorOption.color(accentColor).opacity(0.85) : .clear)
+                    .frame(width: Adaptive.size(23, 25),
+                           height: Adaptive.size(23, 25))
                     .overlay(Circle().stroke(Color.fieldBackground, lineWidth: 2))
                     .overlay {
                         Circle()
                             .fill(.cardBackground)
-                            .frame(width: Components.displaySize(8, 10),
-                                   height: Components.displaySize(8, 10))
+                            .frame(width: Adaptive.size(8, 10),
+                                   height: Adaptive.size(8, 10))
                     }
                     .padding(.trailing, 5)
             }
@@ -91,101 +82,71 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 
     var description: String {
         switch self {
-            case .astrology:
-                return "Узнайте силу ваших планет"
-            case .behavioralPatterns:
-                return "Разберите свои реакции"
-            case .decisionMaking:
-                return "Поймите, как вы выбираете"
-            case .attachmentStyle:
-                return "Определите ваш стиль отношений"
-            case .idealPartner:
-                return "Соберите портрет партнера"
-            case .loveLanguage:
-                return "Как вы выражаете любовь?"
+            case .astrology: "Узнайте силу ваших планет"
+            case .behavioralPatterns: "Разберите свои реакции"
+            case .decisionMaking: "Поймите, как вы выбираете"
+            case .attachmentStyle: "Определите ваш стиль отношений"
+            case .idealPartner: "Соберите портрет партнера"
+            case .loveLanguage: "Как вы выражаете любовь?"
         }
     }
 
     var icon: String {
         switch self {
-            case .astrology:
-                return "sparkles"
-            case .behavioralPatterns:
-                return "figure.walk.motion"
-            case .decisionMaking:
-                return "brain.head.profile"
-            case .attachmentStyle:
-                return "person.2"
-            case .idealPartner:
-                return "heart.text.square"
-            case .loveLanguage:
-                return "heart"
+            case .astrology: "sparkles"
+            case .behavioralPatterns: "figure.walk.motion"
+            case .decisionMaking: "brain.head.profile"
+            case .attachmentStyle: "person.2"
+            case .idealPartner: "heart.text.square"
+            case .loveLanguage: "heart"
         }
     }
 
     var color: UIColor {
         switch self {
-            case .astrology:
-                return .systemIndigo
-            case .behavioralPatterns:
-                return .systemTeal
-            case .decisionMaking:
-                return .systemBlue
-            case .attachmentStyle:
-                return .systemOrange
-            case .idealPartner:
-                return .systemPurple
-            case .loveLanguage:
-                return .systemRed
+            case .astrology: .systemIndigo
+            case .behavioralPatterns: .systemTeal
+            case .decisionMaking: .systemBlue
+            case .attachmentStyle: .systemOrange
+            case .idealPartner: .systemPurple
+            case .loveLanguage: .systemRed
         }
     }
 
     var deepDescription: String {
         switch self {
-            case .astrology:
-                return "Получите подробный разбор вашей натальной карты: положение планет, сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение."
-            case .behavioralPatterns:
-                return "Разберите повторяющиеся сценарии поведения: как вы реагируете на стресс, близость, неопределенность и эмоциональное напряжение."
-            case .decisionMaking:
-                return "Поймите, что сильнее влияет на ваши решения: эмоции, логика, интуиция или потребность в стабильности. Это поможет выбирать спокойнее и увереннее."
-            case .attachmentStyle:
-                return "Определите свой стиль привязанности и разберите модели поведения в отношениях. Узнаете, почему вы реагируете определённым образом и какие сценарии повторяются чаще всего."
-            case .idealPartner:
-                return "Соберите понятный портрет партнера, который подходит вашему темпераменту, эмоциональным потребностям и ожиданиям от близости."
-            case .loveLanguage:
-                return "Поймите, как вы выражаете любовь и что делает вас эмоционально удовлетворённым в отношениях. Это поможет лучше понимать себя и избегать типичных недопониманий."
+            case .astrology: "Получите подробный разбор вашей натальной карты: положение планет, сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение."
+            case .behavioralPatterns: "Разберите повторяющиеся сценарии поведения: как вы реагируете на стресс, близость, неопределенность и эмоциональное напряжение."
+            case .decisionMaking: "Поймите, что сильнее влияет на ваши решения: эмоции, логика, интуиция или потребность в стабильности. Это поможет выбирать спокойнее и увереннее."
+            case .attachmentStyle: "Определите свой стиль привязанности и разберите модели поведения в отношениях. Узнаете, почему вы реагируете определённым образом и какие сценарии повторяются чаще всего."
+            case .idealPartner: "Соберите понятный портрет партнера, который подходит вашему темпераменту, эмоциональным потребностям и ожиданиям от близости."
+            case .loveLanguage: "Поймите, как вы выражаете любовь и что делает вас эмоционально удовлетворённым в отношениях. Это поможет лучше понимать себя и избегать типичных недопониманий."
         }
     }
 
     var includedItems: [String] {
         switch self {
-            case .astrology:
-                return ["Анализ натальной карты",
+            case .astrology: ["Анализ натальной карты",
                         "Планетарные аспекты",
                         "Сильные и слабые стороны",
                         "Личностные особенности"]
-            case .behavioralPatterns:
-                return ["Повторяющиеся реакции",
+            case .behavioralPatterns: ["Повторяющиеся реакции",
                         "Поведение в стрессе",
                         "Социальные сценарии",
                         "Зоны личного роста"]
-            case .decisionMaking:
-                return ["Стиль выбора",
+            case .decisionMaking: ["Стиль выбора",
                         "Роль эмоций и логики",
                         "Реакция на неопределенность",
                         "Риски импульсивности"]
-            case .attachmentStyle:
-                return ["Тип привязанности",
+            case .attachmentStyle: ["Тип привязанности",
                         "Поведение в отношениях",
                         "Триггеры и страхи",
                         "Зоны личного роста"]
-            case .idealPartner:
-                return ["Эмоциональные потребности",
+            case .idealPartner: ["Эмоциональные потребности",
                         "Подходящий темперамент",
                         "Важные границы",
                         "Портрет партнера"]
-            case .loveLanguage:
-                return ["Ваш язык любви",
+            case .loveLanguage: ["Ваш язык любви",
                         "Способы проявления чувств",
                         "Эмоциональные потребности",
                         "Ошибки в коммуникации"]
@@ -205,101 +166,71 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 
     var description: String {
         switch self {
-            case .astrology:
-                return "Общая динамика"
-            case .behavioralPatterns:
-                return "Как вы ведете себя"
-            case .attachmentCompatibility:
-                return "Безопасность и дистанция"
-            case .loveLanguages:
-                return "Как вы даете и принимаете любовь"
-            case .conflictResolution:
-                return "Триггеры и ссоры"
-            case .sexualCompatibility:
-                return "Химия и интимные ожидания"
+            case .astrology: "Общая динамика"
+            case .behavioralPatterns: "Как вы ведете себя"
+            case .attachmentCompatibility: "Безопасность и дистанция"
+            case .loveLanguages: "Как вы даете и принимаете любовь"
+            case .conflictResolution: "Триггеры и ссоры"
+            case .sexualCompatibility: "Химия и интимные ожидания"
         }
     }
 
     var icon: String {
         switch self {
-            case .astrology:
-                return "sparkles"
-            case .behavioralPatterns:
-                return "person.2.wave.2"
-            case .attachmentCompatibility:
-                return "lock.heart"
-            case .loveLanguages:
-                return "heart"
-            case .conflictResolution:
-                return "bubble.left.and.bubble.right"
-            case .sexualCompatibility:
-                return "flame"
+            case .astrology: "sparkles"
+            case .behavioralPatterns: "person.2.wave.2"
+            case .attachmentCompatibility: "lock.heart"
+            case .loveLanguages: "heart"
+            case .conflictResolution: "bubble.left.and.bubble.right"
+            case .sexualCompatibility: "flame"
         }
     }
 
     var color: UIColor {
         switch self {
-            case .astrology:
-                return .systemIndigo
-            case .behavioralPatterns:
-                return .systemTeal
-            case .attachmentCompatibility:
-                return .systemOrange
-            case .loveLanguages:
-                return .systemRed
-            case .conflictResolution:
-                return .systemBlue
-            case .sexualCompatibility:
-                return .systemPink
+            case .astrology: .systemIndigo
+            case .behavioralPatterns: .systemTeal
+            case .attachmentCompatibility: .systemOrange
+            case .loveLanguages: .systemRed
+            case .conflictResolution: .systemBlue
+            case .sexualCompatibility: .systemPink
         }
     }
 
     var deepDescription: String {
         switch self {
-            case .astrology:
-                return "Сравните ваши натальные показатели и узнайте, где между вами возникает легкость, напряжение, притяжение и долгосрочный потенциал."
-            case .behavioralPatterns:
-                return "Разберите, как ваши привычные реакции сочетаются в паре: кто сближается, кто отдаляется, где возникает поддержка, а где недопонимание."
-            case .attachmentCompatibility:
-                return "Поймите, насколько ваши стили привязанности подходят друг другу и какие сценарии могут создавать тревогу, холодность или ощущение безопасности."
-            case .loveLanguages:
-                return "Сравните ваши способы проявлять любовь, принимать заботу и чувствовать значимость в отношениях."
-            case .conflictResolution:
-                return "Узнайте, как вы оба ведете себя в конфликте, какие триггеры усиливают ссоры и какие способы примирения подходят вашей паре."
-            case .sexualCompatibility:
-                return "Исследуйте уровень интимной совместимости: желания, ожидания и скрытые несовпадения. Поймёте, где возникает напряжение и как усилить химию между вами."
+            case .astrology: "Сравните ваши натальные показатели и узнайте, где между вами возникает легкость, напряжение, притяжение и долгосрочный потенциал."
+            case .behavioralPatterns: "Разберите, как ваши привычные реакции сочетаются в паре: кто сближается, кто отдаляется, где возникает поддержка, а где недопонимание."
+            case .attachmentCompatibility: "Поймите, насколько ваши стили привязанности подходят друг другу и какие сценарии могут создавать тревогу, холодность или ощущение безопасности."
+            case .loveLanguages: "Сравните ваши способы проявлять любовь, принимать заботу и чувствовать значимость в отношениях."
+            case .conflictResolution: "Узнайте, как вы оба ведете себя в конфликте, какие триггеры усиливают ссоры и какие способы примирения подходят вашей паре."
+            case .sexualCompatibility: "Исследуйте уровень интимной совместимости: желания, ожидания и скрытые несовпадения. Поймёте, где возникает напряжение и как усилить химию между вами."
         }
     }
 
     var includedItems: [String] {
         switch self {
-            case .astrology:
-                return ["Синастрия пары",
+            case .astrology: ["Синастрия пары",
                         "Солнце, Луна и Венера",
                         "Точки притяжения",
                         "Потенциал отношений"]
-            case .behavioralPatterns:
-                return ["Реакции в близости",
+            case .behavioralPatterns: ["Реакции в близости",
                         "Поведение в стрессе",
                         "Роли в отношениях",
                         "Повторяющиеся сценарии"]
-            case .attachmentCompatibility:
-                return ["Стили привязанности",
+            case .attachmentCompatibility: ["Стили привязанности",
                         "Потребность в дистанции",
                         "Тревожные триггеры",
                         "Чувство безопасности"]
-            case .loveLanguages:
-                return ["Языки любви пары",
+            case .loveLanguages: ["Языки любви пары",
                         "Способы заботы",
                         "Ожидания от партнера",
                         "Эмоциональная связь"]
-            case .conflictResolution:
-                return ["Типичные конфликты",
+            case .conflictResolution: ["Типичные конфликты",
                         "Триггеры напряжения",
                         "Стратегии примирения",
                         "Зоны договоренностей"]
-            case .sexualCompatibility:
-                return ["Уровень влечения",
+            case .sexualCompatibility: ["Уровень влечения",
                         "Интимные ожидания",
                         "Совпадение желаний",
                         "Потенциал химии"]

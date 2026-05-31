@@ -20,3 +20,9 @@ extension UIDevice {
         return screen.nativeBounds.height >= 2796
     }()
 }
+
+enum Adaptive {
+    static func size<T>(_ base: T, _ plus: T) -> T {
+        UIDevice.isPlus ? plus : base
+    }
+}

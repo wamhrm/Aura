@@ -12,13 +12,13 @@ struct HoroscopeDetailsView: View {
     
     var body: some View {
         ZStack {
-            Components.backgroundColor()
+            BackgroundView()
             
             ScrollView {
                 VStack(spacing: 25) {
                     VStack(spacing: 12) {
                         Text(horoscope.type.icon)
-                            .font(.system(size: Components.displaySize(30, 32)))
+                            .font(.system(size: Adaptive.size(30, 32)))
                             .padding(.top, 8)
                             .padding(.vertical, 18)
                         
@@ -27,7 +27,7 @@ struct HoroscopeDetailsView: View {
                             .fontDesign(.monospaced)
                             .bold()
                         
-                        Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, true)
+                        HoroscopeDateView(dateStart: horoscope.dateStart, dateEnd: horoscope.dateEnd, isCellDetails: true)
                             .padding(10)
                             .background(Color.fieldBackground.opacity(0.45))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -42,13 +42,13 @@ struct HoroscopeDetailsView: View {
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text("На этой неделе")
-                            .font(Components.displaySize(.callout, .default))
+                            .font(Adaptive.size(.callout, .default))
                             .fontWeight(.semibold)
                         
                         Text("""
                             "\(horoscope.description)"
                             """)
-                            .font(.system(size: Components.displaySize(14, 15)))
+                            .font(.system(size: Adaptive.size(14, 15)))
                             .italic()
                             .foregroundStyle(.deepGray)
                             .fontWeight(.medium)
@@ -70,7 +70,7 @@ struct HoroscopeDetailsView: View {
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
-                        .font(Components.displaySize(.system(size: 15), .default))
+                        .font(Adaptive.size(.system(size: 15), .default))
                         
                         ForEach(horoscope.items, id: \.self) { item in
                             HoroscopeDetailsCellView(type: item.title, description: item.description)

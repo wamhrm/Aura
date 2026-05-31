@@ -8,13 +8,8 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @ObservedObject private var vm: ProfileViewModel
-    @ObservedObject private var homeViewModel: HomeViewModel
-
-    init(vm: ProfileViewModel, homeViewModel: HomeViewModel) {
-        self.vm = vm
-        self.homeViewModel = homeViewModel
-    }
+    @ObservedObject var vm: ProfileViewModel
+    @ObservedObject var homeViewModel: HomeViewModel
 
     var body: some View {
         NavigationStack(path: $vm.profileRoutes) {
@@ -64,12 +59,8 @@ extension ProfileView {
     }
     
     private func sheetView() -> some View {
-        SettingsSheetView(vm: vm, isSignedOut: vm.isSignedOut) {
-            vm.profileRoutes.append(.addProfileInfo)
-        } onSignOut: {
-            vm.signOut()
-        }
-        .presentationDetents([.height(vm.isSignedOut ? Components.displaySize(260, 280) : Components.displaySize(370, 390))])
+        SettingsSheetView(vm: vm, isSignedOut: vm.isSignedOut)
+            .presentationDetents([.height(vm.isSignedOut ? Adaptive.size(260, 280) : Adaptive.size(370, 390))])
     }
 }
 

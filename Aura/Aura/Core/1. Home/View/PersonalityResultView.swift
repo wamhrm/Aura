@@ -13,40 +13,40 @@ struct PersonalityResultView: View {
 
     var body: some View {
         ZStack {
-            Components.backgroundColor()
+            BackgroundView()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 15) {
                     VStack {
                         HStack(spacing: 15) {
                             Text(result.zodiacSign)
-                                .font(Components.displaySize(.default, .title3))
+                                .font(Adaptive.size(.default, .title3))
                                 .fontWeight(.semibold)
                                 .padding(10)
                                 .background(.lightPurple)
                                 .clipShape(Circle())
                             
                             Text(result.name.capitalized)
-                                .font(Components.displaySize(.title3, .title2))
+                                .font(Adaptive.size(.title3, .title2))
                                 .fontDesign(.rounded)
                                 .bold()
                         }
-                        .padding(.vertical, Components.displaySize(20, 22))
+                        .padding(.vertical, Adaptive.size(20, 22))
                         
-                        VStack(alignment: .center, spacing: Components.displaySize(15, 17)) {
+                        VStack(alignment: .center, spacing: Adaptive.size(15, 17)) {
                             HStack {
                                 ForEach(result.selectedTests, id: \.self) { test in
-                                    Components.testCellImage(test.icon, test.color, .default, 30, true)
+                                    TestCellImage(icon: test.icon, color: test.color, iconSize: .default, backgroundSize: 30, isResults: true)
                                 }
                             }
                             
                             Text(result.archetypeTitle)
-                                .font(Components.displaySize(.default, .system(size: 19)))
-                                .foregroundStyle(Components.handleAccentColor(accentColor))
+                                .font(Adaptive.size(.default, .system(size: 19)))
+                                .foregroundStyle(AccentColorOption.color(accentColor))
                                 .fontWeight(.semibold)
                             
                             Text(result.archetypeSubtitle)
-                                .font(Components.displaySize(.footnote, .system(size: 14)))
+                                .font(Adaptive.size(.footnote, .system(size: 14)))
                                 .foregroundStyle(.deepGray)
                                 .multilineTextAlignment(.center)
                                 .fontWeight(.medium)
@@ -58,14 +58,14 @@ struct PersonalityResultView: View {
                     
                     section(result.overview.title) {
                         Text(result.overview.description)
-                            .font(.system(size: Components.displaySize(14, 15)))
+                            .font(.system(size: Adaptive.size(14, 15)))
                             .foregroundStyle(.deepGray)
                     }
                     
                     section("Внутренний мир") {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
-                                Components.emotionalProfileBar(bar.title, bar.value)
+                                EmotionalProfileBar(type: bar.title, value: bar.value)
                             }
                         }
                         .padding(.top, 5)
@@ -74,7 +74,7 @@ struct PersonalityResultView: View {
                     ForEach(result.sections, id: \.self) { test in
                         section(test.selectedTest.rawValue) {
                             Text(test.description)
-                                .font(Components.displaySize(.system(size: 15), .callout))
+                                .font(Adaptive.size(.system(size: 15), .callout))
                                 .foregroundStyle(.deepGray)
                             
                             VStack(spacing: 15) {
@@ -106,7 +106,7 @@ extension PersonalityResultView {
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(Components.displaySize(.system(size: 15), .default))
+                .font(Adaptive.size(.system(size: 15), .default))
                 .bold()
             
             content()
