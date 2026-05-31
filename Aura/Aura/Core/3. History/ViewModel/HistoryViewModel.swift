@@ -15,14 +15,14 @@ enum HistoryRoutes: Hashable {
 }
 
 @MainActor
-final class HistoryViewModel: ObservableObject {
+final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
     @Published var historyRoutes: [HistoryRoutes] = []
     @Published private(set) var historyCells: [HistoryCellModel] = []
 
     @Published private(set) var isSignedIn = false
-    @Published private(set) var isServerWakingUp = false
+    @Published var isServerWakingUp = false
     @Published var showAlert = false
-    @Published private(set) var alertMessage = ""
+    @Published var alertMessage = ""
     @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol
@@ -37,10 +37,6 @@ final class HistoryViewModel: ObservableObject {
         self.contentService = contentService
 
         setupSubscriptions()
-    }
-
-    deinit {
-        cancellables.removeAll()
     }
 
     private func setupSubscriptions() {
@@ -93,7 +89,7 @@ final class HistoryViewModel: ObservableObject {
             historyCells = history
             UserDefaultsHelper.saveHistoryLocally(history, for: userId)
         } catch {
-            showAlert(message: "Не удалось загрузить историю")
+            presentAlert("Не удалось загрузить историю")
         }
     }
 
@@ -106,7 +102,7 @@ final class HistoryViewModel: ObservableObject {
                     UserDefaultsHelper.saveHistoryLocally(historyCells, for: userId)
                 }
             } catch {
-                showAlert(message: "Не удалось удалить запись")
+                presentAlert("Не удалось удалить запись")
             }
         }
     }
@@ -117,44 +113,29 @@ final class HistoryViewModel: ObservableObject {
         isLoading = true
 
         Task {
-            let loadedTask = Task {
-                try await Task.sleep(for: .seconds(12))
+            await withServerWakeUpIndicator(after: .seconds(12)) {
+                do {
+                    let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
 
-                if !Task.isCancelled {
-                    withAnimation { isServerWakingUp = true }
+                    switch historyDetails.kind {
+                        case .personality:
+                            guard let result = historyDetails.personalityResult else {
+                                presentAlert("Не удалось открыть результат")
+                                return
+                            }
+                            historyRoutes.append(.personalityResult(result))
+                        case .compatibility:
+                            guard let result = historyDetails.compatibilityResult else {
+                                presentAlert("Не удалось открыть результат")
+                                return
+                            }
+                            historyRoutes.append(.compatibilityResult(result))
+                    }
+                } catch {
+                    presentAlert("Не удалось открыть результат")
                 }
             }
-
-            defer { loadedTask.cancel() }
-
-            do {
-                let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
-
-                switch historyDetails.kind {
-                    case .personality:
-                        guard let result = historyDetails.personalityResult else {
-                            showAlert(message: "Не удалось открыть результат")
-                            return
-                        }
-                        historyRoutes.append(.personalityResult(result))
-                    case .compatibility:
-                        guard let result = historyDetails.compatibilityResult else {
-                            showAlert(message: "Не удалось открыть результат")
-                            return
-                        }
-                        historyRoutes.append(.compatibilityResult(result))
-                }
-            } catch {
-                showAlert(message: "Не удалось открыть результат")
-            }
-            
-            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
-    }
-
-    private func showAlert(message: String) {
-        alertMessage = message
-        showAlert = true
     }
 }
