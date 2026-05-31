@@ -14,7 +14,7 @@ enum ProfileRoutes: Hashable {
 }
 
 @MainActor
-final class ProfileViewModel: ObservableObject {
+final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published var profileRoutes: [ProfileRoutes] = []
 
     @Published var name = ""
@@ -26,13 +26,13 @@ final class ProfileViewModel: ObservableObject {
     @Published private(set) var dailyTip: DailyContentModel?
     
     @Published private(set) var isLoading = false
-    @Published private(set) var isServerWakingUp = false
+    @Published var isServerWakingUp = false
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
 
     @Published var showSettings = false
     @Published var showAlert = false
-    @Published private(set) var alertMessage = ""
+    @Published var alertMessage = ""
     
     @Published var showSignIn = false
     @Published var showCreateAccount = false
@@ -51,10 +51,6 @@ final class ProfileViewModel: ObservableObject {
         self.contentService = contentService
 
         setupSubscriptions()
-    }
-
-    deinit {
-        cancellables.removeAll()
     }
 
     private func setupSubscriptions() {
@@ -141,7 +137,7 @@ final class ProfileViewModel: ObservableObject {
             updateProfileDisplay()
         } catch {
             if showErrorOnFailure {
-                showError(error.localizedDescription)
+                presentAlert(error.localizedDescription)
             }
         }
     }
@@ -173,7 +169,7 @@ final class ProfileViewModel: ObservableObject {
             UserDefaultsHelper.savePersonalityLocally(result, for: userId)
         } catch {
             if showErrorOnFailure {
-                showError(error.localizedDescription)
+                presentAlert(error.localizedDescription)
             }
         }
     }
@@ -183,7 +179,7 @@ final class ProfileViewModel: ObservableObject {
         let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let message = validateCreateAccount(name: name, email: email, password: password) {
-            showError(message)
+            presentAlert(message)
             return
         }
 
@@ -192,25 +188,16 @@ final class ProfileViewModel: ObservableObject {
         isLoading = true
 
         Task {
-            let loadedTask = Task {
-                try await Task.sleep(for: .seconds(14))
-
-                if !Task.isCancelled {
-                    withAnimation { isServerWakingUp = true }
+            await withServerWakeUpIndicator(after: .seconds(14)) {
+                do {
+                    try await authService.createAccount(name: name, email: email, password: password)
+                } catch {
+                    presentAlert(error.localizedDescription)
+                    isLoading = false
                 }
+
+                try? await Task.sleep(for: .seconds(2.5))
             }
-
-            defer { loadedTask.cancel() }
-
-            do {
-                try await authService.createAccount(name: name, email: email, password: password)
-            } catch {
-                showError(error.localizedDescription)
-                isLoading = false
-            }
-
-            try? await Task.sleep(for: .seconds(2.5))
-            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
     }
@@ -219,7 +206,7 @@ final class ProfileViewModel: ObservableObject {
         let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let message = validateSignIn(email: email, password: password) {
-            showError(message)
+            presentAlert(message)
             return
         }
 
@@ -228,25 +215,16 @@ final class ProfileViewModel: ObservableObject {
         isLoading = true
 
         Task {
-            let loadedTask = Task {
-                try await Task.sleep(for: .seconds(14))
-
-                if !Task.isCancelled {
-                    withAnimation { isServerWakingUp = true }
+            await withServerWakeUpIndicator(after: .seconds(14)) {
+                do {
+                    try await authService.signIn(email: email, password: password)
+                } catch {
+                    presentAlert(error.localizedDescription)
+                    isLoading = false
                 }
+
+                try? await Task.sleep(for: .seconds(2.5))
             }
-
-            defer { loadedTask.cancel() }
-
-            do {
-                try await authService.signIn(email: email, password: password)
-            } catch {
-                showError(error.localizedDescription)
-                isLoading = false
-            }
-
-            try? await Task.sleep(for: .seconds(2.5))
-            withAnimation { isServerWakingUp = false }
             isLoading = false
         }
     }
@@ -277,11 +255,6 @@ final class ProfileViewModel: ObservableObject {
         personalityResult = result
         hasPersonalityTests = true
         updateProfileDisplay()
-    }
-
-    private func showError(_ message: String) {
-        showAlert = true
-        alertMessage = message
     }
 
     private func clearPersonality(for userId: UUID) {

@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 extension UIDevice {
-    static var isPlus: Bool {
+    static let isPlus: Bool = {
         guard let screen = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first?.screen
@@ -18,5 +18,5 @@ extension UIDevice {
         }
 
         return screen.nativeBounds.height >= 2796
-    }
+    }()
 }
