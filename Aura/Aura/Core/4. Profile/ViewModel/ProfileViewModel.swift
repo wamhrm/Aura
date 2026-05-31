@@ -29,11 +29,9 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published var isServerWakingUp = false
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
-
     @Published var showSettings = false
     @Published var showAlert = false
     @Published var alertMessage = ""
-    
     @Published var showSignIn = false
     @Published var showCreateAccount = false
 
@@ -188,7 +186,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(14)) {
+            await withServerWakeUpIndicator(after: .seconds(12)) {
                 do {
                     try await authService.createAccount(name: name, email: email, password: password)
                 } catch {
@@ -198,6 +196,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 
                 try? await Task.sleep(for: .seconds(2.5))
             }
+            
             isLoading = false
         }
     }
@@ -215,7 +214,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(14)) {
+            await withServerWakeUpIndicator(after: .seconds(12)) {
                 do {
                     try await authService.signIn(email: email, password: password)
                 } catch {
@@ -225,6 +224,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 
                 try? await Task.sleep(for: .seconds(2.5))
             }
+            
             isLoading = false
         }
     }
@@ -240,11 +240,18 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         password = ""
     }
     
-    func closeSignInCreateViews() {
+    func dismissSignInCreateViews() {
         showSignIn = false
         showCreateAccount = false
     }
-    
+
+    func switchAuthMode() {
+        withAnimation(.spring) {
+            showSignIn.toggle()
+            showCreateAccount.toggle()
+        }
+    }
+
     private func updateProfileDisplay() {
         profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult,
                                                   dailyTip: dailyTip,
@@ -265,42 +272,47 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     private func validateSignIn(email: String, password: String) -> String? {
-        if email.isEmpty, password.isEmpty {
+        guard !email.isEmpty, !password.isEmpty else {
             return "Заполните почту и пароль"
         }
-        if email.isEmpty {
-            return "Укажите почту"
-        }
-        if password.isEmpty {
-            return "Укажите пароль"
-        }
-        if !Self.isValidEmail(email) {
-            return "Укажите корректный e-mail"
-        }
-        if password.count < AuthInput.minPasswordLength {
-            return "Пароль должен быть не короче \(AuthInput.minPasswordLength) символов"
-        }
+        if let error = emailError(email) { return error }
+        if let error = passwordError(password) { return error }
         return nil
     }
 
     private func validateCreateAccount(name: String, email: String, password: String) -> String? {
-        if name.isEmpty, email.isEmpty, password.isEmpty {
+        guard !name.isEmpty, !email.isEmpty, !password.isEmpty else {
             return "Заполните имя, почту и пароль"
         }
+        if let error = nameError(name) { return error }
+        if let error = emailError(email) { return error }
+        if let error = passwordError(password) { return error }
+        return nil
+    }
+
+    private func nameError(_ name: String) -> String? {
         if name.isEmpty {
             return "Укажите имя"
-        }
-        if email.isEmpty {
-            return "Укажите почту"
-        }
-        if password.isEmpty {
-            return "Укажите пароль"
         }
         if name.count < AuthInput.minNameLength {
             return "Имя должно содержать минимум \(AuthInput.minNameLength) символа"
         }
+        return nil
+    }
+
+    private func emailError(_ email: String) -> String? {
+        if email.isEmpty {
+            return "Укажите почту"
+        }
         if !Self.isValidEmail(email) {
             return "Укажите корректный e-mail"
+        }
+        return nil
+    }
+
+    private func passwordError(_ password: String) -> String? {
+        if password.isEmpty {
+            return "Укажите пароль"
         }
         if password.count < AuthInput.minPasswordLength {
             return "Пароль должен быть не короче \(AuthInput.minPasswordLength) символов"

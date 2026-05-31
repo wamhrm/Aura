@@ -8,12 +8,18 @@
 import Foundation
 import SwiftUI
 
-struct Components {
-    static func backgroundColor() -> some View {
-        return Color(uiColor: .appBackground).ignoresSafeArea()
+struct BackgroundView: View {
+    var body: some View {
+        Color(uiColor: .appBackground).ignoresSafeArea()
     }
+}
 
-    static func horoscopeDate(_ dateStart: String, _ dateEnd: String, _ isCellDetails: Bool) -> some View {
+struct HoroscopeDateView: View {
+    let dateStart: String
+    let dateEnd: String
+    let isCellDetails: Bool
+
+    var body: some View {
         HStack(spacing: 4) {
             Text(dateStart)
 
@@ -22,12 +28,16 @@ struct Components {
 
             Text(dateEnd)
         }
-        .font(Components.displaySize(.caption, .footnote))
+        .font(Adaptive.size(.caption, .footnote))
         .fontWeight(isCellDetails ? .bold : .medium)
         .foregroundStyle(.deepGray)
     }
+}
 
-    static func logoImage(_ size: CGFloat) -> some View {
+struct LogoImage: View {
+    let size: CGFloat
+
+    var body: some View {
         Image("logo")
             .resizable()
             .scaledToFill()
@@ -35,13 +45,9 @@ struct Components {
             .clipShape(Circle())
             .clipped()
     }
-
-    static func classicButton(_ title: String, _ completion: @escaping () -> Void) -> some View {
-        ClassicButton(title: title, action: completion)
-    }
 }
 
-private struct ClassicButton: View {
+struct ClassicButton: View {
     let title: String
     let action: () -> Void
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
@@ -49,29 +55,38 @@ private struct ClassicButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: Components.displaySize(14, 15)))
+                .font(.system(size: Adaptive.size(14, 15)))
                 .foregroundStyle(.white)
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
-                .background(Components.handleAccentColor(accentColor))
+                .background(AccentColorOption.color(accentColor))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
 }
 
-extension Components {
+struct TestCellImage: View {
+    let icon: String
+    let color: UIColor
+    let iconSize: Font
+    let backgroundSize: CGFloat
+    let isResults: Bool
 
-    static func testCellImage(_ title: String, _ color: UIColor, _ imgSize: Font, _ backgroundSize: CGFloat, _ isResults: Bool) -> some View {
-        Image(systemName: title)
-            .font(imgSize)
+    var body: some View {
+        Image(systemName: icon)
+            .font(iconSize)
             .foregroundStyle(Color(color))
             .padding(10)
             .frame(width: backgroundSize, height: backgroundSize)
-            .background(RoundedRectangle(cornerRadius: isResults ? 8 : 15) .fill(Color(color).opacity(0.2)))
+            .background(RoundedRectangle(cornerRadius: isResults ? 8 : 15).fill(Color(color).opacity(0.2)))
     }
+}
 
-    static func completeYourProfileLock(_ title: String) -> some View {
+struct CompleteProfileLock: View {
+    let title: String
+
+    var body: some View {
         VStack(spacing: 15) {
             Image(systemName: "lock")
                 .imageScale(.large)
@@ -80,18 +95,23 @@ extension Components {
                 .padding()
                 .background(Color.fieldBackground.opacity(0.75))
                 .clipShape(Circle())
-                .overlay(Circle() .stroke(Color.fieldBorder, lineWidth: 1))
+                .overlay(Circle().stroke(Color.fieldBorder, lineWidth: 1))
 
             Text(title)
-                .font(Components.displaySize(.system(size: 15), .callout))
+                .font(Adaptive.size(.system(size: 15), .callout))
                 .fontDesign(.monospaced)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.center)
         }
         .padding()
     }
+}
 
-    static func emotionalProfileBar(_ type: EmotionalProfileTypes, _ value: Int) -> some View {
+struct EmotionalProfileBar: View {
+    let type: EmotionalProfileTypes
+    let value: Int
+
+    var body: some View {
         VStack(spacing: 10) {
             HStack {
                 Text(type.leftSide)
@@ -100,7 +120,7 @@ extension Components {
 
                 Text(type.rightSide)
             }
-            .font(Components.displaySize(.caption, .system(size: 14)))
+            .font(Adaptive.size(.caption, .system(size: 14)))
             .fontWeight(.semibold)
             .foregroundStyle(.deepGray)
 
@@ -116,14 +136,18 @@ extension Components {
                         .frame(width: bar.size.width * (CGFloat(value) / CGFloat(10)))
                 }
             }
-            .frame(height: Components.displaySize(8, 10))
+            .frame(height: Adaptive.size(8, 10))
         }
     }
-    
-    static func serverWakingUpView(_ value: Bool) -> some View {
+}
+
+struct ServerWakingUpView: View {
+    let isVisible: Bool
+
+    var body: some View {
         VStack(spacing: 30) {
             ProgressView()
-            
+
             VStack(spacing: 20) {
                 Text("Сервер просыпается. Первый запуск может занять до 50 секунд.")
                     .lineSpacing(3)
@@ -135,15 +159,7 @@ extension Components {
             .multilineTextAlignment(.center)
             .padding(.horizontal, 55)
         }
-        .animation(.easeInOut(duration: 0.25), value: value)
-    }
-
-    static func displaySize<T>(_ base: T, _ plus: T) -> T {
-        return !UIDevice.isPlus ? base : plus
-    }
-
-    static func handleAccentColor(_ value: String) -> Color {
-        AccentColorOption.color(value)
+        .animation(.easeInOut(duration: 0.25), value: isVisible)
     }
 }
 
@@ -159,52 +175,36 @@ enum EmotionalProfileTypes: String, Codable {
 
     var leftSide: String {
         switch self {
-            case .temperament:
-                return "Интроверсия"
-            case .thinking:
-                return "Логика"
-            case .organization:
-                return "Хаос"
-            case .relationships:
-                return "Независимость"
-            case .emotionalResonance:
-                return "Дистанция"
-            case .innerOpenness:
-                return "Закрытость"
-            case .soulAlignment:
-                return "Недопонимание"
-            case .emotionalWarmth:
-                return "Холодная дистанция"
-            }
+            case .temperament: "Интроверсия"
+            case .thinking: "Логика"
+            case .organization: "Хаос"
+            case .relationships: "Независимость"
+            case .emotionalResonance: "Дистанция"
+            case .innerOpenness: "Закрытость"
+            case .soulAlignment: "Недопонимание"
+            case .emotionalWarmth: "Холодная дистанция"
+        }
     }
 
     var rightSide: String {
         switch self {
-            case .temperament:
-                return "Экстраверсия"
-            case .thinking:
-                return "Интуиция"
-            case .organization:
-                return "Контроль"
-            case .relationships:
-                return "Привязанность"
-            case .emotionalResonance:
-                return "Близость"
-            case .innerOpenness:
-                return "Душевная открытость"
-            case .soulAlignment:
-                return "Взаимопонимание"
-            case .emotionalWarmth:
-                return "Теплая привязанность"
+            case .temperament: "Экстраверсия"
+            case .thinking: "Интуиция"
+            case .organization: "Контроль"
+            case .relationships: "Привязанность"
+            case .emotionalResonance: "Близость"
+            case .innerOpenness: "Душевная открытость"
+            case .soulAlignment: "Взаимопонимание"
+            case .emotionalWarmth: "Теплая привязанность"
         }
     }
 
     var colors: [Color] {
         switch self {
             case .temperament, .thinking, .organization, .relationships:
-                return [.purple, .softPurple]
+                [.purple, .softPurple]
             case .emotionalResonance, .innerOpenness, .soulAlignment, .emotionalWarmth:
-                return [.blue, .softPurple]
+                [.blue, .softPurple]
         }
     }
 }

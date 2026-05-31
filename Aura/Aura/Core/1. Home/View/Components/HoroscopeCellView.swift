@@ -8,34 +8,29 @@
 import SwiftUI
 
 struct HoroscopeCellView: View {
-    private let horoscope: HoroscopeModel
-    private let onTapHandler: () -> Void
-
-    init(horoscope: HoroscopeModel, onTapHandler: @escaping () -> Void) {
-        self.horoscope = horoscope
-        self.onTapHandler = onTapHandler
-    }
+    let horoscope: HoroscopeModel
+    let onTapHandler: () -> Void
 
     var body: some View {
         Button(action: onTapHandler) {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 18) {
                     Text(horoscope.type.icon)
-                        .font(Components.displaySize(.title3, .title2))
+                        .font(Adaptive.size(.title3, .title2))
                     
                     VStack(alignment: .leading, spacing: 5) {
                         Text(horoscope.type.rawValue)
-                            .font(Components.displaySize(.callout, .default))
+                            .font(Adaptive.size(.callout, .default))
                             .fontWeight(.semibold)
                         
-                        Components.horoscopeDate(horoscope.dateStart, horoscope.dateEnd, false)
+                        HoroscopeDateView(dateStart: horoscope.dateStart, dateEnd: horoscope.dateEnd, isCellDetails: false)
                     }
                 }
                 
                 Text("""
                      "\(horoscope.description)"
                      """)
-                .font(Components.displaySize(.footnote, .system(size: 15)))
+                .font(Adaptive.size(.footnote, .system(size: 15)))
                 .italic()
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
@@ -47,12 +42,12 @@ struct HoroscopeCellView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.lightBlue)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12) .stroke(Color.fieldBackground, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.fieldBackground, lineWidth: 1))
         }
     }
 }
 
-enum HoroscopeType: String, CaseIterable, Codable {
+enum HoroscopeTypes: String, CaseIterable, Codable {
     case aries = "Овен"
     case taurus = "Телец"
     case gemini = "Близнецы"
@@ -68,18 +63,18 @@ enum HoroscopeType: String, CaseIterable, Codable {
     
     var icon: String {
         switch self {
-            case .aries: return "♈️"
-            case .taurus: return "♉️"
-            case .gemini: return "♊️"
-            case .cancer: return "♋️"
-            case .leo: return "♌️"
-            case .virgo: return "♍️"
-            case .libra: return "♎️"
-            case .scorpio: return "♏️"
-            case .sagittarius: return "♐️"
-            case .capricorn: return "♑️"
-            case .aquarius: return "♒️"
-            case .pisces: return "♓️"
+            case .aries: "♈️"
+            case .taurus: "♉️"
+            case .gemini: "♊️"
+            case .cancer: "♋️"
+            case .leo: "♌️"
+            case .virgo: "♍️"
+            case .libra: "♎️"
+            case .scorpio: "♏️"
+            case .sagittarius: "♐️"
+            case .capricorn: "♑️"
+            case .aquarius: "♒️"
+            case .pisces: "♓️"
         }
     }
 }

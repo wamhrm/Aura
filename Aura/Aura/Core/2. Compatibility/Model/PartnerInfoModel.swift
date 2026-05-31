@@ -15,8 +15,6 @@ struct PartnerInfoModel {
     var birthTime = ""
     var age = ""
 
-    init() {}
-    
     func compatibilityTestRequest(selectedTests: [CompatibilityTestTypes]) -> CompatibilityTestRequest {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let gender = gender.trimmingCharacters(in: .whitespacesAndNewlines)

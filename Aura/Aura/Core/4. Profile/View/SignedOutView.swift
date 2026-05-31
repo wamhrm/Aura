@@ -12,14 +12,14 @@ struct SignedOutView: View {
 
     var body: some View {
         ZStack {
-            Components.backgroundColor()
+            BackgroundView()
 
             if vm.isServerWakingUp {
-                Components.serverWakingUpView(vm.isServerWakingUp)
+                ServerWakingUpView(isVisible: vm.isServerWakingUp)
             } else {
                 VStack(spacing: 100) {
                     VStack(spacing: 15) {
-                        Components.logoImage(65)
+                        LogoImage(size: 65)
 
                         Text("Добро пожаловать")
                             .fontDesign(.monospaced)
@@ -27,15 +27,15 @@ struct SignedOutView: View {
                     }
 
                     VStack(spacing: 15) {
-                        SignInCreateAccountButtonView(type: .signIn,
-                                                      isSignedOut: true) {
+                        SignInCreateAccountButtonView(vm: vm,
+                                                      type: .signIn) {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 vm.showSignIn.toggle()
                             }
                         }
 
-                        SignInCreateAccountButtonView(type: .createAccount,
-                                                      isSignedOut: true) {
+                        SignInCreateAccountButtonView(vm: vm,
+                                                      type: .createAccount) {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 vm.showCreateAccount.toggle()
                             }
@@ -47,16 +47,13 @@ struct SignedOutView: View {
                 .overlay {
                     overlayView()
                 }
-                .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-                    Button("ОК", role: .cancel) {}
-                }
-                .onDisappear {
-                    vm.closeSignInCreateViews()
-                }
             }
         }
         .ignoresSafeArea(.keyboard)
         .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("ОК", role: .cancel) {}
+        }
     }
 }
 
@@ -64,23 +61,9 @@ extension SignedOutView {
     @ViewBuilder
     private func overlayView() -> some View {
         if vm.showSignIn {
-            SignInCreateAccountView(vm: vm,
-                                    type: .signIn,
-                                    showSignInCreate: $vm.showSignIn) {
-                withAnimation(.spring) {
-                    vm.showSignIn = false
-                    vm.showCreateAccount = true
-                }
-            }
+            SignInCreateAccountView(vm: vm, type: .signIn)
         } else if vm.showCreateAccount {
-            SignInCreateAccountView(vm: vm,
-                                    type: .createAccount,
-                                    showSignInCreate: $vm.showCreateAccount) {
-                withAnimation(.spring) {
-                    vm.showCreateAccount = false
-                    vm.showSignIn = true
-                }
-            }
+            SignInCreateAccountView(vm: vm, type: .createAccount)
         }
     }
 }

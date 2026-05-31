@@ -13,10 +13,8 @@ enum AppTheme: String, CaseIterable {
 
     var colorScheme: ColorScheme {
         switch self {
-            case .light:
-                return .light
-            case .dark:
-                return .dark
+            case .light: .light
+            case .dark: .dark
         }
     }
 }
@@ -32,16 +30,11 @@ enum AccentColorOption: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-            case .blue:
-                return .accentBlue
-            case .purple:
-                return .accentPurple
-            case .red:
-                return .accentRed
-            case .teal:
-                return .accentTeal
-            case .orange:
-                return .accentOrange
+            case .blue: .accentBlue
+            case .purple: .accentPurple
+            case .red: .accentRed
+            case .teal: .accentTeal
+            case .orange: .accentOrange
         }
     }
 

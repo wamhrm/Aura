@@ -17,18 +17,18 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
     let description: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Components.displaySize(10, 12)) {
+        VStack(alignment: .leading, spacing: Adaptive.size(10, 12)) {
             HStack {
                 Text(test.icon)
-                    .font(Components.displaySize(.default, .system(size: 19)))
+                    .font(Adaptive.size(.default, .system(size: 19)))
                 
                 Text(test.title)
-                    .font(.system(size: Components.displaySize(14, 15)))
+                    .font(.system(size: Adaptive.size(14, 15)))
                     .fontWeight(.semibold)
             }
             
             Text(description)
-                .font(Components.displaySize(.footnote, .system(size: 14)))
+                .font(Adaptive.size(.footnote, .system(size: 14)))
                 .foregroundStyle(.deepGray)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -60,22 +60,22 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
     case loveExpression = "Способы проявления чувств"
     case emotionalNeeds = "Эмоциональные потребности"
 
-    var title: String { return rawValue }
+    var title: String { rawValue }
 
     var icon: String {
         switch self {
-            case .socialFilter: return "🛡️"
-            case .energyDrain: return "🔋"
-            case .logicBalance: return "⚖️"
-            case .intuitionFactor: return "🔮"
-            case .autonomyNeed: return "🦅"
-            case .securityBase: return "⚓"
-            case .intellectualMatch: return "🧠"
-            case .emotionalDepth: return "🌊"
-            case .natalChart: return "✨"
-            case .planetaryAspects: return "🪐"
-            case .loveExpression: return "💝"
-            case .emotionalNeeds: return "💗"
+            case .socialFilter: "🛡️"
+            case .energyDrain: "🔋"
+            case .logicBalance: "⚖️"
+            case .intuitionFactor: "🔮"
+            case .autonomyNeed: "🦅"
+            case .securityBase: "⚓"
+            case .intellectualMatch: "🧠"
+            case .emotionalDepth: "🌊"
+            case .natalChart: "✨"
+            case .planetaryAspects: "🪐"
+            case .loveExpression: "💝"
+            case .emotionalNeeds: "💗"
         }
     }
 }
@@ -105,22 +105,22 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
     case sexualTemperament = "Сексуальный темперамент"
     case sexualChemistry = "Сексуальная химия"
     
-    var title: String { return rawValue }
+    var title: String { rawValue }
 
     var icon: String {
         switch self {
-            case .synastry: return "🪐"
-            case .karmicLesson: return "⚓"
-            case .dominanceDynamics: return "👑"
-            case .emotionalResonance: return "📻"
-            case .attachmentBond: return "⛓️"
-            case .comfortDistance: return "📏"
-            case .languageMatch: return "🗣️"
-            case .translationNeeds: return "📖"
-            case .conflictMechanics: return "🧨"
-            case .peaceRecovery: return "🏳️"
-            case .sexualTemperament: return "🔥"
-            case .sexualChemistry: return "🧪"
+            case .synastry: "🪐"
+            case .karmicLesson: "⚓"
+            case .dominanceDynamics: "👑"
+            case .emotionalResonance: "📻"
+            case .attachmentBond: "⛓️"
+            case .comfortDistance: "📏"
+            case .languageMatch: "🗣️"
+            case .translationNeeds: "📖"
+            case .conflictMechanics: "🧨"
+            case .peaceRecovery: "🏳️"
+            case .sexualTemperament: "🔥"
+            case .sexualChemistry: "🧪"
         }
     }
 }

@@ -15,10 +15,10 @@ struct AddProfileInfoView: View {
 
     var body: some View {
         ZStack {
-            Components.backgroundColor()
+            BackgroundView()
 
             if vm.isServerWakingUp {
-                Components.serverWakingUpView(vm.isServerWakingUp)
+                ServerWakingUpView(isVisible: vm.isServerWakingUp)
             } else {
                 ScrollView {
                     VStack(spacing: 16) {
@@ -80,7 +80,7 @@ struct AddProfileInfoView: View {
                             }
                         }
 
-                        Components.classicButton(vm.isLoading ? "Сохраняем..." : "Готово") {
+                        ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Готово") {
                             vm.saveProfileInfo {
                                 dismiss()
                             }
@@ -111,7 +111,7 @@ extension AddProfileInfoView {
                                         @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 15) {
             Text(title)
-                .font(Components.displaySize(.system(size: 15), .default))
+                .font(Adaptive.size(.system(size: 15), .default))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
 
@@ -127,16 +127,16 @@ extension AddProfileInfoView {
 
         return HStack {
             Text(type.icon)
-                .font(Components.displaySize(.footnote, .system(size: 15)))
+                .font(Adaptive.size(.footnote, .system(size: 15)))
 
             Text(type.title)
-                .font(Components.displaySize(.footnote, .system(size: 14)))
+                .font(Adaptive.size(.footnote, .system(size: 14)))
                 .foregroundStyle(isSelected ? .white : .primaryText)
                 .bold()
         }
         .padding(12)
         .frame(maxWidth: .infinity)
-        .background(isSelected ? Components.handleAccentColor(accentColor) : Color.fieldBackground)
+        .background(isSelected ? AccentColorOption.color(accentColor) : Color.fieldBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture { selection.wrappedValue = type.rawValue }
         .animation(.easeInOut(duration: 0.15), value: isSelected)
@@ -206,25 +206,46 @@ enum ProfileInfoOption: String, CaseIterable {
 
     var title: String {
         switch self {
-            case .man: return "Мужской"
-            case .woman: return "Женский"
-            case .introvert: return "Интроверт"
-            case .ambivert: return "Амбиверт"
-            case .extrovert: return "Экстраверт"
-            case .mediator: return "Миротворец"
-            case .direct: return "Прямой"
-            case .avoider: return "Избегающий"
-            case .logic: return "Рациональный"
-            case .intuitive: return "Интуитивный"
-            case .planner: return "Планируете"
-            case .spontaneous: return "По ситуации"
-            case .procrastinator: return "Откладываете"
-            case .stability: return "Стабильность"
-            case .growth: return "Рост"
-            case .peace: return "Спокойствие"
+            case .man: "Мужской"
+            case .woman: "Женский"
+            case .introvert: "Интроверт"
+            case .ambivert: "Амбиверт"
+            case .extrovert: "Экстраверт"
+            case .mediator: "Миротворец"
+            case .direct: "Прямой"
+            case .avoider: "Избегающий"
+            case .logic: "Рациональный"
+            case .intuitive: "Интуитивный"
+            case .planner: "Планируете"
+            case .spontaneous: "По ситуации"
+            case .procrastinator: "Откладываете"
+            case .stability: "Стабильность"
+            case .growth: "Рост"
+            case .peace: "Спокойствие"
         }
     }
 
+    var icon: String {
+        switch self {
+            case .man: "👱🏻‍♂️"
+            case .woman: "👩🏻"
+            case .introvert: "🌙"
+            case .ambivert: "🌗"
+            case .extrovert: "🔥"
+            case .mediator: "🤝"
+            case .direct: "⚡"
+            case .avoider: "🌫"
+            case .logic: "🧠"
+            case .intuitive: "✨"
+            case .planner: "🗂"
+            case .spontaneous: "⚡"
+            case .procrastinator: "⏳"
+            case .stability: "🛡"
+            case .growth: "🚀"
+            case .peace: "🕊"
+        }
+    }
+    
     static func normalizedKey(_ stored: String?) -> String? {
         guard let stored, !stored.isEmpty else { return nil }
         if let match = Self.allCases.first(where: { $0.rawValue == stored }) {
@@ -234,27 +255,6 @@ enum ProfileInfoOption: String, CaseIterable {
             return match.rawValue
         }
         return stored
-    }
-
-    var icon: String {
-        switch self {
-            case .man: return "👱🏻‍♂️"
-            case .woman: return "👩🏻"
-            case .introvert: return "🌙"
-            case .ambivert: return "🌗"
-            case .extrovert: return "🔥"
-            case .mediator: return "🤝"
-            case .direct: return "⚡"
-            case .avoider: return "🌫"
-            case .logic: return "🧠"
-            case .intuitive: return "✨"
-            case .planner: return "🗂"
-            case .spontaneous: return "⚡"
-            case .procrastinator: return "⏳"
-            case .stability: return "🛡"
-            case .growth: return "🚀"
-            case .peace: return "🕊"
-        }
     }
 }
 

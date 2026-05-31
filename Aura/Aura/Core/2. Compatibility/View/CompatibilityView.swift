@@ -14,10 +14,10 @@ struct CompatibilityView: View {
     var body: some View {
         NavigationStack(path: $vm.compatibilityRoutes) {
             ZStack {
-                Components.backgroundColor()
+                BackgroundView()
 
                 if vm.isServerWakingUp {
-                    Components.serverWakingUpView(vm.isServerWakingUp)
+                    ServerWakingUpView(isVisible: vm.isServerWakingUp)
                 } else {
                     ScrollView {
                         VStack(spacing: 25) {
@@ -26,15 +26,15 @@ struct CompatibilityView: View {
                             VStack(alignment: .leading, spacing: 25) {
                                 HStack(spacing: 10) {
                                     Image(systemName: "heart")
-                                        .font(Components.displaySize(.callout, .default))
-                                        .foregroundStyle(Components.handleAccentColor(accentColor))
+                                        .font(Adaptive.size(.callout, .default))
+                                        .foregroundStyle(AccentColorOption.color(accentColor))
                                         .fontWeight(.semibold)
-                                        .padding(Components.displaySize(7, 9))
+                                        .padding(Adaptive.size(7, 9))
                                         .background(.capsuleBackground)
                                         .clipShape(Circle())
 
                                     Text("Детали партнера")
-                                        .font(Components.displaySize(.system(size: 15), .default))
+                                        .font(Adaptive.size(.system(size: 15), .default))
                                         .bold()
 
                                     Spacer()
@@ -98,11 +98,11 @@ struct CompatibilityView: View {
                                         vm.selectedTests = CompatibilityTestTypes.allCases
                                     } label: {
                                         Text("Выбрать все")
-                                            .foregroundStyle(Components.handleAccentColor(accentColor))
+                                            .foregroundStyle(AccentColorOption.color(accentColor))
                                             .fontWeight(.medium)
                                     }
                                 }
-                                .font(Components.displaySize(.system(size: 15), .default))
+                                .font(Adaptive.size(.system(size: 15), .default))
 
                                 ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
                                     TestCellView(type: test,
@@ -115,7 +115,7 @@ struct CompatibilityView: View {
                                                     }
                                 }
 
-                                Components.classicButton(vm.isLoading ? "Готовим результат..." : "Узнать совместимость") {
+                                ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Узнать совместимость") {
                                     vm.makeCompatibilityTest()
                                 }
                                 .disabled(vm.isLoading)
@@ -147,7 +147,7 @@ struct CompatibilityView: View {
 extension CompatibilityView {
     private func headerText(_ title: String) -> some View {
         Text(title)
-            .font(Components.displaySize(.footnote, .system(size: 14)))
+            .font(Adaptive.size(.footnote, .system(size: 14)))
             .foregroundStyle(.deepGray)
             .fontWeight(.medium)
     }
@@ -155,7 +155,7 @@ extension CompatibilityView {
     private func headerView() -> some View {
         VStack(alignment: .center, spacing: 7) {
             Image(systemName: "heart")
-                .font(Components.displaySize(.title2, .title3))
+                .font(Adaptive.size(.title2, .title3))
                 .fontWeight(.semibold)
                 .foregroundStyle(.white)
                 .padding(15)
@@ -166,11 +166,11 @@ extension CompatibilityView {
                 .padding(.vertical, 12)
 
             Text("Анализ партнера")
-                .font(Components.displaySize(.default, .title3))
+                .font(Adaptive.size(.default, .title3))
                 .bold()
 
             Text("Введите информацию о партнере")
-                .font(Components.displaySize(.system(size: 14), .callout))
+                .font(Adaptive.size(.system(size: 14), .callout))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
         }
@@ -210,13 +210,13 @@ extension CompatibilityView {
                         onTapHandler(item)
                     } label: {
                         Text(item.rawValue)
-                            .font(Components.displaySize(.footnote, .system(size: 14)))
+                            .font(Adaptive.size(.footnote, .system(size: 14)))
                             .foregroundStyle(selected == item ? .white : .deepGray)
                             .bold()
-                            .padding(.vertical, Components.displaySize(10, 11))
-                            .padding(.horizontal, Components.displaySize(20, 21))
-                            .background(selected == item ? Components.handleAccentColor(accentColor) : .clear)
-                            .overlay(RoundedRectangle(cornerRadius: 10) .stroke(.gray, lineWidth: 1))
+                            .padding(.vertical, Adaptive.size(10, 11))
+                            .padding(.horizontal, Adaptive.size(20, 21))
+                            .background(selected == item ? AccentColorOption.color(accentColor) : .clear)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.gray, lineWidth: 1))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }

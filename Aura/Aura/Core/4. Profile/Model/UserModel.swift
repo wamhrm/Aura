@@ -21,7 +21,7 @@ struct UserModel: Codable, Equatable, Identifiable {
     let coreFocus: String?
     
     var nameCapitalized: String {
-        return name.capitalized
+        name.capitalized
     }
 
     var hasCompletedProfileInfo: Bool {

@@ -13,10 +13,10 @@ struct HistoryView: View {
     var body: some View {
         NavigationStack(path: $vm.historyRoutes) {
             ZStack {
-                Components.backgroundColor()
+                BackgroundView()
 
                 if vm.isServerWakingUp {
-                    Components.serverWakingUpView(vm.isServerWakingUp)
+                    ServerWakingUpView(isVisible: vm.isServerWakingUp)
                 } else if vm.isSignedIn {
                     VStack(alignment: .leading, spacing: 15) {
                         if vm.historyCells.isEmpty {
