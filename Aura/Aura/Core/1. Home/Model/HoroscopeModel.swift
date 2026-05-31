@@ -9,7 +9,7 @@ import Foundation
 
 struct HoroscopeModel: Identifiable, Hashable, Codable {
     let id: UUID
-    let type: HoroscopeType
+    let type: HoroscopeTypes
     let dateStart: String
     let dateEnd: String
     let description: String

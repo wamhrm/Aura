@@ -29,6 +29,7 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
+    
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -72,7 +73,7 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(25)) {
+            await withServerWakeUpIndicator(after: .seconds(20)) {
                 do {
                     try validatePartnerInfoForms()
                     let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
@@ -82,6 +83,7 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
                     presentAlert(error.localizedDescription)
                 }
             }
+            
             isLoading = false
         }
     }

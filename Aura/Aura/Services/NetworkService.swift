@@ -35,10 +35,14 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private let tokenPath = Constants.tokenPath
     private let tokenKey = Constants.tokenKey
 
+    private let keychain: any KeychainHelperProtocol
+
     init(baseURL: String = Constants.baseURL,
-         session: URLSession = NetworkService.makeSession()) {
+         session: URLSession = NetworkService.makeSession(),
+         keychain: any KeychainHelperProtocol = KeychainHelper()) {
         self.baseURL = baseURL
         self.session = session
+        self.keychain = keychain
     }
 
     private static func makeSession() -> URLSession {
@@ -136,7 +140,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.httpBody = body
         }
 
-        if let tokenData = KeychainHelper.standard.getToken(path: tokenPath, key: tokenKey),
+        if let tokenData = keychain.getToken(path: tokenPath, key: tokenKey),
            let token = String(data: tokenData, encoding: .utf8) {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }

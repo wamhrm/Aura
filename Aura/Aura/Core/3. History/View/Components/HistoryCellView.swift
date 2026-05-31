@@ -18,11 +18,11 @@ struct HistoryCellView: View {
 
             VStack(alignment: .leading, spacing: 7) {
                 Text(titleText)
-                    .font(Components.displaySize(.callout, .default))
+                    .font(Adaptive.size(.callout, .default))
                     .bold()
 
                 Text(cell.archetypeSubtitle)
-                    .font(.system(size: Components.displaySize(14, 15)))
+                    .font(.system(size: Adaptive.size(14, 15)))
                     .foregroundStyle(.deepGray)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -31,18 +31,18 @@ struct HistoryCellView: View {
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
                     Text("\(cell.compatibilityResult?.compatibilityScore ?? 0)%")
-                        .font(Components.displaySize(.footnote, .system(size: 14)))
+                        .font(Adaptive.size(.footnote, .system(size: 14)))
                         .foregroundStyle(.white)
                         .bold()
                         .padding(.vertical, 3)
                         .padding(.horizontal, 6)
-                        .background(Components.handleAccentColor(accentColor).opacity(0.75))
+                        .background(AccentColorOption.color(accentColor).opacity(0.75))
                         .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
             }
         }
         .padding(.horizontal)
-        .frame(height: Components.displaySize(93, 97))
+        .frame(height: Adaptive.size(93, 97))
         .frame(maxWidth: .infinity, alignment: .leading)
         .backgroundWithShape(12, .cardBackground, true)
     }
@@ -61,22 +61,9 @@ extension HistoryCellView {
 
     private var titleText: String {
         switch cell.kind {
-            case .personality:
-                return cell.archetypeTitle
-            case .compatibility:
-                return cell.compatibilityResult?.partnerName ?? ""
+            case .personality: cell.archetypeTitle
+            case .compatibility: cell.compatibilityResult?.partnerName ?? ""
         }
-    }
-
-    private var formattedDate: String {
-        let parser = ISO8601DateFormatter()
-        parser.formatOptions = [.withInternetDateTime]
-        guard let date = parser.date(from: cell.createdAt) else { return cell.createdAt }
-
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter.string(from: date)
     }
 }
 

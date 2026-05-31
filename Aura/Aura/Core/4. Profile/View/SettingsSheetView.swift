@@ -10,22 +10,10 @@ import SwiftUI
 struct SettingsSheetView: View {
     @ObservedObject var vm: ProfileViewModel
     let isSignedOut: Bool
-    @Environment(\.dismiss) private var dismiss
-    private let onUpdateInfo: () -> Void
-    private let onSignOut: () -> Void
     
     @AppStorage(Constants.selectedThemeKey) private var selectedTheme = AppTheme.light
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
-
-    init(vm: ProfileViewModel,
-         isSignedOut: Bool,
-         onUpdateInfo: @escaping () -> Void,
-         onSignOut: @escaping () -> Void) {
-        self.vm = vm
-        self.isSignedOut = isSignedOut
-        self.onUpdateInfo = onUpdateInfo
-        self.onSignOut = onSignOut
-    }
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
@@ -63,7 +51,7 @@ struct SettingsSheetView: View {
                 if !isSignedOut {
                     VStack(spacing: 15) {
                         customButton(.updateInfo) {
-                            onUpdateInfo()
+                            vm.profileRoutes.append(.addProfileInfo)
                             dismiss()
                         }
 
@@ -102,7 +90,7 @@ extension SettingsSheetView {
     private func alertView() -> some View {
         Button("Отмена", role: .cancel) {}
         Button("Выйти", role: .destructive) {
-            onSignOut()
+            vm.signOut()
             dismiss()
         }
         .disabled(vm.isLoading)
@@ -110,7 +98,7 @@ extension SettingsSheetView {
     
     private func headerText(_ title: String) -> some View {
         Text(title)
-            .font(Components.displaySize(.system(size: 15), .default))
+            .font(Adaptive.size(.system(size: 15), .default))
             .foregroundStyle(.secondary)
     }
 
@@ -121,7 +109,7 @@ extension SettingsSheetView {
         } label: {
             VStack(alignment: .center) {
                 Text(type.rawValue)
-                    .font(Components.displaySize(.footnote, .system(size: 15)))
+                    .font(Adaptive.size(.footnote, .system(size: 15)))
                     .bold()
                     .foregroundStyle(type.foregroundColor)
             }
@@ -129,7 +117,7 @@ extension SettingsSheetView {
             .frame(maxWidth: .infinity, alignment: .center)
             .background(type.backgroundColor)
             .overlay {
-                RoundedRectangle(cornerRadius: 10) .stroke(type.stroke, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 10).stroke(type.stroke, lineWidth: 2)
             }
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
@@ -145,7 +133,7 @@ extension SettingsSheetView {
                 Text(type.rawValue)
             }
             .padding(.vertical, 13)
-            .font(Components.displaySize(.footnote, .system(size: 15)))
+            .font(Adaptive.size(.footnote, .system(size: 15)))
             .frame(maxWidth: .infinity)
             .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
             .foregroundStyle(isSelected ? .blue : .primary)
@@ -161,9 +149,9 @@ extension SettingsSheetView {
         Button(action: onTapHandler) {
             Circle()
                 .fill(color)
-                .frame(width: Components.displaySize(30, 32), height: Components.displaySize(30, 32))
-                .overlay(Circle() .stroke(Color.white, lineWidth: 1))
-                .overlay(Circle() .stroke(isSelected ? Color(.systemGray2) : Color.clear, lineWidth: 4))
+                .frame(width: Adaptive.size(30, 32), height: Adaptive.size(30, 32))
+                .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                .overlay(Circle().stroke(isSelected ? Color(.systemGray2) : Color.clear, lineWidth: 4))
                 .shadow(color: .black.opacity(0.1), radius: 2)
         }
     }
@@ -207,19 +195,13 @@ fileprivate enum ThemeButtonTypes: String {
     
     var icon: String {
         switch self {
-            case .bright:
-                return "sun.max.fill"
-            case .dark:
-                return "moon.fill"
+            case .bright: "sun.max.fill"
+            case .dark: "moon.fill"
         }
     }
 }
 
 #Preview {
     SettingsSheetView(vm: ProfileViewModel(authService: AuthService(),
-                                           contentService: ContentService()), isSignedOut: false) {
-
-    } onSignOut: {
-
-    }
+                                           contentService: ContentService()), isSignedOut: false)
 }

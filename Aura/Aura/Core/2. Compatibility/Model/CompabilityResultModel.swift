@@ -32,11 +32,11 @@ struct CompabilityResultModel: Codable, Hashable {
     let forecast: CompatibilityForecast
     
     var userNameCapitalized: String {
-        return userName.capitalized
+        userName.capitalized
     }
-    
+
     var partnerNameCapitalized: String {
-        return partnerName.capitalized
+        partnerName.capitalized
     }
 }
 

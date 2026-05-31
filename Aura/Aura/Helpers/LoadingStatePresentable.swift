@@ -26,8 +26,8 @@ extension LoadingStatePresentable {
                 withAnimation { self.isServerWakingUp = true }
             }
         }
+        
         defer { wakeUpTask.cancel() }
-
         await operation()
 
         withAnimation { self.isServerWakingUp = false }
