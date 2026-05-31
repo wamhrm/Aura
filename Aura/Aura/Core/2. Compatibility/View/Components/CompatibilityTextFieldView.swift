@@ -10,15 +10,15 @@ import SwiftUI
 struct CompatibilityTextFieldView: View {
     let title: String
     @Binding var text: String
-    let type: InputFieldType
+    let type: CompatibilityTextFieldTypes
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             TextField(title, text: $text)
-                .font(Components.displaySize(.footnote, .system(size: 14)))
+                .font(Adaptive.size(.footnote, .system(size: 14)))
                 .foregroundStyle(.gray)
                 .fontWeight(.medium)
-                .frame(height: Components.displaySize(46, 48))
+                .frame(height: Adaptive.size(46, 48))
                 .padding(.leading)
                 .background(Color.fieldBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -33,8 +33,8 @@ struct CompatibilityTextFieldView: View {
 extension CompatibilityTextFieldView {
     private var keyboardType: UIKeyboardType {
         switch type {
-            case .age: return .numberPad
-            default: return .default
+            case .age: .numberPad
+            default: .default
         }
     }
 
@@ -56,7 +56,7 @@ extension CompatibilityTextFieldView {
     }
 }
 
-enum InputFieldType {
+enum CompatibilityTextFieldTypes {
     case name(maxLength: Int = 10)
     case age(maxAge: Int = 100)
 }

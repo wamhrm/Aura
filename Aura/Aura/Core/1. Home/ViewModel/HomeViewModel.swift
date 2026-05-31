@@ -24,19 +24,18 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 
     @Published var profileInfo = ProfileInfoModel()
     @Published private(set) var userName = ""
-    @Published private(set) var isSignedIn = false
-    @Published private(set) var hasProfileInfo = false
     @Published private(set) var horoscope: HoroscopeModel?
     @Published private(set) var dailyInsight: DailyContentModel?
-
-    @Published var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
     @Published private(set) var personalityResult: PersonalityResultModel?
+    @Published private(set) var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
 
-    @Published var showAlert = false
-    @Published var alertMessage = ""
+    @Published private(set) var isSignedIn = false
+    @Published private(set) var hasProfileInfo = false
     @Published private(set) var isLoading = false
     @Published var isServerWakingUp = false
     @Published private(set) var isLoadingScreen = true
+    @Published var showAlert = false
+    @Published var alertMessage = ""
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -52,7 +51,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     var dailyInsightHandler: String {
-        return dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
+        dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
     }
 
     private func setupSubscriptions() {
@@ -104,7 +103,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(25)) {
+            await withServerWakeUpIndicator(after: .seconds(20)) {
                 do {
                     try validateProfileInfoForms()
 
@@ -120,6 +119,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                     presentAlert(error.localizedDescription)
                 }
             }
+            
             isLoading = false
         }
     }
@@ -142,7 +142,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         Task {
             isLoading = true
 
-            await withServerWakeUpIndicator(after: .seconds(25)) {
+            await withServerWakeUpIndicator(after: .seconds(20)) {
                 do {
                     personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
                     homeRoutes.append(.testResults)

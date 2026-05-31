@@ -10,15 +10,15 @@ import SwiftUI
 struct CompatibilityDateOfBirthView: View {
     let title: String
     @Binding var text: String
-    var isTime: Bool = false
+    var isTime = false
     var onInvalidDateOfBirth: (() -> Void)?
     
     var body: some View {
         TextField(title, text: $text)
-            .font(Components.displaySize(.footnote, .system(size: 14)))
+            .font(Adaptive.size(.footnote, .system(size: 14)))
             .foregroundStyle(.gray)
             .fontWeight(.medium)
-            .frame(height: Components.displaySize(46, 48))
+            .frame(height: Adaptive.size(46, 48))
             .padding(.leading)
             .background(Color.fieldBackground)
             .clipShape(RoundedRectangle(cornerRadius: 10))

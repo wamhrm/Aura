@@ -19,11 +19,11 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
     @Published var historyRoutes: [HistoryRoutes] = []
     @Published private(set) var historyCells: [HistoryCellModel] = []
 
-    @Published private(set) var isSignedIn = false
-    @Published var isServerWakingUp = false
     @Published var showAlert = false
     @Published var alertMessage = ""
+    @Published private(set) var isSignedIn = false
     @Published private(set) var isLoading = false
+    @Published var isServerWakingUp = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -113,7 +113,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(12)) {
+            await withServerWakeUpIndicator(after: .seconds(8)) {
                 do {
                     let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
 
@@ -135,6 +135,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
                     presentAlert("Не удалось открыть результат")
                 }
             }
+            
             isLoading = false
         }
     }

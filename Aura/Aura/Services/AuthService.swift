@@ -31,9 +31,13 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private let userKey = Constants.userKey
 
     private let networkService: any NetworkServiceProtocol
+    private let keychain: any KeychainHelperProtocol
 
-    init(networkService: any NetworkServiceProtocol = NetworkService()) {
+    init(networkService: any NetworkServiceProtocol = NetworkService(),
+         keychain: any KeychainHelperProtocol = KeychainHelper()) {
         self.networkService = networkService
+        self.keychain = keychain
+        
         autoSignIn()
     }
 
@@ -45,7 +49,6 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func signIn(email: String, password: String) async throws {
         let response = try await networkService.signIn(email: normalizeEmail(email), password: password)
-
         saveToken(response.token)
         saveUserLocally(response.user)
         authState.send(.signedIn(response.user))
@@ -65,15 +68,16 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
             UserDefaultsHelper.deleteLocalPersonality(for: user.id)
             UserDefaultsHelper.deleteLocalDailyInsight(for: user.id)
             UserDefaultsHelper.deleteLocalDailyTip(for: user.id)
+            UserDefaultsHelper.deleteLocalHistory(for: user.id)
         }
 
-        KeychainHelper.standard.deleteToken(path: tokenPath, key: tokenKey)
+        keychain.deleteToken(path: tokenPath, key: tokenKey)
         UserDefaults.standard.removeObject(forKey: userKey)
         authState.send(.signedOut)
     }
 
     private func autoSignIn() {
-        if let _ = KeychainHelper.standard.getToken(path: tokenPath, key: tokenKey),
+        if let _ = keychain.getToken(path: tokenPath, key: tokenKey),
            let userData = UserDefaults.standard.data(forKey: userKey),
            let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
             authState.send(.signedIn(user))
@@ -90,11 +94,11 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private func saveToken(_ token: String) {
         if let data = token.data(using: .utf8) {
-            KeychainHelper.standard.saveToken(data, path: tokenPath, key: tokenKey)
+            keychain.saveToken(data, path: tokenPath, key: tokenKey)
         }
     }
 
     private func normalizeEmail(_ email: String) -> String {
-        return email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }

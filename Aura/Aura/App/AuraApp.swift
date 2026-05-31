@@ -16,8 +16,9 @@ struct AuraApp: App {
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     init() {
-        let networkService = NetworkService()
-        _authService = StateObject(wrappedValue: AuthService(networkService: networkService))
+        let keychain = KeychainHelper()
+        let networkService = NetworkService(keychain: keychain)
+        _authService = StateObject(wrappedValue: AuthService(networkService: networkService, keychain: keychain))
         _contentService = StateObject(wrappedValue: ContentService(networkService: networkService))
     }
 
@@ -26,7 +27,7 @@ struct AuraApp: App {
             MainTabView(authService: authService,
                         contentService: contentService)
                 .preferredColorScheme(selectedTheme.colorScheme)
-                .tint(Components.handleAccentColor(accentColor))
+                .tint(AccentColorOption.color(accentColor))
         }
     }
 }

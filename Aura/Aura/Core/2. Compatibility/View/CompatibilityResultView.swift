@@ -13,7 +13,7 @@ struct CompatibilityResultView: View {
 
     var body: some View {
         ZStack {
-            Components.backgroundColor()
+            BackgroundView()
 
             ScrollView {
                 VStack(spacing: 15) {
@@ -26,7 +26,7 @@ struct CompatibilityResultView: View {
                                 .compatibilityResultZodiacsModifier()
 
                             Text(result.userNameCapitalized)
-                                .font(Components.displaySize(.callout, .default))
+                                .font(Adaptive.size(.callout, .default))
                                 .bold()
                         }
                         .frame(width: 150, alignment: .trailing)
@@ -36,7 +36,7 @@ struct CompatibilityResultView: View {
                                 .compatibilityResultZodiacsModifier()
 
                             Text(result.partnerNameCapitalized)
-                                .font(Components.displaySize(.callout, .default))
+                                .font(Adaptive.size(.callout, .default))
                                 .bold()
                         }
                         .frame(width: 150, alignment: .leading)
@@ -44,34 +44,34 @@ struct CompatibilityResultView: View {
                     .font(.title3)
                     .overlay {
                         Image(systemName: "heart")
-                            .font(Components.displaySize(.title3, .title2))
+                            .font(Adaptive.size(.title3, .title2))
                             .foregroundStyle(.red)
                     }
 
-                    VStack(spacing: Components.displaySize(12, 13)) {
+                    VStack(spacing: Adaptive.size(12, 13)) {
                         Text(result.title)
-                            .font(Components.displaySize(.callout, .default))
-                            .foregroundStyle(Components.handleAccentColor(accentColor))
+                            .font(Adaptive.size(.callout, .default))
+                            .foregroundStyle(AccentColorOption.color(accentColor))
                             .bold()
 
                         Text(result.subtitle)
-                            .font(Components.displaySize(.footnote, .system(size: 15)))
+                            .font(Adaptive.size(.footnote, .system(size: 15)))
                             .foregroundStyle(.deepGray)
                     }
                     .multilineTextAlignment(.center)
-                    .frame(width: Components.displaySize(310, 320))
+                    .frame(width: Adaptive.size(310, 320))
                     .padding(.bottom, 10)
 
                     resultsSection(result.overview.title) {
                         Text(result.overview.description)
-                            .font(.system(size: Components.displaySize(14, 15)))
+                            .font(.system(size: Adaptive.size(14, 15)))
                             .foregroundStyle(.deepGray)
                     }
 
                     resultsSection("Эмоциональная совместимость") {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
-                                Components.emotionalProfileBar(bar.title, bar.value)
+                                EmotionalProfileBar(type: bar.title, value: bar.value)
                             }
                         }
                         .padding(.top, 5)
@@ -80,7 +80,7 @@ struct CompatibilityResultView: View {
                     ForEach(result.sections, id: \.self) { section in
                         resultsSection(section.selectedTest.rawValue) {
                             Text(section.description)
-                                .font(.system(size: Components.displaySize(14, 15)))
+                                .font(.system(size: Adaptive.size(14, 15)))
                                 .foregroundStyle(.deepGray)
 
                             VStack(spacing: 12) {
@@ -124,23 +124,23 @@ extension CompatibilityResultView {
     private func compatibilityScaleBar(_ value: Int) -> some View {
         ZStack {
             Circle()
-                .stroke(Components.handleAccentColor(accentColor).opacity(0.18), lineWidth: 8)
+                .stroke(AccentColorOption.color(accentColor).opacity(0.18), lineWidth: 8)
 
             Circle()
                 .trim(from: 0, to: CGFloat(min(max(value, 0), 100)) / 100)
-                .stroke(Components.handleAccentColor(accentColor), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .stroke(AccentColorOption.color(accentColor), style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
             VStack(spacing: 5) {
                 Text("\(min(max(value, 0), 100))%")
-                    .font(Components.displaySize(.title3, .system(size: 21)))
+                    .font(Adaptive.size(.title3, .system(size: 21)))
                     .bold()
-                    .foregroundStyle(Components.handleAccentColor(accentColor))
+                    .foregroundStyle(AccentColorOption.color(accentColor))
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
 
                 Text("СОВМЕСТИМОСТЬ")
-                    .font(Components.displaySize(.caption2, .caption))
+                    .font(Adaptive.size(.caption2, .caption))
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.deepGray)
             }
@@ -152,7 +152,7 @@ extension CompatibilityResultView {
                                                @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(Components.displaySize(.system(size: 15), .default))
+                .font(Adaptive.size(.system(size: 15), .default))
                 .bold()
 
             content()
@@ -161,13 +161,13 @@ extension CompatibilityResultView {
         .padding(20)
         .backgroundWithShape(12, .cardBackground, true)
     }
-
+    
     private func resultsWithNumbersSection(_ type: LoveLanguageTypes,
                                            _ title: String,
                                            _ description: String) -> some View {
         HStack(alignment: .top) {
             Text(type.number)
-                .font(Components.displaySize(.callout, .default))
+                .font(Adaptive.size(.callout, .default))
                 .fontWeight(.semibold)
                 .foregroundStyle(numberColor(for: type))
                 .padding(10)
@@ -177,16 +177,16 @@ extension CompatibilityResultView {
 
             VStack(alignment: .leading, spacing: 7) {
                 Text(type.rawValue.uppercased())
-                    .font(Components.displaySize(.footnote, .system(size: 14)))
+                    .font(Adaptive.size(.footnote, .system(size: 14)))
                     .fontWeight(.medium)
                     .foregroundStyle(.gray)
 
-                Text(title.capitalized)
-                    .font(.system(size: Components.displaySize(14, 15)))
+                Text(title)
+                    .font(.system(size: Adaptive.size(14, 15)))
                     .bold()
 
-                Text(description.capitalized)
-                    .font(Components.displaySize(.footnote, .system(size: 14)))
+                Text(description)
+                    .font(Adaptive.size(.footnote, .system(size: 14)))
                     .foregroundStyle(.deepGray)
             }
             .padding(.top, 5)
@@ -194,31 +194,25 @@ extension CompatibilityResultView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private enum LoveLanguageTypes: String {
-        case main = "Основной"
-        case additional = "Дополнительный"
-        case spark = "Искра"
-        case potentional = "Потенциал"
-
-        var number: String {
-            switch self {
-                case .main, .spark:
-                    return "1"
-                case .additional, .potentional:
-                    return "2"
-            }
-        }
-
-    }
-
     private func numberColor(for type: LoveLanguageTypes) -> Color {
         switch type {
-            case .main:
-                return .red
-            case .additional, .spark:
-                return Components.handleAccentColor(accentColor)
-            case .potentional:
-                return .yellow
+            case .main: .red
+            case .additional, .spark: AccentColorOption.color(accentColor)
+            case .potentional: .yellow
+        }
+    }
+}
+
+fileprivate enum LoveLanguageTypes: String {
+    case main = "Основной"
+    case additional = "Дополнительный"
+    case spark = "Искра"
+    case potentional = "Потенциал"
+
+    var number: String {
+        switch self {
+            case .main, .spark: "1"
+            case .additional, .potentional: "2"
         }
     }
 }

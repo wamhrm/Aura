@@ -24,7 +24,11 @@ struct ProfileDisplayModel: Equatable {
     let relationships: Int
     let zodiacSignTitle: String?
     let bestCompatibility: BestCompatibilityDisplay?
+}
 
+extension ProfileDisplayModel {
+    static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
+    
     static func make(personalityResult: PersonalityResultModel?,
                      dailyTip: DailyContentModel?,
                      history: [HistoryCellModel] = []) -> ProfileDisplayModel {
@@ -52,7 +56,7 @@ struct ProfileDisplayModel: Equatable {
     }
 
     private static func bestCompatibility(from history: [HistoryCellModel]) -> BestCompatibilityDisplay? {
-        return history
+        history
             .filter { $0.kind == .compatibility }
             .compactMap(\.compatibilityResult)
             .max(by: { $0.compatibilityScore < $1.compatibilityScore })
@@ -65,11 +69,9 @@ struct ProfileDisplayModel: Equatable {
 
     private static func zodiacSignTitle(from sign: String?) -> String? {
         guard let sign else { return nil }
-        return HoroscopeType.allCases
+        return HoroscopeTypes.allCases
             .first { $0.icon.contains(sign) || sign.contains($0.icon) }?.rawValue
     }
-
-    static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
 }
 
 fileprivate enum ProfileDisplayPlaceholder {
