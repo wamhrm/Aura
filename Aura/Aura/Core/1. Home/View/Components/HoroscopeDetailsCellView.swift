@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HoroscopeDetailsCellView: View {
-    let type: HoroscopeDetailsCellType
+    let type: HoroscopeDetailsCellTypes
     let description: String
     
     var body: some View {
@@ -38,7 +38,7 @@ struct HoroscopeDetailsCellView: View {
     }
 }
 
-enum HoroscopeDetailsCellType: String, CaseIterable, Codable {
+enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
     case love = "Любовь"
     case health = "Здоровье"
     case work = "Работа"

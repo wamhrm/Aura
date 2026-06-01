@@ -29,13 +29,13 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var personalityResult: PersonalityResultModel?
     @Published private(set) var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
 
+    @Published var showAlert = false
+    @Published var alertMessage = ""
     @Published private(set) var isSignedIn = false
     @Published private(set) var hasProfileInfo = false
     @Published private(set) var isLoading = false
     @Published var isServerWakingUp = false
     @Published private(set) var isLoadingScreen = true
-    @Published var showAlert = false
-    @Published var alertMessage = ""
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
