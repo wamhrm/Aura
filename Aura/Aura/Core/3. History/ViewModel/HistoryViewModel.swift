@@ -52,7 +52,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 guard let self, let userId = currentUserId else { return }
-                Task { await self.loadHistory(for: userId, ignoreCache: true) }
+                Task { await self.fetchHistory(for: userId, ignoreCache: true) }
             }
             .store(in: &cancellables)
     }
@@ -63,7 +63,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
                 currentUserId = user.id
                 historyCells = UserDefaultsHelper.getLocalHistory(for: user.id) ?? []
                 isSignedIn = true
-                Task { await loadHistory(for: user.id, ignoreCache: true) }
+                Task { await fetchHistory(for: user.id, ignoreCache: true) }
             case .signedOut:
                 currentUserId = nil
                 isSignedIn = false
@@ -75,10 +75,10 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
 
     func fetchHistory() {
         guard let userId = currentUserId else { return }
-        Task { await loadHistory(for: userId, ignoreCache: true) }
+        Task { await fetchHistory(for: userId, ignoreCache: true) }
     }
 
-    private func loadHistory(for userId: UUID, ignoreCache: Bool = false) async {
+    private func fetchHistory(for userId: UUID, ignoreCache: Bool = false) async {
         if !ignoreCache, let cached = UserDefaultsHelper.getLocalHistory(for: userId) {
             historyCells = cached
             return

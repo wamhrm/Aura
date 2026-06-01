@@ -18,7 +18,8 @@ enum CompatibilityRoutes: Hashable {
 final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
 
-    @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
+    @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns,
+                                                              .attachmentCompatibility]
     @Published var partnerInfo = PartnerInfoModel()
     @Published private(set) var compatibilityResult: CompabilityResultModel?
 
@@ -68,6 +69,16 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     func makeCompatibilityTest() {
+        guard case .signedIn(let user) = authService.authState.value else {
+            presentAlert("Войдите или зарегистрируйтесь")
+            return
+        }
+
+        guard user.hasCompletedProfileInfo else {
+            presentAlert("Заполните информацию о себе")
+            return
+        }
+
         guard !isLoading else { return }
 
         isLoading = true
@@ -109,6 +120,13 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     
     func showInvalidDateOfBirthday() {
         presentAlert("Укажите корректную дату рождения")
+    }
+
+    func clearFields() {
+        partnerInfo.name = ""
+        partnerInfo.dateOfBirth = ""
+        partnerInfo.birthTime = ""
+        partnerInfo.age = ""
     }
 }
 

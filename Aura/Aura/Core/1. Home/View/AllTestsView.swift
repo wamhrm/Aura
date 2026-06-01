@@ -45,6 +45,9 @@ struct AllTestsView: View {
         .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
         .navigationTitle("Проверить себя")
         .navigationBarTitleDisplayMode(.inline)
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("OK", role: .cancel) {}
+        }
     }
 }
 

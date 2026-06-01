@@ -25,13 +25,13 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var profileDisplay: ProfileDisplayModel?
     @Published private(set) var dailyTip: DailyContentModel?
     
+    @Published var showAlert = false
+    @Published var alertMessage = ""
     @Published private(set) var isLoading = false
     @Published var isServerWakingUp = false
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
     @Published var showSettings = false
-    @Published var showAlert = false
-    @Published var alertMessage = ""
     @Published var showSignIn = false
     @Published var showCreateAccount = false
 
@@ -245,11 +245,9 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         showCreateAccount = false
     }
 
-    func switchAuthMode() {
-        withAnimation(.spring) {
-            showSignIn.toggle()
-            showCreateAccount.toggle()
-        }
+    func toggleSignInCreateView() {
+        showSignIn.toggle()
+        showCreateAccount.toggle()
     }
 
     private func updateProfileDisplay() {

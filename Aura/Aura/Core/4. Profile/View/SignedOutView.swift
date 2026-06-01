@@ -28,14 +28,16 @@ struct SignedOutView: View {
 
                     VStack(spacing: 15) {
                         SignInCreateAccountButtonView(vm: vm,
-                                                      type: .signIn) {
+                                                      type: .signIn,
+                                                      isLanding: true) {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 vm.showSignIn.toggle()
                             }
                         }
 
                         SignInCreateAccountButtonView(vm: vm,
-                                                      type: .createAccount) {
+                                                      type: .createAccount,
+                                                      isLanding: true) {
                             withAnimation(.easeInOut(duration: 0.25)) {
                                 vm.showCreateAccount.toggle()
                             }
@@ -60,10 +62,8 @@ struct SignedOutView: View {
 extension SignedOutView {
     @ViewBuilder
     private func overlayView() -> some View {
-        if vm.showSignIn {
-            SignInCreateAccountView(vm: vm, type: .signIn)
-        } else if vm.showCreateAccount {
-            SignInCreateAccountView(vm: vm, type: .createAccount)
+        if vm.showSignIn || vm.showCreateAccount {
+            SignInCreateAccountView(vm: vm, type: vm.showSignIn ? .signIn : .createAccount)
         }
     }
 }
