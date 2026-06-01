@@ -10,17 +10,20 @@ import SwiftUI
 struct SignInCreateAccountButtonView: View {
     @ObservedObject var vm: ProfileViewModel
     let type: SignInCreateAccountButtonTypes
+    let isLanding: Bool
     let onTapHandler: () -> Void
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     init(vm: ProfileViewModel,
          type: SignInCreateAccountButtonTypes,
+         isLanding: Bool = false,
          onTapHandler: @escaping () -> Void) {
         self.vm = vm
         self.type = type
+        self.isLanding = isLanding
         self.onTapHandler = onTapHandler
     }
-    
+
     var body: some View {
         Button(action: onTapHandler) {
             HStack(spacing: 15) {
@@ -38,13 +41,13 @@ struct SignInCreateAccountButtonView: View {
                 
                 Text(buttonTitle)
                     .font(Adaptive.size(.caption, .system(size: 14)))
-                    .foregroundStyle(vm.isSignedOut ? (type == .signIn ? .white : .black) : type.foregroundColor)
+                    .foregroundStyle(buttonForegroundColor)
                     .padding(.leading, type == .apple ? 3 : 0)
             }
             .bold()
             .padding()
             .frame(maxWidth: .infinity)
-            .background(vm.isSignedOut && type == .createAccount ? .white : buttonBackgroundColor)
+            .background(buttonBackgroundColor)
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(.black, lineWidth: 0.3))
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
@@ -58,9 +61,18 @@ extension SignInCreateAccountButtonView {
 
     private var buttonBackgroundColor: Color {
         switch type {
-            case .signIn, .createAccount: AccentColorOption.color(accentColor)
-            case .apple: .black
+            case .signIn: AccentColorOption.color(accentColor)
+            case .createAccount: isLanding ? .white : AccentColorOption.color(accentColor)
             case .google: .white
+            case .apple: .black
+        }
+    }
+
+    private var buttonForegroundColor: Color {
+        switch type {
+            case .signIn, .apple: .white
+            case .createAccount: isLanding ? .black : .white
+            case .google: .black
         }
     }
 }
@@ -76,13 +88,6 @@ enum SignInCreateAccountButtonTypes: String {
             case .signIn: "Входим..."
             case .createAccount: "Создаем аккаунт..."
             case .apple, .google: rawValue
-        }
-    }
-    
-    var foregroundColor: Color {
-        switch self {
-            case .signIn, .createAccount, .apple: .white
-            case .google: .black
         }
     }
 }

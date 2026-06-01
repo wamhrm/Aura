@@ -187,6 +187,9 @@ extension CompatibilityView {
             case .compatibilityResults:
                 if let result = vm.compatibilityResult {
                     CompatibilityResultView(result: result)
+                        .onDisappear {
+                            vm.clearFields()
+                        }
                 }
         }
     }
