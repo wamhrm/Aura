@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SignInCreateAccountView: View {
     @ObservedObject var vm: ProfileViewModel
-    let type: SignInCreateAccountType
+    let type: SignInCreateAccountTypes
 
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
@@ -80,13 +80,13 @@ struct SignInCreateAccountView: View {
             if type == .signIn {
                 alreadyHaveAccountButtonsView(type: .signIn) {
                     withAnimation {
-                        vm.switchAuthMode()
+                        vm.toggleSignInCreateView()
                     }
                 }
             } else {
                 alreadyHaveAccountButtonsView(type: .alreadyHaveAccount) {
                     withAnimation {
-                        vm.switchAuthMode()
+                        vm.toggleSignInCreateView()
                     }
                 }
             }
@@ -154,7 +154,7 @@ extension SignInCreateAccountView {
     }
 }
 
-enum SignInCreateAccountType: String {
+enum SignInCreateAccountTypes: String {
     case signIn = "Войти"
     case createAccount = "Создать аккаунт"
 }

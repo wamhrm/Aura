@@ -17,7 +17,7 @@ struct HoroscopeModel: Identifiable, Hashable, Codable {
 }
 
 struct HoroscopeItems: Hashable, Codable {
-    let title: HoroscopeDetailsCellType
+    let title: HoroscopeDetailsCellTypes
     let description: String
 }
 
