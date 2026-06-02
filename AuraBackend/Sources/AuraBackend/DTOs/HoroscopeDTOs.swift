@@ -1,6 +1,6 @@
 //
 //  HoroscopeDTOs.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 21.05.2026.
 //
@@ -17,7 +17,7 @@ struct HoroscopeDTO: Content {
     let items: [HoroscopeItems]
 }
 
-struct HoroscopeItems: Content, Codable {
+struct HoroscopeItems: Content {
     let title: String
     let description: String
 }
@@ -40,6 +40,23 @@ enum HoroscopeSign: String {
     case capricorn = "Козерог"
     case aquarius = "Водолей"
     case pisces = "Рыбы"
+
+    var emoji: String {
+        switch self {
+            case .aries: return "♈️"
+            case .taurus: return "♉️"
+            case .gemini: return "♊️"
+            case .cancer: return "♋️"
+            case .leo: return "♌️"
+            case .virgo: return "♍️"
+            case .libra: return "♎️"
+            case .scorpio: return "♏️"
+            case .sagittarius: return "♐️"
+            case .capricorn: return "♑️"
+            case .aquarius: return "♒️"
+            case .pisces: return "♓️"
+        }
+    }
 
     static func from(dateOfBirth: Date) -> HoroscopeSign? {
         let calendar = Calendar(identifier: .gregorian)

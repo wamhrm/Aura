@@ -1,6 +1,6 @@
 //
 //  PsychologyService.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -18,13 +18,13 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
-        let uniqueSelectedTests = uniquePersonalityTests(from: selectedTests)
+        let uniqueSelectedTests = unique(selectedTests)
 
         guard uniqueSelectedTests.count >= 2 else {
             throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
         }
 
-        guard hasCompletedProfileInfo(user) else {
+        guard user.hasCompletedProfileInfo else {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
@@ -58,13 +58,13 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
-        let uniqueSelectedTests = uniqueCompatibilityTests(from: selectedTests)
+        let uniqueSelectedTests = unique(selectedTests)
 
         guard uniqueSelectedTests.count >= 2 else {
             throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
         }
 
-        guard hasCompletedProfileInfo(user) else {
+        guard user.hasCompletedProfileInfo else {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
@@ -82,29 +82,8 @@ struct PsychologyService {
                                                              req: req)
     }
 
-    private func uniquePersonalityTests(from tests: [PersonalityTests]) -> [PersonalityTests] {
-        var seen = Set<PersonalityTests>()
-
-        return tests.filter { test in
-            seen.insert(test).inserted
-        }
-    }
-
-    private func uniqueCompatibilityTests(from tests: [CompatibilityTests]) -> [CompatibilityTests] {
-        var seen = Set<CompatibilityTests>()
-
-        return tests.filter { test in
-            seen.insert(test).inserted
-        }
-    }
-
-    private func hasCompletedProfileInfo(_ user: User) -> Bool {
-        user.dateOfBirth != nil &&
-        user.gender != nil &&
-        user.socialType != nil &&
-        user.conflictStyle != nil &&
-        user.emotionalCore != nil &&
-        user.decisionStyle != nil &&
-        user.coreFocus != nil
+    private func unique<T: Hashable>(_ tests: [T]) -> [T] {
+        var seen = Set<T>()
+        return tests.filter { seen.insert($0).inserted }
     }
 }

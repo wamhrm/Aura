@@ -1,6 +1,6 @@
 //
 //  User.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -52,20 +52,26 @@ final class User: Model, Authenticatable, @unchecked Sendable {
 
     init() {}
 
-    init(id: UUID? = nil,
-         name: String,
+    init(name: String,
          email: String,
-         dateOfBirth: Date? = nil,
          passwordHash: String) {
-        self.id = id
         self.name = name
         self.email = email
-        self.dateOfBirth = dateOfBirth
         self.passwordHash = passwordHash
     }
 }
 
 extension User {
+    var hasCompletedProfileInfo: Bool {
+        dateOfBirth != nil &&
+        gender != nil &&
+        socialType != nil &&
+        conflictStyle != nil &&
+        emotionalCore != nil &&
+        decisionStyle != nil &&
+        coreFocus != nil
+    }
+
     func toDTO() throws -> UserDTO {
         UserDTO(id: try requireID(),
                 name: name,

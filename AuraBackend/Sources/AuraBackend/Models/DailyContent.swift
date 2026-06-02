@@ -1,6 +1,6 @@
 //
 //  DailyContent.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 26.05.2026.
 //
@@ -36,12 +36,10 @@ final class DailyContent: Model, @unchecked Sendable {
 
     init() {}
 
-    init(id: UUID? = nil,
-         userID: User.IDValue,
+    init(userID: User.IDValue,
          kind: DailyContentKind,
          text: String,
          generatedDate: String) {
-        self.id = id
         self.$user.id = userID
         self.kind = kind.rawValue
         self.text = text

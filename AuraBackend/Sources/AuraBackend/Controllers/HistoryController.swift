@@ -1,6 +1,6 @@
 //
 //  HistoryController.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -13,12 +13,12 @@ struct HistoryController: RouteCollection {
         let history = routes.grouped("history")
             .grouped(UserAuthMiddleware())
 
-        history.get(use: getHistory)
-        history.get(":historyID", use: getHistoryItemDetails)
-        history.delete(":historyID", use: deleteHistoryItem)
+        history.get(use: fetchHistory)
+        history.get(":historyID", use: fetchHistoryDetails)
+        history.delete(":historyID", use: deleteHistory)
     }
 
-    private func getHistory(_ req: Request) async throws -> [HistoryItemDTO] {
+    private func fetchHistory(_ req: Request) async throws -> [HistoryItemDTO] {
         let userID = try req.auth.require(User.self).requireID()
 
         let entries = try await History.query(on: req.db)
@@ -29,7 +29,7 @@ struct HistoryController: RouteCollection {
         return try entries.map { try HistoryDTOMapper.getHistoryItem(from: $0) }
     }
 
-    private func getHistoryItemDetails(_ req: Request) async throws -> HistoryItemDTO {
+    private func fetchHistoryDetails(_ req: Request) async throws -> HistoryItemDTO {
         let userID = try req.auth.require(User.self).requireID()
 
         guard let historyID = req.parameters.get("historyID", as: UUID.self) else {
@@ -47,7 +47,7 @@ struct HistoryController: RouteCollection {
         return try HistoryDTOMapper.getHistoryItemDetails(from: entry)
     }
 
-    private func deleteHistoryItem(_ req: Request) async throws -> HTTPStatus {
+    private func deleteHistory(_ req: Request) async throws -> HTTPStatus {
         let userID = try req.auth.require(User.self).requireID()
 
         guard let historyID = req.parameters.get("historyID", as: UUID.self) else {

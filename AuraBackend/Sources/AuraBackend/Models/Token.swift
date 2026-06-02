@@ -1,6 +1,6 @@
 //
 //  Token.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -22,10 +22,8 @@ final class Token: Model, @unchecked Sendable {
 
     init() {}
 
-    init(id: UUID? = nil,
-         value: String,
+    init(value: String,
          userID: User.IDValue) {
-        self.id = id
         self.value = value
         self.$user.id = userID
     }

@@ -1,6 +1,6 @@
 //
 //  OpenAIService.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -10,44 +10,16 @@ import Vapor
 
 struct OpenAIService {
     private let model = "gpt-5.4"
-    
-    private func apiKey() throws -> String {
-        if let key = Environment.get("OPENAI_KEY"), !key.isEmpty {
-            return key
-        }
-
-        throw Abort(.serviceUnavailable, reason: "OPENAI_KEY не задан")
-    }
 
     // MARK: - Personality
     func makePersonalityTest(for user: User,
                              selectedTests: [PersonalityTests],
                              req: Request) async throws -> PersonalityResultDTO {
-        let apiKey = try apiKey()
-        let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: personalitySystemPrompt),
-                                               OpenAIMessage(role: "user",
-                                                             content: personalityUserPrompt(for: user,
-                                                                                            selectedTests: selectedTests))],
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
-
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
-        }
-
-        guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
-        }
-
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
-
-        guard let content = chatResponse.choices.first?.message.content,
-              let data = content.data(using: .utf8) else {
-            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
-        }
+        let data = try await chatCompletion(
+            messages: [OpenAIMessage(role: "system", content: personalitySystemPrompt),
+                       OpenAIMessage(role: "user", content: personalityUserPrompt(for: user,
+                                                                                   selectedTests: selectedTests))],
+            req: req)
 
         do {
             let analysis = try JSONDecoder().decode(PersonalityTestContent.self, from: data)
@@ -275,7 +247,7 @@ struct OpenAIService {
 
     private func filteredPersonalitySections(_ sections: [PersonalitySection],
                                              selectedTitles: Set<String>) -> [PersonalitySection] {
-        return sections.filter { selectedTitles.contains($0.selectedTest) }
+        sections.filter { selectedTitles.contains($0.selectedTest) }
     }
 
     // MARK: - Compatibility
@@ -283,32 +255,12 @@ struct OpenAIService {
                                partner: CompatibilityTestRequest,
                                selectedTests: [CompatibilityTests],
                                req: Request) async throws -> CompatibilityResultDTO {
-        let apiKey = try apiKey()
-        let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: compatibilitySystemPrompt),
-                                               OpenAIMessage(role: "user", content: compatibilityUserPrompt(
-                                                                                              for: user,
-                                                                                              partner: partner,
-                                                                                              selectedTests: selectedTests))],
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
-
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
-        }
-
-        guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
-        }
-
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
-
-        guard let content = chatResponse.choices.first?.message.content,
-              let data = content.data(using: .utf8) else {
-            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
-        }
+        let data = try await chatCompletion(
+            messages: [OpenAIMessage(role: "system", content: compatibilitySystemPrompt),
+                       OpenAIMessage(role: "user", content: compatibilityUserPrompt(for: user,
+                                                                                     partner: partner,
+                                                                                     selectedTests: selectedTests))],
+            req: req)
 
         do {
             let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
@@ -535,7 +487,7 @@ struct OpenAIService {
 
     private func filteredCompatibilitySections(_ sections: [CompatibilitySection],
                                                selectedTitles: Set<String>) -> [CompatibilitySection] {
-        return sections.filter { selectedTitles.contains($0.selectedTest) }
+        sections.filter { selectedTitles.contains($0.selectedTest) }
     }
 
     private func compatibilityPartnerDateOfBirth(from partner: CompatibilityTestRequest) -> Date? {
@@ -548,30 +500,11 @@ struct OpenAIService {
     }
 
     // MARK: - Horoscope
-    func makeHoroscopeTest(for sign: HoroscopeSign, req: Request) async throws -> HoroscopeContentResult {
-        let apiKey = try apiKey()
-        let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
-                                               OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
-
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
-        }
-
-        guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
-        }
-
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
-
-        guard let content = chatResponse.choices.first?.message.content,
-              let data = content.data(using: .utf8) else {
-            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
-        }
+    func makeHoroscope(for sign: HoroscopeSign, req: Request) async throws -> HoroscopeContentResult {
+        let data = try await chatCompletion(
+            messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
+                       OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
+            req: req)
 
         do {
             return try JSONDecoder().decode(HoroscopeContentResult.self, from: data)
@@ -649,29 +582,10 @@ struct OpenAIService {
                                   userPrompt: String,
                                   wordRange: ClosedRange<Int>,
                                   req: Request) async throws -> String {
-        let apiKey = try apiKey()
-        let request = OpenAIChatDTO(model: model,
-                                    messages: [OpenAIMessage(role: "system", content: systemPrompt),
-                                               OpenAIMessage(role: "user", content: userPrompt)],
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
-
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
-        }
-
-        guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
-        }
-
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
-
-        guard let content = chatResponse.choices.first?.message.content,
-              let data = content.data(using: .utf8) else {
-            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
-        }
+        let data = try await chatCompletion(
+            messages: [OpenAIMessage(role: "system", content: systemPrompt),
+                       OpenAIMessage(role: "user", content: userPrompt)],
+            req: req)
 
         do {
             let result = try JSONDecoder().decode(DailyContentResult.self, from: data)
@@ -695,7 +609,7 @@ struct OpenAIService {
     }
 
     private func dailyInsightUserPrompt(for user: User) -> String {
-        return """
+        """
         Данные пользователя:
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
         - время рождения: \(user.birthTime ?? "не указано")
@@ -728,7 +642,7 @@ struct OpenAIService {
     }
 
     private func dailyTipUserPrompt(for user: User) -> String {
-        return """
+        """
         Данные пользователя:
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
         - время рождения: \(user.birthTime ?? "не указано")
@@ -760,39 +674,44 @@ struct OpenAIService {
         """
     }
 
+    // MARK: - Helpers
+    private func apiKey() throws -> String {
+        if let key = Environment.get("OPENAI_KEY"), !key.isEmpty {
+            return key
+        }
+
+        throw Abort(.serviceUnavailable, reason: "OPENAI_KEY не задан")
+    }
+
+    private func chatCompletion(messages: [OpenAIMessage], req: Request) async throws -> Data {
+        let apiKey = try apiKey()
+        let request = OpenAIChatDTO(model: model,
+                                    messages: messages,
+                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
+
+        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
+            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
+            clientRequest.headers.contentType = .json
+            try clientRequest.content.encode(request)
+        }
+
+        guard response.status == .ok else {
+            let error = try? response.content.decode(OpenAIErrorResponse.self)
+            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
+        }
+
+        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+
+        guard let content = chatResponse.choices.first?.message.content,
+              let data = content.data(using: .utf8) else {
+            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
+        }
+
+        return data
+    }
+    
     private func zodiacSign(from date: Date?) -> String? {
         guard let date else { return nil }
-
-        let components = Calendar(identifier: .gregorian).dateComponents([.day, .month], from: date)
-        guard let day = components.day, let month = components.month else { return nil }
-
-        switch (month, day) {
-            case (1, 20...31),  (2, 1...18):
-                return "♒️"
-            case (2, 19...29),  (3, 1...20):
-                return "♓️"
-            case (3, 21...31),  (4, 1...19):
-                return "♈️"
-            case (4, 20...30),  (5, 1...20):
-                return "♉️"
-            case (5, 21...31),  (6, 1...20):
-                return "♊️"
-            case (6, 21...30),  (7, 1...22):
-                return "♋️"
-            case (7, 23...31),  (8, 1...22):
-                return "♌️"
-            case (8, 23...31),  (9, 1...22):
-                return "♍️"
-            case (9, 23...30),  (10, 1...22):
-                return "♎️"
-            case (10, 23...31), (11, 1...21):
-                return "♏️"
-            case (11, 22...30), (12, 1...21):
-                return "♐️"
-            case (12, 22...31), (1, 1...19):
-                return "♑️"
-            default:
-                return nil
-        }
+        return HoroscopeSign.from(dateOfBirth: date)?.emoji
     }
 }
