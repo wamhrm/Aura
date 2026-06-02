@@ -1,6 +1,6 @@
 //
 //  DailyDateHelper.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 26.05.2026.
 //
@@ -24,10 +24,10 @@ enum DailyDateHelper {
     }()
 
     static func todayString() -> String {
-        return storageFormatter.string(from: Date())
+        storageFormatter.string(from: Date())
     }
 
     static func isToday(_ generatedDate: String) -> Bool {
-        return generatedDate == todayString()
+        generatedDate == todayString()
     }
 }

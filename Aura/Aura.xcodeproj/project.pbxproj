@@ -6,8 +6,27 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		36F5899C2FCDFE1B00091154 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 36222CB22F7BEE40000735A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 36222CB92F7BEE40000735A1;
+			remoteInfo = Aura;
+		};
+		36F589AB2FCDFE3900091154 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 36222CB22F7BEE40000735A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 36222CB92F7BEE40000735A1;
+			remoteInfo = Aura;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		36222CBA2F7BEE40000735A1 /* Aura.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aura.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		36F589982FCDFE1B00091154 /* AuraUnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AuraUnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		36F589A52FCDFE3900091154 /* AuraUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AuraUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +35,34 @@
 			path = Aura;
 			sourceTree = "<group>";
 		};
+		36F589992FCDFE1B00091154 /* AuraUnitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AuraUnitTests;
+			sourceTree = "<group>";
+		};
+		36F589A62FCDFE3900091154 /* AuraUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AuraUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		36222CB72F7BEE40000735A1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		36F589952FCDFE1B00091154 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		36F589A22FCDFE3900091154 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +76,8 @@
 			isa = PBXGroup;
 			children = (
 				36222CBC2F7BEE40000735A1 /* Aura */,
+				36F589992FCDFE1B00091154 /* AuraUnitTests */,
+				36F589A62FCDFE3900091154 /* AuraUITests */,
 				36222CBB2F7BEE40000735A1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +86,8 @@
 			isa = PBXGroup;
 			children = (
 				36222CBA2F7BEE40000735A1 /* Aura.app */,
+				36F589982FCDFE1B00091154 /* AuraUnitTests.xctest */,
+				36F589A52FCDFE3900091154 /* AuraUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +117,52 @@
 			productReference = 36222CBA2F7BEE40000735A1 /* Aura.app */;
 			productType = "com.apple.product-type.application";
 		};
+		36F589972FCDFE1B00091154 /* AuraUnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 36F5899E2FCDFE1B00091154 /* Build configuration list for PBXNativeTarget "AuraUnitTests" */;
+			buildPhases = (
+				36F589942FCDFE1B00091154 /* Sources */,
+				36F589952FCDFE1B00091154 /* Frameworks */,
+				36F589962FCDFE1B00091154 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				36F5899D2FCDFE1B00091154 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				36F589992FCDFE1B00091154 /* AuraUnitTests */,
+			);
+			name = AuraUnitTests;
+			packageProductDependencies = (
+			);
+			productName = AuraUnitTests;
+			productReference = 36F589982FCDFE1B00091154 /* AuraUnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		36F589A42FCDFE3900091154 /* AuraUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 36F589AD2FCDFE3900091154 /* Build configuration list for PBXNativeTarget "AuraUITests" */;
+			buildPhases = (
+				36F589A12FCDFE3900091154 /* Sources */,
+				36F589A22FCDFE3900091154 /* Frameworks */,
+				36F589A32FCDFE3900091154 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				36F589AC2FCDFE3900091154 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				36F589A62FCDFE3900091154 /* AuraUITests */,
+			);
+			name = AuraUITests;
+			packageProductDependencies = (
+			);
+			productName = AuraUITests;
+			productReference = 36F589A52FCDFE3900091154 /* AuraUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -77,11 +170,19 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2640;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					36222CB92F7BEE40000735A1 = {
 						CreatedOnToolsVersion = 26.4;
+					};
+					36F589972FCDFE1B00091154 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 36222CB92F7BEE40000735A1;
+					};
+					36F589A42FCDFE3900091154 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 36222CB92F7BEE40000735A1;
 					};
 				};
 			};
@@ -100,12 +201,28 @@
 			projectRoot = "";
 			targets = (
 				36222CB92F7BEE40000735A1 /* Aura */,
+				36F589972FCDFE1B00091154 /* AuraUnitTests */,
+				36F589A42FCDFE3900091154 /* AuraUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		36222CB82F7BEE40000735A1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		36F589962FCDFE1B00091154 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		36F589A32FCDFE3900091154 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +239,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		36F589942FCDFE1B00091154 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		36F589A12FCDFE3900091154 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		36F5899D2FCDFE1B00091154 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 36222CB92F7BEE40000735A1 /* Aura */;
+			targetProxy = 36F5899C2FCDFE1B00091154 /* PBXContainerItemProxy */;
+		};
+		36F589AC2FCDFE3900091154 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 36222CB92F7BEE40000735A1 /* Aura */;
+			targetProxy = 36F589AB2FCDFE3900091154 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		36222CC32F7BEE41000735A1 /* Debug */ = {
@@ -326,6 +470,108 @@
 			};
 			name = Release;
 		};
+		36F5899F2FCDFE1B00091154 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z4QY355L42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ddorsat.AuraUnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aura.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aura";
+			};
+			name = Debug;
+		};
+		36F589A02FCDFE1B00091154 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z4QY355L42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ddorsat.AuraUnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aura.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aura";
+			};
+			name = Release;
+		};
+		36F589AE2FCDFE3900091154 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z4QY355L42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ddorsat.AuraUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Aura;
+			};
+			name = Debug;
+		};
+		36F589AF2FCDFE3900091154 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Z4QY355L42;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ddorsat.AuraUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Aura;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -343,6 +589,24 @@
 			buildConfigurations = (
 				36222CC62F7BEE41000735A1 /* Debug */,
 				36222CC72F7BEE41000735A1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		36F5899E2FCDFE1B00091154 /* Build configuration list for PBXNativeTarget "AuraUnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				36F5899F2FCDFE1B00091154 /* Debug */,
+				36F589A02FCDFE1B00091154 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		36F589AD2FCDFE3900091154 /* Build configuration list for PBXNativeTarget "AuraUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				36F589AE2FCDFE3900091154 /* Debug */,
+				36F589AF2FCDFE3900091154 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

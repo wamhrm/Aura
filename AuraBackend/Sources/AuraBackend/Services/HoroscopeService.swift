@@ -1,6 +1,6 @@
 //
 //  HoroscopeService.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -11,7 +11,7 @@ import Vapor
 struct HoroscopeService {
     private let openAIService = OpenAIService()
 
-    func makeHoroscopeTest(for user: User, req: Request, on database: any Database) async throws -> HoroscopeDTO {
+    func makeHoroscope(for user: User, req: Request, on database: any Database) async throws -> HoroscopeDTO {
         guard let dateOfBirth = user.dateOfBirth else {
             throw Abort(.badRequest, reason: "Укажите дату рождения")
         }
@@ -21,7 +21,7 @@ struct HoroscopeService {
         }
 
         let userID = try user.requireID()
-        let generated = try await openAIService.makeHoroscopeTest(for: sign, req: req)
+        let generated = try await openAIService.makeHoroscope(for: sign, req: req)
         let period = openAIService.horoscopePeriod()
 
         try await Horoscope.query(on: database)
@@ -42,7 +42,7 @@ struct HoroscopeService {
         return try HoroscopeDTOMapper.map(entry)
     }
 
-    func getCurrentHoroscopeTest(for user: User, on database: any Database) async throws -> HoroscopeDTO {
+    func fetchCurrentHoroscope(for user: User, req: Request, on database: any Database) async throws -> HoroscopeDTO {
         let userID = try user.requireID()
 
         guard let entry = try await Horoscope.query(on: database)
@@ -53,6 +53,20 @@ struct HoroscopeService {
             throw Abort(.notFound, reason: "Гороскоп не найден")
         }
 
+        if isExpired(entry), let refreshed = try? await makeHoroscope(for: user, req: req, on: database) {
+            return refreshed
+        }
+
         return try HoroscopeDTOMapper.map(entry)
+    }
+
+    private func isExpired(_ entry: Horoscope) -> Bool {
+        guard let createdAt = entry.createdAt else { return false }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+
+        let periodEnd = calendar.date(byAdding: .day, value: 6, to: calendar.startOfDay(for: createdAt)) ?? createdAt
+        return calendar.startOfDay(for: Date()) > periodEnd
     }
 }

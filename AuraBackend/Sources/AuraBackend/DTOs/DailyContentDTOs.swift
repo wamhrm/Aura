@@ -1,19 +1,13 @@
 //
 //  DailyContentDTOs.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 26.05.2026.
 //
 
 import Vapor
 
-struct DailyInsightDTO: Content {
-    let id: UUID
-    let text: String
-    let dateCreated: String
-}
-
-struct DailyTipDTO: Content {
+struct DailyContentDTO: Content {
     let id: UUID
     let text: String
     let dateCreated: String
@@ -24,23 +18,13 @@ struct DailyContentResult: Codable {
 }
 
 enum DailyContentDTOMapper {
-    static func mapInsight(_ entry: DailyContent) throws -> DailyInsightDTO {
+    static func map(_ entry: DailyContent) throws -> DailyContentDTO {
         guard let id = entry.id else {
-            throw Abort(.internalServerError, reason: "Инсайт дня без идентификатора")
+            throw Abort(.internalServerError, reason: "Контент дня без идентификатора")
         }
 
-        return DailyInsightDTO(id: id,
+        return DailyContentDTO(id: id,
                                text: entry.text,
                                dateCreated: entry.generatedDate)
-    }
-
-    static func mapTip(_ entry: DailyContent) throws -> DailyTipDTO {
-        guard let id = entry.id else {
-            throw Abort(.internalServerError, reason: "Совет дня без идентификатора")
-        }
-
-        return DailyTipDTO(id: id,
-                           text: entry.text,
-                           dateCreated: entry.generatedDate)
     }
 }

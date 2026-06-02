@@ -10,8 +10,8 @@ import SwiftUI
 struct MainTabView: View {
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var compatibilityViewModel: CompatibilityViewModel
-    @StateObject private var profileViewModel: ProfileViewModel
     @StateObject private var historyViewModel: HistoryViewModel
+    @StateObject private var profileViewModel: ProfileViewModel
 
     @State private var selectedTab: Tabs = .home
 
@@ -29,17 +29,17 @@ struct MainTabView: View {
         _compatibilityViewModel = StateObject(wrappedValue: CompatibilityViewModel(
             authService: authService,
             contentService: contentService))
-        _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
+        _historyViewModel = StateObject(wrappedValue: HistoryViewModel(
             authService: authService,
             contentService: contentService))
-        _historyViewModel = StateObject(wrappedValue: HistoryViewModel(
+        _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
             authService: authService,
             contentService: contentService))
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(value: .home, role: .none) {
+            Tab(value: .home) {
                 HomeView(vm: homeViewModel,
                          authService: authService) {
                     selectedTab = .compatibility
@@ -50,19 +50,19 @@ struct MainTabView: View {
                 Image(systemName: Tabs.home.icon)
             }
 
-            Tab(value: .compatibility, role: .none) {
+            Tab(value: .compatibility) {
                 CompatibilityView(vm: compatibilityViewModel)
             } label: {
                 Image(systemName: Tabs.compatibility.icon)
             }
 
-            Tab(value: .history, role: .none) {
+            Tab(value: .history) {
                 HistoryView(vm: historyViewModel)
             } label: {
                 Image(systemName: Tabs.history.icon)
             }
 
-            Tab(value: .profile, role: .none) {
+            Tab(value: .profile) {
                 ProfileView(vm: profileViewModel,
                             homeViewModel: homeViewModel)
             } label: {
@@ -79,14 +79,10 @@ fileprivate enum Tabs {
 
     var icon: String {
         switch self {
-            case .home:
-                return "house"
-            case .compatibility:
-                return "heart"
-            case .history:
-                return "clock.arrow.circlepath"
-            case .profile:
-                return "person"
+            case .home: "house"
+            case .compatibility: "heart"
+            case .history: "clock.arrow.circlepath"
+            case .profile: "person"
         }
     }
 }

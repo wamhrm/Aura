@@ -1,6 +1,6 @@
 //
 //  Horoscope.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -37,14 +37,12 @@ final class Horoscope: Model, @unchecked Sendable {
 
     init() {}
 
-    init(id: UUID? = nil,
-         userID: User.IDValue,
+    init(userID: User.IDValue,
          sign: String,
          dateStart: String,
          dateEnd: String,
          description: String,
          itemsJSON: String) {
-        self.id = id
         self.$user.id = userID
         self.sign = sign
         self.dateStart = dateStart

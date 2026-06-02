@@ -1,6 +1,6 @@
 //
 //  CompatibilityResultDTOs.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -32,28 +32,28 @@ struct CompatibilityResultDTO: Content {
     let forecast: CompatibilityForecast
 }
 
-struct CompatibilityOverview: Content, Codable {
+struct CompatibilityOverview: Content {
     let title: String
     let description: String
 }
 
-struct CompatibilityEmotionalBar: Content, Codable {
+struct CompatibilityEmotionalBar: Content {
     let title: String
     let value: Int
 }
 
-struct CompatibilitySection: Content, Codable {
+struct CompatibilitySection: Content {
     let selectedTest: String
     let description: String
     let items: [CompatibilitySectionItem]
 }
 
-struct CompatibilitySectionItem: Content, Codable {
+struct CompatibilitySectionItem: Content {
     let title: String
     let description: String
 }
 
-struct CompatibilityForecast: Content, Codable {
+struct CompatibilityForecast: Content {
     let recognitionTitle: String
     let recognitionDescription: String
     let potentialTitle: String
@@ -96,18 +96,12 @@ enum CompatibilityTests: String, CaseIterable {
     }
 
     private static func from(title: String) -> CompatibilityTests? {
-        return allCases.first { $0.title == title }
+        allCases.first { $0.title == title }
     }
 
     static func from(titles: [String]) -> [CompatibilityTests]? {
-        var mapped: [CompatibilityTests] = []
-
-        for title in titles {
-            guard let test = from(title: title) else { return nil }
-            mapped.append(test)
-        }
-
-        return mapped
+        let mapped = titles.compactMap(from(title:))
+        return mapped.count == titles.count ? mapped : nil
     }
 }
 

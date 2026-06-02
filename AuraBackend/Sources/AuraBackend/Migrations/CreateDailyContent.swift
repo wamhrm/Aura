@@ -1,6 +1,6 @@
 //
 //  CreateDailyContent.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 26.05.2026.
 //
