@@ -1,6 +1,6 @@
 //
 //  HoroscopeController.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -14,11 +14,11 @@ struct HoroscopeController: RouteCollection {
         let horoscope = routes.grouped("horoscope")
             .grouped(UserAuthMiddleware())
 
-        horoscope.get("current", use: getHoroscope)
+        horoscope.get("current", use: fetchCurrentHoroscope)
     }
 
-    private func getHoroscope(_ req: Request) async throws -> HoroscopeDTO {
+    private func fetchCurrentHoroscope(_ req: Request) async throws -> HoroscopeDTO {
         let user = try req.auth.require(User.self)
-        return try await horoscopeService.getCurrentHoroscopeTest(for: user, on: req.db)
+        return try await horoscopeService.fetchCurrentHoroscope(for: user, req: req, on: req.db)
     }
 }

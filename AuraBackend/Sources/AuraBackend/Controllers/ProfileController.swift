@@ -1,6 +1,6 @@
 //
 //  ProfileController.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -37,7 +37,7 @@ struct ProfileController: RouteCollection {
 
         try await user.save(on: req.db)
 
-        let horoscope = try await horoscopeService.makeHoroscopeTest(for: user, req: req, on: req.db)
+        let horoscope = try await horoscopeService.makeHoroscope(for: user, req: req, on: req.db)
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }

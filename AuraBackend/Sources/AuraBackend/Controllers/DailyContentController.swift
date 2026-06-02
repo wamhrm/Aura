@@ -1,6 +1,6 @@
 //
 //  DailyContentController.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 26.05.2026.
 //
@@ -14,17 +14,17 @@ struct DailyContentController: RouteCollection {
         let daily = routes.grouped("daily")
             .grouped(UserAuthMiddleware())
 
-        daily.get("insight", use: getDailyInsight)
-        daily.get("tip", use: getDailyTip)
+        daily.get("insight", use: fetchDailyInsight)
+        daily.get("tip", use: fetchDailyTip)
     }
 
-    private func getDailyInsight(_ req: Request) async throws -> DailyInsightDTO {
+    private func fetchDailyInsight(_ req: Request) async throws -> DailyContentDTO {
         let user = try req.auth.require(User.self)
-        return try await dailyContentService.getOrGenerateDailyInsight(for: user, req: req, on: req.db)
+        return try await dailyContentService.fetchDailyInsight(for: user, req: req, on: req.db)
     }
 
-    private func getDailyTip(_ req: Request) async throws -> DailyTipDTO {
+    private func fetchDailyTip(_ req: Request) async throws -> DailyContentDTO {
         let user = try req.auth.require(User.self)
-        return try await dailyContentService.getOrGenerateDailyTip(for: user, req: req, on: req.db)
+        return try await dailyContentService.fetchDailyTip(for: user, req: req, on: req.db)
     }
 }
