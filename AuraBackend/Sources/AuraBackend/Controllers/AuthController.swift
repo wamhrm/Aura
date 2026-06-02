@@ -1,6 +1,6 @@
 //
 //  AuthController.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -66,7 +66,7 @@ struct AuthController: RouteCollection {
     }
 
     private func normalizedEmail(_ email: String) -> String {
-        return email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private func isValidEmail(_ email: String) -> Bool {

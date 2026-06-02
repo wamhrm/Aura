@@ -1,6 +1,6 @@
 //
 //  CreateHoroscope.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 21.05.2026.
 //

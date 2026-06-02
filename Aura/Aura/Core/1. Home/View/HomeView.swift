@@ -105,6 +105,7 @@ struct HomeView: View {
                                     headerText("Проверьте себя", "Все тесты") {
                                         vm.homeRoutes.append(.allTests)
                                     }
+                                    .disabled(!vm.hasProfileInfo)
 
                                     ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
                                         TestCellView(type: test,

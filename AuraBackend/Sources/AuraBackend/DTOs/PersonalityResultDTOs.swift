@@ -1,6 +1,6 @@
 //
 //  PersonalityResultDTOs.swift
-//  AuraServer
+//  AuraBackend
 //
 //  Created by ddorsat on 13.05.2026.
 //
@@ -18,23 +18,23 @@ struct PersonalityResultDTO: Content {
     let sections: [PersonalitySection]
 }
 
-struct PersonalityOverview: Content, Codable {
+struct PersonalityOverview: Content {
     let title: String
     let description: String
 }
 
-struct PersonalityEmotionalBar: Content, Codable {
+struct PersonalityEmotionalBar: Content {
     let title: String
     let value: Int
 }
 
-struct PersonalitySection: Content, Codable {
+struct PersonalitySection: Content {
     let selectedTest: String
     let description: String
     let items: [PersonalitySectionItems]
 }
 
-struct PersonalitySectionItems: Content, Codable {
+struct PersonalitySectionItems: Content {
     let title: String
     let description: String
 }
@@ -73,18 +73,12 @@ enum PersonalityTests: String, CaseIterable {
     }
 
     private static func from(title: String) -> PersonalityTests? {
-        return allCases.first { $0.title == title }
+        allCases.first { $0.title == title }
     }
 
     static func from(titles: [String]) -> [PersonalityTests]? {
-        var mapped: [PersonalityTests] = []
-
-        for title in titles {
-            guard let test = from(title: title) else { return nil }
-            mapped.append(test)
-        }
-
-        return mapped
+        let mapped = titles.compactMap(from(title:))
+        return mapped.count == titles.count ? mapped : nil
     }
 }
 
