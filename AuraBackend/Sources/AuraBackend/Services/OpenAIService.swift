@@ -697,7 +697,8 @@ struct OpenAIService {
 
         guard response.status == .ok else {
             let error = try? response.content.decode(OpenAIErrorResponse.self)
-            throw Abort(.badGateway, reason: error?.error.message ?? "OpenAI вернул ошибку")
+            req.logger.error("OpenAI request failed with status \(response.status.code): \(error?.error.message ?? "no error message")")
+            throw Abort(.badGateway, reason: "OpenAI вернул ошибку")
         }
 
         let chatResponse = try response.content.decode(OpenAIChatResponse.self)
