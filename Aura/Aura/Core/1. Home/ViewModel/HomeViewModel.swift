@@ -79,7 +79,10 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                 if user.hasCompletedProfileInfo {
                     horoscope = storage.load(StorageKeys.horoscope, for: user.id)
                     dailyInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
-                    Task { await refreshHomeContent(for: user.id) }
+
+                    if !isLoading {
+                        Task { await refreshHomeContent(for: user.id) }
+                    }
                 } else {
                     horoscope = nil
                     dailyInsight = nil
@@ -116,9 +119,10 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                     if let horoscope = response.horoscope {
                         self.horoscope = horoscope
                         storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
+                    } else {
+                        await loadHoroscope(for: response.user.id, showErrorOnFailure: false)
                     }
                     await loadDailyInsight(for: response.user.id)
-                    try await Task.sleep(for: .seconds(1.5))
                     onSuccess()
                 } catch {
                     presentAlert(error.localizedDescription)

@@ -30,7 +30,7 @@ struct HistoryCellView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
-                    Text("\(cell.compatibilityResult?.compatibilityScore ?? 0)%")
+                    Text("\(cell.resolvedCompatibilityScore ?? 0)%")
                         .font(Adaptive.size(.footnote, .system(size: 14)))
                         .foregroundStyle(.white)
                         .bold()
@@ -54,7 +54,7 @@ extension HistoryCellView {
             case .personality:
                 return cell.zodiacSign
             case .compatibility:
-                let sign = cell.compatibilityResult?.partnerZodiacSign ?? ""
+                let sign = cell.resolvedPartnerZodiacSign ?? ""
                 return sign.isEmpty ? "👤" : sign
         }
     }
@@ -62,7 +62,7 @@ extension HistoryCellView {
     private var titleText: String {
         switch cell.kind {
             case .personality: cell.archetypeTitle
-            case .compatibility: cell.compatibilityResult?.partnerName ?? ""
+            case .compatibility: cell.resolvedPartnerName ?? ""
         }
     }
 }

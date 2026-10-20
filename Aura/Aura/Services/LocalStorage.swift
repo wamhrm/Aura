@@ -11,9 +11,14 @@ struct StorageKey<Value: Codable> {
     let name: String
 }
 
+struct StoredPersonality: Codable {
+    let historyId: UUID
+    let result: PersonalityResultModel
+}
+
 enum StorageKeys {
     static let horoscope = StorageKey<HoroscopeModel>(name: "horoscope")
-    static let personality = StorageKey<PersonalityResultModel>(name: "personality")
+    static let personality = StorageKey<StoredPersonality>(name: "personality")
     static let history = StorageKey<[HistoryCellModel]>(name: "history")
     static let dailyInsight = StorageKey<DailyContentModel>(name: "dailyInsight")
     static let dailyTip = StorageKey<DailyContentModel>(name: "dailyTip")

@@ -58,13 +58,15 @@ extension ProfileDisplayModel {
     private static func bestCompatibility(from history: [HistoryCellModel]) -> BestCompatibilityDisplay? {
         history
             .filter { $0.kind == .compatibility }
-            .compactMap(\.compatibilityResult)
-            .max(by: { $0.compatibilityScore < $1.compatibilityScore })
-            .map {
-                BestCompatibilityDisplay(partnerZodiacSign: $0.partnerZodiacSign,
-                                         partnerName: $0.partnerNameCapitalized,
-                                         score: $0.compatibilityScore)
+            .compactMap { cell -> BestCompatibilityDisplay? in
+                guard let score = cell.resolvedCompatibilityScore,
+                      let partnerName = cell.resolvedPartnerName else { return nil }
+
+                return BestCompatibilityDisplay(partnerZodiacSign: cell.resolvedPartnerZodiacSign ?? "",
+                                                partnerName: partnerName.capitalized,
+                                                score: score)
             }
+            .max(by: { $0.score < $1.score })
     }
 
     private static func zodiacSignTitle(from sign: String?) -> String? {

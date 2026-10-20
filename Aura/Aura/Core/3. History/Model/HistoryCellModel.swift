@@ -15,6 +15,9 @@ struct HistoryCellModel: Codable, Identifiable, Hashable {
     let archetypeTitle: String
     let archetypeSubtitle: String
     let zodiacSign: String
+    let compatibilityScore: Int?
+    let partnerName: String?
+    let partnerZodiacSign: String?
     let personalityResult: PersonalityResultModel?
     let compatibilityResult: CompabilityResultModel?
 }
@@ -33,6 +36,9 @@ extension HistoryCellModel {
         archetypeTitle: PersonalityResultModel.mock.archetypeTitle,
         archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
         zodiacSign: PersonalityResultModel.mock.zodiacSign,
+        compatibilityScore: nil,
+        partnerName: nil,
+        partnerZodiacSign: nil,
         personalityResult: nil,
         compatibilityResult: nil
     )
@@ -45,7 +51,24 @@ extension HistoryCellModel {
         archetypeTitle: CompabilityResultModel.mock.title,
         archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
         zodiacSign: PersonalityResultModel.mock.zodiacSign,
+        compatibilityScore: CompabilityResultModel.mock.compatibilityScore,
+        partnerName: CompabilityResultModel.mock.partnerName,
+        partnerZodiacSign: CompabilityResultModel.mock.partnerZodiacSign,
         personalityResult: nil,
         compatibilityResult: CompabilityResultModel.mock
     )
+}
+
+extension HistoryCellModel {
+    var resolvedCompatibilityScore: Int? {
+        compatibilityScore ?? compatibilityResult?.compatibilityScore
+    }
+
+    var resolvedPartnerName: String? {
+        partnerName ?? compatibilityResult?.partnerName
+    }
+
+    var resolvedPartnerZodiacSign: String? {
+        partnerZodiacSign ?? compatibilityResult?.partnerZodiacSign
+    }
 }
