@@ -23,11 +23,6 @@ struct HoroscopeService {
         let userID = try user.requireID()
         let generated = try await openAIService.makeHoroscope(for: sign, req: req)
         let period = openAIService.horoscopePeriod()
-
-        try await Horoscope.query(on: database)
-            .filter(\.$user.$id == userID)
-            .delete()
-
         let itemsJSON = try HoroscopeDTOMapper.encodeItems(generated.items)
 
         let entry = Horoscope(userID: userID,
@@ -37,7 +32,13 @@ struct HoroscopeService {
                               description: generated.description,
                               itemsJSON: itemsJSON)
 
-        try await entry.save(on: database)
+        try await database.transaction { transaction in
+            try await Horoscope.query(on: transaction)
+                .filter(\.$user.$id == userID)
+                .delete()
+
+            try await entry.save(on: transaction)
+        }
 
         return try HoroscopeDTOMapper.map(entry)
     }

@@ -43,6 +43,8 @@ struct CompatibilityOverview: Content {
 }
 
 struct CompatibilityEmotionalBar: Content {
+    static let titles = ["Эмоциональный резонанс", "Внутренняя открытость", "Гармония души", "Эмоциональная теплота"]
+
     let title: String
     let value: Int
 }

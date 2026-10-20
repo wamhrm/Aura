@@ -24,6 +24,8 @@ struct PersonalityOverview: Content {
 }
 
 struct PersonalityEmotionalBar: Content {
+    static let titles = ["Темперамент", "Мышление", "Организованность", "Отношения"]
+
     let title: String
     let value: Int
 }
