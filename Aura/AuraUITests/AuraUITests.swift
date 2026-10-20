@@ -8,11 +8,10 @@
 import XCTest
 
 final class AuraUITests: XCTestCase {
-    private var app: XCUIApplication!
+    @MainActor private lazy var app = XCUIApplication()
 
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app = XCUIApplication()
     }
 
     @MainActor

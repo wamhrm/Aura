@@ -6,6 +6,7 @@
 import XCTest
 @testable import Aura
 
+@MainActor
 final class UserModelTests: XCTestCase {
     func test_hasCompletedProfileInfo_whenAllFieldsPresent_returnsTrue() {
         // Given

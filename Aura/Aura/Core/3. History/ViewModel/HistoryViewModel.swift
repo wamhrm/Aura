@@ -27,14 +27,17 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
+    private let storage: any LocalStorageProtocol
 
     private var currentUserId: UUID?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol) {
+         contentService: any ContentServiceProtocol,
+         storage: any LocalStorageProtocol = LocalStorage()) {
         self.authService = authService
         self.contentService = contentService
+        self.storage = storage
 
         setupSubscriptions()
     }
@@ -61,7 +64,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
         switch state {
             case .signedIn(let user):
                 currentUserId = user.id
-                historyCells = UserDefaultsHelper.getLocalHistory(for: user.id) ?? []
+                historyCells = storage.load(StorageKeys.history, for: user.id) ?? []
                 isSignedIn = true
                 Task { await fetchHistory(for: user.id, ignoreCache: true) }
             case .signedOut:
@@ -79,7 +82,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     private func fetchHistory(for userId: UUID, ignoreCache: Bool = false) async {
-        if !ignoreCache, let cached = UserDefaultsHelper.getLocalHistory(for: userId) {
+        if !ignoreCache, let cached = storage.load(StorageKeys.history, for: userId) {
             historyCells = cached
             return
         }
@@ -87,7 +90,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
         do {
             let history = try await contentService.fetchHistory()
             historyCells = history
-            UserDefaultsHelper.saveHistoryLocally(history, for: userId)
+            storage.save(history, for: StorageKeys.history, userId: userId)
         } catch {
             presentAlert("Не удалось загрузить историю")
         }
@@ -99,7 +102,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
                 try await contentService.deleteHistory(id: item.id)
                 historyCells.removeAll { $0.id == item.id }
                 if let userId = currentUserId {
-                    UserDefaultsHelper.saveHistoryLocally(historyCells, for: userId)
+                    storage.save(historyCells, for: StorageKeys.history, userId: userId)
                 }
             } catch {
                 presentAlert("Не удалось удалить запись")

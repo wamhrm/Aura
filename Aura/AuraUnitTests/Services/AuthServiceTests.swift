@@ -9,28 +9,19 @@ import XCTest
 
 @MainActor
 final class AuthServiceTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        UserDefaults.standard.removeObject(forKey: Constants.userKey)
-    }
-
-    override func tearDown() {
-        UserDefaults.standard.removeObject(forKey: Constants.userKey)
-        super.tearDown()
-    }
-
     func test_signIn_savesTokenAndUserAndEmitsSignedIn() async throws {
         // Given
         let keychain = MockKeychain()
         let network = MockNetworkService()
-        let sut = makeSUT(keychain: keychain, network: network)
+        let storage = MockLocalStorage()
+        let sut = makeSUT(keychain: keychain, network: network, storage: storage)
 
         // When
         try await sut.signIn(email: "a@b.com", password: "123456")
 
         // Then
         XCTAssertNotNil(keychain.getToken(path: "", key: ""))
-        XCTAssertNotNil(UserDefaults.standard.data(forKey: Constants.userKey))
+        XCTAssertNotNil(storage.loadUser())
         guard case .signedIn(let user) = sut.authState.value else {
             return XCTFail("Ожидался signedIn")
         }
@@ -40,7 +31,8 @@ final class AuthServiceTests: XCTestCase {
     func test_signOut_clearsTokenAndUserAndEmitsSignedOut() async throws {
         // Given
         let keychain = MockKeychain()
-        let sut = makeSUT(keychain: keychain)
+        let storage = MockLocalStorage()
+        let sut = makeSUT(keychain: keychain, storage: storage)
         try await sut.signIn(email: "a@b.com", password: "123456")
 
         // When
@@ -48,7 +40,7 @@ final class AuthServiceTests: XCTestCase {
 
         // Then
         XCTAssertNil(keychain.getToken(path: "", key: ""))
-        XCTAssertNil(UserDefaults.standard.data(forKey: Constants.userKey))
+        XCTAssertNil(storage.loadUser())
         guard case .signedOut = sut.authState.value else {
             return XCTFail("Ожидался signedOut")
         }
@@ -73,14 +65,15 @@ final class AuthServiceTests: XCTestCase {
     func test_updateProfileInfo_savesUserEmitsSignedInAndReturnsResponse() async throws {
         // Given
         let network = MockNetworkService()
-        let sut = makeSUT(network: network)
+        let storage = MockLocalStorage()
+        let sut = makeSUT(network: network, storage: storage)
 
         // When
         let response = try await sut.updateProfileInfo(ProfileInfoModel())
 
         // Then
         XCTAssertEqual(response.user, network.updateProfileInfoResponse.user)
-        XCTAssertNotNil(UserDefaults.standard.data(forKey: Constants.userKey))
+        XCTAssertNotNil(storage.loadUser())
         guard case .signedIn = sut.authState.value else {
             return XCTFail("Ожидался signedIn")
         }
@@ -89,11 +82,11 @@ final class AuthServiceTests: XCTestCase {
     func test_autoSignIn_whenTokenAndUserExist_emitsSignedIn() throws {
         // Given
         let user = UserModel.mock
-        UserDefaults.standard.set(try JSONEncoder().encode(user), forKey: Constants.userKey)
+        let storage = MockLocalStorage(user: user)
         let keychain = MockKeychain(token: Data("token".utf8))
 
         // When
-        let sut = makeSUT(keychain: keychain)
+        let sut = makeSUT(keychain: keychain, storage: storage)
 
         // Then
         guard case .signedIn(let restored) = sut.authState.value else {
@@ -114,7 +107,8 @@ final class AuthServiceTests: XCTestCase {
     
     // MARK: - Helpers
     private func makeSUT(keychain: MockKeychain = MockKeychain(),
-                         network: MockNetworkService? = nil) -> AuthService {
-        AuthService(networkService: network ?? MockNetworkService(), keychain: keychain)
+                         network: MockNetworkService? = nil,
+                         storage: MockLocalStorage = MockLocalStorage()) -> AuthService {
+        AuthService(networkService: network ?? MockNetworkService(), keychain: keychain, storage: storage)
     }
 }

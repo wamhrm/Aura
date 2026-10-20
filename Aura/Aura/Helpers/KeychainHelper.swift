@@ -5,6 +5,7 @@
 //
 
 import Foundation
+import os
 import Security
 
 nonisolated protocol KeychainHelperProtocol: Sendable {
@@ -14,6 +15,8 @@ nonisolated protocol KeychainHelperProtocol: Sendable {
 }
 
 nonisolated final class KeychainHelper: KeychainHelperProtocol, @unchecked Sendable {
+    private static let logger = Logger(subsystem: "ddorsat.Aura", category: "Keychain")
+
     private var memoryToken: Data?
     private let lock = NSLock()
 
@@ -22,13 +25,22 @@ nonisolated final class KeychainHelper: KeychainHelperProtocol, @unchecked Senda
         memoryToken = data
         lock.unlock()
 
-        let query = [kSecValueData: data,
-                     kSecClass: kSecClassGenericPassword,
+        let query = [kSecClass: kSecClassGenericPassword,
                      kSecAttrService: path,
-                     kSecAttrAccount: key] as CFDictionary
-        
-        SecItemDelete(query)
-        SecItemAdd(query, nil)
+                     kSecAttrAccount: key] as [CFString: Any]
+
+        let attributes = [kSecValueData: data,
+                          kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly] as [CFString: Any]
+
+        var status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+
+        if status == errSecItemNotFound {
+            status = SecItemAdd(query.merging(attributes) { $1 } as CFDictionary, nil)
+        }
+
+        if status != errSecSuccess {
+            Self.logger.error("Failed to save token to Keychain, status: \(status)")
+        }
     }
 
     func getToken(path: String, key: String) -> Data? {

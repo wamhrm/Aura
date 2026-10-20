@@ -39,13 +39,16 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
+    private let storage: any LocalStorageProtocol
 
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol) {
+         contentService: any ContentServiceProtocol,
+         storage: any LocalStorageProtocol = LocalStorage()) {
         self.authService = authService
         self.contentService = contentService
+        self.storage = storage
 
         setupSubscriptions()
     }
@@ -74,14 +77,14 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                 isSignedIn = true
 
                 if user.hasCompletedProfileInfo {
-                    horoscope = UserDefaultsHelper.getLocalHoroscope(for: user.id)
-                    dailyInsight = UserDefaultsHelper.getLocalDailyInsight(for: user.id)
+                    horoscope = storage.load(StorageKeys.horoscope, for: user.id)
+                    dailyInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
                     Task { await refreshHomeContent(for: user.id) }
                 } else {
                     horoscope = nil
                     dailyInsight = nil
-                    UserDefaultsHelper.deleteLocalHoroscope(for: user.id)
-                    UserDefaultsHelper.deleteLocalDailyInsight(for: user.id)
+                    storage.delete(StorageKeys.horoscope, for: user.id)
+                    storage.delete(StorageKeys.dailyInsight, for: user.id)
                 }
 
                 isLoadingScreen = false
@@ -112,7 +115,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                     hasProfileInfo = response.user.hasCompletedProfileInfo
                     if let horoscope = response.horoscope {
                         self.horoscope = horoscope
-                        UserDefaultsHelper.saveHoroscopeLocally(horoscope, for: response.user.id)
+                        storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
                     }
                     await loadDailyInsight(for: response.user.id)
                     try await Task.sleep(for: .seconds(1.5))
@@ -161,7 +164,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         do {
             let fetched = try await contentService.fetchCurrentHoroscope()
             horoscope = fetched
-            UserDefaultsHelper.saveHoroscopeLocally(fetched, for: userId)
+            storage.save(fetched, for: StorageKeys.horoscope, userId: userId)
         } catch {
             if showErrorOnFailure {
                 presentAlert(error.localizedDescription)
@@ -173,7 +176,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         do {
             let insight = try await contentService.fetchDailyInsight()
             dailyInsight = insight
-            UserDefaultsHelper.saveDailyInsightLocally(insight, for: userId)
+            storage.save(insight, for: StorageKeys.dailyInsight, userId: userId)
         } catch {
             if showErrorOnFailure {
                 presentAlert(error.localizedDescription)

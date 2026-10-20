@@ -133,7 +133,7 @@ final class HomeViewModelTests: XCTestCase {
         -> (sut: HomeViewModel, auth: MockAuthService, content: MockContentService) {
         let auth = MockAuthService(state: authState)
         let content = MockContentService()
-        let sut = HomeViewModel(authService: auth, contentService: content)
+        let sut = HomeViewModel(authService: auth, contentService: content, storage: MockLocalStorage())
         return (sut, auth, content)
     }
 
