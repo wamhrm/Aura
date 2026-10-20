@@ -3,5 +3,4 @@
 .git
 .env
 .vscode
-Package.resolved
 **/.DS_Store
