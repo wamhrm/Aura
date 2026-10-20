@@ -42,7 +42,9 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private let contentService: any ContentServiceProtocol
     private let storage: any LocalStorageProtocol
     private let transitionDuration = 0.25
+    private let maxSignInWait = 3.0
 
+    private var signInAttempt = UUID()
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -95,13 +97,17 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                 isSignedOut = false
 
                 if isLoading {
+                    let attempt = UUID()
+                    signInAttempt = attempt
+
                     Task {
                         await refreshContent(for: user)
-                        withAnimation(.easeInOut(duration: transitionDuration)) {
-                            authState = .signedIn(user)
-                        }
-                        try? await Task.sleep(for: .seconds(transitionDuration))
-                        isLoading = false
+                        finishSignIn(user, attempt: attempt)
+                    }
+
+                    Task {
+                        try? await Task.sleep(for: .seconds(maxSignInWait))
+                        finishSignIn(user, attempt: attempt)
                     }
                 } else {
                     withAnimation(.easeInOut(duration: transitionDuration)) {
@@ -125,6 +131,21 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         }
     }
     
+    private func finishSignIn(_ user: UserModel, attempt: UUID) {
+        guard attempt == signInAttempt, isLoading else { return }
+
+        signInAttempt = UUID()
+
+        withAnimation(.easeInOut(duration: transitionDuration)) {
+            authState = .signedIn(user)
+        }
+
+        Task {
+            try? await Task.sleep(for: .seconds(transitionDuration))
+            isLoading = false
+        }
+    }
+
     private func refreshContent(for user: UserModel) async {
         async let personality: Void = loadPersonality(for: user.id, ignoreCache: true, showErrorOnFailure: false)
 

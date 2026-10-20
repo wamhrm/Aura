@@ -92,7 +92,7 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
             historyCells = history
             storage.save(history, for: StorageKeys.history, userId: userId)
         } catch {
-            presentAlert("Не удалось загрузить историю")
+            presentAlert((error as? LocalizedError)?.errorDescription ?? "Не удалось загрузить историю")
         }
     }
 
