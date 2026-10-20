@@ -6,10 +6,14 @@
 //
 
 import Foundation
+import NIOCore
 import Vapor
 
 struct OpenAIService {
     private let model = "gpt-5.4"
+    private let requestTimeout: TimeAmount = .seconds(60)
+    private let retryDelay: Duration = .seconds(1)
+    private let retryableStatusCodes: Set<UInt> = [429, 500, 502, 503, 504]
 
     // MARK: - Personality
     func makePersonalityTest(for user: User,
@@ -19,11 +23,12 @@ struct OpenAIService {
             messages: [OpenAIMessage(role: "system", content: personalitySystemPrompt),
                        OpenAIMessage(role: "user", content: personalityUserPrompt(for: user,
                                                                                   selectedTests: selectedTests))],
+            responseFormat: OpenAIResponseFormat(name: "personality_result",
+                                                 schema: personalitySchema(for: selectedTests)),
             req: req)
 
         do {
             let analysis = try JSONDecoder().decode(PersonalityTestContent.self, from: data)
-            let selectedTitles = Set(selectedTests.map(\.title))
 
             return PersonalityResultDTO(name: user.name,
                                         zodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
@@ -31,12 +36,27 @@ struct OpenAIService {
                                         archetypeTitle: analysis.archetypeTitle,
                                         archetypeSubtitle: analysis.archetypeSubtitle,
                                         overview: analysis.overview,
-                                        emotionalBar: analysis.emotionalBar,
-                                        sections: filteredPersonalitySections(analysis.sections,
-                                                                              selectedTitles: selectedTitles))
+                                        emotionalBar: try validatedPersonalityBars(analysis.emotionalBar),
+                                        sections: try validatedPersonalitySections(analysis.sections,
+                                                                                   selectedTests: selectedTests))
         } catch {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+            req.logger.warning("Unexpected OpenAI personality response: \(error)")
+            throw unexpectedFormatError
         }
+    }
+
+    private func personalitySchema(for selectedTests: [PersonalityTests]) -> JSONSchema {
+        let itemTitles = selectedTests.flatMap(PersonalityItems.allowed(for:))
+
+        return .object([("archetypeTitle", .string),
+                        ("archetypeSubtitle", .string),
+                        ("overview", .titledText),
+                        ("emotionalBar", .array(.object([("title", .stringEnum(PersonalityEmotionalBar.titles)),
+                                                         ("value", .integer)]))),
+                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.title))),
+                                                     ("description", .string),
+                                                     ("items", .array(.object([("title", .stringEnum(itemTitles)),
+                                                                               ("description", .string)])))])))])
     }
 
     private func personalityUserPrompt(for user: User, selectedTests: [PersonalityTests]) -> String {
@@ -245,9 +265,30 @@ struct OpenAIService {
         """
     }
 
-    private func filteredPersonalitySections(_ sections: [PersonalitySection],
-                                             selectedTitles: Set<String>) -> [PersonalitySection] {
-        sections.filter { selectedTitles.contains($0.selectedTest) }
+    private func validatedPersonalityBars(_ bars: [PersonalityEmotionalBar]) throws -> [PersonalityEmotionalBar] {
+        let values = Dictionary(bars.map { ($0.title, $0.value) }, uniquingKeysWith: { first, _ in first })
+
+        return try PersonalityEmotionalBar.titles.map { title in
+            guard let value = values[title] else { throw unexpectedFormatError }
+            return PersonalityEmotionalBar(title: title, value: clampedBarValue(value))
+        }
+    }
+
+    private func validatedPersonalitySections(_ sections: [PersonalitySection],
+                                              selectedTests: [PersonalityTests]) throws -> [PersonalitySection] {
+        let validated = selectedTests.compactMap { test -> PersonalitySection? in
+            guard let section = sections.first(where: { $0.selectedTest == test.title }) else { return nil }
+
+            let items = uniqueItems(section.items.filter { PersonalityItems.allowed(for: test).contains($0.title) },
+                                    title: \.title)
+
+            return items.isEmpty ? nil : PersonalitySection(selectedTest: test.title,
+                                                            description: section.description,
+                                                            items: items)
+        }
+
+        guard !validated.isEmpty else { throw unexpectedFormatError }
+        return validated
     }
 
     // MARK: - Compatibility
@@ -260,11 +301,12 @@ struct OpenAIService {
                        OpenAIMessage(role: "user", content: compatibilityUserPrompt(for: user,
                                                                                      partner: partner,
                                                                                      selectedTests: selectedTests))],
+            responseFormat: OpenAIResponseFormat(name: "compatibility_result",
+                                                 schema: compatibilitySchema(for: selectedTests)),
             req: req)
 
         do {
             let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
-            let selectedTitles = Set(selectedTests.map(\.title))
             let partnerDate = compatibilityPartnerDateOfBirth(from: partner)
 
             return CompatibilityResultDTO(userName: user.name,
@@ -276,13 +318,33 @@ struct OpenAIService {
                                           title: analysis.title,
                                           subtitle: analysis.subtitle,
                                           overview: analysis.overview,
-                                          emotionalBar: analysis.emotionalBar,
-                                          sections: filteredCompatibilitySections(analysis.sections,
-                                                                                  selectedTitles: selectedTitles),
+                                          emotionalBar: try validatedCompatibilityBars(analysis.emotionalBar),
+                                          sections: try validatedCompatibilitySections(analysis.sections,
+                                                                                       selectedTests: selectedTests),
                                           forecast: analysis.forecast)
         } catch {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+            req.logger.warning("Unexpected OpenAI compatibility response: \(error)")
+            throw unexpectedFormatError
         }
+    }
+
+    private func compatibilitySchema(for selectedTests: [CompatibilityTests]) -> JSONSchema {
+        let itemTitles = selectedTests.flatMap(CompatibilityItems.allowed(for:))
+
+        return .object([("title", .string),
+                        ("subtitle", .string),
+                        ("compatibilityScore", .integer),
+                        ("overview", .titledText),
+                        ("emotionalBar", .array(.object([("title", .stringEnum(CompatibilityEmotionalBar.titles)),
+                                                         ("value", .integer)]))),
+                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.title))),
+                                                     ("description", .string),
+                                                     ("items", .array(.object([("title", .stringEnum(itemTitles)),
+                                                                               ("description", .string)])))]))),
+                        ("forecast", .object([("recognitionTitle", .string),
+                                              ("recognitionDescription", .string),
+                                              ("potentialTitle", .string),
+                                              ("potentialDescription", .string)]))])
     }
 
     private func compatibilityUserPrompt(for user: User,
@@ -485,9 +547,30 @@ struct OpenAIService {
         """
     }
 
-    private func filteredCompatibilitySections(_ sections: [CompatibilitySection],
-                                               selectedTitles: Set<String>) -> [CompatibilitySection] {
-        sections.filter { selectedTitles.contains($0.selectedTest) }
+    private func validatedCompatibilityBars(_ bars: [CompatibilityEmotionalBar]) throws -> [CompatibilityEmotionalBar] {
+        let values = Dictionary(bars.map { ($0.title, $0.value) }, uniquingKeysWith: { first, _ in first })
+
+        return try CompatibilityEmotionalBar.titles.map { title in
+            guard let value = values[title] else { throw unexpectedFormatError }
+            return CompatibilityEmotionalBar(title: title, value: clampedBarValue(value))
+        }
+    }
+
+    private func validatedCompatibilitySections(_ sections: [CompatibilitySection],
+                                                selectedTests: [CompatibilityTests]) throws -> [CompatibilitySection] {
+        let validated = selectedTests.compactMap { test -> CompatibilitySection? in
+            guard let section = sections.first(where: { $0.selectedTest == test.title }) else { return nil }
+
+            let items = uniqueItems(section.items.filter { CompatibilityItems.allowed(for: test).contains($0.title) },
+                                    title: \.title)
+
+            return items.isEmpty ? nil : CompatibilitySection(selectedTest: test.title,
+                                                              description: section.description,
+                                                              items: items)
+        }
+
+        guard !validated.isEmpty else { throw unexpectedFormatError }
+        return validated
     }
 
     private func compatibilityPartnerDateOfBirth(from partner: CompatibilityTestRequest) -> Date? {
@@ -504,13 +587,21 @@ struct OpenAIService {
         let data = try await chatCompletion(
             messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
                        OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
+            responseFormat: OpenAIResponseFormat(name: "horoscope", schema: horoscopeSchema),
             req: req)
 
         do {
             return try JSONDecoder().decode(HoroscopeContentResult.self, from: data)
         } catch {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+            req.logger.warning("Unexpected OpenAI horoscope response: \(error)")
+            throw unexpectedFormatError
         }
+    }
+
+    private var horoscopeSchema: JSONSchema {
+        .object([("description", .string),
+                 ("items", .array(.object([("title", .stringEnum(HoroscopeDTOMapper.sphereTitles)),
+                                           ("description", .string)])))])
     }
 
     private func horoscopeUserPrompt(for sign: HoroscopeSign) -> String {
@@ -585,6 +676,7 @@ struct OpenAIService {
         let data = try await chatCompletion(
             messages: [OpenAIMessage(role: "system", content: systemPrompt),
                        OpenAIMessage(role: "user", content: userPrompt)],
+            responseFormat: OpenAIResponseFormat(name: "daily_content", schema: .object([("text", .string)])),
             req: req)
 
         do {
@@ -596,7 +688,12 @@ struct OpenAIService {
             }
 
             let wordCount = text.split(whereSeparator: \.isWhitespace).count
-            guard wordRange.contains(wordCount) else {
+
+            if !wordRange.contains(wordCount) {
+                req.logger.info("OpenAI daily content has \(wordCount) words, expected \(wordRange)")
+            }
+
+            guard wordCount <= wordRange.upperBound * 2 else {
                 throw Abort(.badGateway, reason: "OpenAI вернул текст с неверным количеством слов")
             }
 
@@ -604,7 +701,8 @@ struct OpenAIService {
         } catch let error as Abort {
             throw error
         } catch {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+            req.logger.warning("Unexpected OpenAI daily content response: \(error)")
+            throw unexpectedFormatError
         }
     }
 
@@ -683,16 +781,24 @@ struct OpenAIService {
         throw Abort(.serviceUnavailable, reason: "OPENAI_KEY не задан")
     }
 
-    private func chatCompletion(messages: [OpenAIMessage], req: Request) async throws -> Data {
+    private func baseURL() -> String {
+        Environment.get("OPENAI_BASE_URL") ?? "https://api.openai.com"
+    }
+
+    private func chatCompletion(messages: [OpenAIMessage],
+                                responseFormat: OpenAIResponseFormat,
+                                req: Request) async throws -> Data {
         let apiKey = try apiKey()
         let request = OpenAIChatDTO(model: model,
                                     messages: messages,
-                                    responseFormat: OpenAIResponseFormat(type: "json_object"))
+                                    responseFormat: responseFormat)
 
-        let response = try await req.client.post("https://api.openai.com/v1/chat/completions") { clientRequest in
-            clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
-            clientRequest.headers.contentType = .json
-            try clientRequest.content.encode(request)
+        var response = try await send(request, apiKey: apiKey, req: req)
+
+        if retryableStatusCodes.contains(response.status.code) {
+            req.logger.warning("OpenAI returned status \(response.status.code), retrying once")
+            try await Task.sleep(for: retryDelay)
+            response = try await send(request, apiKey: apiKey, req: req)
         }
 
         guard response.status == .ok else {
@@ -701,14 +807,45 @@ struct OpenAIService {
             throw Abort(.badGateway, reason: "OpenAI вернул ошибку")
         }
 
-        let chatResponse = try response.content.decode(OpenAIChatResponse.self)
+        guard let chatResponse = try? response.content.decode(OpenAIChatResponse.self),
+              let choice = chatResponse.choices.first else {
+            throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
+        }
 
-        guard let content = chatResponse.choices.first?.message.content,
+        guard choice.finishReason != "length",
+              let content = choice.message.content,
               let data = content.data(using: .utf8) else {
+            req.logger.warning("OpenAI returned no content, finish reason: \(choice.finishReason ?? "none"), refusal: \(choice.message.refusal ?? "none")")
             throw Abort(.badGateway, reason: "OpenAI вернул пустой ответ")
         }
 
         return data
+    }
+
+    private func send(_ request: OpenAIChatDTO, apiKey: String, req: Request) async throws -> ClientResponse {
+        do {
+            return try await req.client.post(URI(string: baseURL() + "/v1/chat/completions")) { clientRequest in
+                clientRequest.timeout = requestTimeout
+                clientRequest.headers.bearerAuthorization = BearerAuthorization(token: apiKey)
+                try clientRequest.content.encode(request, as: .json)
+            }
+        } catch let error as HTTPClientError where error == .deadlineExceeded {
+            req.logger.error("OpenAI request timed out after \(requestTimeout)")
+            throw Abort(.gatewayTimeout, reason: "OpenAI не ответил вовремя")
+        }
+    }
+
+    private var unexpectedFormatError: Abort {
+        Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+    }
+
+    private func clampedBarValue(_ value: Int) -> Int {
+        min(max(value, 1), 10)
+    }
+
+    private func uniqueItems<Item>(_ items: [Item], title: (Item) -> String) -> [Item] {
+        var seen = Set<String>()
+        return items.filter { seen.insert(title($0)).inserted }
     }
     
     private func zodiacSign(from date: Date?) -> String? {

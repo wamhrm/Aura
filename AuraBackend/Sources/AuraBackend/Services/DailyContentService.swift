@@ -30,10 +30,7 @@ struct DailyContentService {
         let userID = try user.requireID()
         let today = DailyDateHelper.todayString()
 
-        if let entry = try await DailyContent.query(on: database)
-            .filter(\.$user.$id == userID)
-            .filter(\.$kind == kind.rawValue)
-            .first(),
+        if let entry = try await findEntry(kind: kind, userID: userID, on: database),
            DailyDateHelper.isToday(entry.generatedDate) {
             return try DailyContentDTOMapper.map(entry)
         }
@@ -62,22 +59,43 @@ struct DailyContentService {
                              text: String,
                              generatedDate: String,
                              on database: any Database) async throws -> DailyContent {
-        if let existing = try await DailyContent.query(on: database)
-            .filter(\.$user.$id == userID)
-            .filter(\.$kind == kind.rawValue)
-            .first() {
-            existing.text = text
-            existing.generatedDate = generatedDate
-            try await existing.save(on: database)
-            return existing
+        if let existing = try await findEntry(kind: kind, userID: userID, on: database) {
+            return try await update(existing, text: text, generatedDate: generatedDate, on: database)
         }
 
         let entry = DailyContent(userID: userID,
                                  kind: kind,
                                  text: text,
                                  generatedDate: generatedDate)
-        try await entry.save(on: database)
 
+        do {
+            try await entry.save(on: database)
+            return entry
+        } catch {
+            guard (error as? any DatabaseError)?.isConstraintFailure == true,
+                  let existing = try await findEntry(kind: kind, userID: userID, on: database) else {
+                throw error
+            }
+            return try await update(existing, text: text, generatedDate: generatedDate, on: database)
+        }
+    }
+
+    private func findEntry(kind: DailyContentKind,
+                           userID: User.IDValue,
+                           on database: any Database) async throws -> DailyContent? {
+        try await DailyContent.query(on: database)
+            .filter(\.$user.$id == userID)
+            .filter(\.$kind == kind.rawValue)
+            .first()
+    }
+
+    private func update(_ entry: DailyContent,
+                        text: String,
+                        generatedDate: String,
+                        on database: any Database) async throws -> DailyContent {
+        entry.text = text
+        entry.generatedDate = generatedDate
+        try await entry.save(on: database)
         return entry
     }
 }
