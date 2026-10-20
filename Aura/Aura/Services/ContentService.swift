@@ -25,6 +25,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     let historyDidChange = PassthroughSubject<Void, Never>()
 
     private let networkService: any NetworkServiceProtocol
+    private var historyTask: Task<[HistoryCellModel], any Error>?
 
     init(networkService: any NetworkServiceProtocol = NetworkService()) {
         self.networkService = networkService
@@ -44,18 +45,32 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
         let result = try await networkService.makePersonalityTest(selectedTests: selectedTests)
-        historyDidChange.send(())
+        notifyHistoryChanged()
         return result
     }
 
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
         let result = try await networkService.makeCompatibilityTest(request)
-        historyDidChange.send(())
+        notifyHistoryChanged()
         return result
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        try await networkService.fetchHistory()
+        if let historyTask {
+            return try await historyTask.value
+        }
+
+        let networkService = networkService
+        let task = Task { try await networkService.fetchHistory() }
+        historyTask = task
+
+        defer {
+            if historyTask == task {
+                historyTask = nil
+            }
+        }
+
+        return try await task.value
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
@@ -64,6 +79,11 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
 
     func deleteHistory(id: UUID) async throws {
         try await networkService.deleteHistory(id: id)
+        notifyHistoryChanged()
+    }
+
+    private func notifyHistoryChanged() {
+        historyTask = nil
         historyDidChange.send(())
     }
 }

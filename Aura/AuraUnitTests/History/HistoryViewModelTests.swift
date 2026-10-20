@@ -122,6 +122,9 @@ final class HistoryViewModelTests: XCTestCase {
                          archetypeTitle: "",
                          archetypeSubtitle: "",
                          zodiacSign: "",
+                         compatibilityScore: nil,
+                         partnerName: nil,
+                         partnerZodiacSign: nil,
                          personalityResult: .mock,
                          compatibilityResult: nil)
     }

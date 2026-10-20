@@ -41,6 +41,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
     private let storage: any LocalStorageProtocol
+    private let transitionDuration = 0.25
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -75,7 +76,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         switch state {
             case .signedIn(let user):
                 if let cached = storage.load(StorageKeys.personality, for: user.id) {
-                    applyPersonality(result: cached)
+                    applyPersonality(result: cached.result)
                 } else {
                     hasPersonalityTests = false
                     personalityResult = nil
@@ -96,23 +97,24 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                 if isLoading {
                     Task {
                         await refreshContent(for: user)
-                        try? await Task.sleep(for: .seconds(1.5))
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(.easeInOut(duration: transitionDuration)) {
                             authState = .signedIn(user)
                         }
+                        try? await Task.sleep(for: .seconds(transitionDuration))
+                        isLoading = false
                     }
                 } else {
-                    withAnimation(.easeInOut(duration: 0.25)) {
+                    withAnimation(.easeInOut(duration: transitionDuration)) {
                         authState = .signedIn(user)
                     }
 
                     Task { await refreshContent(for: user) }
                 }
             case .signedOut:
-                withAnimation(.easeInOut(duration: 0.25)) { authState = .signedOut }
+                withAnimation(.easeInOut(duration: transitionDuration)) { authState = .signedOut }
 
                 Task {
-                    try? await Task.sleep(for: .seconds(1.5))
+                    try? await Task.sleep(for: .seconds(transitionDuration))
                     hasPersonalityTests = false
                     personalityResult = nil
                     dailyTip = nil
@@ -124,10 +126,13 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     }
     
     private func refreshContent(for user: UserModel) async {
+        async let personality: Void = loadPersonality(for: user.id, ignoreCache: true, showErrorOnFailure: false)
+
         if user.hasCompletedProfileInfo {
             await loadDailyTip(for: user.id, showErrorOnFailure: false)
         }
-        await loadPersonality(for: user.id, ignoreCache: true, showErrorOnFailure: false)
+
+        await personality
     }
 
     private func loadDailyTip(for userId: UUID, showErrorOnFailure: Bool = true) async {
@@ -147,7 +152,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                                  ignoreCache: Bool = false,
                                  showErrorOnFailure: Bool = true) async {
         if !ignoreCache, let cached = storage.load(StorageKeys.personality, for: userId) {
-            applyPersonality(result: cached)
+            applyPersonality(result: cached.result)
             return
         }
 
@@ -161,13 +166,19 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                 return clearPersonality(for: userId)
             }
 
+            if let cached = storage.load(StorageKeys.personality, for: userId), cached.historyId == latest.id {
+                return applyPersonality(result: cached.result)
+            }
+
             let historyDetails = try await contentService.fetchHistoryDetails(id: latest.id)
             guard let result = historyDetails.personalityResult else {
                 return clearPersonality(for: userId)
             }
 
             applyPersonality(result: result)
-            storage.save(result, for: StorageKeys.personality, userId: userId)
+            storage.save(StoredPersonality(historyId: latest.id, result: result),
+                         for: StorageKeys.personality,
+                         userId: userId)
         } catch {
             if showErrorOnFailure {
                 presentAlert(error.localizedDescription)
@@ -196,11 +207,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                     presentAlert(error.localizedDescription)
                     isLoading = false
                 }
-
-                try? await Task.sleep(for: .seconds(2.5))
             }
-            
-            isLoading = false
         }
     }
 
@@ -224,11 +231,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                     presentAlert(error.localizedDescription)
                     isLoading = false
                 }
-
-                try? await Task.sleep(for: .seconds(2.5))
             }
-            
-            isLoading = false
         }
     }
 
