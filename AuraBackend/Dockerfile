@@ -1,15 +1,15 @@
-FROM swift:6.1-noble AS build
+FROM swift:6.4-noble AS build
 
 WORKDIR /build
 
-COPY Package.swift ./
-RUN swift package resolve
+COPY Package.swift Package.resolved ./
+RUN swift package resolve --force-resolved-versions
 
 COPY Sources ./Sources
 
 RUN swift build -c release --product AuraBackend
 
-FROM swift:6.1-noble
+FROM swift:6.4-noble
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -q update \
