@@ -11,63 +11,48 @@ import Vapor
 struct HoroscopeService {
     private let openAIService = OpenAIService()
 
-    func makeHoroscope(for user: User, req: Request, on database: any Database) async throws -> HoroscopeDTO {
-        guard let dateOfBirth = user.dateOfBirth else {
-            throw Abort(.badRequest, reason: "Укажите дату рождения")
-        }
-
-        guard let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
-            throw Abort(.badRequest, reason: "Не удалось определить знак зодиака")
-        }
-
-        let userID = try user.requireID()
-        let generated = try await openAIService.makeHoroscope(for: sign, req: req)
-        let period = openAIService.horoscopePeriod()
-        let itemsJSON = try HoroscopeDTOMapper.encodeItems(generated.items)
-
-        let entry = Horoscope(userID: userID,
-                              sign: sign.rawValue,
-                              dateStart: period.start,
-                              dateEnd: period.end,
-                              description: generated.description,
-                              itemsJSON: itemsJSON)
-
-        try await database.transaction { transaction in
-            try await Horoscope.query(on: transaction)
-                .filter(\.$user.$id == userID)
-                .delete()
-
-            try await entry.save(on: transaction)
-        }
-
-        return try HoroscopeDTOMapper.map(entry)
-    }
-
     func fetchCurrentHoroscope(for user: User, req: Request, on database: any Database) async throws -> HoroscopeDTO {
-        let userID = try user.requireID()
-
-        guard let entry = try await Horoscope.query(on: database)
-            .filter(\.$user.$id == userID)
-            .sort(\.$createdAt, .descending)
-            .first()
-        else {
+        guard let dateOfBirth = user.dateOfBirth,
+              let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
             throw Abort(.notFound, reason: "Гороскоп не найден")
         }
 
-        if isExpired(entry), let refreshed = try? await makeHoroscope(for: user, req: req, on: database) {
-            return refreshed
+        let week = DailyDateHelper.currentWeek()
+
+        if let entry = try await findHoroscope(sign: sign, weekStart: week.key, on: database) {
+            return try HoroscopeDTOMapper.map(entry)
+        }
+
+        let generated = try await openAIService.makeHoroscope(for: sign,
+                                                              period: (week.start, week.end),
+                                                              req: req)
+
+        let entry = Horoscope(sign: sign.rawValue,
+                              weekStart: week.key,
+                              dateStart: week.start,
+                              dateEnd: week.end,
+                              description: generated.description,
+                              itemsJSON: try HoroscopeDTOMapper.encodeItems(generated.items))
+
+        do {
+            try await entry.save(on: database)
+        } catch {
+            guard (error as? any DatabaseError)?.isConstraintFailure == true,
+                  let existing = try await findHoroscope(sign: sign, weekStart: week.key, on: database) else {
+                throw error
+            }
+            return try HoroscopeDTOMapper.map(existing)
         }
 
         return try HoroscopeDTOMapper.map(entry)
     }
 
-    private func isExpired(_ entry: Horoscope) -> Bool {
-        guard let createdAt = entry.createdAt else { return false }
-
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
-
-        let periodEnd = calendar.date(byAdding: .day, value: 6, to: calendar.startOfDay(for: createdAt)) ?? createdAt
-        return calendar.startOfDay(for: Date()) > periodEnd
+    private func findHoroscope(sign: HoroscopeSign,
+                               weekStart: String,
+                               on database: any Database) async throws -> Horoscope? {
+        try await Horoscope.query(on: database)
+            .filter(\.$sign == sign.rawValue)
+            .filter(\.$weekStart == weekStart)
+            .first()
     }
 }
