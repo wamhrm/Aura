@@ -47,3 +47,12 @@ extension Application {
         return try .require(NIOSSLContext(configuration: tlsConfig))
     }
 }
+
+extension Database {
+    func sql() throws -> any SQLDatabase {
+        guard let sql = self as? any SQLDatabase else {
+            throw Abort(.internalServerError, reason: "SQL database required")
+        }
+        return sql
+    }
+}

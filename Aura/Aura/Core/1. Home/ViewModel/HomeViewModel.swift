@@ -95,6 +95,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                 isLoadingScreen = false
                 profileInfo = ProfileInfoModel()
                 hasProfileInfo = false
+                userName = ""
                 horoscope = nil
                 dailyInsight = nil
                 personalityResult = nil
