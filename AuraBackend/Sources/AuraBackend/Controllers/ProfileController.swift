@@ -22,12 +22,27 @@ struct ProfileController: RouteCollection {
         let user = try req.auth.require(User.self)
         let profileInfo = try req.content.decode(UpdateProfileInfoRequest.self)
 
-        guard let dateOfBirth = UserDateFormatter.date(from: profileInfo.dateOfBirth) else {
-            throw Abort(.badRequest, reason: "Укажите дату рождения в формате ДД.ММ.ГГГГ")
+        guard let dateOfBirth = UserDateFormatter.birthDate(from: profileInfo.dateOfBirth) else {
+            throw Abort(.badRequest, reason: "Укажите корректную дату рождения в формате ДД.ММ.ГГГГ")
+        }
+
+        let birthTime = emptyStringToNil(profileInfo.birthTime)
+
+        if let birthTime, !UserDateFormatter.isValidTime(birthTime) {
+            throw Abort(.badRequest, reason: "Укажите время рождения в формате ЧЧ:ММ")
+        }
+
+        guard ProfileInfoOptions.genders.contains(profileInfo.gender),
+              ProfileInfoOptions.socialTypes.contains(profileInfo.socialType),
+              ProfileInfoOptions.conflictStyles.contains(profileInfo.conflictStyle),
+              ProfileInfoOptions.emotionalCores.contains(profileInfo.emotionalCore),
+              ProfileInfoOptions.decisionStyles.contains(profileInfo.decisionStyle),
+              ProfileInfoOptions.coreFocuses.contains(profileInfo.coreFocus) else {
+            throw Abort(.badRequest, reason: "Некорректные данные профиля")
         }
 
         user.dateOfBirth = dateOfBirth
-        user.birthTime = emptyStringToNil(profileInfo.birthTime)
+        user.birthTime = birthTime
         user.gender = profileInfo.gender
         user.socialType = profileInfo.socialType
         user.conflictStyle = profileInfo.conflictStyle

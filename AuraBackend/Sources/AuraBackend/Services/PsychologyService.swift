@@ -39,18 +39,31 @@ struct PsychologyService {
         let partnerName = request.partnerName.trimmingCharacters(in: .whitespacesAndNewlines)
         let partnerGender = request.partnerGender.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard partnerName.count >= 2 else {
+        guard partnerName.count >= InputLimits.minNameLength else {
             throw Abort(.badRequest, reason: "Имя партнёра должно содержать минимум 2 символа")
         }
 
-        guard !partnerGender.isEmpty else {
+        guard partnerName.count <= InputLimits.maxNameLength else {
+            throw Abort(.badRequest, reason: "Имя партнёра должно быть не длиннее 50 символов")
+        }
+
+        guard PartnerInfoOptions.genders.contains(partnerGender) else {
             throw Abort(.badRequest, reason: "Укажите пол партнёра")
         }
 
         if request.exactDateOfBirth {
             guard let dateString = request.partnerDateOfBirth,
-                  UserDateFormatter.date(from: dateString) != nil else {
+                  UserDateFormatter.birthDate(from: dateString) != nil else {
                 throw Abort(.badRequest, reason: "Укажите дату рождения партнёра в формате ДД.ММ.ГГГГ")
+            }
+
+            if let birthTime = request.partnerBirthTime, !UserDateFormatter.isValidTime(birthTime) {
+                throw Abort(.badRequest, reason: "Укажите время рождения партнёра в формате ЧЧ:ММ")
+            }
+        } else {
+            guard let age = request.partnerAge.flatMap(Int.init),
+                  PartnerInfoOptions.ageRange.contains(age) else {
+                throw Abort(.badRequest, reason: "Укажите возраст партнёра")
             }
         }
 

@@ -17,6 +17,11 @@ struct CompatibilityTestRequest: Content {
     let selectedTests: [String]
 }
 
+enum PartnerInfoOptions {
+    static let genders: Set<String> = ["Мужской", "Женский"]
+    static let ageRange = 1...120
+}
+
 struct CompatibilityResultDTO: Content {
     let userName: String
     let userZodiacSign: String
