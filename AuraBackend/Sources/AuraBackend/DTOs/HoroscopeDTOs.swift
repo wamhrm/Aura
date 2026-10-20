@@ -95,7 +95,7 @@ enum HoroscopeSign: String {
 }
 
 enum HoroscopeDTOMapper {
-    private static let sphereTitles = ["Любовь", "Здоровье", "Работа"]
+    static let sphereTitles = ["Любовь", "Здоровье", "Работа"]
 
     static func map(_ horoscope: Horoscope) throws -> HoroscopeDTO {
         guard let id = horoscope.id else {

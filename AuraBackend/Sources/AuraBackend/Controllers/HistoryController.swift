@@ -26,7 +26,14 @@ struct HistoryController: RouteCollection {
             .sort(\.$createdAt, .descending)
             .all()
 
-        return try entries.map { try HistoryDTOMapper.getHistoryItem(from: $0) }
+        return entries.compactMap { entry in
+            do {
+                return try HistoryDTOMapper.getHistoryItem(from: entry)
+            } catch {
+                req.logger.warning("Skipping corrupted history entry \(entry.id?.uuidString ?? "unknown"): \(error)")
+                return nil
+            }
+        }
     }
 
     private func fetchHistoryDetails(_ req: Request) async throws -> HistoryItemDTO {
@@ -44,7 +51,12 @@ struct HistoryController: RouteCollection {
             throw Abort(.notFound, reason: "Запись не найдена")
         }
 
-        return try HistoryDTOMapper.getHistoryItemDetails(from: entry)
+        do {
+            return try HistoryDTOMapper.getHistoryItemDetails(from: entry)
+        } catch {
+            req.logger.error("Failed to decode history entry \(historyID): \(error)")
+            throw Abort(.internalServerError, reason: "Не удалось открыть запись истории")
+        }
     }
 
     private func deleteHistory(_ req: Request) async throws -> HTTPStatus {
