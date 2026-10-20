@@ -76,9 +76,9 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
         }
     }
 
-    func fetchHistory() {
+    func fetchHistory() async {
         guard let userId = currentUserId else { return }
-        Task { await fetchHistory(for: userId, ignoreCache: true) }
+        await fetchHistory(for: userId, ignoreCache: true)
     }
 
     private func fetchHistory(for userId: UUID, ignoreCache: Bool = false) async {

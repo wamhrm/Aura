@@ -43,7 +43,7 @@ struct HistoryView: View {
                                 .padding(.horizontal)
                             }
                             .refreshable {
-                                vm.fetchHistory()
+                                await vm.fetchHistory()
                             }
                             .overlay {
                                 if vm.isLoading {
