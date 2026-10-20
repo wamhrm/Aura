@@ -15,17 +15,26 @@ struct AuraApp: App {
     @AppStorage(Constants.selectedThemeKey) private var selectedTheme = AppTheme.light
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
+    private let storage: LocalStorage
+
     init() {
         let keychain = KeychainHelper()
         let networkService = NetworkService(keychain: keychain)
-        _authService = StateObject(wrappedValue: AuthService(networkService: networkService, keychain: keychain))
+        let storage = LocalStorage()
+        storage.migrateLegacyUserDefaults()
+
+        self.storage = storage
+        _authService = StateObject(wrappedValue: AuthService(networkService: networkService,
+                                                             keychain: keychain,
+                                                             storage: storage))
         _contentService = StateObject(wrappedValue: ContentService(networkService: networkService))
     }
 
     var body: some Scene {
         WindowGroup {
             MainTabView(authService: authService,
-                        contentService: contentService)
+                        contentService: contentService,
+                        storage: storage)
                 .preferredColorScheme(selectedTheme.colorScheme)
                 .tint(AccentColorOption.color(accentColor))
         }

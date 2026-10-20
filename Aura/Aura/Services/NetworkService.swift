@@ -251,7 +251,7 @@ private struct AuthSignInBody: Encodable {
     let password: String
 }
 
-private struct ServerErrorResponse: Decodable {
+nonisolated private struct ServerErrorResponse: Decodable {
     let reason: String
 }
 

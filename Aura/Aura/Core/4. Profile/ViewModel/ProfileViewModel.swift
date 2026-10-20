@@ -40,13 +40,16 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
+    private let storage: any LocalStorageProtocol
 
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol) {
+         contentService: any ContentServiceProtocol,
+         storage: any LocalStorageProtocol = LocalStorage()) {
         self.authService = authService
         self.contentService = contentService
+        self.storage = storage
 
         setupSubscriptions()
     }
@@ -71,20 +74,20 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private func handleAuthState(_ state: AuthState) {
         switch state {
             case .signedIn(let user):
-                if let cached = UserDefaultsHelper.getLocalPersonality(for: user.id) {
+                if let cached = storage.load(StorageKeys.personality, for: user.id) {
                     applyPersonality(result: cached)
                 } else {
                     hasPersonalityTests = false
                     personalityResult = nil
                 }
 
-                compatibilityHistory = UserDefaultsHelper.getLocalHistory(for: user.id) ?? []
+                compatibilityHistory = storage.load(StorageKeys.history, for: user.id) ?? []
 
                 if user.hasCompletedProfileInfo {
-                    dailyTip = UserDefaultsHelper.getLocalDailyTip(for: user.id)
+                    dailyTip = storage.load(StorageKeys.dailyTip, for: user.id)
                 } else {
                     dailyTip = nil
-                    UserDefaultsHelper.deleteLocalDailyTip(for: user.id)
+                    storage.delete(StorageKeys.dailyTip, for: user.id)
                 }
 
                 updateProfileDisplay()
@@ -131,7 +134,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         do {
             let tip = try await contentService.fetchDailyTip()
             dailyTip = tip
-            UserDefaultsHelper.saveDailyTipLocally(tip, for: userId)
+            storage.save(tip, for: StorageKeys.dailyTip, userId: userId)
             updateProfileDisplay()
         } catch {
             if showErrorOnFailure {
@@ -143,7 +146,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private func loadPersonality(for userId: UUID,
                                  ignoreCache: Bool = false,
                                  showErrorOnFailure: Bool = true) async {
-        if !ignoreCache, let cached = UserDefaultsHelper.getLocalPersonality(for: userId) {
+        if !ignoreCache, let cached = storage.load(StorageKeys.personality, for: userId) {
             applyPersonality(result: cached)
             return
         }
@@ -151,7 +154,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         do {
             let history = try await contentService.fetchHistory()
             compatibilityHistory = history
-            UserDefaultsHelper.saveHistoryLocally(history, for: userId)
+            storage.save(history, for: StorageKeys.history, userId: userId)
             updateProfileDisplay()
 
             guard let latest = history.first(where: { $0.kind == .personality }) else {
@@ -164,7 +167,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
             }
 
             applyPersonality(result: result)
-            UserDefaultsHelper.savePersonalityLocally(result, for: userId)
+            storage.save(result, for: StorageKeys.personality, userId: userId)
         } catch {
             if showErrorOnFailure {
                 presentAlert(error.localizedDescription)
@@ -265,7 +268,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private func clearPersonality(for userId: UUID) {
         hasPersonalityTests = false
         personalityResult = nil
-        UserDefaultsHelper.deleteLocalPersonality(for: userId)
+        storage.delete(StorageKeys.personality, for: userId)
         updateProfileDisplay()
     }
 

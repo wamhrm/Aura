@@ -19,22 +19,26 @@ struct MainTabView: View {
     private let contentService: ContentServiceProtocol
 
     init(authService: AuthService,
-         contentService: ContentService) {
+         contentService: ContentService,
+         storage: any LocalStorageProtocol = LocalStorage()) {
         self.authService = authService
         self.contentService = contentService
 
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(
             authService: authService,
-            contentService: contentService))
+            contentService: contentService,
+            storage: storage))
         _compatibilityViewModel = StateObject(wrappedValue: CompatibilityViewModel(
             authService: authService,
             contentService: contentService))
         _historyViewModel = StateObject(wrappedValue: HistoryViewModel(
             authService: authService,
-            contentService: contentService))
+            contentService: contentService,
+            storage: storage))
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
             authService: authService,
-            contentService: contentService))
+            contentService: contentService,
+            storage: storage))
     }
 
     var body: some View {
