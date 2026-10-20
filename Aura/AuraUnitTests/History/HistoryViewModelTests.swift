@@ -11,16 +11,6 @@ import XCTest
 final class HistoryViewModelTests: XCTestCase {
     private let user = UserModel.mock
 
-    override func setUp() {
-        super.setUp()
-        UserDefaultsHelper.deleteLocalHistory(for: user.id)
-    }
-
-    override func tearDown() {
-        UserDefaultsHelper.deleteLocalHistory(for: user.id)
-        super.tearDown()
-    }
-
     func test_whenSignedIn_loadsHistoryFromService() async {
         // Given
         let content = MockContentService()
@@ -120,7 +110,7 @@ final class HistoryViewModelTests: XCTestCase {
                          content: MockContentService)
         -> (sut: HistoryViewModel, auth: MockAuthService, content: MockContentService) {
         let auth = MockAuthService(state: authState)
-        let sut = HistoryViewModel(authService: auth, contentService: content)
+        let sut = HistoryViewModel(authService: auth, contentService: content, storage: MockLocalStorage())
         return (sut, auth, content)
     }
 

@@ -138,7 +138,7 @@ final class ProfileViewModelTests: XCTestCase {
     // MARK: - Helpers
     private func makeSUT() -> (sut: ProfileViewModel, auth: MockAuthService) {
         let auth = MockAuthService()
-        let sut = ProfileViewModel(authService: auth, contentService: MockContentService())
+        let sut = ProfileViewModel(authService: auth, contentService: MockContentService(), storage: MockLocalStorage())
         return (sut, auth)
     }
 }

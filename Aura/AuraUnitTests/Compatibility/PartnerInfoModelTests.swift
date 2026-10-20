@@ -6,6 +6,7 @@
 import XCTest
 @testable import Aura
 
+@MainActor
 final class PartnerInfoModelTests: XCTestCase {
     func test_compatibilityTestRequest_withExactDate_mapsDateAndTimeAndTrimsName() {
         // Given

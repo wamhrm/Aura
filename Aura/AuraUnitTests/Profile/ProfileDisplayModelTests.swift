@@ -6,6 +6,7 @@
 import XCTest
 @testable import Aura
 
+@MainActor
 final class ProfileDisplayModelTests: XCTestCase {
     func test_make_withoutDailyTip_usesPlaceholder() {
         // Given / When

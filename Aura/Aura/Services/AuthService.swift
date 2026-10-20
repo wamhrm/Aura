@@ -28,15 +28,17 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private let tokenPath = Constants.tokenPath
     private let tokenKey = Constants.tokenKey
-    private let userKey = Constants.userKey
 
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
+    private let storage: any LocalStorageProtocol
 
     init(networkService: any NetworkServiceProtocol = NetworkService(),
-         keychain: any KeychainHelperProtocol = KeychainHelper()) {
+         keychain: any KeychainHelperProtocol = KeychainHelper(),
+         storage: any LocalStorageProtocol = LocalStorage()) {
         self.networkService = networkService
         self.keychain = keychain
+        self.storage = storage
 
         autoSignIn()
         observeSessionExpiration()
@@ -73,17 +75,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     private func endSession() {
-        if let userData = UserDefaults.standard.data(forKey: userKey),
-           let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
-            UserDefaultsHelper.deleteLocalHoroscope(for: user.id)
-            UserDefaultsHelper.deleteLocalPersonality(for: user.id)
-            UserDefaultsHelper.deleteLocalDailyInsight(for: user.id)
-            UserDefaultsHelper.deleteLocalDailyTip(for: user.id)
-            UserDefaultsHelper.deleteLocalHistory(for: user.id)
+        if let user = storage.loadUser() {
+            storage.deleteAll(for: user.id)
         }
 
         keychain.deleteToken(path: tokenPath, key: tokenKey)
-        UserDefaults.standard.removeObject(forKey: userKey)
+        storage.deleteUser()
         authState.send(.signedOut)
     }
 
@@ -99,19 +96,22 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     private func autoSignIn() {
-        if let _ = keychain.getToken(path: tokenPath, key: tokenKey),
-           let userData = UserDefaults.standard.data(forKey: userKey),
-           let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
+        let hasToken = keychain.getToken(path: tokenPath, key: tokenKey) != nil
+
+        if hasToken, let user = storage.loadUser() {
             authState.send(.signedIn(user))
-        } else {
-            authState.send(.signedOut)
+            return
         }
+
+        if hasToken {
+            keychain.deleteToken(path: tokenPath, key: tokenKey)
+        }
+
+        authState.send(.signedOut)
     }
 
     private func saveUserLocally(_ user: UserModel) {
-        if let data = try? JSONEncoder().encode(user) {
-            UserDefaults.standard.set(data, forKey: userKey)
-        }
+        storage.saveUser(user)
     }
 
     private func saveToken(_ token: String) {
