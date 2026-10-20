@@ -17,5 +17,7 @@ extension Application {
         self.migrations.add(CreateHoroscope())
         self.migrations.add(CreateDailyContent())
         self.migrations.add(HashTokens())
+        self.migrations.add(CreateSharedHoroscopes())
+        self.migrations.add(CreateIndexes())
     }
 }

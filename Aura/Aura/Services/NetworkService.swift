@@ -197,7 +197,7 @@ struct AuthTokenResponse: Decodable {
 
 struct UpdateProfileInfoResponse: Decodable {
     let user: UserModel
-    let horoscope: HoroscopeModel
+    let horoscope: HoroscopeModel?
 }
 
 private struct AuthSignUpBody: Encodable {

@@ -583,10 +583,12 @@ struct OpenAIService {
     }
 
     // MARK: - Horoscope
-    func makeHoroscope(for sign: HoroscopeSign, req: Request) async throws -> HoroscopeContentResult {
+    func makeHoroscope(for sign: HoroscopeSign,
+                       period: (start: String, end: String),
+                       req: Request) async throws -> HoroscopeContentResult {
         let data = try await chatCompletion(
             messages: [OpenAIMessage(role: "system", content: horoscopeSystemPrompt),
-                       OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign))],
+                       OpenAIMessage(role: "user", content: horoscopeUserPrompt(for: sign, period: period))],
             responseFormat: OpenAIResponseFormat(name: "horoscope", schema: horoscopeSchema),
             req: req)
 
@@ -604,10 +606,8 @@ struct OpenAIService {
                                            ("description", .string)])))])
     }
 
-    private func horoscopeUserPrompt(for sign: HoroscopeSign) -> String {
-        let period = horoscopePeriod()
-
-        return """
+    private func horoscopeUserPrompt(for sign: HoroscopeSign, period: (start: String, end: String)) -> String {
+        """
         Знак зодиака: \(sign.rawValue)
         Текущий период прогноза: \(period.start) — \(period.end)
 
@@ -637,18 +637,6 @@ struct OpenAIService {
         В items ровно 3 элемента с title: Любовь, Здоровье, Работа.
         Не давай медицинских, юридических или финансовых советов.
         """
-    }
-    
-    func horoscopePeriod() -> (start: String, end: String) {
-        let calendar = Calendar(identifier: .gregorian)
-        let now = Date()
-        let startDate = calendar.startOfDay(for: now)
-        let endDate = calendar.date(byAdding: .day, value: 6, to: startDate) ?? now
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        formatter.dateFormat = "d MMM"
-        return (formatter.string(from: startDate), formatter.string(from: endDate))
     }
     
     // MARK: - Daily Content
