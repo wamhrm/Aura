@@ -18,9 +18,13 @@ final class AuraUITestsLaunchTests: XCTestCase {
 
     @MainActor
     func testLaunch() throws {
+        // Given
         let app = XCUIApplication()
+
+        // When
         app.launch()
 
+        // Then
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"
         attachment.lifetime = .keepAlways
