@@ -110,8 +110,10 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                     let response = try await authService.updateProfileInfo(profileInfo)
                     profileInfo = response.user.profileInfo
                     hasProfileInfo = response.user.hasCompletedProfileInfo
-                    horoscope = response.horoscope
-                    UserDefaultsHelper.saveHoroscopeLocally(response.horoscope, for: response.user.id)
+                    if let horoscope = response.horoscope {
+                        self.horoscope = horoscope
+                        UserDefaultsHelper.saveHoroscopeLocally(horoscope, for: response.user.id)
+                    }
                     await loadDailyInsight(for: response.user.id)
                     try await Task.sleep(for: .seconds(1.5))
                     onSuccess()

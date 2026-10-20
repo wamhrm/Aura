@@ -14,11 +14,11 @@ final class Horoscope: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
 
-    @Parent(key: "user_id")
-    var user: User
-
     @Field(key: "sign")
     var sign: String
+
+    @Field(key: "week_start")
+    var weekStart: String
 
     @Field(key: "date_start")
     var dateStart: String
@@ -37,14 +37,14 @@ final class Horoscope: Model, @unchecked Sendable {
 
     init() {}
 
-    init(userID: User.IDValue,
-         sign: String,
+    init(sign: String,
+         weekStart: String,
          dateStart: String,
          dateEnd: String,
          description: String,
          itemsJSON: String) {
-        self.$user.id = userID
         self.sign = sign
+        self.weekStart = weekStart
         self.dateStart = dateStart
         self.dateEnd = dateEnd
         self.description = description

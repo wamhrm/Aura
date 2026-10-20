@@ -52,7 +52,14 @@ struct ProfileController: RouteCollection {
 
         try await user.save(on: req.db)
 
-        let horoscope = try await horoscopeService.makeHoroscope(for: user, req: req, on: req.db)
+        let horoscope: HoroscopeDTO?
+
+        do {
+            horoscope = try await horoscopeService.fetchCurrentHoroscope(for: user, req: req, on: req.db)
+        } catch {
+            req.logger.warning("Profile saved without horoscope: \(error)")
+            horoscope = nil
+        }
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }
