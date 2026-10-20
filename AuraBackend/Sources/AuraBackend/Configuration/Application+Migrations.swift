@@ -19,5 +19,6 @@ extension Application {
         self.migrations.add(HashTokens())
         self.migrations.add(CreateSharedHoroscopes())
         self.migrations.add(CreateIndexes())
+        self.migrations.add(CreateTestUsages())
     }
 }
