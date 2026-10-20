@@ -149,7 +149,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                     personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
                     homeRoutes.append(.testResults)
                 } catch {
-                    presentAlert("Не удалось получить результат")
+                    presentAlert((error as? LocalizedError)?.errorDescription ?? "Не удалось получить результат")
                 }
             }
 
