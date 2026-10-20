@@ -37,8 +37,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
          keychain: any KeychainHelperProtocol = KeychainHelper()) {
         self.networkService = networkService
         self.keychain = keychain
-        
+
         autoSignIn()
+        observeSessionExpiration()
     }
 
     func createAccount(name: String, email: String, password: String) async throws {
@@ -62,6 +63,16 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func signOut() {
+        if let tokenData = keychain.getToken(path: tokenPath, key: tokenKey),
+           let token = String(data: tokenData, encoding: .utf8) {
+            let networkService = networkService
+            Task { try? await networkService.logout(token: token) }
+        }
+
+        endSession()
+    }
+
+    private func endSession() {
         if let userData = UserDefaults.standard.data(forKey: userKey),
            let user = try? JSONDecoder().decode(UserModel.self, from: userData) {
             UserDefaultsHelper.deleteLocalHoroscope(for: user.id)
@@ -74,6 +85,17 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         keychain.deleteToken(path: tokenPath, key: tokenKey)
         UserDefaults.standard.removeObject(forKey: userKey)
         authState.send(.signedOut)
+    }
+
+    private func observeSessionExpiration() {
+        let events = networkService.sessionExpiredEvents
+
+        Task { [weak self] in
+            for await _ in events {
+                guard let self, case .signedIn = authState.value else { continue }
+                endSession()
+            }
+        }
     }
 
     private func autoSignIn() {
