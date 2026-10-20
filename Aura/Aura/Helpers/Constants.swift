@@ -8,8 +8,17 @@
 import Foundation
 
 nonisolated enum Constants {
-    static let baseURL = "https://aura-mogr.onrender.com"
+    static let productionBaseURL = "https://aura-mogr.onrender.com"
     static let tokenPath = "com.aura.auth.token"
+
+    static var baseURL: String {
+        #if DEBUG
+        if let override = ProcessInfo.processInfo.environment["AURA_BASE_URL"], !override.isEmpty {
+            return override
+        }
+        #endif
+        return productionBaseURL
+    }
     
     static let userKey = "userKey"
     static let tokenKey = "tokenKey"

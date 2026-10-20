@@ -14,9 +14,18 @@ fileprivate enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
+fileprivate enum RequestAuthorization {
+    case none
+    case storedToken
+    case token(String)
+}
+
 protocol NetworkServiceProtocol: Sendable {
+    var sessionExpiredEvents: AsyncStream<Void> { get }
+
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
+    func logout(token: String) async throws
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
     func fetchCurrentHoroscope() async throws -> HoroscopeModel
     func fetchDailyInsight() async throws -> DailyContentModel
@@ -29,8 +38,11 @@ protocol NetworkServiceProtocol: Sendable {
 }
 
 nonisolated final class NetworkService: NetworkServiceProtocol {
+    let sessionExpiredEvents: AsyncStream<Void>
+
     private let baseURL: String
     private let session: URLSession
+    private let sessionExpiredContinuation: AsyncStream<Void>.Continuation
 
     private let tokenPath = Constants.tokenPath
     private let tokenKey = Constants.tokenKey
@@ -43,6 +55,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         self.baseURL = baseURL
         self.session = session
         self.keychain = keychain
+        (sessionExpiredEvents, sessionExpiredContinuation) = AsyncStream.makeStream(of: Void.self)
     }
 
     private static func makeSession() -> URLSession {
@@ -55,56 +68,60 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func createAccount(name: String, email: String, password: String) async throws {
         let bodyData = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
-        _ = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData)
+        _ = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData, authorization: .none)
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
-        let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData)
-        return try decoder().decode(AuthTokenResponse.self, from: data)
+        let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData, authorization: .none)
+        return try decode(AuthTokenResponse.self, from: data)
+    }
+
+    func logout(token: String) async throws {
+        _ = try await request(endpoint: "/auth/logout", method: .post, authorization: .token(token))
     }
 
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         let bodyData = try JSONEncoder().encode(profileInfo)
         let data = try await request(endpoint: "/auth/profileInfo", method: .patch, body: bodyData)
-        return try decoder().decode(UpdateProfileInfoResponse.self, from: data)
+        return try decode(UpdateProfileInfoResponse.self, from: data)
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         let data = try await request(endpoint: "/horoscope/current", method: .get)
-        return try decoder().decode(HoroscopeModel.self, from: data)
+        return try decode(HoroscopeModel.self, from: data)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
         let data = try await request(endpoint: "/daily/insight", method: .get)
-        return try decoder().decode(DailyContentModel.self, from: data)
+        return try decode(DailyContentModel.self, from: data)
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
         let data = try await request(endpoint: "/daily/tip", method: .get)
-        return try decoder().decode(DailyContentModel.self, from: data)
+        return try decode(DailyContentModel.self, from: data)
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
         let bodyData = try JSONEncoder().encode(selectedTests)
         let data = try await request(endpoint: "/history/personality", method: .post, body: bodyData)
-        return try decoder().decode(PersonalityResultModel.self, from: data)
+        return try decode(PersonalityResultModel.self, from: data)
     }
 
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel {
         let bodyData = try JSONEncoder().encode(testRequest)
         let data = try await request(endpoint: "/history/compatibility", method: .post, body: bodyData)
-        return try decoder().decode(CompabilityResultModel.self, from: data)
+        return try decode(CompabilityResultModel.self, from: data)
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
         let data = try await request(endpoint: "/history", method: .get)
-        return try decoder().decode([HistoryCellModel].self, from: data)
+        return try decode([HistoryCellModel].self, from: data)
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
         let data = try await request(endpoint: "/history/\(id.uuidString)", method: .get)
-        return try decoder().decode(HistoryCellModel.self, from: data)
+        return try decode(HistoryCellModel.self, from: data)
     }
 
     func deleteHistory(id: UUID) async throws {
@@ -114,12 +131,17 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private func request(endpoint: String,
                          method: HTTPMethod,
                          body: Data? = nil,
+                         authorization: RequestAuthorization = .storedToken,
                          attempt: Int = 0) async throws -> Data {
         do {
-            return try await performRequest(endpoint: endpoint, method: method, body: body)
-        } catch let urlError as URLError where Self.isRetryable(urlError) && attempt < 2 {
+            return try await performRequest(endpoint: endpoint, method: method, body: body, authorization: authorization)
+        } catch let urlError as URLError where method == .get && Self.isRetryable(urlError) && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(for: attempt))
-            return try await request(endpoint: endpoint, method: method, body: body, attempt: attempt + 1)
+            return try await request(endpoint: endpoint,
+                                     method: method,
+                                     body: body,
+                                     authorization: authorization,
+                                     attempt: attempt + 1)
         } catch let urlError as URLError {
             throw NetworkError(urlError: urlError)
         }
@@ -127,7 +149,8 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     private func performRequest(endpoint: String,
                                 method: HTTPMethod,
-                                body: Data? = nil) async throws -> Data {
+                                body: Data?,
+                                authorization: RequestAuthorization) async throws -> Data {
         guard let baseURL = URL(string: baseURL),
               let url = URL(string: endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
@@ -140,8 +163,8 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.httpBody = body
         }
 
-        if let tokenData = keychain.getToken(path: tokenPath, key: tokenKey),
-           let token = String(data: tokenData, encoding: .utf8) {
+        let token = bearerToken(for: authorization)
+        if let token {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
@@ -154,14 +177,31 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         switch httpResponse.statusCode {
             case 200...299:
                 return data
-            case 401:
-                throw NetworkError.unauthorized
-            case 409:
-                throw NetworkError.userExists
-            case 404:
-                throw NetworkError.notFound
+            case 401 where token != nil:
+                sessionExpiredContinuation.yield()
+                throw NetworkError.sessionExpired
             default:
-                throw NetworkError.invalidResponse
+                throw NetworkError(statusCode: httpResponse.statusCode, data: data)
+        }
+    }
+
+    private func bearerToken(for authorization: RequestAuthorization) -> String? {
+        switch authorization {
+            case .none:
+                return nil
+            case .token(let token):
+                return token
+            case .storedToken:
+                guard let tokenData = keychain.getToken(path: tokenPath, key: tokenKey) else { return nil }
+                return String(data: tokenData, encoding: .utf8)
+        }
+    }
+
+    private func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+        do {
+            return try decoder().decode(type, from: data)
+        } catch {
+            throw NetworkError.decodingError
         }
     }
 
@@ -211,16 +251,49 @@ private struct AuthSignInBody: Encodable {
     let password: String
 }
 
+private struct ServerErrorResponse: Decodable {
+    let reason: String
+}
+
 fileprivate enum NetworkError: LocalizedError {
     case invalidURL
     case invalidResponse
     case decodingError
     case unauthorized
+    case sessionExpired
     case userExists
     case notFound
+    case tooManyRequests
+    case serverUnavailable
+    case server(String)
     case timedOut
     case noConnection
     case cannotReachServer
+
+    init(statusCode: Int, data: Data) {
+        if (500...599).contains(statusCode) {
+            self = .serverUnavailable
+            return
+        }
+
+        if let reason = try? JSONDecoder().decode(ServerErrorResponse.self, from: data).reason, !reason.isEmpty {
+            self = .server(reason)
+            return
+        }
+
+        switch statusCode {
+            case 401:
+                self = .unauthorized
+            case 404:
+                self = .notFound
+            case 409:
+                self = .userExists
+            case 429:
+                self = .tooManyRequests
+            default:
+                self = .invalidResponse
+        }
+    }
 
     init(urlError: URLError) {
         switch urlError.code {
@@ -245,10 +318,18 @@ fileprivate enum NetworkError: LocalizedError {
                 return "Не удалось обработать ответ сервера"
             case .unauthorized:
                 return "Неправильная почта или пароль"
+            case .sessionExpired:
+                return "Сессия истекла. Войдите снова"
             case .userExists:
                 return "Пользователь уже зарегистрирован"
             case .notFound:
-                return "Пользователь не найден"
+                return "Данные не найдены"
+            case .tooManyRequests:
+                return "Слишком много запросов. Попробуйте позже"
+            case .serverUnavailable:
+                return "Сервис временно недоступен. Попробуйте позже"
+            case .server(let message):
+                return message
             case .timedOut:
                 return "Сервер просыпается дольше обычного. Попробуйте ещё раз через минуту"
             case .noConnection:

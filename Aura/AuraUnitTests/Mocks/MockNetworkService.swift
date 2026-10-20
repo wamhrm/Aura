@@ -8,12 +8,15 @@ import Foundation
 
 @MainActor
 final class MockNetworkService: NetworkServiceProtocol {
+    let sessionExpiredEvents = AsyncStream<Void> { _ in }
+
     var authTokenResponse = AuthTokenResponse(token: "test-token", user: .mock)
     var updateProfileInfoResponse = UpdateProfileInfoResponse(user: .mock, horoscope: .mock)
     var errorToThrow: Error?
 
     private(set) var createAccountCallCount = 0
     private(set) var signInCallCount = 0
+    private(set) var logoutCallCount = 0
 
     func createAccount(name: String, email: String, password: String) async throws {
         createAccountCallCount += 1
@@ -24,6 +27,11 @@ final class MockNetworkService: NetworkServiceProtocol {
         signInCallCount += 1
         if let errorToThrow { throw errorToThrow }
         return authTokenResponse
+    }
+
+    func logout(token: String) async throws {
+        logoutCallCount += 1
+        if let errorToThrow { throw errorToThrow }
     }
 
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
