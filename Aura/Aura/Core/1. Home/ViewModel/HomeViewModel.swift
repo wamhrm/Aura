@@ -33,6 +33,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     @Published var alertMessage = ""
     @Published private(set) var isSignedIn = false
     @Published private(set) var hasProfileInfo = false
+    @Published private(set) var hasAIConsent = false
     @Published private(set) var isLoading = false
     @Published var isServerWakingUp = false
     @Published private(set) var isLoadingScreen = true
@@ -51,6 +52,10 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         self.storage = storage
 
         setupSubscriptions()
+    }
+
+    var canTakeTests: Bool {
+        hasProfileInfo && hasAIConsent
     }
 
     var dailyInsightHandler: String {
@@ -73,6 +78,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                 isLoadingScreen = true
                 profileInfo = user.profileInfo
                 hasProfileInfo = user.hasCompletedProfileInfo
+                hasAIConsent = user.allowsAIAnalysis
                 userName = user.name
                 isSignedIn = true
 
@@ -95,6 +101,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                 isLoadingScreen = false
                 profileInfo = ProfileInfoModel()
                 hasProfileInfo = false
+                hasAIConsent = false
                 userName = ""
                 horoscope = nil
                 dailyInsight = nil
@@ -117,13 +124,16 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                     let response = try await authService.updateProfileInfo(profileInfo)
                     profileInfo = response.user.profileInfo
                     hasProfileInfo = response.user.hasCompletedProfileInfo
+                    hasAIConsent = response.user.allowsAIAnalysis
                     if let horoscope = response.horoscope {
                         self.horoscope = horoscope
                         storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
                     } else {
                         await loadHoroscope(for: response.user.id, showErrorOnFailure: false)
                     }
-                    await loadDailyInsight(for: response.user.id)
+                    if hasAIConsent {
+                        await loadDailyInsight(for: response.user.id)
+                    }
                     onSuccess()
                 } catch {
                     presentAlert(error.localizedDescription)
@@ -191,6 +201,8 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 
     private func refreshHomeContent(for userId: UUID) async {
         await loadHoroscope(for: userId, showErrorOnFailure: false)
+
+        guard hasAIConsent else { return }
         await loadDailyInsight(for: userId, showErrorOnFailure: false)
     }
 

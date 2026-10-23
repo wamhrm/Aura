@@ -30,6 +30,7 @@ struct UserDTO: Content {
     let emotionalCore: String?
     let decisionStyle: String?
     let coreFocus: String?
+    let hasAIConsent: Bool
 }
 
 struct AuthDTO: Content {

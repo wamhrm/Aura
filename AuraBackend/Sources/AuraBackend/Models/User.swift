@@ -44,6 +44,9 @@ final class User: Model, Authenticatable, @unchecked Sendable {
     @OptionalField(key: "core_focus")
     var coreFocus: String?
 
+    @OptionalField(key: "ai_consent_at")
+    var aiConsentAt: Date?
+
     @Field(key: "password_hash")
     var passwordHash: String
 
@@ -83,6 +86,7 @@ extension User {
                 conflictStyle: conflictStyle,
                 emotionalCore: emotionalCore,
                 decisionStyle: decisionStyle,
-                coreFocus: coreFocus)
+                coreFocus: coreFocus,
+                hasAIConsent: aiConsentAt != nil)
     }
 }

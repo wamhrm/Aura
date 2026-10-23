@@ -21,6 +21,7 @@ RUN useradd --user-group --create-home --system --home-dir /app vapor
 WORKDIR /app
 
 COPY --from=build --chown=vapor:vapor /build/.build/release/AuraBackend ./AuraBackend
+COPY --chown=vapor:vapor Public ./Public
 
 USER vapor:vapor
 

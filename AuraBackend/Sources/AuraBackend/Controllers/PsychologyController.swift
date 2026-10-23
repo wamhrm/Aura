@@ -16,6 +16,7 @@ struct PsychologyController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let history = routes.grouped("history")
             .grouped(UserAuthMiddleware())
+            .grouped(AIConsentMiddleware())
 
         history.post("personality", use: makePersonalityTest)
         history.post("compatibility", use: makeCompatibilityTest)

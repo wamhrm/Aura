@@ -11,6 +11,8 @@ struct CompatibilityView: View {
     @ObservedObject var vm: CompatibilityViewModel
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
+    let aiConsentButton: () -> Void
+
     var body: some View {
         NavigationStack(path: $vm.compatibilityRoutes) {
             ZStack {
@@ -120,6 +122,14 @@ struct CompatibilityView: View {
                                 }
                                 .disabled(vm.isLoading)
                                 .padding(.top, 10)
+                            }
+                            .blur(radius: vm.needsAIConsent ? 5 : 0)
+                            .disabled(vm.needsAIConsent)
+                            .overlay {
+                                if vm.needsAIConsent {
+                                    AIConsentLock(title: "Разрешите анализ с помощью AI для теста совместимости",
+                                                  onAllow: aiConsentButton)
+                                }
                             }
                         }
                         .disabled(vm.isLoading)
@@ -243,6 +253,8 @@ fileprivate enum CompatibilityButtons {
 #Preview {
     NavigationStack {
         CompatibilityView(vm: CompatibilityViewModel(authService: AuthService(),
-                                                     contentService: ContentService()))
+                                                     contentService: ContentService())) {
+
+        }
     }
 }

@@ -27,6 +27,7 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     @Published var alertMessage = ""
     @Published private(set) var isLoading = false
     @Published var isServerWakingUp = false
+    @Published private(set) var needsAIConsent = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -47,9 +48,13 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
             .sink { [weak self] in
                 guard let self else { return }
 
-                if case .signedOut = $0 {
-                    compatibilityRoutes = []
-                    compatibilityResult = nil
+                switch $0 {
+                    case .signedIn(let user):
+                        needsAIConsent = user.hasCompletedProfileInfo && !user.allowsAIAnalysis
+                    case .signedOut:
+                        compatibilityRoutes = []
+                        compatibilityResult = nil
+                        needsAIConsent = false
                 }
             }
             .store(in: &cancellables)

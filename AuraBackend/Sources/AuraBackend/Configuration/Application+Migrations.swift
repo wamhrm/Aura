@@ -20,5 +20,6 @@ extension Application {
         self.migrations.add(CreateSharedHoroscopes())
         self.migrations.add(CreateIndexes())
         self.migrations.add(CreateTestUsages())
+        self.migrations.add(AddAIConsent())
     }
 }

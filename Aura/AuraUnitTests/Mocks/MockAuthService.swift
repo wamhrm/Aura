@@ -42,8 +42,17 @@ final class MockAuthService: AuthServiceProtocol {
         return updateProfileInfoResult
     }
 
+    func giveAIConsent() async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
     func signOut() {
         signOutCallCount += 1
+        authState.send(.signedOut)
+    }
+
+    func deleteAccount() async throws {
+        if let errorToThrow { throw errorToThrow }
         authState.send(.signedOut)
     }
 }

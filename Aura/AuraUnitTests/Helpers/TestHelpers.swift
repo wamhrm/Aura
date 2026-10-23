@@ -26,5 +26,6 @@ func makeIncompleteUser() -> UserModel {
               conflictStyle: nil,
               emotionalCore: nil,
               decisionStyle: nil,
-              coreFocus: nil)
+              coreFocus: nil,
+              hasAIConsent: nil)
 }

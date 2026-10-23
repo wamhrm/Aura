@@ -14,6 +14,7 @@ struct HomeView: View {
     let authService: AuthServiceProtocol
     let compatibilityButton: () -> Void
     let profileButton: () -> Void
+    let aiConsentButton: () -> Void
 
     var body: some View {
         NavigationStack(path: $vm.homeRoutes) {
@@ -45,9 +46,15 @@ struct HomeView: View {
                                             .font(Adaptive.size(.callout, .default))
                                             .fontWeight(.heavy)
 
-                                        Text(vm.dailyInsightHandler)
-                                            .font(.system(size: Adaptive.size(14, 15))).italic()
-                                            .fontWeight(.medium)
+                                        if vm.hasAIConsent {
+                                            Text(vm.dailyInsightHandler)
+                                                .font(.system(size: Adaptive.size(14, 15))).italic()
+                                                .fontWeight(.medium)
+                                        } else {
+                                            AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
+                                                          onAllow: aiConsentButton)
+                                                .frame(maxWidth: .infinity)
+                                        }
                                     }
                                     .foregroundStyle(.white)
                                     .padding(20)
@@ -105,7 +112,7 @@ struct HomeView: View {
                                     headerText("Проверьте себя", "Все тесты") {
                                         vm.homeRoutes.append(.allTests)
                                     }
-                                    .disabled(!vm.hasProfileInfo)
+                                    .disabled(!vm.canTakeTests)
 
                                     ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
                                         TestCellView(type: test,
@@ -117,21 +124,24 @@ struct HomeView: View {
                                                             vm.homeRoutes.append(.testDetails(test))
                                                         }
                                     }
-                                    .disabled(!vm.hasProfileInfo)
+                                    .disabled(!vm.canTakeTests)
 
                                     ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Проверить себя") {
                                         vm.makePersonalityTest()
                                     }
-                                    .disabled(vm.isLoading || !vm.hasProfileInfo)
+                                    .disabled(vm.isLoading || !vm.canTakeTests)
                                     .padding(.top, 10)
                                 }
-                                .blur(radius: !vm.hasProfileInfo ? 5 : 0)
+                                .blur(radius: !vm.canTakeTests ? 5 : 0)
                                 .padding(.top, 15)
                                 .overlay {
                                     if vm.userName.isEmpty {
                                         CompleteProfileLock(title: "Войдите или зарегистрируйтесь для прохождения тестов")
                                     } else if !vm.hasProfileInfo {
                                         CompleteProfileLock(title: "Заполните свой профиль для прохождения тестов")
+                                    } else if !vm.hasAIConsent {
+                                        AIConsentLock(title: "Разрешите анализ с помощью AI для прохождения тестов",
+                                                      onAllow: aiConsentButton)
                                     }
                                 }
                             }
@@ -263,6 +273,8 @@ extension HomeView {
              authService: authService) {
 
     } profileButton: {
+
+    } aiConsentButton: {
 
     }
 }

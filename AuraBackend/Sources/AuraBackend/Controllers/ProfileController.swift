@@ -16,6 +16,18 @@ struct ProfileController: RouteCollection {
             .grouped(UserAuthMiddleware())
 
         auth.patch("profileInfo", use: updateProfileInfo)
+        auth.post("aiConsent", use: giveAIConsent)
+    }
+
+    private func giveAIConsent(_ req: Request) async throws -> UserDTO {
+        let user = try req.auth.require(User.self)
+
+        if user.aiConsentAt == nil {
+            user.aiConsentAt = Date()
+            try await user.save(on: req.db)
+        }
+
+        return try user.toDTO()
     }
 
     private func updateProfileInfo(_ req: Request) async throws -> UpdateProfileInfoResponse {

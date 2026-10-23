@@ -75,7 +75,6 @@ struct OpenAIService {
 
         return """
         Данные пользователя:
-        - имя: \(user.name)
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
         - время рождения: \(user.birthTime ?? "не указано")
         - пол: \(user.gender ?? "не указано")
@@ -369,7 +368,6 @@ struct OpenAIService {
 
         return """
         Данные пользователя:
-        - имя: \(user.name)
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
         - время рождения: \(user.birthTime ?? "не указано")
         - пол: \(user.gender ?? "не указано")
@@ -380,7 +378,6 @@ struct OpenAIService {
         - фокус в отношениях: \(user.coreFocus ?? "не указано")
 
         Данные партнёра:
-        - имя: \(partner.partnerName)
         - дата рождения или возраст: \(partnerBirthDate)
         - время рождения: \(partner.partnerBirthTime ?? "не указано")
         - пол: \(partner.partnerGender)
