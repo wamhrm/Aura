@@ -32,6 +32,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
     @Published var showSettings = false
+    @Published var showSignOutAlert = false
     @Published var showDeleteAccountAlert = false
     @Published var showDeleteAccountError = false
     @Published private(set) var isDeletingAccount = false
@@ -266,6 +267,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 
     func signOut() {
         showSettings = false
+        showAlert = false
         authService.signOut()
     }
 
@@ -278,6 +280,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
             do {
                 try await authService.deleteAccount()
                 showSettings = false
+                showAlert = false
             } catch {
                 alertMessage = error.localizedDescription
                 showDeleteAccountError = true
