@@ -56,7 +56,7 @@ struct SettingsSheetView: View {
                         }
 
                         customButton(.signOut) {
-                            vm.showAlert.toggle()
+                            vm.showSignOutAlert = true
                         }
 
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
@@ -79,7 +79,7 @@ struct SettingsSheetView: View {
             .toolbar {
                 toolbarItem()
             }
-            .alert("Выйти из аккаунта?", isPresented: $vm.showAlert) {
+            .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
                 alertView()
             }
         }
