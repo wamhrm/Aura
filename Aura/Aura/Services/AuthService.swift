@@ -19,7 +19,9 @@ protocol AuthServiceProtocol {
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
+    func giveAIConsent() async throws
     func signOut()
+    func deleteAccount() async throws
 }
 
 @MainActor
@@ -64,6 +66,14 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         return response
     }
 
+    func giveAIConsent() async throws {
+        let user = try await networkService.giveAIConsent()
+        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else { return }
+
+        saveUserLocally(user)
+        authState.send(.signedIn(user))
+    }
+
     func signOut() {
         if let tokenData = keychain.getToken(path: tokenPath, key: tokenKey),
            let token = String(data: tokenData, encoding: .utf8) {
@@ -71,6 +81,11 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
             Task { try? await networkService.logout(token: token) }
         }
 
+        endSession()
+    }
+
+    func deleteAccount() async throws {
+        try await networkService.deleteAccount()
         endSession()
     }
 

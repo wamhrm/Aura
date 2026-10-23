@@ -19,6 +19,14 @@ nonisolated enum Constants {
         #endif
         return productionBaseURL
     }
+
+    static var privacyPolicyURL: URL? {
+        URL(string: baseURL + "/privacy.html")
+    }
+
+    static var termsOfUseURL: URL? {
+        URL(string: baseURL + "/terms.html")
+    }
     
     static let userKey = "userKey"
     static let tokenKey = "tokenKey"

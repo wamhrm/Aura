@@ -13,6 +13,7 @@ struct DailyContentController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let daily = routes.grouped("daily")
             .grouped(UserAuthMiddleware())
+            .grouped(AIConsentMiddleware())
 
         daily.get("insight", use: fetchDailyInsight)
         daily.get("tip", use: fetchDailyTip)

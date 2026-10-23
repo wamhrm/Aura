@@ -34,6 +34,15 @@ final class MockNetworkService: NetworkServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
+    func deleteAccount() async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
+    func giveAIConsent() async throws -> UserModel {
+        if let errorToThrow { throw errorToThrow }
+        return .mock
+    }
+
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         if let errorToThrow { throw errorToThrow }
         return updateProfileInfoResponse

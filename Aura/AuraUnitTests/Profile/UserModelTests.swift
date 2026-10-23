@@ -31,7 +31,8 @@ final class UserModelTests: XCTestCase {
                              conflictStyle: "mediator",
                              emotionalCore: "logic",
                              decisionStyle: "planner",
-                             coreFocus: nil)
+                             coreFocus: nil,
+                             hasAIConsent: nil)
 
         // When
         let result = user.hasCompletedProfileInfo

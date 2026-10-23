@@ -12,6 +12,7 @@ struct MainTabView: View {
     @StateObject private var compatibilityViewModel: CompatibilityViewModel
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var profileViewModel: ProfileViewModel
+    @StateObject private var aiConsentViewModel: AIConsentViewModel
 
     @State private var selectedTab: Tabs = .home
 
@@ -39,6 +40,7 @@ struct MainTabView: View {
             authService: authService,
             contentService: contentService,
             storage: storage))
+        _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(authService: authService))
     }
 
     var body: some View {
@@ -49,13 +51,17 @@ struct MainTabView: View {
                     selectedTab = .compatibility
                 } profileButton: {
                     selectedTab = .profile
+                } aiConsentButton: {
+                    aiConsentViewModel.request()
                 }
             } label: {
                 Image(systemName: Tabs.home.icon)
             }
 
             Tab(value: .compatibility) {
-                CompatibilityView(vm: compatibilityViewModel)
+                CompatibilityView(vm: compatibilityViewModel) {
+                    aiConsentViewModel.request()
+                }
             } label: {
                 Image(systemName: Tabs.compatibility.icon)
             }
@@ -68,13 +74,18 @@ struct MainTabView: View {
 
             Tab(value: .profile) {
                 ProfileView(vm: profileViewModel,
-                            homeViewModel: homeViewModel)
+                            homeViewModel: homeViewModel) {
+                    aiConsentViewModel.request()
+                }
             } label: {
                 Image(systemName: Tabs.profile.icon)
             }
         }
         .disabled(profileViewModel.isLoading)
         .tabBarMinimizeBehavior(.never)
+        .sheet(isPresented: $aiConsentViewModel.showConsent) {
+            AIConsentView(vm: aiConsentViewModel)
+        }
     }
 }
 

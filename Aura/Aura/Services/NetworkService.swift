@@ -26,6 +26,8 @@ protocol NetworkServiceProtocol: Sendable {
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
     func logout(token: String) async throws
+    func deleteAccount() async throws
+    func giveAIConsent() async throws -> UserModel
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
     func fetchCurrentHoroscope() async throws -> HoroscopeModel
     func fetchDailyInsight() async throws -> DailyContentModel
@@ -79,6 +81,15 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func logout(token: String) async throws {
         _ = try await request(endpoint: "/auth/logout", method: .post, authorization: .token(token))
+    }
+
+    func deleteAccount() async throws {
+        _ = try await request(endpoint: "/auth/account", method: .delete)
+    }
+
+    func giveAIConsent() async throws -> UserModel {
+        let data = try await request(endpoint: "/auth/aiConsent", method: .post)
+        return try decode(UserModel.self, from: data)
     }
 
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
