@@ -19,6 +19,7 @@ struct UserModel: Codable, Equatable, Identifiable {
     let emotionalCore: String?
     let decisionStyle: String?
     let coreFocus: String?
+    let hasAIConsent: Bool?
     
     var nameCapitalized: String {
         name.capitalized
@@ -32,6 +33,10 @@ struct UserModel: Codable, Equatable, Identifiable {
         emotionalCore != nil &&
         decisionStyle != nil &&
         coreFocus != nil
+    }
+
+    var allowsAIAnalysis: Bool {
+        hasAIConsent == true
     }
     
     var profileInfo: ProfileInfoModel {
@@ -50,5 +55,6 @@ extension UserModel {
                                 conflictStyle: "mediator",
                                 emotionalCore: "logic",
                                 decisionStyle: "planner",
-                                coreFocus: "stability")
+                                coreFocus: "stability",
+                                hasAIConsent: true)
 }

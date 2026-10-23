@@ -58,8 +58,20 @@ struct SettingsSheetView: View {
                         customButton(.signOut) {
                             vm.showAlert.toggle()
                         }
+
+                        customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
+                            vm.showDeleteAccountAlert = true
+                        }
+                        .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
+                            deleteAccountAlertView()
+                        } message: {
+                            Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
+                        }
                     }
+                    .disabled(vm.isDeletingAccount)
                 }
+
+                legalLinksView()
             }
             .padding(.horizontal)
             .navigationTitle("Настройки")
@@ -70,6 +82,12 @@ struct SettingsSheetView: View {
             .alert("Выйти из аккаунта?", isPresented: $vm.showAlert) {
                 alertView()
             }
+        }
+        .interactiveDismissDisabled(vm.isDeletingAccount)
+        .alert("Не удалось удалить аккаунт", isPresented: $vm.showDeleteAccountError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(vm.alertMessage)
         }
     }
 }
@@ -83,6 +101,7 @@ extension SettingsSheetView {
             } label: {
                 Image(systemName: "xmark")
             }
+            .disabled(vm.isDeletingAccount)
         }
     }
     
@@ -95,6 +114,29 @@ extension SettingsSheetView {
         }
         .disabled(vm.isLoading)
     }
+
+    @ViewBuilder
+    private func deleteAccountAlertView() -> some View {
+        Button("Отмена", role: .cancel) {}
+        Button("Удалить", role: .destructive) {
+            vm.deleteAccount()
+        }
+    }
+
+    private func legalLinksView() -> some View {
+        HStack(spacing: 20) {
+            if let url = Constants.privacyPolicyURL {
+                Link("Политика конфиденциальности", destination: url)
+            }
+
+            if let url = Constants.termsOfUseURL {
+                Link("Условия использования", destination: url)
+            }
+        }
+        .font(Adaptive.size(.caption, .footnote))
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+    }
     
     private func headerText(_ title: String) -> some View {
         Text(title)
@@ -103,6 +145,7 @@ extension SettingsSheetView {
     }
 
     private func customButton(_ type: ButtonTypes,
+                              isLoading: Bool = false,
                               _ completion: @escaping () -> Void) -> some View {
         Button {
             completion()
@@ -112,6 +155,13 @@ extension SettingsSheetView {
                     .font(Adaptive.size(.footnote, .system(size: 15)))
                     .bold()
                     .foregroundStyle(type.foregroundColor)
+                    .opacity(isLoading ? 0 : 1)
+                    .overlay {
+                        if isLoading {
+                            ProgressView()
+                                .tint(type.foregroundColor)
+                        }
+                    }
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -160,6 +210,7 @@ extension SettingsSheetView {
 fileprivate enum ButtonTypes: String {
     case updateInfo = "Обновить информацию о себе"
     case signOut = "Выйти"
+    case deleteAccount = "Удалить аккаунт"
 
     var backgroundColor: Color {
         switch self {
@@ -167,6 +218,8 @@ fileprivate enum ButtonTypes: String {
                 .blue.opacity(0.155)
             case .signOut:
                 .red.opacity(0.155)
+            case .deleteAccount:
+                .clear
         }
     }
 
@@ -174,7 +227,7 @@ fileprivate enum ButtonTypes: String {
         switch self {
             case .updateInfo:
                 .blue
-            case .signOut:
+            case .signOut, .deleteAccount:
                 .red
         }
     }
@@ -183,7 +236,7 @@ fileprivate enum ButtonTypes: String {
         switch self {
             case .updateInfo:
                 .blue.opacity(0.25)
-            case .signOut:
+            case .signOut, .deleteAccount:
                 .red.opacity(0.25)
         }
     }

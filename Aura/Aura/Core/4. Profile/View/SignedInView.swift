@@ -10,6 +10,7 @@ import SwiftUI
 struct SignedInView: View {
     @ObservedObject var vm: ProfileViewModel
     let user: UserModel
+    let aiConsentButton: () -> Void
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     private var profileDisplay: ProfileDisplayModel {
@@ -63,9 +64,15 @@ struct SignedInView: View {
                                 .font(Adaptive.size(.callout, .default))
                                 .fontWeight(.heavy)
 
-                            Text(profileDisplay.dailyTip)
-                                .font(.system(size: Adaptive.size(14, 15))).italic()
-                                .fontWeight(.medium)
+                            if vm.needsAIConsent {
+                                AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать совет дня",
+                                              onAllow: aiConsentButton)
+                                    .frame(maxWidth: .infinity)
+                            } else {
+                                Text(profileDisplay.dailyTip)
+                                    .font(.system(size: Adaptive.size(14, 15))).italic()
+                                    .fontWeight(.medium)
+                            }
                         }
                         .foregroundStyle(.white)
                         .padding(20)
@@ -172,6 +179,8 @@ extension SignedInView {
     NavigationStack {
         SignedInView(vm: ProfileViewModel(authService: AuthService(),
                                           contentService: ContentService()),
-                     user: .mock)
+                     user: .mock) {
+
+        }
     }
 }

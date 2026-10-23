@@ -32,6 +32,9 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
     @Published var showSettings = false
+    @Published var showDeleteAccountAlert = false
+    @Published var showDeleteAccountError = false
+    @Published private(set) var isDeletingAccount = false
     @Published var showSignIn = false
     @Published var showCreateAccount = false
 
@@ -55,6 +58,11 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         self.storage = storage
 
         setupSubscriptions()
+    }
+
+    var needsAIConsent: Bool {
+        guard hasPersonalityTests, case .signedIn(let user) = authState else { return false }
+        return !user.allowsAIAnalysis
     }
 
     private func setupSubscriptions() {
@@ -149,7 +157,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private func refreshContent(for user: UserModel) async {
         async let personality: Void = loadPersonality(for: user.id, ignoreCache: true, showErrorOnFailure: false)
 
-        if user.hasCompletedProfileInfo {
+        if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
             await loadDailyTip(for: user.id, showErrorOnFailure: false)
         }
 
@@ -259,6 +267,24 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     func signOut() {
         showSettings = false
         authService.signOut()
+    }
+
+    func deleteAccount() {
+        guard !isDeletingAccount else { return }
+
+        isDeletingAccount = true
+
+        Task {
+            do {
+                try await authService.deleteAccount()
+                showSettings = false
+            } catch {
+                alertMessage = error.localizedDescription
+                showDeleteAccountError = true
+            }
+
+            isDeletingAccount = false
+        }
     }
 
     func clearTextFields() {

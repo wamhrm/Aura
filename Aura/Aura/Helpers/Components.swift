@@ -107,6 +107,30 @@ struct CompleteProfileLock: View {
     }
 }
 
+struct AIConsentLock: View {
+    let title: String
+    let onAllow: () -> Void
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+
+    var body: some View {
+        VStack(spacing: 0) {
+            CompleteProfileLock(title: title)
+
+            Button(action: onAllow) {
+                Text("Разрешить")
+                    .font(Adaptive.size(.system(size: 15), .callout))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(AccentColorOption.color(accentColor))
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 11)
+                    .background(.white)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.fieldBorder, lineWidth: 1))
+            }
+        }
+    }
+}
+
 struct EmotionalProfileBar: View {
     let type: EmotionalProfileTypes
     let value: Int
