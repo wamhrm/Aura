@@ -21,5 +21,6 @@ extension Application {
         self.migrations.add(CreateIndexes())
         self.migrations.add(CreateTestUsages())
         self.migrations.add(AddAIConsent())
+        self.migrations.add(AddAppleSignIn())
     }
 }

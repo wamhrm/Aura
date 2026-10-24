@@ -25,6 +25,10 @@ protocol NetworkServiceProtocol: Sendable {
 
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
+    func signInWithApple(identityToken: String,
+                         authorizationCode: String?,
+                         nonce: String,
+                         name: String?) async throws -> AuthTokenResponse
     func logout(token: String) async throws
     func deleteAccount() async throws
     func giveAIConsent() async throws -> UserModel
@@ -76,6 +80,18 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
         let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData, authorization: .none)
+        return try decode(AuthTokenResponse.self, from: data)
+    }
+
+    func signInWithApple(identityToken: String,
+                         authorizationCode: String?,
+                         nonce: String,
+                         name: String?) async throws -> AuthTokenResponse {
+        let bodyData = try JSONEncoder().encode(AppleSignInBody(identityToken: identityToken,
+                                                                authorizationCode: authorizationCode,
+                                                                nonce: nonce,
+                                                                name: name))
+        let data = try await request(endpoint: "/auth/apple", method: .post, body: bodyData, authorization: .none)
         return try decode(AuthTokenResponse.self, from: data)
     }
 
@@ -260,6 +276,13 @@ private struct AuthSignUpBody: Encodable {
 private struct AuthSignInBody: Encodable {
     let email: String
     let password: String
+}
+
+private struct AppleSignInBody: Encodable {
+    let identityToken: String
+    let authorizationCode: String?
+    let nonce: String
+    let name: String?
 }
 
 nonisolated private struct ServerErrorResponse: Decodable {
