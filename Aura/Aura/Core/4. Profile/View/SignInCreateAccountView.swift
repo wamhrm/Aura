@@ -5,6 +5,7 @@
 //  Created by ddorsat on 07.05.2026.
 //
 
+import AuthenticationServices
 import SwiftUI
 
 struct SignInCreateAccountView: View {
@@ -12,6 +13,7 @@ struct SignInCreateAccountView: View {
     let type: SignInCreateAccountTypes
 
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 25) {
@@ -36,6 +38,7 @@ struct SignInCreateAccountView: View {
                         .clipShape(Circle())
                 }
             }
+            .dismissKeyboardOnTap()
 
             if type == .signIn {
                 VStack(spacing: 10) {
@@ -47,6 +50,7 @@ struct SignInCreateAccountView: View {
                     }
                     .padding(.top, 5)
                 }
+                .dismissKeyboardOnTap()
             } else {
                 VStack(spacing: 10) {
                     textFieldView(type: .name, field: $vm.name)
@@ -58,6 +62,7 @@ struct SignInCreateAccountView: View {
                     }
                     .padding(.top, 5)
                 }
+                .dismissKeyboardOnTap()
             }
 
             HStack(spacing: 15) {
@@ -71,11 +76,16 @@ struct SignInCreateAccountView: View {
                     .frame(height: 0.5)
             }
             .foregroundStyle(.gray)
+            .dismissKeyboardOnTap()
 
-            VStack(spacing: 10) {
-                SignInCreateAccountButtonView(vm: vm, type: .google) {}
-                SignInCreateAccountButtonView(vm: vm, type: .apple) {}
+            SignInWithAppleButton(.continue) { request in
+                vm.prepareAppleSignIn(request)
+            } onCompletion: { result in
+                vm.completeAppleSignIn(result)
             }
+            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+            .frame(height: 50)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
 
             if type == .signIn {
                 alreadyHaveAccountButtonsView(type: .signIn) {
@@ -92,12 +102,11 @@ struct SignInCreateAccountView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: type == .signIn ? Adaptive.size(470, 490) : Adaptive.size(550, 570))
+        .frame(height: type == .signIn ? Adaptive.size(410, 430) : Adaptive.size(490, 510))
         .padding(25)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.cardBackground))
+        .background(RoundedRectangle(cornerRadius: 12).fill(.cardBackground).dismissKeyboardOnTap())
         .padding(.horizontal)
         .disabled(vm.isLoading)
-        .dismissKeyboardOnTap()
         .scrollDismissesKeyboard(.interactively)
         .onDisappear {
             vm.clearTextFields()

@@ -5,6 +5,8 @@
 //  Created by ddorsat on 31.03.2026.
 //
 
+import AuthenticationServices
+import CryptoKit
 import Foundation
 import Combine
 import SwiftUI
@@ -49,6 +51,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private let maxSignInWait = 3.0
 
     private var signInAttempt = UUID()
+    private var appleSignInNonce: String?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -265,6 +268,35 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         }
     }
 
+    func prepareAppleSignIn(_ request: ASAuthorizationAppleIDRequest) {
+        let nonce = Self.makeNonce()
+        appleSignInNonce = nonce
+        request.requestedScopes = [.fullName]
+        request.nonce = Self.sha256(nonce)
+    }
+
+    func completeAppleSignIn(_ result: Result<ASAuthorization, any Error>) {
+        switch result {
+            case .success(let authorization):
+                guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                      let tokenData = credential.identityToken,
+                      let identityToken = String(data: tokenData, encoding: .utf8),
+                      let nonce = appleSignInNonce else {
+                    presentAlert("Не удалось войти через Apple")
+                    return
+                }
+
+                let authorizationCode = credential.authorizationCode.flatMap { String(data: $0, encoding: .utf8) }
+                signInWithApple(identityToken: identityToken,
+                                authorizationCode: authorizationCode,
+                                nonce: nonce,
+                                name: credential.fullName?.givenName)
+            case .failure(let error):
+                guard (error as? ASAuthorizationError)?.code != .canceled else { return }
+                presentAlert("Не удалось войти через Apple")
+        }
+    }
+
     func signOut() {
         showSettings = false
         showAlert = false
@@ -304,6 +336,26 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     func toggleSignInCreateView() {
         showSignIn.toggle()
         showCreateAccount.toggle()
+    }
+
+    private func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) {
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            await withServerWakeUpIndicator(after: .seconds(12)) {
+                do {
+                    try await authService.signInWithApple(identityToken: identityToken,
+                                                          authorizationCode: authorizationCode,
+                                                          nonce: nonce,
+                                                          name: name)
+                } catch {
+                    presentAlert(error.localizedDescription)
+                    isLoading = false
+                }
+            }
+        }
     }
 
     private func updateProfileDisplay() {
@@ -372,6 +424,15 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
             return "Пароль должен быть не короче \(AuthInput.minPasswordLength) символов"
         }
         return nil
+    }
+
+    private static func makeNonce() -> String {
+        let bytes = (0..<32).map { _ in UInt8.random(in: .min ... .max) }
+        return Data(bytes).base64EncodedString()
+    }
+
+    private static func sha256(_ value: String) -> String {
+        SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     private static func isValidEmail(_ email: String) -> Bool {

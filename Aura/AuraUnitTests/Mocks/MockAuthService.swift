@@ -36,6 +36,10 @@ final class MockAuthService: AuthServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
+    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         if let errorToThrow { throw errorToThrow }
         guard let updateProfileInfoResult else { throw MockError.notStubbed }
