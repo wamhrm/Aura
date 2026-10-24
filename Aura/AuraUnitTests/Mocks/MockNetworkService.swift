@@ -29,6 +29,14 @@ final class MockNetworkService: NetworkServiceProtocol {
         return authTokenResponse
     }
 
+    func signInWithApple(identityToken: String,
+                         authorizationCode: String?,
+                         nonce: String,
+                         name: String?) async throws -> AuthTokenResponse {
+        if let errorToThrow { throw errorToThrow }
+        return authTokenResponse
+    }
+
     func logout(token: String) async throws {
         logoutCallCount += 1
         if let errorToThrow { throw errorToThrow }

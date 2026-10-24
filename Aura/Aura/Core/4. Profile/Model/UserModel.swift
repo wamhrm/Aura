@@ -10,7 +10,7 @@ import Foundation
 struct UserModel: Codable, Equatable, Identifiable {
     let id: UUID
     let name: String
-    let email: String
+    let email: String?
     let dateOfBirth: String?
     let birthTime: String?
     let gender: String?

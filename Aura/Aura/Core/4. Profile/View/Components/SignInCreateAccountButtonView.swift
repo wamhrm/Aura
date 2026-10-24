@@ -26,30 +26,15 @@ struct SignInCreateAccountButtonView: View {
 
     var body: some View {
         Button(action: onTapHandler) {
-            HStack(spacing: 15) {
-                if type == .google {
-                    Image("google")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: 18, maxHeight: 18)
-                        .padding(.leading, 4)
-                        .clipped()
-                } else if type == .apple {
-                    Image(systemName: "apple.logo")
-                        .foregroundStyle(.white)
-                }
-                
-                Text(buttonTitle)
-                    .font(Adaptive.size(.caption, .system(size: 14)))
-                    .foregroundStyle(buttonForegroundColor)
-                    .padding(.leading, type == .apple ? 3 : 0)
-            }
-            .bold()
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(buttonBackgroundColor)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.black, lineWidth: 0.3))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            Text(buttonTitle)
+                .font(Adaptive.size(.caption, .system(size: 14)))
+                .foregroundStyle(buttonForegroundColor)
+                .bold()
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(buttonBackgroundColor)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(.black, lineWidth: 0.3))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
 }
@@ -63,16 +48,13 @@ extension SignInCreateAccountButtonView {
         switch type {
             case .signIn: AccentColorOption.color(accentColor)
             case .createAccount: isLanding ? .white : AccentColorOption.color(accentColor)
-            case .google: .white
-            case .apple: .black
         }
     }
 
     private var buttonForegroundColor: Color {
         switch type {
-            case .signIn, .apple: .white
+            case .signIn: .white
             case .createAccount: isLanding ? .black : .white
-            case .google: .black
         }
     }
 }
@@ -80,14 +62,11 @@ extension SignInCreateAccountButtonView {
 enum SignInCreateAccountButtonTypes: String {
     case signIn = "Войти"
     case createAccount = "Создать аккаунт"
-    case apple = "Apple"
-    case google = "Google"
 
     var loadingTitle: String {
         switch self {
             case .signIn: "Входим..."
             case .createAccount: "Создаем аккаунт..."
-            case .apple, .google: rawValue
         }
     }
 }
@@ -97,7 +76,7 @@ enum SignInCreateAccountButtonTypes: String {
     let contentService = ContentService()
     SignInCreateAccountButtonView(vm: ProfileViewModel(authService: authService,
                                                        contentService: contentService),
-                                  type: .google) {
+                                  type: .signIn) {
         
     }
     .padding(.horizontal)

@@ -17,8 +17,8 @@ final class User: Model, Authenticatable, @unchecked Sendable {
     @Field(key: "name")
     var name: String
 
-    @Field(key: "email")
-    var email: String
+    @OptionalField(key: "email")
+    var email: String?
 
     @OptionalField(key: "date_of_birth")
     var dateOfBirth: Date?
@@ -47,8 +47,14 @@ final class User: Model, Authenticatable, @unchecked Sendable {
     @OptionalField(key: "ai_consent_at")
     var aiConsentAt: Date?
 
-    @Field(key: "password_hash")
-    var passwordHash: String
+    @OptionalField(key: "password_hash")
+    var passwordHash: String?
+
+    @OptionalField(key: "apple_user_id")
+    var appleUserID: String?
+
+    @OptionalField(key: "apple_refresh_token")
+    var appleRefreshToken: String?
 
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
@@ -61,6 +67,11 @@ final class User: Model, Authenticatable, @unchecked Sendable {
         self.name = name
         self.email = email
         self.passwordHash = passwordHash
+    }
+
+    init(name: String, appleUserID: String) {
+        self.name = name
+        self.appleUserID = appleUserID
     }
 }
 
