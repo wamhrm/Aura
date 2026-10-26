@@ -45,7 +45,6 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var isResetCodeSent = false
 
     private var personalityResult: PersonalityResultModel?
-    private var compatibilityHistory: [HistoryCellModel] = []
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -106,8 +105,6 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                     personalityResult = nil
                 }
 
-                compatibilityHistory = storage.load(StorageKeys.history, for: user.id) ?? []
-
                 if user.hasCompletedProfileInfo {
                     dailyTip = storage.load(StorageKeys.dailyTip, for: user.id)
                 } else {
@@ -147,7 +144,6 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                     personalityResult = nil
                     dailyTip = nil
                     profileDisplay = nil
-                    compatibilityHistory = []
                     isSignedOut = true
                 }
         }
@@ -201,9 +197,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 
         do {
             let history = try await contentService.fetchHistory()
-            compatibilityHistory = history
             storage.save(history, for: StorageKeys.history, userId: userId)
-            updateProfileDisplay()
 
             guard let latest = history.first(where: { $0.kind == .personality }) else {
                 return clearPersonality(for: userId)
@@ -436,8 +430,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 
     private func updateProfileDisplay() {
         profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult,
-                                                  dailyTip: dailyTip,
-                                                  history: compatibilityHistory)
+                                                  dailyTip: dailyTip)
     }
 
     private func applyPersonality(result: PersonalityResultModel) {
