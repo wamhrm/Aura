@@ -7,12 +7,6 @@
 
 import Foundation
 
-struct BestCompatibilityDisplay: Equatable {
-    let partnerZodiacSign: String
-    let partnerName: String
-    let score: Int
-}
-
 struct ProfileDisplayModel: Equatable {
     let dailyTip: String
     let overview: String
@@ -23,15 +17,13 @@ struct ProfileDisplayModel: Equatable {
     let organization: Int
     let relationships: Int
     let zodiacSignTitle: String?
-    let bestCompatibility: BestCompatibilityDisplay?
 }
 
 extension ProfileDisplayModel {
     static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
     
     static func make(personalityResult: PersonalityResultModel?,
-                     dailyTip: DailyContentModel?,
-                     history: [HistoryCellModel] = []) -> ProfileDisplayModel {
+                     dailyTip: DailyContentModel?) -> ProfileDisplayModel {
         ProfileDisplayModel(
             dailyTip: dailyTip?.text ?? ProfileDisplayPlaceholder.dailyTip,
             overview: personalityResult?.overview.description ?? ProfileDisplayPlaceholder.overview,
@@ -41,8 +33,7 @@ extension ProfileDisplayModel {
             thinking: barValue(.thinking, from: personalityResult) ?? ProfileDisplayPlaceholder.thinking,
             organization: barValue(.organization, from: personalityResult) ?? ProfileDisplayPlaceholder.organization,
             relationships: barValue(.relationships, from: personalityResult) ?? ProfileDisplayPlaceholder.relationships,
-            zodiacSignTitle: zodiacSignTitle(from: personalityResult?.zodiacSign),
-            bestCompatibility: bestCompatibility(from: history))
+            zodiacSignTitle: zodiacSignTitle(from: personalityResult?.zodiacSign))
     }
 
     private static func sectionItem(_ title: PersonalityCellTypes,
@@ -53,20 +44,6 @@ extension ProfileDisplayModel {
     private static func barValue(_ title: EmotionalProfileTypes,
                                  from result: PersonalityResultModel?) -> Int? {
         result?.emotionalBar.first(where: { $0.title == title })?.value
-    }
-
-    private static func bestCompatibility(from history: [HistoryCellModel]) -> BestCompatibilityDisplay? {
-        history
-            .filter { $0.kind == .compatibility }
-            .compactMap { cell -> BestCompatibilityDisplay? in
-                guard let score = cell.resolvedCompatibilityScore,
-                      let partnerName = cell.resolvedPartnerName else { return nil }
-
-                return BestCompatibilityDisplay(partnerZodiacSign: cell.resolvedPartnerZodiacSign ?? "",
-                                                partnerName: partnerName.capitalized,
-                                                score: score)
-            }
-            .max(by: { $0.score < $1.score })
     }
 
     private static func zodiacSignTitle(from sign: String?) -> String? {

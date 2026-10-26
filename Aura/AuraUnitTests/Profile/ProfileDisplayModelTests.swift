@@ -10,7 +10,7 @@ import XCTest
 final class ProfileDisplayModelTests: XCTestCase {
     func test_make_withoutDailyTip_usesPlaceholder() {
         // Given / When
-        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil, history: [])
+        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
 
         // Then
         XCTAssertFalse(result.dailyTip.isEmpty)
@@ -21,40 +21,9 @@ final class ProfileDisplayModelTests: XCTestCase {
         let tip = DailyContentModel(id: UUID(), text: "Мой совет дня", dateCreated: "2026-01-01")
 
         // When
-        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: tip, history: [])
+        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: tip)
 
         // Then
         XCTAssertEqual(result.dailyTip, "Мой совет дня")
-    }
-
-    func test_make_withEmptyHistory_hasNoBestCompatibility() {
-        // Given / When
-        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil, history: [])
-
-        // Then
-        XCTAssertNil(result.bestCompatibility)
-    }
-
-    func test_make_withCompatibilityHistory_setsBestCompatibility() {
-        // Given
-        let history = [HistoryCellModel.compatibilityPlaceholder]
-
-        // When
-        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil, history: history)
-
-        // Then
-        XCTAssertEqual(result.bestCompatibility?.score, CompabilityResultModel.mock.compatibilityScore)
-        XCTAssertEqual(result.bestCompatibility?.partnerName, CompabilityResultModel.mock.partnerNameCapitalized)
-    }
-
-    func test_make_withPersonalityHistoryOnly_hasNoBestCompatibility() {
-        // Given
-        let history = [HistoryCellModel.personalityPlaceholder]
-
-        // When
-        let result = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil, history: history)
-
-        // Then
-        XCTAssertNil(result.bestCompatibility)
     }
 }
