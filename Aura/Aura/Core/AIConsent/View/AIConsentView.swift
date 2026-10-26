@@ -12,28 +12,7 @@ struct AIConsentView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 15) {
-                    headerView()
-
-                    Text("Инсайт и совет дня, тесты личности и совместимости составляет сервис искусственного интеллекта OpenAI (США). Для этого Aura передаёт ему:")
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        bulletText("дату и время рождения, пол и ответы анкеты;")
-                        bulletText("для теста совместимости — дату рождения или возраст, время рождения и пол партнёра.")
-                    }
-
-                    Text("Имена и адрес почты не передаются. Гороскоп работает и без этого разрешения.")
-
-                    if let url = Constants.privacyPolicyURL {
-                        Link("Политика конфиденциальности", destination: url)
-                            .fontWeight(.semibold)
-                    }
-                }
-                .font(Adaptive.size(.system(size: 14), .callout))
-                .padding(.top, 30)
-            }
-            .scrollIndicators(.hidden)
+            AIConsentContentView()
 
             VStack(spacing: 5) {
                 ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Разрешить") {
@@ -61,7 +40,34 @@ struct AIConsentView: View {
     }
 }
 
-extension AIConsentView {
+struct AIConsentContentView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                headerView()
+
+                Text("Инсайт и совет дня, тесты личности и совместимости составляет сервис искусственного интеллекта OpenAI (США). Для этого Aura передаёт ему:")
+
+                VStack(alignment: .leading, spacing: 8) {
+                    bulletText("дату и время рождения, пол и ответы анкеты;")
+                    bulletText("для теста совместимости — дату рождения или возраст, время рождения и пол партнёра.")
+                }
+
+                Text("Имена и адрес почты не передаются. Гороскоп работает и без этого разрешения.")
+
+                if let url = Constants.privacyPolicyURL {
+                    Link("Политика конфиденциальности", destination: url)
+                        .fontWeight(.semibold)
+                }
+            }
+            .font(Adaptive.size(.system(size: 14), .callout))
+            .padding(.top, 30)
+        }
+        .scrollIndicators(.hidden)
+    }
+}
+
+extension AIConsentContentView {
     private func headerView() -> some View {
         VStack(spacing: 15) {
             Image(systemName: "sparkles")

@@ -32,9 +32,9 @@ struct AuraApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView(authService: authService,
-                        contentService: contentService,
-                        storage: storage)
+            RootView(authService: authService,
+                     contentService: contentService,
+                     storage: storage)
                 .preferredColorScheme(selectedTheme.colorScheme)
                 .tint(AccentColorOption.color(accentColor))
         }
