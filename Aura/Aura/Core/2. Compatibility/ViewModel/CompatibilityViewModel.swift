@@ -26,7 +26,6 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published private(set) var isLoading = false
-    @Published var isServerWakingUp = false
     @Published private(set) var needsAIConsent = false
 
     private let authService: any AuthServiceProtocol
@@ -89,15 +88,13 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(20)) {
-                do {
-                    try validatePartnerInfoForms()
-                    let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
-                    compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
-                    compatibilityRoutes.append(.compatibilityResults)
-                } catch {
-                    presentAlert(error.localizedDescription)
-                }
+            do {
+                try validatePartnerInfoForms()
+                let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
+                compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
+                compatibilityRoutes.append(.compatibilityResults)
+            } catch {
+                presentAlert(error.localizedDescription)
             }
             
             isLoading = false

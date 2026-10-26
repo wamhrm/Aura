@@ -365,7 +365,7 @@ fileprivate enum NetworkError: LocalizedError {
             case .server(let message):
                 return message
             case .timedOut:
-                return "Сервер просыпается дольше обычного. Попробуйте ещё раз через минуту"
+                return "Сервер не ответил вовремя. Попробуйте ещё раз"
             case .noConnection:
                 return "Нет подключения к интернету"
             case .cannotReachServer:

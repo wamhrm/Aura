@@ -30,7 +30,6 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published private(set) var isLoading = false
-    @Published var isServerWakingUp = false
     @Published private(set) var hasPersonalityTests = false
     @Published private(set) var isSignedOut = false
     @Published var showSettings = false
@@ -233,13 +232,11 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(12)) {
-                do {
-                    try await authService.createAccount(name: name, email: email, password: password)
-                } catch {
-                    presentAlert(error.localizedDescription)
-                    isLoading = false
-                }
+            do {
+                try await authService.createAccount(name: name, email: email, password: password)
+            } catch {
+                presentAlert(error.localizedDescription)
+                isLoading = false
             }
         }
     }
@@ -257,13 +254,11 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(12)) {
-                do {
-                    try await authService.signIn(email: email, password: password)
-                } catch {
-                    presentAlert(error.localizedDescription)
-                    isLoading = false
-                }
+            do {
+                try await authService.signIn(email: email, password: password)
+            } catch {
+                presentAlert(error.localizedDescription)
+                isLoading = false
             }
         }
     }
@@ -344,16 +339,14 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(12)) {
-                do {
-                    try await authService.signInWithApple(identityToken: identityToken,
-                                                          authorizationCode: authorizationCode,
-                                                          nonce: nonce,
-                                                          name: name)
-                } catch {
-                    presentAlert(error.localizedDescription)
-                    isLoading = false
-                }
+            do {
+                try await authService.signInWithApple(identityToken: identityToken,
+                                                      authorizationCode: authorizationCode,
+                                                      nonce: nonce,
+                                                      name: name)
+            } catch {
+                presentAlert(error.localizedDescription)
+                isLoading = false
             }
         }
     }

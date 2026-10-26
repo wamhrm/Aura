@@ -23,7 +23,6 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
     @Published var alertMessage = ""
     @Published private(set) var isSignedIn = false
     @Published private(set) var isLoading = false
-    @Published var isServerWakingUp = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -70,7 +69,6 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
             case .signedOut:
                 currentUserId = nil
                 isSignedIn = false
-                isServerWakingUp = false
                 historyCells = []
                 historyRoutes = []
         }
@@ -111,32 +109,30 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     func openHistoryCellDetails(_ item: HistoryCellModel) {
-        guard !isServerWakingUp && !isLoading else { return }
+        guard !isLoading else { return }
         
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(8)) {
-                do {
-                    let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
+            do {
+                let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
 
-                    switch historyDetails.kind {
-                        case .personality:
-                            guard let result = historyDetails.personalityResult else {
-                                presentAlert("Не удалось открыть результат")
-                                return
-                            }
-                            historyRoutes.append(.personalityResult(result))
-                        case .compatibility:
-                            guard let result = historyDetails.compatibilityResult else {
-                                presentAlert("Не удалось открыть результат")
-                                return
-                            }
-                            historyRoutes.append(.compatibilityResult(result))
-                    }
-                } catch {
-                    presentAlert("Не удалось открыть результат")
+                switch historyDetails.kind {
+                    case .personality:
+                        guard let result = historyDetails.personalityResult else {
+                            presentAlert("Не удалось открыть результат")
+                            return
+                        }
+                        historyRoutes.append(.personalityResult(result))
+                    case .compatibility:
+                        guard let result = historyDetails.compatibilityResult else {
+                            presentAlert("Не удалось открыть результат")
+                            return
+                        }
+                        historyRoutes.append(.compatibilityResult(result))
                 }
+            } catch {
+                presentAlert("Не удалось открыть результат")
             }
             
             isLoading = false
