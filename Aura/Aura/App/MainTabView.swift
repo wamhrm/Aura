@@ -21,7 +21,8 @@ struct MainTabView: View {
 
     init(authService: AuthService,
          contentService: ContentService,
-         storage: any LocalStorageProtocol = LocalStorage()) {
+         storage: any LocalStorageProtocol = LocalStorage(),
+         promptsAIConsentAutomatically: Bool = true) {
         self.authService = authService
         self.contentService = contentService
 
@@ -40,7 +41,8 @@ struct MainTabView: View {
             authService: authService,
             contentService: contentService,
             storage: storage))
-        _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(authService: authService))
+        _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(authService: authService,
+                                                                           promptsAutomatically: promptsAIConsentAutomatically))
     }
 
     var body: some View {
@@ -81,7 +83,6 @@ struct MainTabView: View {
                 Image(systemName: Tabs.profile.icon)
             }
         }
-        .disabled(profileViewModel.isLoading)
         .tabBarMinimizeBehavior(.never)
         .sheet(isPresented: $aiConsentViewModel.showConsent) {
             AIConsentView(vm: aiConsentViewModel)

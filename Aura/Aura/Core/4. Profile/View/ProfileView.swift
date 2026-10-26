@@ -21,8 +21,7 @@ struct ProfileView: View {
                         SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
                     case .signedOut:
-                        SignedOutView(vm: vm)
-                            .transition(.opacity.combined(with: .move(edge: .leading)))
+                        BackgroundView()
                 }
             }
             .navigationTitle("Профиль")

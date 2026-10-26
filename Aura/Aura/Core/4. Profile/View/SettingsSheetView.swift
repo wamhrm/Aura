@@ -112,7 +112,6 @@ extension SettingsSheetView {
             vm.signOut()
             dismiss()
         }
-        .disabled(vm.isLoading)
     }
 
     @ViewBuilder
