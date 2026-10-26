@@ -18,6 +18,16 @@ struct SignInRequest: Content {
     let password: String
 }
 
+struct ForgotPasswordRequest: Content {
+    let email: String
+}
+
+struct ResetPasswordRequest: Content {
+    let email: String
+    let code: String
+    let password: String
+}
+
 struct AppleSignInRequest: Content {
     let identityToken: String
     let authorizationCode: String?

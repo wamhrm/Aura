@@ -39,6 +39,10 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var isDeletingAccount = false
     @Published var showSignIn = false
     @Published var showCreateAccount = false
+    @Published var showPasswordReset = false
+    @Published var resetCode = ""
+    @Published var newPassword = ""
+    @Published private(set) var isResetCodeSent = false
 
     private var personalityResult: PersonalityResultModel?
     private var compatibilityHistory: [HistoryCellModel] = []
@@ -61,6 +65,13 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         self.storage = storage
 
         setupSubscriptions()
+    }
+
+    var authCardType: SignInCreateAccountTypes? {
+        if showSignIn { return .signIn }
+        if showCreateAccount { return .createAccount }
+        if showPasswordReset { return .resetPassword }
+        return nil
     }
 
     var needsAIConsent: Bool {
@@ -263,6 +274,60 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         }
     }
 
+    func requestPasswordReset() {
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let message = emailError(email) {
+            presentAlert(message)
+            return
+        }
+
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            do {
+                try await authService.requestPasswordReset(email: email)
+                withAnimation(.easeInOut(duration: transitionDuration)) {
+                    isResetCodeSent = true
+                }
+            } catch {
+                presentAlert(error.localizedDescription)
+            }
+
+            isLoading = false
+        }
+    }
+
+    func resetPassword() {
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let code = resetCode.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard code.count == ResetInput.codeLength, code.allSatisfy(\.isNumber) else {
+            presentAlert("Введите 6-значный код из письма")
+            return
+        }
+
+        if let message = passwordError(newPassword) {
+            presentAlert(message)
+            return
+        }
+
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            do {
+                try await authService.resetPassword(email: email, code: code, newPassword: newPassword)
+            } catch {
+                presentAlert(error.localizedDescription)
+                isLoading = false
+            }
+        }
+    }
+
     func prepareAppleSignIn(_ request: ASAuthorizationAppleIDRequest) {
         let nonce = Self.makeNonce()
         appleSignInNonce = nonce
@@ -321,11 +386,29 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         name = ""
         email = ""
         password = ""
+        resetCode = ""
+        newPassword = ""
     }
     
     func dismissSignInCreateViews() {
         showSignIn = false
         showCreateAccount = false
+        showPasswordReset = false
+        isResetCodeSent = false
+    }
+
+    func showPasswordResetView() {
+        showSignIn = false
+        showCreateAccount = false
+        isResetCodeSent = false
+        resetCode = ""
+        newPassword = ""
+        showPasswordReset = true
+    }
+
+    func showSignInView() {
+        showPasswordReset = false
+        showSignIn = true
     }
 
     func toggleSignInCreateView() {
@@ -440,4 +523,8 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
 private enum AuthInput {
     static let minPasswordLength = 6
     static let minNameLength = 2
+}
+
+private enum ResetInput {
+    static let codeLength = 6
 }

@@ -18,7 +18,7 @@ struct SignInCreateAccountView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 25) {
             HStack {
-                Text(type == .signIn ? "Войти" : "Создать аккаунт")
+                Text(type.rawValue)
                     .font(Adaptive.size(.title3, .title2))
                     .fontWeight(.semibold)
 
@@ -40,69 +40,83 @@ struct SignInCreateAccountView: View {
             }
             .dismissKeyboardOnTap()
 
-            if type == .signIn {
-                VStack(spacing: 10) {
-                    textFieldView(type: .email, field: $vm.email)
-                    textFieldView(type: .password, field: $vm.password)
-                    SignInCreateAccountButtonView(vm: vm,
-                                                  type: .signIn) {
-                        vm.signIn()
+            switch type {
+                case .signIn:
+                    VStack(spacing: 10) {
+                        textFieldView(type: .email, field: $vm.email)
+                        textFieldView(type: .password, field: $vm.password)
+                        forgotPasswordButtonView()
+                        SignInCreateAccountButtonView(vm: vm,
+                                                      type: .signIn) {
+                            vm.signIn()
+                        }
+                        .padding(.top, 5)
                     }
-                    .padding(.top, 5)
+                    .dismissKeyboardOnTap()
+                case .createAccount:
+                    VStack(spacing: 10) {
+                        textFieldView(type: .name, field: $vm.name)
+                        textFieldView(type: .email, field: $vm.email)
+                        textFieldView(type: .password, field: $vm.password)
+                        SignInCreateAccountButtonView(vm: vm,
+                                                      type: .createAccount) {
+                            vm.createAccount()
+                        }
+                        .padding(.top, 5)
+                    }
+                    .dismissKeyboardOnTap()
+                case .resetPassword:
+                    resetPasswordView()
+                        .dismissKeyboardOnTap()
+            }
+
+            if type != .resetPassword {
+                HStack(spacing: 15) {
+                    Rectangle()
+                        .frame(height: 0.5)
+
+                    Text("или")
+                        .font(Adaptive.size(.callout, .system(size: 15)))
+
+                    Rectangle()
+                        .frame(height: 0.5)
                 }
+                .foregroundStyle(.gray)
                 .dismissKeyboardOnTap()
-            } else {
-                VStack(spacing: 10) {
-                    textFieldView(type: .name, field: $vm.name)
-                    textFieldView(type: .email, field: $vm.email)
-                    textFieldView(type: .password, field: $vm.password)
-                    SignInCreateAccountButtonView(vm: vm,
-                                                  type: .createAccount) {
-                        vm.createAccount()
-                    }
-                    .padding(.top, 5)
+
+                SignInWithAppleButton(.continue) { request in
+                    vm.prepareAppleSignIn(request)
+                } onCompletion: { result in
+                    vm.completeAppleSignIn(result)
                 }
-                .dismissKeyboardOnTap()
+                .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
+                .frame(height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
 
-            HStack(spacing: 15) {
-                Rectangle()
-                    .frame(height: 0.5)
-
-                Text("или")
-                    .font(Adaptive.size(.callout, .system(size: 15)))
-
-                Rectangle()
-                    .frame(height: 0.5)
-            }
-            .foregroundStyle(.gray)
-            .dismissKeyboardOnTap()
-
-            SignInWithAppleButton(.continue) { request in
-                vm.prepareAppleSignIn(request)
-            } onCompletion: { result in
-                vm.completeAppleSignIn(result)
-            }
-            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-            .frame(height: 50)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-
-            if type == .signIn {
-                alreadyHaveAccountButtonsView(type: .signIn) {
-                    withAnimation {
-                        vm.toggleSignInCreateView()
+            switch type {
+                case .signIn:
+                    alreadyHaveAccountButtonsView(type: .signIn) {
+                        withAnimation {
+                            vm.toggleSignInCreateView()
+                        }
                     }
-                }
-            } else {
-                alreadyHaveAccountButtonsView(type: .alreadyHaveAccount) {
-                    withAnimation {
-                        vm.toggleSignInCreateView()
+                case .createAccount:
+                    alreadyHaveAccountButtonsView(type: .alreadyHaveAccount) {
+                        withAnimation {
+                            vm.toggleSignInCreateView()
+                        }
                     }
-                }
+                case .resetPassword:
+                    alreadyHaveAccountButtonsView(type: .rememberedPassword) {
+                        withAnimation {
+                            vm.showSignInView()
+                        }
+                    }
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: type == .signIn ? Adaptive.size(410, 430) : Adaptive.size(490, 510))
+        .frame(height: cardHeight)
         .padding(25)
         .background(RoundedRectangle(cornerRadius: 12).fill(.cardBackground).dismissKeyboardOnTap())
         .padding(.horizontal)
@@ -116,6 +130,67 @@ struct SignInCreateAccountView: View {
 }
 
 extension SignInCreateAccountView {
+    private var cardHeight: CGFloat {
+        switch type {
+            case .signIn: Adaptive.size(440, 460)
+            case .createAccount: Adaptive.size(490, 510)
+            case .resetPassword: vm.isResetCodeSent ? Adaptive.size(430, 450) : Adaptive.size(300, 320)
+        }
+    }
+
+    private func forgotPasswordButtonView() -> some View {
+        Button {
+            withAnimation {
+                vm.showPasswordResetView()
+            }
+        } label: {
+            Text("Забыли пароль?")
+                .font(Adaptive.size(.footnote, .callout))
+                .foregroundStyle(.blue)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+
+    @ViewBuilder
+    private func resetPasswordView() -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(vm.isResetCodeSent
+                 ? "Если аккаунт с почтой \(vm.email) есть, мы отправили на неё код. Он действует 15 минут."
+                 : "Введите почту аккаунта, и мы отправим на неё код для сброса пароля.")
+                .font(Adaptive.size(.footnote, .callout))
+                .foregroundStyle(.signInCreateAccountField)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 5)
+
+            if vm.isResetCodeSent {
+                textFieldView(type: .code, field: $vm.resetCode)
+                textFieldView(type: .newPassword, field: $vm.newPassword)
+                SignInCreateAccountButtonView(vm: vm,
+                                              type: .resetPassword) {
+                    vm.resetPassword()
+                }
+                .padding(.top, 5)
+
+                Button {
+                    vm.requestPasswordReset()
+                } label: {
+                    Text("Отправить код ещё раз")
+                        .font(Adaptive.size(.footnote, .callout))
+                        .foregroundStyle(.blue)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 5)
+            } else {
+                textFieldView(type: .email, field: $vm.email)
+                SignInCreateAccountButtonView(vm: vm,
+                                              type: .sendCode) {
+                    vm.requestPasswordReset()
+                }
+                .padding(.top, 5)
+            }
+        }
+    }
+
     private func alreadyHaveAccountButtonsView(type: AlreadyHaveAccountButtonTypes,
                                                onTapHandler: @escaping () -> Void) -> some View {
         Button(action: onTapHandler) {
@@ -144,13 +219,14 @@ extension SignInCreateAccountView {
                 .fontWeight(.semibold)
 
             Group {
-                if type == .password {
+                if type == .password || type == .newPassword {
                     SecureField(type.textField, text: field)
                         .textInputAutocapitalization(.never)
                 } else {
                     TextField(type.textField, text: field)
-                        .keyboardType(type == .email ? .emailAddress : .default)
-                        .textInputAutocapitalization(type == .email ? .never : .words)
+                        .keyboardType(type.keyboardType)
+                        .textContentType(type == .code ? .oneTimeCode : nil)
+                        .textInputAutocapitalization(type == .name ? .words : .never)
                 }
             }
             .font(Adaptive.size(.footnote, .callout))
@@ -158,7 +234,7 @@ extension SignInCreateAccountView {
             .padding(.leading)
             .background(.signInCreateAccountFieldButton)
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            .autocorrectionDisabled(type == .email || type == .password)
+            .autocorrectionDisabled(type != .name)
         }
     }
 }
@@ -166,16 +242,18 @@ extension SignInCreateAccountView {
 enum SignInCreateAccountTypes: String {
     case signIn = "Войти"
     case createAccount = "Создать аккаунт"
+    case resetPassword = "Сброс пароля"
 }
 
 fileprivate enum AlreadyHaveAccountButtonTypes: String {
     case signIn = "Нет аккаунта?"
     case alreadyHaveAccount = "Уже есть аккаунт?"
+    case rememberedPassword = "Вспомнили пароль?"
 
     var buttonTitle: String {
         switch self {
             case .signIn: "Создать аккаунт"
-            case .alreadyHaveAccount: "Войти"
+            case .alreadyHaveAccount, .rememberedPassword: "Войти"
         }
     }
 }
@@ -184,12 +262,24 @@ fileprivate enum TextFieldTypes: String {
     case name = "Имя"
     case email = "Почта"
     case password = "Пароль"
+    case code = "Код из письма"
+    case newPassword = "Новый пароль"
 
     var textField: String {
         switch self {
             case .name: "Введите ваше имя"
             case .email: "Введите вашу почту"
             case .password: "Введите ваш пароль"
+            case .code: "Введите 6 цифр"
+            case .newPassword: "Придумайте новый пароль"
+        }
+    }
+
+    var keyboardType: UIKeyboardType {
+        switch self {
+            case .email: .emailAddress
+            case .code: .numberPad
+            case .name, .password, .newPassword: .default
         }
     }
 }

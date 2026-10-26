@@ -40,6 +40,14 @@ final class MockAuthService: AuthServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
+    func requestPasswordReset(email: String) async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
+    func resetPassword(email: String, code: String, newPassword: String) async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         if let errorToThrow { throw errorToThrow }
         guard let updateProfileInfoResult else { throw MockError.notStubbed }

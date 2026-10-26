@@ -22,5 +22,6 @@ extension Application {
         self.migrations.add(CreateTestUsages())
         self.migrations.add(AddAIConsent())
         self.migrations.add(AddAppleSignIn())
+        self.migrations.add(CreatePasswordResets())
     }
 }
