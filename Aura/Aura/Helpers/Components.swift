@@ -165,28 +165,6 @@ struct EmotionalProfileBar: View {
     }
 }
 
-struct ServerWakingUpView: View {
-    let isVisible: Bool
-
-    var body: some View {
-        VStack(spacing: 30) {
-            ProgressView()
-
-            VStack(spacing: 20) {
-                Text("Сервер просыпается. Первый запуск может занять до 50 секунд.")
-                    .lineSpacing(3)
-
-                Text("Пожалуйста, ожидайте.")
-            }
-            .font(.callout)
-            .bold()
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 55)
-        }
-        .animation(.easeInOut(duration: 0.25), value: isVisible)
-    }
-}
-
 enum EmotionalProfileTypes: String, Codable {
     case temperament = "Темперамент"
     case thinking = "Мышление"

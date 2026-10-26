@@ -35,7 +35,6 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     @Published private(set) var hasProfileInfo = false
     @Published private(set) var hasAIConsent = false
     @Published private(set) var isLoading = false
-    @Published var isServerWakingUp = false
     @Published private(set) var isLoadingScreen = true
 
     private let authService: any AuthServiceProtocol
@@ -117,27 +116,25 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         isLoading = true
 
         Task {
-            await withServerWakeUpIndicator(after: .seconds(20)) {
-                do {
-                    try validateProfileInfoForms()
+            do {
+                try validateProfileInfoForms()
 
-                    let response = try await authService.updateProfileInfo(profileInfo)
-                    profileInfo = response.user.profileInfo
-                    hasProfileInfo = response.user.hasCompletedProfileInfo
-                    hasAIConsent = response.user.allowsAIAnalysis
-                    if let horoscope = response.horoscope {
-                        self.horoscope = horoscope
-                        storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
-                    } else {
-                        await loadHoroscope(for: response.user.id, showErrorOnFailure: false)
-                    }
-                    if hasAIConsent {
-                        await loadDailyInsight(for: response.user.id)
-                    }
-                    onSuccess()
-                } catch {
-                    presentAlert(error.localizedDescription)
+                let response = try await authService.updateProfileInfo(profileInfo)
+                profileInfo = response.user.profileInfo
+                hasProfileInfo = response.user.hasCompletedProfileInfo
+                hasAIConsent = response.user.allowsAIAnalysis
+                if let horoscope = response.horoscope {
+                    self.horoscope = horoscope
+                    storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
+                } else {
+                    await loadHoroscope(for: response.user.id, showErrorOnFailure: false)
                 }
+                if hasAIConsent {
+                    await loadDailyInsight(for: response.user.id)
+                }
+                onSuccess()
+            } catch {
+                presentAlert(error.localizedDescription)
             }
             
             isLoading = false
@@ -162,13 +159,11 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         Task {
             isLoading = true
 
-            await withServerWakeUpIndicator(after: .seconds(20)) {
-                do {
-                    personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
-                    homeRoutes.append(.testResults)
-                } catch {
-                    presentAlert((error as? LocalizedError)?.errorDescription ?? "Не удалось получить результат")
-                }
+            do {
+                personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
+                homeRoutes.append(.testResults)
+            } catch {
+                presentAlert((error as? LocalizedError)?.errorDescription ?? "Не удалось получить результат")
             }
 
             isLoading = false

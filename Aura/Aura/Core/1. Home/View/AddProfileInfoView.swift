@@ -17,89 +17,84 @@ struct AddProfileInfoView: View {
         ZStack {
             BackgroundView()
 
-            if vm.isServerWakingUp {
-                ServerWakingUpView(isVisible: vm.isServerWakingUp)
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        section("Ваш пол") {
-                            HStack {
-                                option(.man, $vm.profileInfo.gender)
-                                option(.woman, $vm.profileInfo.gender)
-                            }
+            ScrollView {
+                VStack(spacing: 16) {
+                    section("Ваш пол") {
+                        HStack {
+                            option(.man, $vm.profileInfo.gender)
+                            option(.woman, $vm.profileInfo.gender)
                         }
-
-                        section("Дата рождения") {
-                            VStack(spacing: 10) {
-                                CompatibilityDateOfBirthView(title: "День/Месяц/Год",
-                                                             text: $vm.profileInfo.dateOfBirth,
-                                                             isTime: false)
-
-                                CompatibilityDateOfBirthView(title: "Время (необязательно)",
-                                                             text: $vm.profileInfo.birthTime,
-                                                             isTime: true)
-                            }
-                        }
-
-                        section("Темперамент") {
-                            FlowLayout() {
-                                option(.introvert, $vm.profileInfo.socialType)
-                                option(.ambivert, $vm.profileInfo.socialType)
-                                option(.extrovert, $vm.profileInfo.socialType)
-                            }
-                        }
-
-                        section("Стиль в конфликте") {
-                            FlowLayout() {
-                                option(.mediator, $vm.profileInfo.conflictStyle)
-                                option(.direct, $vm.profileInfo.conflictStyle)
-                                option(.avoider, $vm.profileInfo.conflictStyle)
-                            }
-                        }
-
-                        section("Эмоциональная основа") {
-                            FlowLayout() {
-                                option(.logic, $vm.profileInfo.emotionalCore)
-                                option(.intuitive, $vm.profileInfo.emotionalCore)
-                            }
-                        }
-
-                        section("Вы чаще") {
-                            FlowLayout() {
-                                option(.planner, $vm.profileInfo.decisionStyle)
-                                option(.spontaneous, $vm.profileInfo.decisionStyle)
-                                option(.procrastinator, $vm.profileInfo.decisionStyle)
-                            }
-                        }
-
-                        section("Приоритет") {
-                            FlowLayout() {
-                                option(.stability, $vm.profileInfo.coreFocus)
-                                option(.growth, $vm.profileInfo.coreFocus)
-                                option(.peace, $vm.profileInfo.coreFocus)
-                            }
-                        }
-
-                        ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Готово") {
-                            vm.saveProfileInfo {
-                                dismiss()
-                            }
-                        }
-                        .padding(.top, 5)
-                        .disabled(vm.isLoading)
                     }
+
+                    section("Дата рождения") {
+                        VStack(spacing: 10) {
+                            CompatibilityDateOfBirthView(title: "День/Месяц/Год",
+                                                         text: $vm.profileInfo.dateOfBirth,
+                                                         isTime: false)
+
+                            CompatibilityDateOfBirthView(title: "Время (необязательно)",
+                                                         text: $vm.profileInfo.birthTime,
+                                                         isTime: true)
+                        }
+                    }
+
+                    section("Темперамент") {
+                        FlowLayout() {
+                            option(.introvert, $vm.profileInfo.socialType)
+                            option(.ambivert, $vm.profileInfo.socialType)
+                            option(.extrovert, $vm.profileInfo.socialType)
+                        }
+                    }
+
+                    section("Стиль в конфликте") {
+                        FlowLayout() {
+                            option(.mediator, $vm.profileInfo.conflictStyle)
+                            option(.direct, $vm.profileInfo.conflictStyle)
+                            option(.avoider, $vm.profileInfo.conflictStyle)
+                        }
+                    }
+
+                    section("Эмоциональная основа") {
+                        FlowLayout() {
+                            option(.logic, $vm.profileInfo.emotionalCore)
+                            option(.intuitive, $vm.profileInfo.emotionalCore)
+                        }
+                    }
+
+                    section("Вы чаще") {
+                        FlowLayout() {
+                            option(.planner, $vm.profileInfo.decisionStyle)
+                            option(.spontaneous, $vm.profileInfo.decisionStyle)
+                            option(.procrastinator, $vm.profileInfo.decisionStyle)
+                        }
+                    }
+
+                    section("Приоритет") {
+                        FlowLayout() {
+                            option(.stability, $vm.profileInfo.coreFocus)
+                            option(.growth, $vm.profileInfo.coreFocus)
+                            option(.peace, $vm.profileInfo.coreFocus)
+                        }
+                    }
+
+                    ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Готово") {
+                        vm.saveProfileInfo {
+                            dismiss()
+                        }
+                    }
+                    .padding(.top, 5)
                     .disabled(vm.isLoading)
-                    .padding(.horizontal)
                 }
-                .bottomAreaPadding(50)
-                .scrollIndicators(.hidden)
-                .dismissKeyboardOnTap()
-                .scrollDismissesKeyboard(.interactively)
+                .disabled(vm.isLoading)
+                .padding(.horizontal)
             }
+            .bottomAreaPadding(50)
+            .scrollIndicators(.hidden)
+            .dismissKeyboardOnTap()
+            .scrollDismissesKeyboard(.interactively)
         }
         .navigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
-        .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }
