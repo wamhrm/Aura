@@ -46,14 +46,14 @@ extension SignInCreateAccountButtonView {
 
     private var buttonBackgroundColor: Color {
         switch type {
-            case .signIn: AccentColorOption.color(accentColor)
+            case .signIn, .sendCode, .resetPassword: AccentColorOption.color(accentColor)
             case .createAccount: isLanding ? .white : AccentColorOption.color(accentColor)
         }
     }
 
     private var buttonForegroundColor: Color {
         switch type {
-            case .signIn: .white
+            case .signIn, .sendCode, .resetPassword: .white
             case .createAccount: isLanding ? .black : .white
         }
     }
@@ -62,11 +62,15 @@ extension SignInCreateAccountButtonView {
 enum SignInCreateAccountButtonTypes: String {
     case signIn = "Войти"
     case createAccount = "Создать аккаунт"
+    case sendCode = "Отправить код"
+    case resetPassword = "Сохранить пароль"
 
     var loadingTitle: String {
         switch self {
             case .signIn: "Входим..."
             case .createAccount: "Создаем аккаунт..."
+            case .sendCode: "Отправляем..."
+            case .resetPassword: "Сохраняем..."
         }
     }
 }

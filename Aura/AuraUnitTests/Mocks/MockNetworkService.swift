@@ -42,6 +42,15 @@ final class MockNetworkService: NetworkServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
+    func requestPasswordReset(email: String) async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
+    func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse {
+        if let errorToThrow { throw errorToThrow }
+        return authTokenResponse
+    }
+
     func deleteAccount() async throws {
         if let errorToThrow { throw errorToThrow }
     }

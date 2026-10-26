@@ -10,6 +10,7 @@ import Vapor
 
 struct AuthController: RouteCollection {
     private let appleAuthService = AppleAuthService()
+    private let passwordResetService = PasswordResetService()
 
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
@@ -18,6 +19,8 @@ struct AuthController: RouteCollection {
         limited.post("createAccount", use: createAccount)
         limited.post("signIn", use: signIn)
         limited.post("apple", use: signInWithApple)
+        limited.post("password", "forgot", use: requestPasswordReset)
+        limited.post("password", "reset", use: resetPassword)
 
         let authenticated = auth.grouped(UserAuthMiddleware())
         authenticated.post("logout", use: logout)
@@ -38,12 +41,7 @@ struct AuthController: RouteCollection {
         guard email.count <= InputLimits.maxEmailLength, isValidEmail(email) else {
             throw Abort(.badRequest, reason: "Укажите корректный e-mail")
         }
-        guard data.password.count >= InputLimits.minPasswordLength else {
-            throw Abort(.badRequest, reason: "Пароль должен быть не короче 6 символов")
-        }
-        guard data.password.utf8.count <= InputLimits.maxPasswordBytes else {
-            throw Abort(.badRequest, reason: "Пароль слишком длинный")
-        }
+        try validatePassword(data.password)
 
         let existingUser = try await User.query(on: req.db)
             .filter(\.$email == email)
@@ -76,6 +74,46 @@ struct AuthController: RouteCollection {
         let isPasswordCorrect = try await req.password.async.verify(signInData.password, created: passwordHash)
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
+
+        return try await issueToken(for: user, on: req)
+    }
+
+    private func requestPasswordReset(_ req: Request) async throws -> HTTPStatus {
+        let data = try req.content.decode(ForgotPasswordRequest.self)
+        let email = normalizedEmail(data.email)
+
+        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email) else {
+            throw Abort(.badRequest, reason: "Укажите корректный e-mail")
+        }
+
+        if let user = try await User.query(on: req.db).filter(\.$email == email).first(), user.passwordHash != nil {
+            try await passwordResetService.sendCode(to: user, req: req)
+        }
+
+        return .noContent
+    }
+
+    private func resetPassword(_ req: Request) async throws -> AuthDTO {
+        let data = try req.content.decode(ResetPasswordRequest.self)
+        let email = normalizedEmail(data.email)
+        try validatePassword(data.password)
+
+        guard let user = try await User.query(on: req.db).filter(\.$email == email).first(),
+              user.passwordHash != nil
+        else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
+
+        try await passwordResetService.verifyCode(data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                  for: user,
+                                                  req: req)
+
+        let userID = try user.requireID()
+        user.passwordHash = try await req.password.async.hash(data.password)
+
+        try await req.db.transaction { database in
+            try await user.save(on: database)
+            try await Token.query(on: database).filter(\.$user.$id == userID).delete()
+            try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
+        }
 
         return try await issueToken(for: user, on: req)
     }
@@ -151,6 +189,15 @@ struct AuthController: RouteCollection {
 
         try await user.delete(on: req.db)
         return .noContent
+    }
+
+    private func validatePassword(_ password: String) throws {
+        guard password.count >= InputLimits.minPasswordLength else {
+            throw Abort(.badRequest, reason: "Пароль должен быть не короче 6 символов")
+        }
+        guard password.utf8.count <= InputLimits.maxPasswordBytes else {
+            throw Abort(.badRequest, reason: "Пароль слишком длинный")
+        }
     }
 
     private func normalizedEmail(_ email: String) -> String {

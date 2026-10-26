@@ -30,6 +30,8 @@ protocol NetworkServiceProtocol: Sendable {
                          nonce: String,
                          name: String?) async throws -> AuthTokenResponse
     func logout(token: String) async throws
+    func requestPasswordReset(email: String) async throws
+    func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse
     func deleteAccount() async throws
     func giveAIConsent() async throws -> UserModel
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
@@ -97,6 +99,17 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func logout(token: String) async throws {
         _ = try await request(endpoint: "/auth/logout", method: .post, authorization: .token(token))
+    }
+
+    func requestPasswordReset(email: String) async throws {
+        let bodyData = try JSONEncoder().encode(PasswordResetRequestBody(email: email))
+        _ = try await request(endpoint: "/auth/password/forgot", method: .post, body: bodyData, authorization: .none)
+    }
+
+    func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse {
+        let bodyData = try JSONEncoder().encode(PasswordResetBody(email: email, code: code, password: password))
+        let data = try await request(endpoint: "/auth/password/reset", method: .post, body: bodyData, authorization: .none)
+        return try decode(AuthTokenResponse.self, from: data)
     }
 
     func deleteAccount() async throws {
@@ -275,6 +288,16 @@ private struct AuthSignUpBody: Encodable {
 
 private struct AuthSignInBody: Encodable {
     let email: String
+    let password: String
+}
+
+private struct PasswordResetRequestBody: Encodable {
+    let email: String
+}
+
+private struct PasswordResetBody: Encodable {
+    let email: String
+    let code: String
     let password: String
 }
 
