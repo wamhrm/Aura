@@ -18,135 +18,130 @@ struct CompatibilityView: View {
             ZStack {
                 BackgroundView()
 
-                if vm.isServerWakingUp {
-                    ServerWakingUpView(isVisible: vm.isServerWakingUp)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 25) {
-                            headerView()
+                ScrollView {
+                    VStack(spacing: 25) {
+                        headerView()
 
-                            VStack(alignment: .leading, spacing: 25) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "heart")
-                                        .font(Adaptive.size(.callout, .default))
-                                        .foregroundStyle(AccentColorOption.color(accentColor))
-                                        .fontWeight(.semibold)
-                                        .padding(Adaptive.size(7, 9))
-                                        .background(.capsuleBackground)
-                                        .clipShape(Circle())
+                        VStack(alignment: .leading, spacing: 25) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "heart")
+                                    .font(Adaptive.size(.callout, .default))
+                                    .foregroundStyle(AccentColorOption.color(accentColor))
+                                    .fontWeight(.semibold)
+                                    .padding(Adaptive.size(7, 9))
+                                    .background(.capsuleBackground)
+                                    .clipShape(Circle())
 
-                                    Text("Детали партнера")
-                                        .font(Adaptive.size(.system(size: 15), .default))
-                                        .bold()
+                                Text("Детали партнера")
+                                    .font(Adaptive.size(.system(size: 15), .default))
+                                    .bold()
 
-                                    Spacer()
-                                }
+                                Spacer()
+                            }
 
-                                VStack(alignment: .leading) {
-                                    headerText("Имя *")
+                            VStack(alignment: .leading) {
+                                headerText("Имя *")
 
-                                    CompatibilityTextFieldView(title: "Введите имя",
-                                                               text: $vm.partnerInfo.name,
-                                                               type: .name(maxLength: 10))
-                                }
+                                CompatibilityTextFieldView(title: "Введите имя",
+                                                           text: $vm.partnerInfo.name,
+                                                           type: .name(maxLength: 10))
+                            }
 
-                                VStack(alignment: .leading) {
-                                    headerText("Пол *")
+                            VStack(alignment: .leading) {
+                                headerText("Пол *")
 
-                                    SelectionButtons<CompatibilityButtons.genderOptions> { button in
-                                        vm.partnerInfo.gender = button.rawValue
-                                    }
-                                }
-
-                                VStack(alignment: .leading) {
-                                    headerText("Дата рождения")
-
-                                    SelectionButtons<CompatibilityButtons.birthOptions> { button in
-                                        vm.partnerInfo.exactDateOfBirth = button == .exactDate
-                                    }
-                                    .padding(.bottom, 10)
-
-                                    if vm.partnerInfo.exactDateOfBirth {
-                                        CompatibilityDateOfBirthView(
-                                            title: "День/Месяц/Год",
-                                            text: $vm.partnerInfo.dateOfBirth,
-                                            isTime: false) {
-                                                vm.showInvalidDateOfBirthday()
-                                            }
-
-                                        CompatibilityDateOfBirthView(
-                                            title: "Время (необязательно)",
-                                            text: $vm.partnerInfo.birthTime,
-                                            isTime: true)
-                                    } else {
-                                        CompatibilityTextFieldView(title: "Возраст (лет)",
-                                                                   text: $vm.partnerInfo.age,
-                                                                   type: .age(maxAge: 100))
-                                    }
+                                SelectionButtons<CompatibilityButtons.genderOptions> { button in
+                                    vm.partnerInfo.gender = button.rawValue
                                 }
                             }
-                            .padding(20)
-                            .backgroundWithShape(12, .cardBackground, true)
 
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack {
-                                    Text("Выберите тесты")
-                                        .fontWeight(.semibold)
-                                        .padding(.leading, 4)
+                            VStack(alignment: .leading) {
+                                headerText("Дата рождения")
 
-                                    Spacer()
-
-                                    Button {
-                                        vm.selectedTests = CompatibilityTestTypes.allCases
-                                    } label: {
-                                        Text("Выбрать все")
-                                            .foregroundStyle(AccentColorOption.color(accentColor))
-                                            .fontWeight(.medium)
-                                    }
+                                SelectionButtons<CompatibilityButtons.birthOptions> { button in
+                                    vm.partnerInfo.exactDateOfBirth = button == .exactDate
                                 }
-                                .font(Adaptive.size(.system(size: 15), .default))
+                                .padding(.bottom, 10)
 
-                                ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
-                                    TestCellView(type: test,
-                                                 hasChosenTest: Binding(
-                                                    get: { vm.selectedTests.contains(test) },
-                                                    set: { _ in })) {
-                                                        vm.toggleTestSelection(test)
-                                                    } onTapHandler: {
-                                                        vm.compatibilityRoutes.append(.testDetails(test))
-                                                    }
-                                }
+                                if vm.partnerInfo.exactDateOfBirth {
+                                    CompatibilityDateOfBirthView(
+                                        title: "День/Месяц/Год",
+                                        text: $vm.partnerInfo.dateOfBirth,
+                                        isTime: false) {
+                                            vm.showInvalidDateOfBirthday()
+                                        }
 
-                                ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Узнать совместимость") {
-                                    vm.makeCompatibilityTest()
-                                }
-                                .disabled(vm.isLoading)
-                                .padding(.top, 10)
-                            }
-                            .blur(radius: vm.needsAIConsent ? 5 : 0)
-                            .disabled(vm.needsAIConsent)
-                            .overlay {
-                                if vm.needsAIConsent {
-                                    AIConsentLock(title: "Разрешите анализ с помощью AI для теста совместимости",
-                                                  onAllow: aiConsentButton)
+                                    CompatibilityDateOfBirthView(
+                                        title: "Время (необязательно)",
+                                        text: $vm.partnerInfo.birthTime,
+                                        isTime: true)
+                                } else {
+                                    CompatibilityTextFieldView(title: "Возраст (лет)",
+                                                               text: $vm.partnerInfo.age,
+                                                               type: .age(maxAge: 100))
                                 }
                             }
                         }
-                        .disabled(vm.isLoading)
-                        .padding(.horizontal)
-                        .bottomAreaPadding(50)
+                        .padding(20)
+                        .backgroundWithShape(12, .cardBackground, true)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("Выберите тесты")
+                                    .fontWeight(.semibold)
+                                    .padding(.leading, 4)
+
+                                Spacer()
+
+                                Button {
+                                    vm.selectedTests = CompatibilityTestTypes.allCases
+                                } label: {
+                                    Text("Выбрать все")
+                                        .foregroundStyle(AccentColorOption.color(accentColor))
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            .font(Adaptive.size(.system(size: 15), .default))
+
+                            ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
+                                TestCellView(type: test,
+                                             hasChosenTest: Binding(
+                                                get: { vm.selectedTests.contains(test) },
+                                                set: { _ in })) {
+                                                    vm.toggleTestSelection(test)
+                                                } onTapHandler: {
+                                                    vm.compatibilityRoutes.append(.testDetails(test))
+                                                }
+                            }
+
+                            ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Узнать совместимость") {
+                                vm.makeCompatibilityTest()
+                            }
+                            .disabled(vm.isLoading)
+                            .padding(.top, 10)
+                        }
+                        .blur(radius: vm.needsAIConsent ? 5 : 0)
+                        .disabled(vm.needsAIConsent)
+                        .overlay {
+                            if vm.needsAIConsent {
+                                AIConsentLock(title: "Разрешите анализ с помощью AI для теста совместимости",
+                                              onAllow: aiConsentButton)
+                            }
+                        }
                     }
-                    .scrollIndicators(.hidden)
-                    .dismissKeyboardOnTap()
-                    .scrollDismissesKeyboard(.interactively)
+                    .disabled(vm.isLoading)
+                    .padding(.horizontal)
+                    .bottomAreaPadding(50)
                 }
+                .scrollIndicators(.hidden)
+                .dismissKeyboardOnTap()
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("Узнать совместимость")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: CompatibilityRoutes.self) { destination in
                 destinationView(destination)
             }
-            .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
             .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }

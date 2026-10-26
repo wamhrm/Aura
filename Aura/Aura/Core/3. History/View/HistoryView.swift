@@ -15,9 +15,7 @@ struct HistoryView: View {
             ZStack {
                 BackgroundView()
 
-                if vm.isServerWakingUp {
-                    ServerWakingUpView(isVisible: vm.isServerWakingUp)
-                } else if vm.isSignedIn {
+                if vm.isSignedIn {
                     VStack(alignment: .leading, spacing: 15) {
                         if vm.historyCells.isEmpty {
                             ContentUnavailableView {
@@ -65,7 +63,6 @@ struct HistoryView: View {
             .navigationDestination(for: HistoryRoutes.self) { route in
                 destinationView(route)
             }
-            .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
             .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }

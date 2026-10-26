@@ -24,133 +24,129 @@ struct HomeView: View {
                 if vm.isLoadingScreen {
                     ProgressView()
                 } else {
-                    if vm.isServerWakingUp {
-                        ServerWakingUpView(isVisible: vm.isServerWakingUp)
-                    } else {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 15) {
-                                HStack(spacing: 15) {
-                                    LogoImage(size: 32)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 15) {
+                            HStack(spacing: 15) {
+                                LogoImage(size: 32)
 
-                                    Text(vm.userName.isEmpty ? "Добро пожаловать" : "Здравствуйте, \(vm.userName.capitalized)")
+                                Text(vm.userName.isEmpty ? "Добро пожаловать" : "Здравствуйте, \(vm.userName.capitalized)")
+                                    .font(Adaptive.size(.callout, .default))
+                                    .fontWeight(.semibold)
+                                    .fontDesign(.monospaced)
+
+                                Spacer()
+                            }
+
+                            if vm.hasProfileInfo {
+                                VStack(alignment: .leading, spacing: 15) {
+                                    Text("ИНСАЙТ ДНЯ")
                                         .font(Adaptive.size(.callout, .default))
-                                        .fontWeight(.semibold)
-                                        .fontDesign(.monospaced)
+                                        .fontWeight(.heavy)
 
-                                    Spacer()
-                                }
-
-                                if vm.hasProfileInfo {
-                                    VStack(alignment: .leading, spacing: 15) {
-                                        Text("ИНСАЙТ ДНЯ")
-                                            .font(Adaptive.size(.callout, .default))
-                                            .fontWeight(.heavy)
-
-                                        if vm.hasAIConsent {
-                                            Text(vm.dailyInsightHandler)
-                                                .font(.system(size: Adaptive.size(14, 15))).italic()
-                                                .fontWeight(.medium)
-                                        } else {
-                                            AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
-                                                          onAllow: aiConsentButton)
-                                                .frame(maxWidth: .infinity)
-                                        }
-                                    }
-                                    .foregroundStyle(.white)
-                                    .padding(20)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(AccentColorOption.color(accentColor).opacity(0.85))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                                    if let horoscope = vm.horoscope {
-                                        VStack(alignment: .leading, spacing: 10) {
-                                            headerText("Гороскоп на неделю", "Читать") {
-                                                vm.homeRoutes.append(.horoscopeDetails)
-                                            }
-
-                                            HoroscopeCellView(horoscope: horoscope) {
-                                                vm.homeRoutes.append(.horoscopeDetails)
-                                            }
-                                        }
-                                        .padding(.top, 15)
-                                    }
-                                }
-
-                                if !vm.hasProfileInfo {
-                                    completeYourProfile(vm.isSignedIn) {
-                                        if vm.isSignedIn {
-                                            vm.homeRoutes.append(.addProfileInfo)
-                                        } else {
-                                            profileButton()
-                                        }
-                                    }
-                                }
-
-                                Button {
-                                    compatibilityButton()
-                                } label: {
-                                    HStack {
-                                        Text("Проверить совместимость")
-                                            .font(Adaptive.size(.system(size: 18), .title3))
-                                            .bold()
-                                            .foregroundStyle(.white)
-                                        
-                                        Spacer()
-
-                                        sparkImageWithBackground(Adaptive.size(.medium, .large), .white)
-                                    }
-                                    .padding(.horizontal, 7)
-                                    .padding(18)
-                                    .frame(maxWidth: .infinity)
-                                    .background(LinearGradient(colors: [.purple, .blue],
-                                                               startPoint: .leading,
-                                                               endPoint: .trailing))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
-
-                                VStack(alignment: .leading, spacing: 10) {
-                                    headerText("Проверьте себя", "Все тесты") {
-                                        vm.homeRoutes.append(.allTests)
-                                    }
-                                    .disabled(!vm.canTakeTests)
-
-                                    ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
-                                        TestCellView(type: test,
-                                                     hasChosenTest: Binding(
-                                                        get: { vm.selectedTests.contains(test) },
-                                                        set: { _ in })) {
-                                                            vm.toggleTestSelection(test)
-                                                        } onTapHandler: {
-                                                            vm.homeRoutes.append(.testDetails(test))
-                                                        }
-                                    }
-                                    .disabled(!vm.canTakeTests)
-
-                                    ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Проверить себя") {
-                                        vm.makePersonalityTest()
-                                    }
-                                    .disabled(vm.isLoading || !vm.canTakeTests)
-                                    .padding(.top, 10)
-                                }
-                                .blur(radius: !vm.canTakeTests ? 5 : 0)
-                                .padding(.top, 15)
-                                .overlay {
-                                    if vm.userName.isEmpty {
-                                        CompleteProfileLock(title: "Войдите или зарегистрируйтесь для прохождения тестов")
-                                    } else if !vm.hasProfileInfo {
-                                        CompleteProfileLock(title: "Заполните свой профиль для прохождения тестов")
-                                    } else if !vm.hasAIConsent {
-                                        AIConsentLock(title: "Разрешите анализ с помощью AI для прохождения тестов",
+                                    if vm.hasAIConsent {
+                                        Text(vm.dailyInsightHandler)
+                                            .font(.system(size: Adaptive.size(14, 15))).italic()
+                                            .fontWeight(.medium)
+                                    } else {
+                                        AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
                                                       onAllow: aiConsentButton)
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                }
+                                .foregroundStyle(.white)
+                                .padding(20)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(AccentColorOption.color(accentColor).opacity(0.85))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                                if let horoscope = vm.horoscope {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        headerText("Гороскоп на неделю", "Читать") {
+                                            vm.homeRoutes.append(.horoscopeDetails)
+                                        }
+
+                                        HoroscopeCellView(horoscope: horoscope) {
+                                            vm.homeRoutes.append(.horoscopeDetails)
+                                        }
+                                    }
+                                    .padding(.top, 15)
+                                }
+                            }
+
+                            if !vm.hasProfileInfo {
+                                completeYourProfile(vm.isSignedIn) {
+                                    if vm.isSignedIn {
+                                        vm.homeRoutes.append(.addProfileInfo)
+                                    } else {
+                                        profileButton()
                                     }
                                 }
                             }
-                            .disabled(vm.isLoading)
-                            .padding(.horizontal)
+
+                            Button {
+                                compatibilityButton()
+                            } label: {
+                                HStack {
+                                    Text("Проверить совместимость")
+                                        .font(Adaptive.size(.system(size: 18), .title3))
+                                        .bold()
+                                        .foregroundStyle(.white)
+                                    
+                                    Spacer()
+
+                                    sparkImageWithBackground(Adaptive.size(.medium, .large), .white)
+                                }
+                                .padding(.horizontal, 7)
+                                .padding(18)
+                                .frame(maxWidth: .infinity)
+                                .background(LinearGradient(colors: [.purple, .blue],
+                                                           startPoint: .leading,
+                                                           endPoint: .trailing))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                headerText("Проверьте себя", "Все тесты") {
+                                    vm.homeRoutes.append(.allTests)
+                                }
+                                .disabled(!vm.canTakeTests)
+
+                                ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
+                                    TestCellView(type: test,
+                                                 hasChosenTest: Binding(
+                                                    get: { vm.selectedTests.contains(test) },
+                                                    set: { _ in })) {
+                                                        vm.toggleTestSelection(test)
+                                                    } onTapHandler: {
+                                                        vm.homeRoutes.append(.testDetails(test))
+                                                    }
+                                }
+                                .disabled(!vm.canTakeTests)
+
+                                ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Проверить себя") {
+                                    vm.makePersonalityTest()
+                                }
+                                .disabled(vm.isLoading || !vm.canTakeTests)
+                                .padding(.top, 10)
+                            }
+                            .blur(radius: !vm.canTakeTests ? 5 : 0)
+                            .padding(.top, 15)
+                            .overlay {
+                                if vm.userName.isEmpty {
+                                    CompleteProfileLock(title: "Войдите или зарегистрируйтесь для прохождения тестов")
+                                } else if !vm.hasProfileInfo {
+                                    CompleteProfileLock(title: "Заполните свой профиль для прохождения тестов")
+                                } else if !vm.hasAIConsent {
+                                    AIConsentLock(title: "Разрешите анализ с помощью AI для прохождения тестов",
+                                                  onAllow: aiConsentButton)
+                                }
+                            }
                         }
-                        .bottomAreaPadding(50)
-                        .scrollIndicators(.hidden)
+                        .disabled(vm.isLoading)
+                        .padding(.horizontal)
                     }
+                    .bottomAreaPadding(50)
+                    .scrollIndicators(.hidden)
                 }
             }
             .navigationTitle("Главная")
@@ -158,7 +154,6 @@ struct HomeView: View {
             .navigationDestination(for: HomeRoutes.self) { destination in
                 destinationView(destination)
             }
-            .animation(.easeInOut(duration: 0.25), value: vm.isServerWakingUp)
             .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }
