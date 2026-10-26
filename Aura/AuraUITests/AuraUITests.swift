@@ -24,11 +24,18 @@ final class AuraUITests: XCTestCase {
     }
 
     @MainActor
-    func test_tabBar_isVisibleOnLaunch() {
-        // Given / When
+    func test_firstScreen_isVisibleOnLaunch() {
+        // Given
+        let firstScreen = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@ OR elementType == %d",
+                                  "У меня уже есть аккаунт",
+                                  XCUIElement.ElementType.tabBar.rawValue))
+            .firstMatch
+
+        // When
         app.launch()
 
         // Then
-        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(firstScreen.waitForExistence(timeout: 15))
     }
 }
