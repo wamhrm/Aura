@@ -80,34 +80,6 @@ struct SignedInView: View {
                         .background(AccentColorOption.color(accentColor))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                        if let best = profileDisplay.bestCompatibility {
-                            VStack(alignment: .leading, spacing: Adaptive.size(16, 17)) {
-                                Text("Лучшая совместимость")
-                                    .font(Adaptive.size(.system(size: 15), .default))
-                                    .bold()
-
-
-                                HStack(spacing: 15) {
-                                    Text(!best.partnerZodiacSign.isEmpty ? best.partnerZodiacSign : "👤")
-                                        .zodiacSingModifier()
-
-                                    Text(best.partnerName)
-                                        .font(Adaptive.size(.callout, .default))
-                                        .bold()
-
-                                    Spacer()
-
-                                    Text("\(best.score)%")
-                                        .font(Adaptive.size(.callout, .default))
-                                        .foregroundStyle(AccentColorOption.color(accentColor))
-                                        .bold()
-                                }
-                            }
-                            .padding(20)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .backgroundWithShape(12, .cardBackground, true)
-                        }
-
                         VStack(alignment: .leading, spacing: 10) {
                             Text("О вас")
                                 .font(Adaptive.size(.system(size: 15), .default))
