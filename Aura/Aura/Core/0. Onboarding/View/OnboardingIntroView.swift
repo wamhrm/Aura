@@ -99,7 +99,7 @@ fileprivate enum IntroPages: Int, CaseIterable {
 
     var title: String {
         switch self {
-            case .welcome: "Добро пожаловать в Aura"
+            case .welcome: "Добро пожаловать"
             case .horoscope: "Гороскоп на неделю"
             case .daily: "Инсайт и совет дня"
             case .tests: "Тесты о вас и совместимость"
@@ -108,7 +108,7 @@ fileprivate enum IntroPages: Int, CaseIterable {
 
     var subtitle: String {
         switch self {
-            case .welcome: "Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя"
+            case .welcome: "Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других"
             case .horoscope: "Прогноз о любви, здоровье и работе для вашего знака зодиака"
             case .daily: "Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание"
             case .tests: "Узнайте свой психотип и проверьте совместимость с партнёром"

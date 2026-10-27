@@ -21,22 +21,15 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        ZStack {
-            BackgroundView()
-                .dismissKeyboardOnTap()
+        NavigationStack(path: $vm.onboardingRoutes) {
+            ZStack {
+                BackgroundView()
 
-            VStack(spacing: 0) {
-                if showsTopBar {
-                    OnboardingTopBar(canGoBack: vm.canGoBack, progress: vm.progress) {
-                        vm.back()
-                    }
-                }
-
-                stepView
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .id(vm.step)
-                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
-                                            removal: .opacity))
+                OnboardingIntroView(vm: vm)
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: OnboardingRoutes.self) { destination in
+                destinationView(destination)
             }
         }
         .disabled(vm.isLoading)
@@ -47,15 +40,27 @@ struct OnboardingView: View {
 }
 
 extension OnboardingView {
-    private var showsTopBar: Bool {
-        vm.step != .intro && vm.step != .loading
+    private func destinationView(_ route: OnboardingRoutes) -> some View {
+        ZStack {
+            BackgroundView()
+                .dismissKeyboardOnTap()
+
+            VStack(spacing: 0) {
+                if route != .loading {
+                    OnboardingTopBar(progress: route.progress)
+                }
+
+                stepView(route)
+                    .frame(maxHeight: .infinity)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden(route == .loading)
     }
 
     @ViewBuilder
-    private var stepView: some View {
-        switch vm.step {
-            case .intro:
-                OnboardingIntroView(vm: vm)
+    private func stepView(_ route: OnboardingRoutes) -> some View {
+        switch route {
             case .nameAndBirth:
                 NameAndBirthStepView(vm: vm)
             case .email:
