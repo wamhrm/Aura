@@ -11,17 +11,14 @@ import CryptoKit
 import Foundation
 import SwiftUI
 
-enum OnboardingStep: Hashable {
-    case intro
-    case nameAndBirth
-    case email
-    case password
-    case signIn
-    case resetPassword
-    case psychotype
-    case aiConsent
-    case notifications
-    case loading
+enum OnboardingRoutes: Hashable {
+    case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent, notifications, loading
+
+    var progress: Double? {
+        let signUpRoutes: [OnboardingRoutes] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent, .notifications]
+        guard let index = signUpRoutes.firstIndex(of: self) else { return nil }
+        return Double(index + 1) / Double(signUpRoutes.count)
+    }
 }
 
 enum OnboardingLoadingStage: CaseIterable {
@@ -40,7 +37,7 @@ enum OnboardingLoadingStage: CaseIterable {
 
 @MainActor
 final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
-    @Published private(set) var step: OnboardingStep
+    @Published var onboardingRoutes: [OnboardingRoutes] = []
 
     @Published var name = ""
     @Published var email = ""
@@ -64,8 +61,6 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
 
     static let birthDateRange = (Calendar.current.date(from: DateComponents(year: 1920)) ?? .distantPast)...Date()
 
-    private let signUpSteps: [OnboardingStep] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent, .notifications]
-    private var history: [OnboardingStep] = []
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false
     private var appleSignInNonce: String?
@@ -86,9 +81,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
 
         if case .signedIn(let user) = authService.authState.value {
             name = user.name
-            step = .nameAndBirth
-        } else {
-            step = .intro
+            onboardingRoutes = [.nameAndBirth]
         }
     }
 
@@ -97,42 +90,27 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
         return false
     }
 
-    var canGoBack: Bool {
-        !history.isEmpty
-    }
-
-    var progress: Double? {
-        guard let index = signUpSteps.firstIndex(of: step) else { return nil }
-        return Double(index + 1) / Double(signUpSteps.count)
-    }
-
     var displayName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func start() {
-        go(to: .nameAndBirth)
+        onboardingRoutes.append(.nameAndBirth)
     }
 
     func showSignIn() {
-        go(to: .signIn)
+        onboardingRoutes.append(.signIn)
     }
 
     func showSignUp() {
-        history = [.intro]
-        withAnimation { step = .nameAndBirth }
+        onboardingRoutes = [.nameAndBirth]
     }
 
     func showPasswordReset() {
         isResetCodeSent = false
         resetCode = ""
         newPassword = ""
-        go(to: .resetPassword)
-    }
-
-    func back() {
-        guard let previous = history.popLast() else { return }
-        withAnimation { step = previous }
+        onboardingRoutes.append(.resetPassword)
     }
 
     func continueFromNameAndBirth() {
@@ -142,7 +120,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
         }
 
         hasEnteredBirthDate = true
-        go(to: isSignedIn ? .psychotype : .email)
+        onboardingRoutes.append(isSignedIn ? .psychotype : .email)
     }
 
     func continueFromEmail() {
@@ -153,7 +131,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
             return
         }
 
-        go(to: .password)
+        onboardingRoutes.append(.password)
     }
 
     func createAccount() {
@@ -298,7 +276,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
             return
         }
 
-        go(to: .aiConsent)
+        onboardingRoutes.append(.aiConsent)
     }
 
     func chooseAIConsent(_ allows: Bool) {
@@ -308,12 +286,12 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : onFinish()
         } else {
-            go(to: .notifications)
+            onboardingRoutes.append(.notifications)
         }
     }
 
     func continueFromNotifications() {
-        go(to: .loading)
+        onboardingRoutes.append(.loading)
         prepareProfile()
     }
 
@@ -409,23 +387,16 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
         name = user.name
         password = ""
 
+        // Auth screens are dropped from the stack, so back can't return to them
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
             onFinish()
         } else if user.hasCompletedProfileInfo {
-            history = []
-            withAnimation { step = .aiConsent }
+            onboardingRoutes = [.aiConsent]
         } else if hasEnteredBirthDate {
-            history = [.nameAndBirth]
-            withAnimation { step = .psychotype }
+            onboardingRoutes = [.nameAndBirth, .psychotype]
         } else {
-            history = []
-            withAnimation { step = .nameAndBirth }
+            onboardingRoutes = [.nameAndBirth]
         }
-    }
-
-    private func go(to nextStep: OnboardingStep) {
-        history.append(step)
-        withAnimation { step = nextStep }
     }
 
     private func format(_ date: Date, _ dateFormat: String) -> String {
