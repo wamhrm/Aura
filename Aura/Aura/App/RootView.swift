@@ -43,3 +43,9 @@ struct RootView: View {
         }
     }
 }
+
+#Preview {
+    RootView(authService: AuthService(),
+             contentService: ContentService(),
+             storage: LocalStorage())
+}

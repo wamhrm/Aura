@@ -41,8 +41,9 @@ struct MainTabView: View {
             authService: authService,
             contentService: contentService,
             storage: storage))
-        _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(authService: authService,
-                                                                           promptsAutomatically: promptsAIConsentAutomatically))
+        _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(
+            authService: authService,
+            promptsAutomatically: promptsAIConsentAutomatically))
     }
 
     var body: some View {

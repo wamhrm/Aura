@@ -9,21 +9,20 @@ import AuthenticationServices
 import SwiftUI
 
 struct OnboardingTopBar: View {
-    let canGoBack: Bool
     let progress: Double?
-    let onBack: () -> Void
+    @Environment(\.dismiss) private var dismiss
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         HStack(spacing: 15) {
-            Button(action: onBack) {
+            Button {
+                dismiss()
+            } label: {
                 Image(systemName: "chevron.left")
                     .font(Adaptive.size(.title3, .title2))
                     .fontWeight(.semibold)
                     .foregroundStyle(.deepGray)
             }
-            .opacity(canGoBack ? 1 : 0)
-            .disabled(!canGoBack)
 
             if let progress {
                 GeometryReader { bar in
