@@ -18,7 +18,7 @@ struct LoadingStepView: View {
 
             loaderView()
 
-            Text(vm.hasLoadingFailed ? "Не удалось подготовить профиль" : "Составляем ваш профиль")
+            Text(vm.loadingTitle)
                 .font(Adaptive.size(.title3, .title2))
                 .bold()
                 .multilineTextAlignment(.center)
@@ -62,7 +62,7 @@ extension LoadingStepView {
                 .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isRotating)
                 .opacity(vm.hasLoadingFailed ? 0 : 1)
 
-            Image(systemName: vm.hasLoadingFailed ? "exclamationmark" : "sparkles")
+            Image(systemName: vm.loadingIcon)
                 .font(.system(size: 40))
                 .fontWeight(.semibold)
                 .foregroundStyle(AccentColorOption.color(accentColor))
@@ -72,7 +72,7 @@ extension LoadingStepView {
 
     private func stageView(_ stage: OnboardingLoadingStage) -> some View {
         HStack(spacing: 12) {
-            if vm.completedLoadingStages.contains(stage) {
+            if vm.isCompleted(stage) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
                     .foregroundStyle(AccentColorOption.color(accentColor))

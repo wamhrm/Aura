@@ -52,7 +52,7 @@ extension ProfileView {
     private func toolbarItem() -> some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button {
-                vm.showSettings.toggle()
+                vm.openSettings()
             } label: {
                 Image(systemName: "gearshape")
             }

@@ -71,4 +71,25 @@ extension HistoryCellModel {
     var resolvedPartnerZodiacSign: String? {
         partnerZodiacSign ?? compatibilityResult?.partnerZodiacSign
     }
+
+    var iconHandler: String {
+        switch kind {
+            case .personality:
+                return zodiacSign
+            case .compatibility:
+                let sign = resolvedPartnerZodiacSign ?? ""
+                return sign.isEmpty ? "👤" : sign
+        }
+    }
+
+    var titleText: String {
+        switch kind {
+            case .personality: archetypeTitle
+            case .compatibility: resolvedPartnerName ?? ""
+        }
+    }
+
+    var compatibilityScoreText: String {
+        "\(resolvedCompatibilityScore ?? 0)%"
+    }
 }

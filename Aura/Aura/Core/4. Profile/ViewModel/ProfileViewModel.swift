@@ -50,6 +50,10 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         setupSubscriptions()
     }
 
+    var profileDisplayHandler: ProfileDisplayModel {
+        profileDisplay ?? .placeholder
+    }
+
     var needsAIConsent: Bool {
         guard hasPersonalityTests, case .signedIn(let user) = authState else { return false }
         return !user.allowsAIAnalysis
@@ -168,6 +172,22 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                 presentAlert(error.localizedDescription)
             }
         }
+    }
+
+    func showAddProfileInfo() {
+        profileRoutes.append(.addProfileInfo)
+    }
+
+    func openSettings() {
+        showSettings = true
+    }
+
+    func requestSignOut() {
+        showSignOutAlert = true
+    }
+
+    func requestAccountDeletion() {
+        showDeleteAccountAlert = true
     }
 
     func signOut() {

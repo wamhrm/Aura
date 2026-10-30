@@ -35,9 +35,44 @@ enum OnboardingLoadingStage: CaseIterable {
     }
 }
 
+enum IntroPages: Int, CaseIterable {
+    case welcome
+    case horoscope
+    case daily
+    case tests
+
+    var icon: String? {
+        switch self {
+            case .welcome: nil
+            case .horoscope: "moon.stars"
+            case .daily: "sun.max"
+            case .tests: "heart.text.square"
+        }
+    }
+
+    var title: String {
+        switch self {
+            case .welcome: "Добро пожаловать"
+            case .horoscope: "Гороскоп на неделю"
+            case .daily: "Инсайт и совет дня"
+            case .tests: "Тесты о вас и совместимость"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+            case .welcome: "Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других"
+            case .horoscope: "Прогноз о любви, здоровье и работе для вашего знака зодиака"
+            case .daily: "Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание"
+            case .tests: "Узнайте свой психотип и проверьте совместимость с партнёром"
+        }
+    }
+}
+
 @MainActor
 final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
     @Published var onboardingRoutes: [OnboardingRoutes] = []
+    @Published var introPage = 0
 
     @Published var name = ""
     @Published var email = ""
@@ -92,6 +127,58 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
 
     var displayName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var introButtonTitle: String {
+        isLastIntroPage ? "Начать" : "Далее"
+    }
+
+    var nameAndBirthTitle: String {
+        isSignedIn ? "Когда вы родились?" : "Как вас зовут и когда вы родились?"
+    }
+
+    var createAccountButtonTitle: String {
+        isLoading ? "Создаём аккаунт..." : "Создать аккаунт"
+    }
+
+    var signInButtonTitle: String {
+        isLoading ? "Входим..." : "Войти"
+    }
+
+    var sendCodeButtonTitle: String {
+        isLoading ? "Отправляем..." : "Отправить код"
+    }
+
+    var resetPasswordButtonTitle: String {
+        isLoading ? "Сохраняем..." : "Сохранить пароль"
+    }
+
+    var aiConsentButtonTitle: String {
+        isLoading ? "Сохраняем..." : "Разрешить"
+    }
+
+    var loadingTitle: String {
+        hasLoadingFailed ? "Не удалось подготовить профиль" : "Составляем ваш профиль"
+    }
+
+    var loadingIcon: String {
+        hasLoadingFailed ? "exclamationmark" : "sparkles"
+    }
+
+    private var isLastIntroPage: Bool {
+        introPage == IntroPages.allCases.count - 1
+    }
+
+    func isCompleted(_ stage: OnboardingLoadingStage) -> Bool {
+        completedLoadingStages.contains(stage)
+    }
+
+    func showNextIntroPage() {
+        if isLastIntroPage {
+            start()
+        } else {
+            withAnimation { introPage += 1 }
+        }
     }
 
     func start() {

@@ -26,7 +26,7 @@ struct PersonalityResultView: View {
                                 .background(.lightPurple)
                                 .clipShape(Circle())
                             
-                            Text(result.name.capitalized)
+                            Text(result.nameCapitalized)
                                 .font(Adaptive.size(.title3, .title2))
                                 .fontDesign(.rounded)
                                 .bold()

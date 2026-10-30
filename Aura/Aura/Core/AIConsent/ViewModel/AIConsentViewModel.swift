@@ -27,6 +27,10 @@ final class AIConsentViewModel: ObservableObject {
         setupSubscriptions()
     }
 
+    var allowButtonTitle: String {
+        isLoading ? "Сохраняем..." : "Разрешить"
+    }
+
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)

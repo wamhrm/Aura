@@ -18,16 +18,14 @@ struct AllTestsView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     ForEach(PersonalityTestTypes.allCases, id: \.self) { test in
                         TestCellView(type: test,
-                                     hasChosenTest: Binding(
-                                        get: { vm.selectedTests.contains(test) },
-                                        set: { _ in })) {
+                                     hasChosenTest: vm.isSelected(test)) {
                             vm.toggleTestSelection(test)
                         } onTapHandler: {
-                            vm.homeRoutes.append(.testDetails(test))
+                            vm.showTestDetails(test)
                         }
                     }
                     
-                    ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Проверить себя") {
+                    ClassicButton(title: vm.testButtonTitle) {
                         vm.makePersonalityTest()
                     }
                     .disabled(vm.isLoading)
