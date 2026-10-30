@@ -11,15 +11,12 @@ import Foundation
 import SwiftUI
 
 enum HomeRoutes: Hashable {
-    case addProfileInfo
-    case horoscopeDetails
-    case allTests
+    case horoscopeDetails, allTests, testResults
     case testDetails(PersonalityTestTypes)
-    case testResults
 }
 
 @MainActor
-final class HomeViewModel: ObservableObject, LoadingStatePresentable {
+final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published var homeRoutes: [HomeRoutes] = []
 
     @Published var profileInfo = ProfileInfoModel()
@@ -31,9 +28,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var isSignedIn = false
-    @Published private(set) var hasProfileInfo = false
-    @Published private(set) var hasAIConsent = false
+    @Published private(set) var allowsAIAnalysis = false
     @Published private(set) var isLoading = false
     @Published private(set) var isLoadingScreen = true
 
@@ -53,16 +48,12 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         setupSubscriptions()
     }
 
-    var canTakeTests: Bool {
-        hasProfileInfo && hasAIConsent
-    }
-
     var dailyInsightHandler: String {
         dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
     }
 
     var greetingText: String {
-        userName.isEmpty ? "Добро пожаловать" : "Здравствуйте, \(userName.capitalized)"
+        "Здравствуйте, \(userName.capitalized)"
     }
 
     var testButtonTitle: String {
@@ -71,18 +62,6 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 
     var saveButtonTitle: String {
         isLoading ? "Сохраняем..." : "Готово"
-    }
-
-    var completeProfileTitle: String {
-        isSignedIn ? "Заполните свой профиль" : "Войдите или зарегистрируйтесь, чтобы заполнить свой профиль"
-    }
-
-    var completeProfileSubtitle: String {
-        isSignedIn ? "Расскажите о себе, чтобы получить детальный разбор вашего астрологического профиля" : "Вы можете рассказать о себе, чтобы получить детальный разбор вашего астрологического профиля"
-    }
-
-    var completeProfileButtonTitle: String {
-        isSignedIn ? "Заполнить информацию" : "Войти или зарегистрироваться"
     }
 
     func isSelected(_ test: PersonalityTestTypes) -> Bool {
@@ -100,58 +79,22 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     private func handleProfileInfo(_ authState: AuthState) {
-        switch authState {
-            case .signedIn(let user):
-                isLoadingScreen = true
-                profileInfo = user.profileInfo
-                hasProfileInfo = user.hasCompletedProfileInfo
-                hasAIConsent = user.allowsAIAnalysis
-                userName = user.name
-                isSignedIn = true
+        guard case .signedIn(let user) = authState else { return }
 
-                if user.hasCompletedProfileInfo {
-                    horoscope = storage.load(StorageKeys.horoscope, for: user.id)
-                    dailyInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
+        profileInfo = user.profileInfo
+        allowsAIAnalysis = user.allowsAIAnalysis
+        userName = user.name
+        horoscope = storage.load(StorageKeys.horoscope, for: user.id)
+        dailyInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
+        isLoadingScreen = false
 
-                    if !isLoading {
-                        Task { await refreshHomeContent(for: user.id) }
-                    }
-                } else {
-                    horoscope = nil
-                    dailyInsight = nil
-                    storage.delete(StorageKeys.horoscope, for: user.id)
-                    storage.delete(StorageKeys.dailyInsight, for: user.id)
-                }
-
-                isLoadingScreen = false
-            case .signedOut:
-                isLoadingScreen = false
-                profileInfo = ProfileInfoModel()
-                hasProfileInfo = false
-                hasAIConsent = false
-                userName = ""
-                horoscope = nil
-                dailyInsight = nil
-                personalityResult = nil
-                homeRoutes = []
-                isSignedIn = false
+        if !isLoading {
+            Task { await refreshHomeContent(for: user.id) }
         }
     }
 
     func showHoroscopeDetails() {
         homeRoutes.append(.horoscopeDetails)
-    }
-
-    func showAddProfileInfo() {
-        homeRoutes.append(.addProfileInfo)
-    }
-
-    func completeProfile(onSignIn: () -> Void) {
-        if isSignedIn {
-            showAddProfileInfo()
-        } else {
-            onSignIn()
-        }
     }
 
     func showAllTests() {
@@ -173,20 +116,18 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 
                 let response = try await authService.updateProfileInfo(profileInfo)
                 profileInfo = response.user.profileInfo
-                hasProfileInfo = response.user.hasCompletedProfileInfo
-                hasAIConsent = response.user.allowsAIAnalysis
+                allowsAIAnalysis = response.user.allowsAIAnalysis
                 if let horoscope = response.horoscope {
                     self.horoscope = horoscope
-                    storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
                 } else {
-                    await loadHoroscope(for: response.user.id, showErrorOnFailure: false)
+                    await loadHoroscope(for: response.user.id)
                 }
-                if hasAIConsent {
+                if allowsAIAnalysis {
                     await loadDailyInsight(for: response.user.id)
                 }
                 onSuccess()
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
             
             isLoading = false
@@ -208,48 +149,40 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
     func makePersonalityTest() {
         guard !isLoading else { return }
 
-        Task {
-            isLoading = true
+        isLoading = true
 
+        Task {
             do {
                 personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
                 homeRoutes.append(.testResults)
             } catch {
-                presentAlert((error as? LocalizedError)?.errorDescription ?? "Не удалось получить результат")
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
         }
     }
 
-    private func loadHoroscope(for userId: UUID, showErrorOnFailure: Bool) async {
-        do {
-            let fetched = try await contentService.fetchCurrentHoroscope()
+    private func loadHoroscope(for userId: UUID) async {
+        if let fetched = try? await contentService.fetchCurrentHoroscope(for: userId) {
             horoscope = fetched
-            storage.save(fetched, for: StorageKeys.horoscope, userId: userId)
-        } catch {
-            if showErrorOnFailure {
-                presentAlert(error.localizedDescription)
-            }
         }
     }
 
     private func loadDailyInsight(for userId: UUID, showErrorOnFailure: Bool = true) async {
         do {
-            let insight = try await contentService.fetchDailyInsight()
-            dailyInsight = insight
-            storage.save(insight, for: StorageKeys.dailyInsight, userId: userId)
+            dailyInsight = try await contentService.fetchDailyInsight(for: userId)
         } catch {
             if showErrorOnFailure {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
         }
     }
 
     private func refreshHomeContent(for userId: UUID) async {
-        await loadHoroscope(for: userId, showErrorOnFailure: false)
+        await loadHoroscope(for: userId)
 
-        guard hasAIConsent else { return }
+        guard allowsAIAnalysis else { return }
         await loadDailyInsight(for: userId, showErrorOnFailure: false)
     }
 
@@ -258,12 +191,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
             throw ProfileInfoError.invalidDateOfBirth
         }
 
-        guard profileInfo.gender != nil,
-              profileInfo.socialType != nil,
-              profileInfo.conflictStyle != nil,
-              profileInfo.emotionalCore != nil,
-              profileInfo.decisionStyle != nil,
-              profileInfo.coreFocus != nil else {
+        guard profileInfo.hasAllAnswers else {
             throw ProfileInfoError.incompleteProfileInfo
         }
     }
@@ -271,8 +199,7 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
 }
 
 fileprivate enum ProfileInfoError: LocalizedError {
-    case invalidDateOfBirth
-    case incompleteProfileInfo
+    case invalidDateOfBirth, incompleteProfileInfo
 
     var errorDescription: String? {
         switch self {

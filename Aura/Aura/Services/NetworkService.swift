@@ -1,5 +1,5 @@
 //
-//  NetworkHelper.swift
+//  NetworkService.swift
 //  Aura
 //
 //  Created by wamhrm on 13.05.2026.
@@ -15,8 +15,7 @@ fileprivate enum HTTPMethod: String {
 }
 
 fileprivate enum RequestAuthorization {
-    case none
-    case storedToken
+    case none, storedToken
     case token(String)
 }
 
@@ -51,9 +50,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private let baseURL: String
     private let session: URLSession
     private let sessionExpiredContinuation: AsyncStream<Void>.Continuation
-
-    private let tokenPath = Constants.tokenPath
-    private let tokenKey = Constants.tokenKey
 
     private let keychain: any KeychainHelperProtocol
 
@@ -232,8 +228,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             case .token(let token):
                 return token
             case .storedToken:
-                guard let tokenData = keychain.getToken(path: tokenPath, key: tokenKey) else { return nil }
-                return String(data: tokenData, encoding: .utf8)
+                return keychain.loadAuthToken()
         }
     }
 
@@ -313,19 +308,8 @@ nonisolated private struct ServerErrorResponse: Decodable {
 }
 
 fileprivate enum NetworkError: LocalizedError {
-    case invalidURL
-    case invalidResponse
-    case decodingError
-    case unauthorized
-    case sessionExpired
-    case userExists
-    case notFound
-    case tooManyRequests
-    case serverUnavailable
+    case invalidURL, invalidResponse, decodingError, unauthorized, sessionExpired, userExists, notFound, tooManyRequests, serverUnavailable, timedOut, noConnection, cannotReachServer
     case server(String)
-    case timedOut
-    case noConnection
-    case cannotReachServer
 
     init(statusCode: Int, data: Data) {
         if (500...599).contains(statusCode) {

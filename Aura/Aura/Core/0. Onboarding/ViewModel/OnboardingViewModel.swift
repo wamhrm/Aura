@@ -22,9 +22,7 @@ enum OnboardingRoutes: Hashable {
 }
 
 enum OnboardingLoadingStage: CaseIterable {
-    case profile
-    case horoscope
-    case insight
+    case profile, horoscope, insight
 
     var title: String {
         switch self {
@@ -36,10 +34,7 @@ enum OnboardingLoadingStage: CaseIterable {
 }
 
 enum IntroPages: Int, CaseIterable {
-    case welcome
-    case horoscope
-    case daily
-    case tests
+    case welcome, horoscope, daily, tests
 
     var icon: String? {
         switch self {
@@ -70,7 +65,7 @@ enum IntroPages: Int, CaseIterable {
 }
 
 @MainActor
-final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
+final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var onboardingRoutes: [OnboardingRoutes] = []
     @Published var introPage = 0
 
@@ -102,16 +97,13 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private let storage: any LocalStorageProtocol
     private let onFinish: () -> Void
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol,
-         storage: any LocalStorageProtocol = LocalStorage(),
          onFinish: @escaping () -> Void) {
         self.authService = authService
         self.contentService = contentService
-        self.storage = storage
         self.onFinish = onFinish
 
         if case .signedIn(let user) = authService.authState.value {
@@ -238,7 +230,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                 try await authService.createAccount(name: displayName, email: email, password: password)
                 continueAfterSignIn()
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
@@ -262,7 +254,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                 try await authService.signIn(email: email, password: password)
                 continueAfterSignIn()
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
@@ -286,7 +278,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                 try await authService.requestPasswordReset(email: email)
                 withAnimation { isResetCodeSent = true }
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
@@ -316,7 +308,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                 try await authService.resetPassword(email: email, code: code, newPassword: newPassword)
                 continueAfterSignIn()
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
@@ -353,12 +345,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     func continueFromPsychotype() {
-        guard profileInfo.gender != nil,
-              profileInfo.socialType != nil,
-              profileInfo.conflictStyle != nil,
-              profileInfo.emotionalCore != nil,
-              profileInfo.decisionStyle != nil,
-              profileInfo.coreFocus != nil else {
+        guard profileInfo.hasAllAnswers else {
             presentAlert("Ответьте на все вопросы")
             return
         }
@@ -399,7 +386,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                                                       name: name)
                 continueAfterSignIn()
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
@@ -416,7 +403,7 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                 try await authService.giveAIConsent()
                 onFinish()
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
 
             isLoading = false
@@ -438,25 +425,21 @@ final class OnboardingViewModel: ObservableObject, LoadingStatePresentable {
                 let userId = response.user.id
                 await completeLoadingStage(.profile)
 
-                if let horoscope = response.horoscope {
-                    storage.save(horoscope, for: StorageKeys.horoscope, userId: userId)
-                } else if let horoscope = try? await contentService.fetchCurrentHoroscope() {
-                    storage.save(horoscope, for: StorageKeys.horoscope, userId: userId)
+                if response.horoscope == nil {
+                    _ = try? await contentService.fetchCurrentHoroscope(for: userId)
                 }
                 await completeLoadingStage(.horoscope)
 
                 if allowsAIAnalysis {
                     try? await authService.giveAIConsent()
 
-                    if let insight = try? await contentService.fetchDailyInsight() {
-                        storage.save(insight, for: StorageKeys.dailyInsight, userId: userId)
-                    }
+                    _ = try? await contentService.fetchDailyInsight(for: userId)
                     await completeLoadingStage(.insight)
                 }
 
                 onFinish()
             } catch {
-                alertMessage = error.localizedDescription
+                alertMessage = error.userMessage
                 hasLoadingFailed = true
             }
         }

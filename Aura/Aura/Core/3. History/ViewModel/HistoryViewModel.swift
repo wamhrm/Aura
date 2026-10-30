@@ -15,13 +15,12 @@ enum HistoryRoutes: Hashable {
 }
 
 @MainActor
-final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
+final class HistoryViewModel: ObservableObject, AlertPresentable {
     @Published var historyRoutes: [HistoryRoutes] = []
     @Published private(set) var historyCells: [HistoryCellModel] = []
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var isSignedIn = false
     @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol
@@ -45,8 +44,8 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
         authService.authState
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                guard let self else { return }
-                handleAuthState($0)
+                guard let self, case .signedIn(let user) = $0 else { return }
+                handleSignIn(user)
             }
             .store(in: &cancellables)
 
@@ -54,43 +53,29 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 guard let self, let userId = currentUserId else { return }
-                Task { await self.fetchHistory(for: userId, ignoreCache: true) }
+                Task { await self.fetchHistory(for: userId) }
             }
             .store(in: &cancellables)
     }
 
-    private func handleAuthState(_ state: AuthState) {
-        switch state {
-            case .signedIn(let user):
-                currentUserId = user.id
-                historyCells = storage.load(StorageKeys.history, for: user.id) ?? []
-                isSignedIn = true
-                Task { await fetchHistory(for: user.id, ignoreCache: true) }
-            case .signedOut:
-                currentUserId = nil
-                isSignedIn = false
-                historyCells = []
-                historyRoutes = []
-        }
+    private func handleSignIn(_ user: UserModel) {
+        currentUserId = user.id
+        historyCells = storage.load(StorageKeys.history, for: user.id) ?? []
+        Task { await fetchHistory(for: user.id) }
     }
 
     func fetchHistory() async {
         guard let userId = currentUserId else { return }
-        await fetchHistory(for: userId, ignoreCache: true)
+        await fetchHistory(for: userId)
     }
 
-    private func fetchHistory(for userId: UUID, ignoreCache: Bool = false) async {
-        if !ignoreCache, let cached = storage.load(StorageKeys.history, for: userId) {
-            historyCells = cached
-            return
-        }
-
+    private func fetchHistory(for userId: UUID) async {
         do {
             let history = try await contentService.fetchHistory()
             historyCells = history
             storage.save(history, for: StorageKeys.history, userId: userId)
         } catch {
-            presentAlert((error as? LocalizedError)?.errorDescription ?? "Не удалось загрузить историю")
+            presentAlert(error.userMessage)
         }
     }
 
@@ -119,17 +104,17 @@ final class HistoryViewModel: ObservableObject, LoadingStatePresentable {
 
                 switch historyDetails.kind {
                     case .personality:
-                        guard let result = historyDetails.personalityResult else {
+                        if let result = historyDetails.personalityResult {
+                            historyRoutes.append(.personalityResult(result))
+                        } else {
                             presentAlert("Не удалось открыть результат")
-                            return
                         }
-                        historyRoutes.append(.personalityResult(result))
                     case .compatibility:
-                        guard let result = historyDetails.compatibilityResult else {
+                        if let result = historyDetails.compatibilityResult {
+                            historyRoutes.append(.compatibilityResult(result))
+                        } else {
                             presentAlert("Не удалось открыть результат")
-                            return
                         }
-                        historyRoutes.append(.compatibilityResult(result))
                 }
             } catch {
                 presentAlert("Не удалось открыть результат")

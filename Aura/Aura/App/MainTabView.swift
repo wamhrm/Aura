@@ -49,11 +49,8 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab(value: .home) {
-                HomeView(vm: homeViewModel,
-                         authService: authService) {
+                HomeView(vm: homeViewModel) {
                     selectedTab = .compatibility
-                } profileButton: {
-                    selectedTab = .profile
                 } aiConsentButton: {
                     aiConsentViewModel.request()
                 }

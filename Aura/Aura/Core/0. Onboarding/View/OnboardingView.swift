@@ -12,11 +12,9 @@ struct OnboardingView: View {
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol,
-         storage: any LocalStorageProtocol,
          onFinish: @escaping () -> Void) {
         _vm = StateObject(wrappedValue: OnboardingViewModel(authService: authService,
                                                             contentService: contentService,
-                                                            storage: storage,
                                                             onFinish: onFinish))
     }
 
@@ -85,6 +83,5 @@ extension OnboardingView {
 
 #Preview {
     OnboardingView(authService: AuthService(),
-                   contentService: ContentService(),
-                   storage: LocalStorage()) {}
+                   contentService: ContentService()) {}
 }

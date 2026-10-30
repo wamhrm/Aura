@@ -35,24 +35,17 @@ final class AIConsentViewModel: ObservableObject {
         authService.authState
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                self?.handleAuthState($0)
+                guard let self, case .signedIn(let user) = $0 else { return }
+                promptIfNeeded(user)
             }
             .store(in: &cancellables)
     }
 
-    private func handleAuthState(_ state: AuthState) {
-        switch state {
-            case .signedIn(let user):
-                guard user.hasCompletedProfileInfo,
-                      !user.allowsAIAnalysis,
-                      !wasPromptedAutomatically else { return }
+    private func promptIfNeeded(_ user: UserModel) {
+        guard !user.allowsAIAnalysis, !wasPromptedAutomatically else { return }
 
-                wasPromptedAutomatically = true
-                showConsent = true
-            case .signedOut:
-                wasPromptedAutomatically = false
-                showConsent = false
-        }
+        wasPromptedAutomatically = true
+        showConsent = true
     }
 
     func request() {
@@ -69,7 +62,7 @@ final class AIConsentViewModel: ObservableObject {
                 try await authService.giveAIConsent()
                 showConsent = false
             } catch {
-                alertMessage = error.localizedDescription
+                alertMessage = error.userMessage
                 showAlert = true
             }
 

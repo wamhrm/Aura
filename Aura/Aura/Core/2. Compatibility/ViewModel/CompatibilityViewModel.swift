@@ -27,7 +27,7 @@ enum CompatibilityButtons {
 }
 
 @MainActor
-final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
+final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
 
     @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns,
@@ -61,16 +61,8 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
         authService.authState
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                guard let self else { return }
-
-                switch $0 {
-                    case .signedIn(let user):
-                        needsAIConsent = user.hasCompletedProfileInfo && !user.allowsAIAnalysis
-                    case .signedOut:
-                        compatibilityRoutes = []
-                        compatibilityResult = nil
-                        needsAIConsent = false
-                }
+                guard let self, case .signedIn(let user) = $0 else { return }
+                needsAIConsent = !user.allowsAIAnalysis
             }
             .store(in: &cancellables)
     }
@@ -109,16 +101,6 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     func makeCompatibilityTest() {
-        guard case .signedIn(let user) = authService.authState.value else {
-            presentAlert("Войдите или зарегистрируйтесь")
-            return
-        }
-
-        guard user.hasCompletedProfileInfo else {
-            presentAlert("Заполните информацию о себе")
-            return
-        }
-
         guard !isLoading else { return }
 
         isLoading = true
@@ -130,7 +112,7 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
                 compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
                 compatibilityRoutes.append(.compatibilityResults)
             } catch {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
             
             isLoading = false
@@ -169,9 +151,7 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
 }
 
 fileprivate enum PartnerInfoError: LocalizedError {
-    case invalidName
-    case invalidDateOfBirth
-    case invalidAge
+    case invalidName, invalidDateOfBirth, invalidAge
 
     var errorDescription: String? {
         switch self {

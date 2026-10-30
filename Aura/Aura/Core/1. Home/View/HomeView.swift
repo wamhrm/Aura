@@ -11,9 +11,7 @@ struct HomeView: View {
     @ObservedObject var vm: HomeViewModel
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
-    let authService: AuthServiceProtocol
     let compatibilityButton: () -> Void
-    let profileButton: () -> Void
     let aiConsentButton: () -> Void
 
     var body: some View {
@@ -37,46 +35,38 @@ struct HomeView: View {
                                 Spacer()
                             }
 
-                            if vm.hasProfileInfo {
-                                VStack(alignment: .leading, spacing: 15) {
-                                    Text("ИНСАЙТ ДНЯ")
-                                        .font(Adaptive.size(.callout, .default))
-                                        .fontWeight(.heavy)
+                            VStack(alignment: .leading, spacing: 15) {
+                                Text("ИНСАЙТ ДНЯ")
+                                    .font(Adaptive.size(.callout, .default))
+                                    .fontWeight(.heavy)
 
-                                    if vm.hasAIConsent {
-                                        Text(vm.dailyInsightHandler)
-                                            .font(.system(size: Adaptive.size(14, 15))).italic()
-                                            .fontWeight(.medium)
-                                    } else {
-                                        AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
-                                                      onAllow: aiConsentButton)
-                                            .frame(maxWidth: .infinity)
-                                    }
-                                }
-                                .foregroundStyle(.white)
-                                .padding(20)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(AccentColorOption.color(accentColor).opacity(0.85))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                                if let horoscope = vm.horoscope {
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        headerText("Гороскоп на неделю", "Читать") {
-                                            vm.showHoroscopeDetails()
-                                        }
-
-                                        HoroscopeCellView(horoscope: horoscope) {
-                                            vm.showHoroscopeDetails()
-                                        }
-                                    }
-                                    .padding(.top, 15)
+                                if vm.allowsAIAnalysis {
+                                    Text(vm.dailyInsightHandler)
+                                        .font(.system(size: Adaptive.size(14, 15))).italic()
+                                        .fontWeight(.medium)
+                                } else {
+                                    AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
+                                                  onAllow: aiConsentButton)
+                                        .frame(maxWidth: .infinity)
                                 }
                             }
+                            .foregroundStyle(.white)
+                            .padding(20)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(AccentColorOption.color(accentColor).opacity(0.85))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                            if !vm.hasProfileInfo {
-                                completeYourProfile {
-                                    vm.completeProfile(onSignIn: profileButton)
+                            if let horoscope = vm.horoscope {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    headerText("Гороскоп на неделю", "Читать") {
+                                        vm.showHoroscopeDetails()
+                                    }
+
+                                    HoroscopeCellView(horoscope: horoscope) {
+                                        vm.showHoroscopeDetails()
+                                    }
                                 }
+                                .padding(.top, 15)
                             }
 
                             Button {
@@ -105,7 +95,7 @@ struct HomeView: View {
                                 headerText("Проверьте себя", "Все тесты") {
                                     vm.showAllTests()
                                 }
-                                .disabled(!vm.canTakeTests)
+                                .disabled(!vm.allowsAIAnalysis)
 
                                 ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
                                     TestCellView(type: test,
@@ -115,22 +105,18 @@ struct HomeView: View {
                                                         vm.showTestDetails(test)
                                                     }
                                 }
-                                .disabled(!vm.canTakeTests)
+                                .disabled(!vm.allowsAIAnalysis)
 
                                 ClassicButton(title: vm.testButtonTitle) {
                                     vm.makePersonalityTest()
                                 }
-                                .disabled(vm.isLoading || !vm.canTakeTests)
+                                .disabled(vm.isLoading || !vm.allowsAIAnalysis)
                                 .padding(.top, 10)
                             }
-                            .blur(radius: !vm.canTakeTests ? 5 : 0)
+                            .blur(radius: !vm.allowsAIAnalysis ? 5 : 0)
                             .padding(.top, 15)
                             .overlay {
-                                if vm.userName.isEmpty {
-                                    CompleteProfileLock(title: "Войдите или зарегистрируйтесь для прохождения тестов")
-                                } else if !vm.hasProfileInfo {
-                                    CompleteProfileLock(title: "Заполните свой профиль для прохождения тестов")
-                                } else if !vm.hasAIConsent {
+                                if !vm.allowsAIAnalysis {
                                     AIConsentLock(title: "Разрешите анализ с помощью AI для прохождения тестов",
                                                   onAllow: aiConsentButton)
                                 }
@@ -180,8 +166,6 @@ extension HomeView {
     @ViewBuilder
     private func destinationView(_ route: HomeRoutes) -> some View {
         switch route {
-            case .addProfileInfo:
-                AddProfileInfoView(vm: vm)
             case .horoscopeDetails:
                 if let horoscope = vm.horoscope {
                     HoroscopeDetailsView(horoscope: horoscope)
@@ -199,49 +183,6 @@ extension HomeView {
         }
     }
 
-    private func completeYourProfile(_ addProfileInfo: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: Adaptive.size(10, 12)) {
-            HStack {
-                Text(vm.completeProfileTitle)
-                    .font(Adaptive.size(.default, .system(size: 19)))
-                    .bold()
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-            }
-
-            Text(vm.completeProfileSubtitle)
-                .font(Adaptive.size(.footnote, .system(size: 15)))
-                .fontWeight(.medium)
-                .foregroundStyle(.white)
-                .padding(.bottom, 13)
-
-            Button {
-                addProfileInfo()
-            } label: {
-                Text(vm.completeProfileButtonTitle)
-                    .font(Adaptive.size(.system(size: 15), .default))
-                    .foregroundStyle(Color(red: 0.42, green: 0.27, blue: 0.93))
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding(14)
-                    .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(LinearGradient(colors: [Color(red: 0.42,
-                                                  green: 0.27,
-                                                  blue: 0.93),
-                                            Color(red: 0.62,
-                                                  green: 0.33,
-                                                  blue: 0.95)],
-                                   startPoint: .leading,
-                                   endPoint: .trailing))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
     private func sparkImageWithBackground(_ size: Image.Scale, _ color: Color) -> some View {
         Image(systemName: "sparkles")
             .imageScale(size)
@@ -253,14 +194,8 @@ extension HomeView {
 }
 
 #Preview {
-    let authService = AuthService()
-    let contentService = ContentService()
-
-    HomeView(vm: HomeViewModel(authService: authService,
-                               contentService: contentService),
-             authService: authService) {
-
-    } profileButton: {
+    HomeView(vm: HomeViewModel(authService: AuthService(),
+                               contentService: ContentService())) {
 
     } aiConsentButton: {
 
