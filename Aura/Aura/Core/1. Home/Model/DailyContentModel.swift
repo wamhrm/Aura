@@ -2,7 +2,7 @@
 //  DailyContentModel.swift
 //  Aura
 //
-//  Created by ddorsat on 26.05.2026.
+//  Created by wamhrm on 26.05.2026.
 //
 
 import Foundation

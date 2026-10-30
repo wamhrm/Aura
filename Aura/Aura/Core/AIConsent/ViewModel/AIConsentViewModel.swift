@@ -2,7 +2,7 @@
 //  AIConsentViewModel.swift
 //  Aura
 //
-//  Created by ddorsat on 23.10.2026.
+//  Created by wamhrm on 23.10.2026.
 //
 
 import Combine

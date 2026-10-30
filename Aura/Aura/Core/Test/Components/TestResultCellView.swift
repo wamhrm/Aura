@@ -2,7 +2,7 @@
 //  TestResultsCellView.swift
 //  Aura
 //
-//  Created by ddorsat on 12.05.2026.
+//  Created by wamhrm on 12.05.2026.
 //
 
 import SwiftUI

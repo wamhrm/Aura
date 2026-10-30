@@ -2,7 +2,7 @@
 //  AuraUITests.swift
 //  AuraUITests
 //
-//  Created by ddorsat on 01.06.2026.
+//  Created by wamhrm on 01.06.2026.
 //
 
 import XCTest

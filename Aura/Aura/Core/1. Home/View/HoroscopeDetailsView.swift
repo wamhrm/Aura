@@ -2,7 +2,7 @@
 //  HoroscopeDetailsView.swift
 //  Aura
 //
-//  Created by ddorsat on 05.05.2026.
+//  Created by wamhrm on 05.05.2026.
 //
 
 import SwiftUI
