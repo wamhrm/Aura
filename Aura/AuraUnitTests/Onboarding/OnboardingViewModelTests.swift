@@ -78,7 +78,6 @@ final class OnboardingViewModelTests: XCTestCase {
     // MARK: - Helpers
     private func makeSUT() -> OnboardingViewModel {
         OnboardingViewModel(authService: MockAuthService(),
-                            contentService: MockContentService(),
-                            storage: MockLocalStorage()) {}
+                            contentService: MockContentService()) {}
     }
 }

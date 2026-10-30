@@ -62,7 +62,7 @@ extension View {
         modifier(CompatibilityResultZodiacsModifier())
     }
 
-    func zodiacSingModifier() -> some View {
+    func zodiacSignModifier() -> some View {
         self
             .font(Adaptive.size(.title2, .system(size: 24)))
             .padding(10)

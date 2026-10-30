@@ -14,17 +14,25 @@ nonisolated protocol KeychainHelperProtocol: Sendable {
     func deleteToken(path: String, key: String)
 }
 
-nonisolated final class KeychainHelper: KeychainHelperProtocol, @unchecked Sendable {
+nonisolated extension KeychainHelperProtocol {
+    func loadAuthToken() -> String? {
+        guard let data = getToken(path: Constants.tokenPath, key: Constants.tokenKey) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    func saveAuthToken(_ token: String) {
+        saveToken(Data(token.utf8), path: Constants.tokenPath, key: Constants.tokenKey)
+    }
+
+    func deleteAuthToken() {
+        deleteToken(path: Constants.tokenPath, key: Constants.tokenKey)
+    }
+}
+
+nonisolated final class KeychainHelper: KeychainHelperProtocol {
     private static let logger = Logger(subsystem: "ddorsat.Aura", category: "Keychain")
 
-    private var memoryToken: Data?
-    private let lock = NSLock()
-
     func saveToken(_ data: Data, path: String, key: String) {
-        lock.lock()
-        memoryToken = data
-        lock.unlock()
-
         let query = [kSecClass: kSecClassGenericPassword,
                      kSecAttrService: path,
                      kSecAttrAccount: key] as [CFString: Any]
@@ -44,13 +52,6 @@ nonisolated final class KeychainHelper: KeychainHelperProtocol, @unchecked Senda
     }
 
     func getToken(path: String, key: String) -> Data? {
-        lock.lock()
-        if let memoryToken {
-            lock.unlock()
-            return memoryToken
-        }
-        lock.unlock()
-
         let query = [kSecAttrService: path,
                      kSecAttrAccount: key,
                      kSecClass: kSecClassGenericPassword,
@@ -59,20 +60,10 @@ nonisolated final class KeychainHelper: KeychainHelperProtocol, @unchecked Senda
 
         SecItemCopyMatching(query, &result)
 
-        guard let data = result as? Data else { return nil }
-
-        lock.lock()
-        memoryToken = data
-        lock.unlock()
-
-        return data
+        return result as? Data
     }
 
     func deleteToken(path: String, key: String) {
-        lock.lock()
-        memoryToken = nil
-        lock.unlock()
-
         let query = [kSecAttrService: path,
                      kSecAttrAccount: key,
                      kSecClass: kSecClassGenericPassword] as CFDictionary

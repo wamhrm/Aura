@@ -28,15 +28,8 @@ nonisolated enum Constants {
         URL(string: baseURL + "/terms.html")
     }
     
-    static let userKey = "userKey"
     static let tokenKey = "tokenKey"
-    
-    static let horoscopeKeyPrefix = "horoscopeKey_"
-    static let personalityKeyPrefix = "personalityKey_"
-    static let historyKeyPrefix = "historyKey_"
-    static let dailyInsightKeyPrefix = "dailyInsightKey_"
-    static let dailyTipKeyPrefix = "dailyTipKey_"
-    
+
     static let selectedThemeKey = "selectedTheme"
     static let accentColorKey = "accentColor"
 }

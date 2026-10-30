@@ -21,6 +21,7 @@ final class MockAuthService: AuthServiceProtocol {
     private(set) var signInCallCount = 0
     private(set) var createAccountCallCount = 0
     private(set) var signOutCallCount = 0
+    private(set) var updateProfileInfoCallCount = 0
 
     init(state: AuthState = .signedOut) {
         authState = CurrentValueSubject<AuthState, Never>(state)
@@ -49,6 +50,7 @@ final class MockAuthService: AuthServiceProtocol {
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+        updateProfileInfoCallCount += 1
         if let errorToThrow { throw errorToThrow }
         guard let updateProfileInfoResult else { throw MockError.notStubbed }
         return updateProfileInfoResult

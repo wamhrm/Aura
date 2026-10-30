@@ -9,8 +9,7 @@ import Combine
 import SwiftUI
 
 enum RootScreen {
-    case onboarding
-    case main
+    case onboarding, main
 }
 
 @MainActor

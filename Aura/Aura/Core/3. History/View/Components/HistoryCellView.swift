@@ -14,7 +14,7 @@ struct HistoryCellView: View {
     var body: some View {
         HStack(spacing: 15) {
             Text(cell.iconHandler)
-                .zodiacSingModifier()
+                .zodiacSignModifier()
 
             VStack(alignment: .leading, spacing: 7) {
                 Text(cell.titleText)

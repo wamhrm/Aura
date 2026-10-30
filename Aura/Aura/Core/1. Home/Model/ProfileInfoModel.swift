@@ -18,6 +18,15 @@ struct ProfileInfoModel: Codable {
     var coreFocus: String?
     
     init() { }
+
+    var hasAllAnswers: Bool {
+        gender != nil &&
+        socialType != nil &&
+        conflictStyle != nil &&
+        emotionalCore != nil &&
+        decisionStyle != nil &&
+        coreFocus != nil
+    }
     
     init(user: UserModel) {
         self.dateOfBirth = user.dateOfBirth ?? ""

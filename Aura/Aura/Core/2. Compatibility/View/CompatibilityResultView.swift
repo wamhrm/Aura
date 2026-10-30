@@ -62,13 +62,13 @@ struct CompatibilityResultView: View {
                     .frame(width: Adaptive.size(310, 320))
                     .padding(.bottom, 10)
 
-                    resultsSection(result.overview.title) {
+                    ResultSectionView(title: result.overview.title) {
                         Text(result.overview.description)
                             .font(.system(size: Adaptive.size(14, 15)))
                             .foregroundStyle(.deepGray)
                     }
 
-                    resultsSection("Эмоциональная совместимость") {
+                    ResultSectionView(title: "Эмоциональная совместимость") {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
                                 EmotionalProfileBar(type: bar.title, value: bar.value)
@@ -78,7 +78,7 @@ struct CompatibilityResultView: View {
                     }
 
                     ForEach(result.sections, id: \.self) { section in
-                        resultsSection(section.selectedTest.rawValue) {
+                        ResultSectionView(title: section.selectedTest.rawValue) {
                             Text(section.description)
                                 .font(.system(size: Adaptive.size(14, 15)))
                                 .foregroundStyle(.deepGray)
@@ -97,7 +97,7 @@ struct CompatibilityResultView: View {
                         }
                     }
 
-                    resultsSection("Прогноз будущего") {
+                    ResultSectionView(title: "Прогноз будущего") {
                         VStack(spacing: 12) {
                             resultsWithNumbersSection(.spark,
                                                       result.forecast.recognitionTitle,
@@ -148,20 +148,6 @@ extension CompatibilityResultView {
         .frame(width: 150, height: 150)
     }
 
-    private func resultsSection<Content: View>(_ title: String,
-                                               @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(Adaptive.size(.system(size: 15), .default))
-                .bold()
-
-            content()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .backgroundWithShape(12, .cardBackground, true)
-    }
-    
     private func resultsWithNumbersSection(_ type: LoveLanguageTypes,
                                            _ title: String,
                                            _ description: String) -> some View {

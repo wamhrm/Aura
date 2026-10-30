@@ -16,31 +16,40 @@ protocol ContentServiceProtocol {
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
-    func fetchDailyInsight() async throws -> DailyContentModel
-    func fetchDailyTip() async throws -> DailyContentModel
-    func fetchCurrentHoroscope() async throws -> HoroscopeModel
+    func fetchDailyInsight(for userId: UUID) async throws -> DailyContentModel
+    func fetchDailyTip(for userId: UUID) async throws -> DailyContentModel
+    func fetchCurrentHoroscope(for userId: UUID) async throws -> HoroscopeModel
 }
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
     let historyDidChange = PassthroughSubject<Void, Never>()
 
     private let networkService: any NetworkServiceProtocol
+    private let storage: any LocalStorageProtocol
     private var historyTask: Task<[HistoryCellModel], any Error>?
 
-    init(networkService: any NetworkServiceProtocol = NetworkService()) {
+    init(networkService: any NetworkServiceProtocol = NetworkService(),
+         storage: any LocalStorageProtocol = LocalStorage()) {
         self.networkService = networkService
+        self.storage = storage
     }
 
-    func fetchDailyInsight() async throws -> DailyContentModel {
-        try await networkService.fetchDailyInsight()
+    func fetchDailyInsight(for userId: UUID) async throws -> DailyContentModel {
+        let insight = try await networkService.fetchDailyInsight()
+        storage.save(insight, for: StorageKeys.dailyInsight, userId: userId)
+        return insight
     }
 
-    func fetchDailyTip() async throws -> DailyContentModel {
-        try await networkService.fetchDailyTip()
+    func fetchDailyTip(for userId: UUID) async throws -> DailyContentModel {
+        let tip = try await networkService.fetchDailyTip()
+        storage.save(tip, for: StorageKeys.dailyTip, userId: userId)
+        return tip
     }
 
-    func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        try await networkService.fetchCurrentHoroscope()
+    func fetchCurrentHoroscope(for userId: UUID) async throws -> HoroscopeModel {
+        let horoscope = try await networkService.fetchCurrentHoroscope()
+        storage.save(horoscope, for: StorageKeys.horoscope, userId: userId)
+        return horoscope
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {

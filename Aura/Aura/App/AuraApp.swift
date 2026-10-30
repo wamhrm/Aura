@@ -21,13 +21,13 @@ struct AuraApp: App {
         let keychain = KeychainHelper()
         let networkService = NetworkService(keychain: keychain)
         let storage = LocalStorage()
-        storage.migrateLegacyUserDefaults()
 
         self.storage = storage
         _authService = StateObject(wrappedValue: AuthService(networkService: networkService,
                                                              keychain: keychain,
                                                              storage: storage))
-        _contentService = StateObject(wrappedValue: ContentService(networkService: networkService))
+        _contentService = StateObject(wrappedValue: ContentService(networkService: networkService,
+                                                                     storage: storage))
     }
 
     var body: some Scene {

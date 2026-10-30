@@ -28,8 +28,7 @@ struct RootView: View {
             switch vm.screen {
                 case .onboarding:
                     OnboardingView(authService: authService,
-                                   contentService: contentService,
-                                   storage: storage) {
+                                   contentService: contentService) {
                         vm.finishOnboarding()
                     }
                     .transition(.opacity)

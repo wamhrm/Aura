@@ -23,8 +23,7 @@ struct HistoryCellModel: Codable, Identifiable, Hashable {
 }
 
 enum HistoryTestKind: String, Codable, Hashable {
-    case personality
-    case compatibility
+    case personality, compatibility
 }
 
 extension HistoryCellModel {

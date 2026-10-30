@@ -76,15 +76,15 @@ final class HomeViewModelTests: XCTestCase {
         await waitUntil { sut.showAlert }
 
         // Then
-        XCTAssertEqual(sut.alertMessage, "Не удалось получить результат")
+        XCTAssertEqual(sut.alertMessage, "Что-то пошло не так. Попробуйте ещё раз")
         XCTAssertFalse(sut.homeRoutes.contains(.testResults))
     }
 
     // MARK: - saveProfileInfo
     func test_saveProfileInfo_whenDateInvalid_showsAlertAndDoesNotProceed() async {
         // Given
-        let (sut, _, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-        await waitUntil { sut.isSignedIn }
+        let (sut, auth, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
+        await waitUntil { !sut.isLoadingScreen }
         // profileInfo.dateOfBirth == "" (длина != 10)
 
         // When
@@ -93,13 +93,13 @@ final class HomeViewModelTests: XCTestCase {
 
         // Then
         XCTAssertEqual(sut.alertMessage, "Укажите дату рождения в формате ДД.ММ.ГГГГ")
-        XCTAssertFalse(sut.hasProfileInfo)
+        XCTAssertEqual(auth.updateProfileInfoCallCount, 0)
     }
 
     func test_saveProfileInfo_whenProfileIncomplete_showsAlertAndDoesNotProceed() async {
         // Given
-        let (sut, _, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-        await waitUntil { sut.isSignedIn }
+        let (sut, auth, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
+        await waitUntil { !sut.isLoadingScreen }
         sut.profileInfo.dateOfBirth = "01.01.2000"
         // остальные поля nil
 
@@ -109,22 +109,24 @@ final class HomeViewModelTests: XCTestCase {
 
         // Then
         XCTAssertEqual(sut.alertMessage, "Заполните все обязательные поля профиля")
-        XCTAssertFalse(sut.hasProfileInfo)
+        XCTAssertEqual(auth.updateProfileInfoCallCount, 0)
     }
 
     func test_saveProfileInfo_whenValid_callsServiceAndUpdatesState() async {
         // Given
         let (sut, auth, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-        await waitUntil { sut.isSignedIn }
+        await waitUntil { !sut.isLoadingScreen }
         auth.updateProfileInfoResult = UpdateProfileInfoResponse(user: .mock, horoscope: .mock)
         fillValidProfileInfo(sut)
+        var didSave = false
 
         // When
-        sut.saveProfileInfo {}
-        await waitUntil { sut.hasProfileInfo }
+        sut.saveProfileInfo { didSave = true }
+        await waitUntil { didSave }
 
         // Then
-        XCTAssertTrue(sut.hasProfileInfo)
+        XCTAssertTrue(didSave)
+        XCTAssertEqual(auth.updateProfileInfoCallCount, 1)
         XCTAssertFalse(sut.showAlert)
     }
     

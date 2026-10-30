@@ -7,24 +7,22 @@
 
 import Foundation
 import Combine
-import SwiftUI
 
 enum ProfileRoutes: Hashable {
     case addProfileInfo
 }
 
 @MainActor
-final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
+final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published var profileRoutes: [ProfileRoutes] = []
 
-    @Published private(set) var authState = AuthState.signedOut
+    @Published private(set) var user: UserModel?
     @Published private(set) var profileDisplay: ProfileDisplayModel?
     @Published private(set) var dailyTip: DailyContentModel?
     
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published private(set) var hasPersonalityTests = false
-    @Published private(set) var isSignedOut = false
     @Published var showSettings = false
     @Published var showSignOutAlert = false
     @Published var showDeleteAccountAlert = false
@@ -36,7 +34,6 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
     private let storage: any LocalStorageProtocol
-    private let transitionDuration = 0.25
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -55,7 +52,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
     }
 
     var needsAIConsent: Bool {
-        guard hasPersonalityTests, case .signedIn(let user) = authState else { return false }
+        guard hasPersonalityTests, let user else { return false }
         return !user.allowsAIAnalysis
     }
 
@@ -63,89 +60,50 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
         authService.authState
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                self?.handleAuthState($0)
+                guard let self, case .signedIn(let user) = $0 else { return }
+                handleSignIn(user)
             }
             .store(in: &cancellables)
 
         contentService.historyDidChange
             .receive(on: RunLoop.main)
             .sink { [weak self] in
-                guard let self, case .signedIn(let user) = authState else { return }
-                Task { await self.loadPersonality(for: user.id, ignoreCache: true) }
+                guard let self, let user else { return }
+                Task { await self.loadPersonality(for: user.id) }
             }
             .store(in: &cancellables)
     }
 
-    private func handleAuthState(_ state: AuthState) {
-        switch state {
-            case .signedIn(let user):
-                if let cached = storage.load(StorageKeys.personality, for: user.id) {
-                    applyPersonality(result: cached.result)
-                } else {
-                    hasPersonalityTests = false
-                    personalityResult = nil
-                }
-
-                if user.hasCompletedProfileInfo {
-                    dailyTip = storage.load(StorageKeys.dailyTip, for: user.id)
-                } else {
-                    dailyTip = nil
-                    storage.delete(StorageKeys.dailyTip, for: user.id)
-                }
-
-                updateProfileDisplay()
-                isSignedOut = false
-
-                withAnimation(.easeInOut(duration: transitionDuration)) {
-                    authState = .signedIn(user)
-                }
-
-                Task { await refreshContent(for: user) }
-            case .signedOut:
-                withAnimation(.easeInOut(duration: transitionDuration)) { authState = .signedOut }
-
-                Task {
-                    try? await Task.sleep(for: .seconds(transitionDuration))
-                    hasPersonalityTests = false
-                    personalityResult = nil
-                    dailyTip = nil
-                    profileDisplay = nil
-                    isSignedOut = true
-                }
+    private func handleSignIn(_ user: UserModel) {
+        if let cached = storage.load(StorageKeys.personality, for: user.id) {
+            applyPersonality(result: cached.result)
         }
+
+        dailyTip = storage.load(StorageKeys.dailyTip, for: user.id)
+        updateProfileDisplay()
+        self.user = user
+
+        Task { await refreshContent(for: user) }
     }
     
     private func refreshContent(for user: UserModel) async {
-        async let personality: Void = loadPersonality(for: user.id, ignoreCache: true, showErrorOnFailure: false)
+        async let personality: Void = loadPersonality(for: user.id, showErrorOnFailure: false)
 
-        if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
-            await loadDailyTip(for: user.id, showErrorOnFailure: false)
+        if user.allowsAIAnalysis {
+            await loadDailyTip(for: user.id)
         }
 
         await personality
     }
 
-    private func loadDailyTip(for userId: UUID, showErrorOnFailure: Bool = true) async {
-        do {
-            let tip = try await contentService.fetchDailyTip()
-            dailyTip = tip
-            storage.save(tip, for: StorageKeys.dailyTip, userId: userId)
-            updateProfileDisplay()
-        } catch {
-            if showErrorOnFailure {
-                presentAlert(error.localizedDescription)
-            }
-        }
+    private func loadDailyTip(for userId: UUID) async {
+        guard let tip = try? await contentService.fetchDailyTip(for: userId) else { return }
+
+        dailyTip = tip
+        updateProfileDisplay()
     }
 
-    private func loadPersonality(for userId: UUID,
-                                 ignoreCache: Bool = false,
-                                 showErrorOnFailure: Bool = true) async {
-        if !ignoreCache, let cached = storage.load(StorageKeys.personality, for: userId) {
-            applyPersonality(result: cached.result)
-            return
-        }
-
+    private func loadPersonality(for userId: UUID, showErrorOnFailure: Bool = true) async {
         do {
             let history = try await contentService.fetchHistory()
             storage.save(history, for: StorageKeys.history, userId: userId)
@@ -169,7 +127,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                          userId: userId)
         } catch {
             if showErrorOnFailure {
-                presentAlert(error.localizedDescription)
+                presentAlert(error.userMessage)
             }
         }
     }
@@ -207,7 +165,7 @@ final class ProfileViewModel: ObservableObject, LoadingStatePresentable {
                 showSettings = false
                 showAlert = false
             } catch {
-                alertMessage = error.localizedDescription
+                alertMessage = error.userMessage
                 showDeleteAccountError = true
             }
 
