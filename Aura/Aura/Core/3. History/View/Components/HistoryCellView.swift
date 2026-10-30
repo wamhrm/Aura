@@ -13,11 +13,11 @@ struct HistoryCellView: View {
 
     var body: some View {
         HStack(spacing: 15) {
-            Text(iconHandler)
+            Text(cell.iconHandler)
                 .zodiacSingModifier()
 
             VStack(alignment: .leading, spacing: 7) {
-                Text(titleText)
+                Text(cell.titleText)
                     .font(Adaptive.size(.callout, .default))
                     .bold()
 
@@ -30,7 +30,7 @@ struct HistoryCellView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
-                    Text("\(cell.resolvedCompatibilityScore ?? 0)%")
+                    Text(cell.compatibilityScoreText)
                         .font(Adaptive.size(.footnote, .system(size: 14)))
                         .foregroundStyle(.white)
                         .bold()
@@ -45,25 +45,6 @@ struct HistoryCellView: View {
         .frame(height: Adaptive.size(93, 97))
         .frame(maxWidth: .infinity, alignment: .leading)
         .backgroundWithShape(12, .cardBackground, true)
-    }
-}
-
-extension HistoryCellView {
-    private var iconHandler: String {
-        switch cell.kind {
-            case .personality:
-                return cell.zodiacSign
-            case .compatibility:
-                let sign = cell.resolvedPartnerZodiacSign ?? ""
-                return sign.isEmpty ? "👤" : sign
-        }
-    }
-
-    private var titleText: String {
-        switch cell.kind {
-            case .personality: cell.archetypeTitle
-            case .compatibility: cell.resolvedPartnerName ?? ""
-        }
     }
 }
 

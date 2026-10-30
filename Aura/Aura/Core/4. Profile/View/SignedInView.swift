@@ -13,10 +13,6 @@ struct SignedInView: View {
     let aiConsentButton: () -> Void
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
-    private var profileDisplay: ProfileDisplayModel {
-        vm.profileDisplay ?? .placeholder
-    }
-
     var body: some View {
         ZStack {
             BackgroundView()
@@ -24,7 +20,7 @@ struct SignedInView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .center, spacing: 10) {
-                        Text(user.name.prefix(2).uppercased())
+                        Text(user.nameInitials)
                             .font(Adaptive.size(.title3, .title2))
                             .foregroundStyle(.white)
                             .fontWeight(.heavy)
@@ -40,9 +36,9 @@ struct SignedInView: View {
                             .fontWeight(.bold)
 
                         HStack(alignment: .center, spacing: 5) {
-                            Text(user.dateOfBirth ?? "Дата рождения не указана")
+                            Text(user.dateOfBirthHandler)
 
-                            if let zodiacSign = profileDisplay.zodiacSignTitle {
+                            if let zodiacSign = vm.profileDisplayHandler.zodiacSignTitle {
                                 Text("·")
                                     .font(.title3)
                                     .bold()
@@ -69,7 +65,7 @@ struct SignedInView: View {
                                               onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
                             } else {
-                                Text(profileDisplay.dailyTip)
+                                Text(vm.profileDisplayHandler.dailyTip)
                                     .font(.system(size: Adaptive.size(14, 15))).italic()
                                     .fontWeight(.medium)
                             }
@@ -85,18 +81,18 @@ struct SignedInView: View {
                                 .font(Adaptive.size(.system(size: 15), .default))
                                 .bold()
 
-                            Text(profileDisplay.overview)
+                            Text(vm.profileDisplayHandler.overview)
                                 .font(.system(size: Adaptive.size(14, 15)))
                                 .foregroundStyle(.deepGray)
 
                             VStack {
                                 TestResultCellView(test: PersonalityCellTypes.socialFilter,
-                                                   description: profileDisplay.socialFilter)
+                                                   description: vm.profileDisplayHandler.socialFilter)
 
                                 Divider()
 
                                 TestResultCellView(test: PersonalityCellTypes.emotionalDepth,
-                                                   description: profileDisplay.emotionalDepth)
+                                                   description: vm.profileDisplayHandler.emotionalDepth)
                             }
                             .testTopicsModifier()
                         }
@@ -110,10 +106,10 @@ struct SignedInView: View {
                                 .bold()
 
                             VStack(spacing: 15) {
-                                EmotionalProfileBar(type: .temperament, value: profileDisplay.temperament)
-                                EmotionalProfileBar(type: .thinking, value: profileDisplay.thinking)
-                                EmotionalProfileBar(type: .organization, value: profileDisplay.organization)
-                                EmotionalProfileBar(type: .relationships, value: profileDisplay.relationships)
+                                EmotionalProfileBar(type: .temperament, value: vm.profileDisplayHandler.temperament)
+                                EmotionalProfileBar(type: .thinking, value: vm.profileDisplayHandler.thinking)
+                                EmotionalProfileBar(type: .organization, value: vm.profileDisplayHandler.organization)
+                                EmotionalProfileBar(type: .relationships, value: vm.profileDisplayHandler.relationships)
                             }
                             .padding(.top, 5)
                         }

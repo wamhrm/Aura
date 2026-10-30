@@ -61,6 +61,34 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
         dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
     }
 
+    var greetingText: String {
+        userName.isEmpty ? "Добро пожаловать" : "Здравствуйте, \(userName.capitalized)"
+    }
+
+    var testButtonTitle: String {
+        isLoading ? "Готовим результат..." : "Проверить себя"
+    }
+
+    var saveButtonTitle: String {
+        isLoading ? "Сохраняем..." : "Готово"
+    }
+
+    var completeProfileTitle: String {
+        isSignedIn ? "Заполните свой профиль" : "Войдите или зарегистрируйтесь, чтобы заполнить свой профиль"
+    }
+
+    var completeProfileSubtitle: String {
+        isSignedIn ? "Расскажите о себе, чтобы получить детальный разбор вашего астрологического профиля" : "Вы можете рассказать о себе, чтобы получить детальный разбор вашего астрологического профиля"
+    }
+
+    var completeProfileButtonTitle: String {
+        isSignedIn ? "Заполнить информацию" : "Войти или зарегистрироваться"
+    }
+
+    func isSelected(_ test: PersonalityTestTypes) -> Bool {
+        selectedTests.contains(test)
+    }
+
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)
@@ -108,6 +136,30 @@ final class HomeViewModel: ObservableObject, LoadingStatePresentable {
                 homeRoutes = []
                 isSignedIn = false
         }
+    }
+
+    func showHoroscopeDetails() {
+        homeRoutes.append(.horoscopeDetails)
+    }
+
+    func showAddProfileInfo() {
+        homeRoutes.append(.addProfileInfo)
+    }
+
+    func completeProfile(onSignIn: () -> Void) {
+        if isSignedIn {
+            showAddProfileInfo()
+        } else {
+            onSignIn()
+        }
+    }
+
+    func showAllTests() {
+        homeRoutes.append(.allTests)
+    }
+
+    func showTestDetails(_ test: PersonalityTestTypes) {
+        homeRoutes.append(.testDetails(test))
     }
 
     func saveProfileInfo(onSuccess: @escaping () -> Void) {

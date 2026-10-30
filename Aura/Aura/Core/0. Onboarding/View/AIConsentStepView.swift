@@ -15,7 +15,7 @@ struct AIConsentStepView: View {
             AIConsentContentView()
                 .padding(.horizontal)
 
-            ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Разрешить") {
+            ClassicButton(title: vm.aiConsentButtonTitle) {
                 vm.chooseAIConsent(true)
             }
             .padding(.horizontal)

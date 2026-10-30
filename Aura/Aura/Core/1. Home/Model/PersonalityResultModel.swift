@@ -16,6 +16,10 @@ struct PersonalityResultModel: Codable, Hashable {
     let overview: PersonalityOverview
     let emotionalBar: [PersonalityEmotionalBar]
     let sections: [PersonalitySection]
+
+    var nameCapitalized: String {
+        name.capitalized
+    }
 }
 
 struct PersonalityOverview: Codable, Hashable {

@@ -32,7 +32,7 @@ struct CompatibilityResultView: View {
                         .frame(width: 150, alignment: .trailing)
 
                         VStack {
-                            Text(!result.partnerZodiacSign.isEmpty ? result.partnerZodiacSign : "👤")
+                            Text(result.partnerZodiacSignHandler)
                                 .compatibilityResultZodiacsModifier()
 
                             Text(result.partnerNameCapitalized)

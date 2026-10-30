@@ -51,7 +51,7 @@ struct CompatibilityView: View {
                                 headerText("Пол *")
 
                                 SelectionButtons<CompatibilityButtons.genderOptions> { button in
-                                    vm.partnerInfo.gender = button.rawValue
+                                    vm.selectGender(button)
                                 }
                             }
 
@@ -59,7 +59,7 @@ struct CompatibilityView: View {
                                 headerText("Дата рождения")
 
                                 SelectionButtons<CompatibilityButtons.birthOptions> { button in
-                                    vm.partnerInfo.exactDateOfBirth = button == .exactDate
+                                    vm.selectBirthOption(button)
                                 }
                                 .padding(.bottom, 10)
 
@@ -94,7 +94,7 @@ struct CompatibilityView: View {
                                 Spacer()
 
                                 Button {
-                                    vm.selectedTests = CompatibilityTestTypes.allCases
+                                    vm.selectAllTests()
                                 } label: {
                                     Text("Выбрать все")
                                         .foregroundStyle(AccentColorOption.color(accentColor))
@@ -105,16 +105,14 @@ struct CompatibilityView: View {
 
                             ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
                                 TestCellView(type: test,
-                                             hasChosenTest: Binding(
-                                                get: { vm.selectedTests.contains(test) },
-                                                set: { _ in })) {
+                                             hasChosenTest: vm.isSelected(test)) {
                                                     vm.toggleTestSelection(test)
                                                 } onTapHandler: {
-                                                    vm.compatibilityRoutes.append(.testDetails(test))
+                                                    vm.showTestDetails(test)
                                                 }
                             }
 
-                            ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Узнать совместимость") {
+                            ClassicButton(title: vm.testButtonTitle) {
                                 vm.makeCompatibilityTest()
                             }
                             .disabled(vm.isLoading)
@@ -186,7 +184,7 @@ extension CompatibilityView {
         switch route {
             case .testDetails(let test):
                 TestDetailsView(type: test,
-                                isSelected: vm.selectedTests.contains(test)) {
+                                isSelected: vm.isSelected(test)) {
                     vm.toggleTestSelection(test)
                 }
             case .compatibilityResults:
@@ -230,18 +228,6 @@ extension CompatibilityView {
                 }
             }
         }
-    }
-}
-
-fileprivate enum CompatibilityButtons {
-    enum genderOptions: String, CaseIterable {
-        case male = "Мужской"
-        case female = "Женский"
-    }
-
-    enum birthOptions: String, CaseIterable {
-        case exactDate = "Точная"
-        case approximateDate = "Примерная"
     }
 }
 

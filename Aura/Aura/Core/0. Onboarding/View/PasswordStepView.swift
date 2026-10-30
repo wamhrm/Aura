@@ -17,7 +17,7 @@ struct PasswordStepView: View {
 
             OnboardingTextField(type: .password, text: $vm.password)
 
-            ClassicButton(title: vm.isLoading ? "Создаём аккаунт..." : "Создать аккаунт") {
+            ClassicButton(title: vm.createAccountButtonTitle) {
                 vm.createAccount()
             }
 

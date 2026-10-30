@@ -25,6 +25,14 @@ struct UserModel: Codable, Equatable, Identifiable {
         name.capitalized
     }
 
+    var nameInitials: String {
+        name.prefix(2).uppercased()
+    }
+
+    var dateOfBirthHandler: String {
+        dateOfBirth ?? "Дата рождения не указана"
+    }
+
     var hasCompletedProfileInfo: Bool {
         dateOfBirth != nil &&
         gender != nil &&

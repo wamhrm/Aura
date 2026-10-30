@@ -38,6 +38,10 @@ struct CompabilityResultModel: Codable, Hashable {
     var partnerNameCapitalized: String {
         partnerName.capitalized
     }
+
+    var partnerZodiacSignHandler: String {
+        partnerZodiacSign.isEmpty ? "👤" : partnerZodiacSign
+    }
 }
 
 struct CompatibilityOverview: Codable, Hashable {

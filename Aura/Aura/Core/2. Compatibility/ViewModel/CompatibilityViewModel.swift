@@ -14,6 +14,18 @@ enum CompatibilityRoutes: Hashable {
     case compatibilityResults
 }
 
+enum CompatibilityButtons {
+    enum genderOptions: String, CaseIterable {
+        case male = "Мужской"
+        case female = "Женский"
+    }
+
+    enum birthOptions: String, CaseIterable {
+        case exactDate = "Точная"
+        case approximateDate = "Примерная"
+    }
+}
+
 @MainActor
 final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
@@ -41,6 +53,10 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
         setupSubscriptions()
     }
 
+    var testButtonTitle: String {
+        isLoading ? "Готовим результат..." : "Узнать совместимость"
+    }
+
     private func setupSubscriptions() {
         authService.authState
             .receive(on: RunLoop.main)
@@ -57,6 +73,26 @@ final class CompatibilityViewModel: ObservableObject, LoadingStatePresentable {
                 }
             }
             .store(in: &cancellables)
+    }
+
+    func showTestDetails(_ test: CompatibilityTestTypes) {
+        compatibilityRoutes.append(.testDetails(test))
+    }
+
+    func selectAllTests() {
+        selectedTests = CompatibilityTestTypes.allCases
+    }
+
+    func isSelected(_ test: CompatibilityTestTypes) -> Bool {
+        selectedTests.contains(test)
+    }
+
+    func selectGender(_ option: CompatibilityButtons.genderOptions) {
+        partnerInfo.gender = option.rawValue
+    }
+
+    func selectBirthOption(_ option: CompatibilityButtons.birthOptions) {
+        partnerInfo.exactDateOfBirth = option == .exactDate
     }
 
     func toggleTestSelection(_ test: CompatibilityTestTypes) {
