@@ -2,7 +2,7 @@
 //  ProfileDisplayModel.swift
 //  Aura
 //
-//  Created by ddorsat on 28.05.2026.
+//  Created by wamhrm on 28.05.2026.
 //
 
 import Foundation

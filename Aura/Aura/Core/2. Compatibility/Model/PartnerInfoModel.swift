@@ -2,7 +2,7 @@
 //  PartnerInfoModelz.swift
 //  Aura
 //
-//  Created by ddorsat on 18.05.2026.
+//  Created by wamhrm on 18.05.2026.
 //
 
 import Foundation

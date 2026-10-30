@@ -2,7 +2,7 @@
 //  AuthController.swift
 //  AuraBackend
 //
-//  Created by ddorsat on 13.05.2026.
+//  Created by wamhrm on 13.05.2026.
 //
 
 import Fluent
