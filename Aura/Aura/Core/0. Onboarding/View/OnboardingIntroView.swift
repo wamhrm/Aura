@@ -115,3 +115,8 @@ fileprivate enum IntroPages: Int, CaseIterable {
         }
     }
 }
+
+#Preview {
+    OnboardingIntroView(vm: OnboardingViewModel(authService: AuthService(),
+                                                contentService: ContentService()) {})
+}

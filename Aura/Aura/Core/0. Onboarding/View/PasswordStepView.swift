@@ -29,3 +29,8 @@ struct PasswordStepView: View {
         .padding(.vertical, 10)
     }
 }
+
+#Preview {
+    PasswordStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                             contentService: ContentService()) {})
+}

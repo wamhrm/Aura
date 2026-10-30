@@ -210,3 +210,26 @@ enum EmotionalProfileTypes: String, Codable {
         }
     }
 }
+
+#Preview {
+    VStack(spacing: 20) {
+        LogoImage(size: 50)
+
+        HoroscopeDateView(dateStart: "27 окт.", dateEnd: "2 нояб.", isCellDetails: true)
+
+        TestCellImage(icon: "sparkles", color: .systemPurple, iconSize: .title3, backgroundSize: 50, isResults: false)
+
+        EmotionalProfileBar(type: .temperament, value: 7)
+
+        CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
+
+        AIConsentLock(title: "Разрешите анализ с помощью AI") {
+
+        }
+
+        ClassicButton(title: "Готово") {
+
+        }
+    }
+    .padding(.horizontal)
+}

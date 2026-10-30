@@ -33,3 +33,8 @@ struct EmailStepView: View {
         .padding(.vertical, 10)
     }
 }
+
+#Preview {
+    EmailStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                          contentService: ContentService()) {})
+}
