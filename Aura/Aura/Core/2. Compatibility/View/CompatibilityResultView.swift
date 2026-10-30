@@ -84,7 +84,7 @@ struct CompatibilityResultView: View {
                                 .foregroundStyle(.deepGray)
 
                             VStack(spacing: 12) {
-                                ForEach(Array(section.items.enumerated()), id: \.element) { index, item in
+                                ForEach(section.items.enumerated(), id: \.element) { index, item in
                                     TestResultCellView(test: item.title,
                                                        description: item.description)
 
@@ -158,7 +158,7 @@ extension CompatibilityResultView {
                 .foregroundStyle(numberColor(for: type))
                 .padding(10)
                 .background(numberColor(for: type).opacity(0.15))
-                .clipShape(Circle())
+                .clipShape(.circle)
                 .frame(width: 35, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 7) {

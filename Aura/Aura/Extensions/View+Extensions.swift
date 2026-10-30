@@ -17,9 +17,9 @@ extension View {
     
     func backgroundWithShape(_ amount: CGFloat, _ color: Color, _ stroke: Bool) -> some View {
         self
-            .background(RoundedRectangle(cornerRadius: amount).fill(color))
+            .background(color, in: .rect(cornerRadius: amount))
             .overlay(RoundedRectangle(cornerRadius: amount).stroke(.cardStroke, lineWidth: stroke ? 0.2 : 0))
-            .clipShape(RoundedRectangle(cornerRadius: amount))
+            .clipShape(.rect(cornerRadius: amount))
             .shadow(color: .gray.opacity(0.1), radius: 3)
     }
     
@@ -53,7 +53,7 @@ extension View {
         self
             .padding(10)
             .background(Color.fieldBackground.opacity(0.55))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(.rect(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.fieldBackground, lineWidth: 1))
             .padding(.top, 5)
     }
@@ -71,7 +71,7 @@ extension View {
                                        startPoint: .top,
                                        endPoint: .bottom))
             .overlay(Circle().stroke(.zodiacStroke, lineWidth: 2))
-            .clipShape(Circle())
+            .clipShape(.circle)
             .shadow(radius: 1)
     }
     
@@ -103,6 +103,6 @@ private struct CompatibilityResultZodiacsModifier: ViewModifier {
             .font(Adaptive.size(.callout, .default))
             .padding(Adaptive.size(10, 12))
             .background(AccentColorOption.color(accentColor).opacity(0.25))
-            .clipShape(Circle())
+            .clipShape(.circle)
     }
 }

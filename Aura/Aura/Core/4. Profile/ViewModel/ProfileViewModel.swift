@@ -69,7 +69,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 guard let self, let user else { return }
-                Task { await self.loadPersonality(for: user.id) }
+                Task { await loadPersonality(for: user.id) }
             }
             .store(in: &cancellables)
     }

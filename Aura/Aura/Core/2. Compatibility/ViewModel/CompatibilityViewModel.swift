@@ -155,12 +155,9 @@ fileprivate enum PartnerInfoError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidName:
-                return "Имя партнёра должно содержать минимум 2 символа"
-            case .invalidDateOfBirth:
-                return "Укажите дату рождения в формате ДД.ММ.ГГГГ"
-            case .invalidAge:
-                return "Укажите возраст партнёра"
+            case .invalidName: "Имя партнёра должно содержать минимум 2 символа"
+            case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
+            case .invalidAge: "Укажите возраст партнёра"
         }
     }
 }

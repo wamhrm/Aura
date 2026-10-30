@@ -42,7 +42,7 @@ struct LogoImage: View {
             .resizable()
             .scaledToFill()
             .frame(width: size, height: size)
-            .clipShape(Circle())
+            .clipShape(.circle)
             .clipped()
     }
 }
@@ -61,7 +61,7 @@ struct ClassicButton: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
                 .background(AccentColorOption.color(accentColor))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(.rect(cornerRadius: 10))
         }
     }
 }
@@ -79,7 +79,7 @@ struct TestCellImage: View {
             .foregroundStyle(Color(color))
             .padding(10)
             .frame(width: backgroundSize, height: backgroundSize)
-            .background(RoundedRectangle(cornerRadius: isResults ? 8 : 15).fill(Color(color).opacity(0.2)))
+            .background(Color(color).opacity(0.2), in: .rect(cornerRadius: isResults ? 8 : 15))
     }
 }
 
@@ -94,7 +94,7 @@ struct CompleteProfileLock: View {
                 .foregroundStyle(.deepGray)
                 .padding()
                 .background(Color.fieldBackground.opacity(0.75))
-                .clipShape(Circle())
+                .clipShape(.circle)
                 .overlay(Circle().stroke(Color.fieldBorder, lineWidth: 1))
 
             Text(title)
@@ -124,7 +124,7 @@ struct AIConsentLock: View {
                     .padding(.horizontal, 28)
                     .padding(.vertical, 11)
                     .background(.white)
-                    .clipShape(Capsule())
+                    .clipShape(.capsule)
                     .overlay(Capsule().stroke(Color.fieldBorder, lineWidth: 1))
             }
         }

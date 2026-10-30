@@ -29,7 +29,7 @@ struct SignedInView: View {
                                                                 .pink.opacity(0.7)],
                                                        startPoint: .top,
                                                        endPoint: .bottom))
-                            .clipShape(Circle())
+                            .clipShape(.circle)
 
                         Text(user.nameCapitalized)
                             .font(Adaptive.size(.title3, .title2))
@@ -74,7 +74,7 @@ struct SignedInView: View {
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(AccentColorOption.color(accentColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(.rect(cornerRadius: 12))
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text("О вас")

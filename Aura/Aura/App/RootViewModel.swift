@@ -35,7 +35,7 @@ final class RootViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
+    
     func finishOnboarding() {
         hasFinishedOnboarding = true
         withAnimation(.easeInOut(duration: 0.3)) { screen = .main }

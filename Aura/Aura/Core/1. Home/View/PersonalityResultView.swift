@@ -24,7 +24,7 @@ struct PersonalityResultView: View {
                                 .fontWeight(.semibold)
                                 .padding(10)
                                 .background(.lightPurple)
-                                .clipShape(Circle())
+                                .clipShape(.circle)
                             
                             Text(result.nameCapitalized)
                                 .font(Adaptive.size(.title3, .title2))
@@ -78,7 +78,7 @@ struct PersonalityResultView: View {
                                 .foregroundStyle(.deepGray)
                             
                             VStack(spacing: 15) {
-                                ForEach(Array(test.items.enumerated()), id: \.element) { index, item in
+                                ForEach(test.items.enumerated(), id: \.element) { index, item in
                                     TestResultCellView(test: item.title,
                                                        description: item.description)
                                     

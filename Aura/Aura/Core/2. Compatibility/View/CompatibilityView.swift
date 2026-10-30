@@ -30,7 +30,7 @@ struct CompatibilityView: View {
                                     .fontWeight(.semibold)
                                     .padding(Adaptive.size(7, 9))
                                     .background(.capsuleBackground)
-                                    .clipShape(Circle())
+                                    .clipShape(.circle)
 
                                 Text("Детали партнера")
                                     .font(Adaptive.size(.system(size: 15), .default))
@@ -165,7 +165,7 @@ extension CompatibilityView {
                 .background(LinearGradient(colors: [.purple, .softPurple],
                                            startPoint: .topLeading,
                                            endPoint: .bottomTrailing))
-                .clipShape(Circle())
+                .clipShape(.circle)
                 .padding(.vertical, 12)
 
             Text("Анализ партнера")
@@ -198,15 +198,10 @@ extension CompatibilityView {
     }
 
     private struct SelectionButtons<T: RawRepresentable & CaseIterable & Hashable>: View where T.RawValue == String {
-        @State private var selected: T
-        @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
-
         let onTapHandler: (T) -> Void
 
-        init(selected: T = T.allCases.first!, onTapHandler: @escaping (T) -> Void) {
-            self._selected = State(initialValue: selected)
-            self.onTapHandler = onTapHandler
-        }
+        @State private var selected = T.allCases.first!
+        @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
         var body: some View {
             HStack(spacing: 12) {
@@ -223,7 +218,7 @@ extension CompatibilityView {
                             .padding(.horizontal, Adaptive.size(20, 21))
                             .background(selected == item ? AccentColorOption.color(accentColor) : .clear)
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(.gray, lineWidth: 1))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(.rect(cornerRadius: 10))
                     }
                 }
             }

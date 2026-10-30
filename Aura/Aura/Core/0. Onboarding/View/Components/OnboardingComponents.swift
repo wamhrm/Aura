@@ -96,7 +96,7 @@ struct OnboardingTextField: View {
         .padding(.horizontal)
         .frame(height: Adaptive.size(48, 52))
         .background(Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(.rect(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.fieldBorder, lineWidth: 1.5))
     }
 }
@@ -144,7 +144,7 @@ struct OnboardingAppleButton: View {
         }
         .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
         .frame(height: 50)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 
@@ -180,7 +180,7 @@ struct OnboardingIcon: View {
             .background(LinearGradient(colors: [.purple, .softPurple],
                                        startPoint: .topLeading,
                                        endPoint: .bottomTrailing))
-            .clipShape(Circle())
+            .clipShape(.circle)
     }
 }
 

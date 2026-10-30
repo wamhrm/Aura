@@ -203,10 +203,8 @@ fileprivate enum ProfileInfoError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidDateOfBirth:
-                return "Укажите дату рождения в формате ДД.ММ.ГГГГ"
-            case .incompleteProfileInfo:
-                return "Заполните все обязательные поля профиля"
+            case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
+            case .incompleteProfileInfo: "Заполните все обязательные поля профиля"
         }
     }
 }

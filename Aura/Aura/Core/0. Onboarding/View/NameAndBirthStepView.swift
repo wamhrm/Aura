@@ -35,7 +35,7 @@ struct NameAndBirthStepView: View {
                         .labelsHidden()
                         .frame(maxWidth: .infinity)
                         .background(Color.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(.rect(cornerRadius: 10))
                 }
 
                 VStack(spacing: 15) {
@@ -54,7 +54,7 @@ struct NameAndBirthStepView: View {
                 .font(Adaptive.size(.footnote, .callout))
                 .padding()
                 .background(Color.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(.rect(cornerRadius: 10))
 
                 ClassicButton(title: "Далее") {
                     vm.continueFromNameAndBirth()

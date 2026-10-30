@@ -41,7 +41,7 @@ struct HoroscopeCellView: View {
             .padding(22)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.lightBlue)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(.rect(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.fieldBackground, lineWidth: 1))
         }
     }

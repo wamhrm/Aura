@@ -12,14 +12,11 @@ struct RootView: View {
 
     private let authService: AuthService
     private let contentService: ContentService
-    private let storage: any LocalStorageProtocol
 
     init(authService: AuthService,
-         contentService: ContentService,
-         storage: any LocalStorageProtocol) {
+         contentService: ContentService) {
         self.authService = authService
         self.contentService = contentService
-        self.storage = storage
         _vm = StateObject(wrappedValue: RootViewModel(authService: authService))
     }
 
@@ -35,7 +32,6 @@ struct RootView: View {
                 case .main:
                     MainTabView(authService: authService,
                                 contentService: contentService,
-                                storage: storage,
                                 promptsAIConsentAutomatically: !vm.hasFinishedOnboarding)
                         .transition(.opacity)
             }
@@ -45,6 +41,5 @@ struct RootView: View {
 
 #Preview {
     RootView(authService: AuthService(),
-             contentService: ContentService(),
-             storage: LocalStorage())
+             contentService: ContentService())
 }

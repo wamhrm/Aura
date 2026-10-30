@@ -30,14 +30,14 @@ struct HoroscopeDetailsView: View {
                         HoroscopeDateView(dateStart: horoscope.dateStart, dateEnd: horoscope.dateEnd, isCellDetails: true)
                             .padding(10)
                             .background(Color.fieldBackground.opacity(0.45))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(.rect(cornerRadius: 10))
                     }
                     .padding(.vertical, 20)
                     .frame(maxWidth: .infinity)
                     .background(LinearGradient(colors: [.softPurple, .libra],
                                                startPoint: .topLeading,
                                                endPoint: .bottomTrailing))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(.rect(cornerRadius: 12))
                     .addSparkles()
                     
                     VStack(alignment: .leading, spacing: 12) {

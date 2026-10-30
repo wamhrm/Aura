@@ -34,6 +34,6 @@ enum AccentColorOption: String, CaseIterable, Identifiable {
     }
 
     static func color(_ value: String) -> Color {
-        AccentColorOption(rawValue: value)?.color ?? AccentColorOption.blue.color
+        (AccentColorOption(rawValue: value) ?? .blue).color
     }
 }
