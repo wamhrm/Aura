@@ -1,7 +1,7 @@
 //  KeychainHelper.swift
 //  Aura
 //
-//  Created by ddorsat on 05.04.2026.
+//  Created by wamhrm on 05.04.2026.
 //
 
 import Foundation

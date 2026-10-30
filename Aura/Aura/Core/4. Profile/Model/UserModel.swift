@@ -2,7 +2,7 @@
 //  UserModel.swift
 //  Aura
 //
-//  Created by ddorsat on 31.03.2026.
+//  Created by wamhrm on 31.03.2026.
 //
 
 import Foundation

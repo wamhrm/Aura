@@ -2,7 +2,7 @@
 //  LoadingStepView.swift
 //  Aura
 //
-//  Created by ddorsat on 27.10.2026.
+//  Created by wamhrm on 27.10.2026.
 //
 
 import SwiftUI

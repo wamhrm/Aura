@@ -2,7 +2,7 @@
 //  AppAppearance.swift
 //  Aura
 //
-//  Created by ddorsat on 29.05.2026.
+//  Created by wamhrm on 29.05.2026.
 //
 
 import SwiftUI

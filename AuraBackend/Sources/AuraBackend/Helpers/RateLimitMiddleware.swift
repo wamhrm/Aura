@@ -2,7 +2,7 @@
 //  RateLimitMiddleware.swift
 //  AuraBackend
 //
-//  Created by ddorsat on 20.10.2026.
+//  Created by wamhrm on 20.10.2026.
 //
 
 import Vapor

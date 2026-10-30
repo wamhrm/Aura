@@ -2,7 +2,7 @@
 //  AppleAuthService.swift
 //  AuraBackend
 //
-//  Created by ddorsat on 25.10.2026.
+//  Created by wamhrm on 25.10.2026.
 //
 
 import JWTKit
