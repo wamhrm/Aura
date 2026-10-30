@@ -89,7 +89,7 @@ struct ProfileInfoOptionView: View {
         .padding(12)
         .frame(maxWidth: .infinity)
         .background(isSelected ? AccentColorOption.color(accentColor) : Color.fieldBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(.rect(cornerRadius: 10))
         .onTapGesture { selection = type.rawValue }
         .animation(.easeInOut(duration: 0.15), value: isSelected)
     }

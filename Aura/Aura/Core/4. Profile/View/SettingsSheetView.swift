@@ -143,9 +143,7 @@ extension SettingsSheetView {
     private func customButton(_ type: ButtonTypes,
                               isLoading: Bool = false,
                               _ completion: @escaping () -> Void) -> some View {
-        Button {
-            completion()
-        } label: {
+        Button(action: completion) {
             VStack(alignment: .center) {
                 Text(type.rawValue)
                     .font(Adaptive.size(.footnote, .system(size: 15)))
@@ -165,7 +163,7 @@ extension SettingsSheetView {
             .overlay {
                 RoundedRectangle(cornerRadius: 10).stroke(type.stroke, lineWidth: 2)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(.rect(cornerRadius: 10))
         }
     }
     
@@ -183,7 +181,7 @@ extension SettingsSheetView {
             .frame(maxWidth: .infinity)
             .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
             .foregroundStyle(isSelected ? .blue : .primary)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(.rect(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10)
                 .stroke(isSelected ? Color.blue : Color.gray.opacity(0.25), lineWidth: 1))
         }

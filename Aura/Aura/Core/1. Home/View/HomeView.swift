@@ -54,7 +54,7 @@ struct HomeView: View {
                             .padding(20)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(AccentColorOption.color(accentColor).opacity(0.85))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(.rect(cornerRadius: 12))
 
                             if let horoscope = vm.horoscope {
                                 VStack(alignment: .leading, spacing: 10) {
@@ -69,9 +69,7 @@ struct HomeView: View {
                                 .padding(.top, 15)
                             }
 
-                            Button {
-                                compatibilityButton()
-                            } label: {
+                            Button(action: compatibilityButton) {
                                 HStack {
                                     Text("Проверить совместимость")
                                         .font(Adaptive.size(.system(size: 18), .title3))
@@ -88,7 +86,7 @@ struct HomeView: View {
                                 .background(LinearGradient(colors: [.purple, .blue],
                                                            startPoint: .leading,
                                                            endPoint: .trailing))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(.rect(cornerRadius: 12))
                             }
 
                             VStack(alignment: .leading, spacing: 10) {
@@ -152,9 +150,7 @@ extension HomeView {
 
             Spacer()
 
-            Button {
-                onTapHandler()
-            } label: {
+            Button(action: onTapHandler) {
                 Text(buttonTitle)
                     .foregroundStyle(AccentColorOption.color(accentColor))
                     .fontWeight(.medium)
@@ -189,7 +185,7 @@ extension HomeView {
             .foregroundStyle(color)
             .padding(8)
             .background(Color.fieldBackground.opacity(0.15))
-            .clipShape(Circle())
+            .clipShape(.circle)
     }
 }
 

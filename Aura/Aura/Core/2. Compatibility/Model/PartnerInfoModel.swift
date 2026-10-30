@@ -26,7 +26,7 @@ struct PartnerInfoModel {
             partnerName: name,
             partnerDateOfBirth: exactDateOfBirth && !date.isEmpty ? date : nil,
             partnerBirthTime: exactDateOfBirth && !time.isEmpty ? time : nil,
-            partnerAge: exactDateOfBirth ? nil : (age.isEmpty ? nil : age),
+            partnerAge: !exactDateOfBirth && !age.isEmpty ? age : nil,
             partnerGender: gender,
             exactDateOfBirth: exactDateOfBirth,
             selectedTests: selectedTests.map(\.rawValue))

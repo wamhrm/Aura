@@ -16,31 +16,21 @@ struct MainTabView: View {
 
     @State private var selectedTab: Tabs = .home
 
-    private let authService: AuthServiceProtocol
-    private let contentService: ContentServiceProtocol
-
     init(authService: AuthService,
          contentService: ContentService,
-         storage: any LocalStorageProtocol = LocalStorage(),
          promptsAIConsentAutomatically: Bool = true) {
-        self.authService = authService
-        self.contentService = contentService
-
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(
             authService: authService,
-            contentService: contentService,
-            storage: storage))
+            contentService: contentService))
         _compatibilityViewModel = StateObject(wrappedValue: CompatibilityViewModel(
             authService: authService,
             contentService: contentService))
         _historyViewModel = StateObject(wrappedValue: HistoryViewModel(
             authService: authService,
-            contentService: contentService,
-            storage: storage))
+            contentService: contentService))
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
             authService: authService,
-            contentService: contentService,
-            storage: storage))
+            contentService: contentService))
         _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(
             authService: authService,
             promptsAutomatically: promptsAIConsentAutomatically))

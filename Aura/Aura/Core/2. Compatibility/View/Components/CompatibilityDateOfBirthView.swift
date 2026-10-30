@@ -21,7 +21,7 @@ struct CompatibilityDateOfBirthView: View {
             .frame(height: Adaptive.size(46, 48))
             .padding(.leading)
             .background(Color.fieldBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(.rect(cornerRadius: 10))
             .keyboardType(.numberPad)
             .onChange(of: text) { _, newValue in
                 switch DateInputFormatter.format(newValue, isTime: isTime) {

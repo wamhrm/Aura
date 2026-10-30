@@ -37,7 +37,7 @@ struct HistoryCellView: View {
                         .padding(.vertical, 3)
                         .padding(.horizontal, 6)
                         .background(AccentColorOption.color(accentColor).opacity(0.75))
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .clipShape(.rect(cornerRadius: 7))
                 }
             }
         }

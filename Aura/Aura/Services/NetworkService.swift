@@ -195,9 +195,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = method.rawValue
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let body {
-            urlRequest.httpBody = body
-        }
+        urlRequest.httpBody = body
 
         let token = bearerToken(for: authorization)
         if let token {
@@ -351,32 +349,19 @@ fileprivate enum NetworkError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidURL:
-                return "Некорректный URL"
-            case .invalidResponse:
-                return "Некорректный ответ от сервера"
-            case .decodingError:
-                return "Не удалось обработать ответ сервера"
-            case .unauthorized:
-                return "Неправильная почта или пароль"
-            case .sessionExpired:
-                return "Сессия истекла. Войдите снова"
-            case .userExists:
-                return "Пользователь уже зарегистрирован"
-            case .notFound:
-                return "Данные не найдены"
-            case .tooManyRequests:
-                return "Слишком много запросов. Попробуйте позже"
-            case .serverUnavailable:
-                return "Сервис временно недоступен. Попробуйте позже"
-            case .server(let message):
-                return message
-            case .timedOut:
-                return "Сервер не ответил вовремя. Попробуйте ещё раз"
-            case .noConnection:
-                return "Нет подключения к интернету"
-            case .cannotReachServer:
-                return "Не удалось связаться с сервером. Попробуйте позже"
+            case .invalidURL: "Некорректный URL"
+            case .invalidResponse: "Некорректный ответ от сервера"
+            case .decodingError: "Не удалось обработать ответ сервера"
+            case .unauthorized: "Неправильная почта или пароль"
+            case .sessionExpired: "Сессия истекла. Войдите снова"
+            case .userExists: "Пользователь уже зарегистрирован"
+            case .notFound: "Данные не найдены"
+            case .tooManyRequests: "Слишком много запросов. Попробуйте позже"
+            case .serverUnavailable: "Сервис временно недоступен. Попробуйте позже"
+            case .server(let message): message
+            case .timedOut: "Сервер не ответил вовремя. Попробуйте ещё раз"
+            case .noConnection: "Нет подключения к интернету"
+            case .cannotReachServer: "Не удалось связаться с сервером. Попробуйте позже"
         }
     }
 }
