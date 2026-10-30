@@ -18,7 +18,7 @@ protocol TestCellDisplayable: Hashable, CaseIterable {
 
 struct TestCellView<Test: TestCellDisplayable>: View {
     let type: Test
-    @Binding var hasChosenTest: Bool
+    let hasChosenTest: Bool
     let onSelectionToggle: () -> Void
     let onTapHandler: () -> Void
     
@@ -239,7 +239,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 }
 
 #Preview {
-    TestCellView(type: CompatibilityTestTypes.astrology, hasChosenTest: .constant(false)) {
+    TestCellView(type: CompatibilityTestTypes.astrology, hasChosenTest: false) {
 
     } onTapHandler: {
 

@@ -14,7 +14,7 @@ struct NameAndBirthStepView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                OnboardingHeader(title: vm.isSignedIn ? "Когда вы родились?" : "Как вас зовут и когда вы родились?",
+                OnboardingHeader(title: vm.nameAndBirthTitle,
                                  subtitle: "По дате рождения мы определим ваш знак зодиака")
 
                 if !vm.isSignedIn {

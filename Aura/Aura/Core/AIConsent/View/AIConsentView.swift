@@ -15,7 +15,7 @@ struct AIConsentView: View {
             AIConsentContentView()
 
             VStack(spacing: 5) {
-                ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Разрешить") {
+                ClassicButton(title: vm.allowButtonTitle) {
                     vm.accept()
                 }
 

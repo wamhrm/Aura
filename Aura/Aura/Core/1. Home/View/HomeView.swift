@@ -29,7 +29,7 @@ struct HomeView: View {
                             HStack(spacing: 15) {
                                 LogoImage(size: 32)
 
-                                Text(vm.userName.isEmpty ? "Добро пожаловать" : "Здравствуйте, \(vm.userName.capitalized)")
+                                Text(vm.greetingText)
                                     .font(Adaptive.size(.callout, .default))
                                     .fontWeight(.semibold)
                                     .fontDesign(.monospaced)
@@ -62,11 +62,11 @@ struct HomeView: View {
                                 if let horoscope = vm.horoscope {
                                     VStack(alignment: .leading, spacing: 10) {
                                         headerText("Гороскоп на неделю", "Читать") {
-                                            vm.homeRoutes.append(.horoscopeDetails)
+                                            vm.showHoroscopeDetails()
                                         }
 
                                         HoroscopeCellView(horoscope: horoscope) {
-                                            vm.homeRoutes.append(.horoscopeDetails)
+                                            vm.showHoroscopeDetails()
                                         }
                                     }
                                     .padding(.top, 15)
@@ -74,12 +74,8 @@ struct HomeView: View {
                             }
 
                             if !vm.hasProfileInfo {
-                                completeYourProfile(vm.isSignedIn) {
-                                    if vm.isSignedIn {
-                                        vm.homeRoutes.append(.addProfileInfo)
-                                    } else {
-                                        profileButton()
-                                    }
+                                completeYourProfile {
+                                    vm.completeProfile(onSignIn: profileButton)
                                 }
                             }
 
@@ -107,23 +103,21 @@ struct HomeView: View {
 
                             VStack(alignment: .leading, spacing: 10) {
                                 headerText("Проверьте себя", "Все тесты") {
-                                    vm.homeRoutes.append(.allTests)
+                                    vm.showAllTests()
                                 }
                                 .disabled(!vm.canTakeTests)
 
                                 ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
                                     TestCellView(type: test,
-                                                 hasChosenTest: Binding(
-                                                    get: { vm.selectedTests.contains(test) },
-                                                    set: { _ in })) {
+                                                 hasChosenTest: vm.isSelected(test)) {
                                                         vm.toggleTestSelection(test)
                                                     } onTapHandler: {
-                                                        vm.homeRoutes.append(.testDetails(test))
+                                                        vm.showTestDetails(test)
                                                     }
                                 }
                                 .disabled(!vm.canTakeTests)
 
-                                ClassicButton(title: vm.isLoading ? "Готовим результат..." : "Проверить себя") {
+                                ClassicButton(title: vm.testButtonTitle) {
                                     vm.makePersonalityTest()
                                 }
                                 .disabled(vm.isLoading || !vm.canTakeTests)
@@ -195,7 +189,7 @@ extension HomeView {
             case .allTests:
                 AllTestsView(vm: vm)
             case .testDetails(let test):
-                TestDetailsView(type: test, isSelected: vm.selectedTests.contains(test)) {
+                TestDetailsView(type: test, isSelected: vm.isSelected(test)) {
                     vm.toggleTestSelection(test)
                 }
             case .testResults:
@@ -205,11 +199,10 @@ extension HomeView {
         }
     }
 
-    private func completeYourProfile(_ isSignedIn: Bool,
-                                     _ addProfileInfo: @escaping () -> Void) -> some View {
+    private func completeYourProfile(_ addProfileInfo: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: Adaptive.size(10, 12)) {
             HStack {
-                Text(isSignedIn ? "Заполните свой профиль" : "Войдите или зарегистрируйтесь, чтобы заполнить свой профиль")
+                Text(vm.completeProfileTitle)
                     .font(Adaptive.size(.default, .system(size: 19)))
                     .bold()
                     .foregroundStyle(.white)
@@ -217,7 +210,7 @@ extension HomeView {
                     .lineLimit(2)
             }
 
-            Text(isSignedIn ? "Расскажите о себе, чтобы получить детальный разбор вашего астрологического профиля" : "Вы можете рассказать о себе, чтобы получить детальный разбор вашего астрологического профиля")
+            Text(vm.completeProfileSubtitle)
                 .font(Adaptive.size(.footnote, .system(size: 15)))
                 .fontWeight(.medium)
                 .foregroundStyle(.white)
@@ -226,7 +219,7 @@ extension HomeView {
             Button {
                 addProfileInfo()
             } label: {
-                Text(isSignedIn ? "Заполнить информацию" : "Войти или зарегистрироваться")
+                Text(vm.completeProfileButtonTitle)
                     .font(Adaptive.size(.system(size: 15), .default))
                     .foregroundStyle(Color(red: 0.42, green: 0.27, blue: 0.93))
                     .fontWeight(.semibold)

@@ -39,7 +39,7 @@ struct AddProfileInfoView: View {
 
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)
 
-                    ClassicButton(title: vm.isLoading ? "Сохраняем..." : "Готово") {
+                    ClassicButton(title: vm.saveButtonTitle) {
                         vm.saveProfileInfo {
                             dismiss()
                         }

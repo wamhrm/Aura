@@ -51,16 +51,16 @@ struct SettingsSheetView: View {
                 if !isSignedOut {
                     VStack(spacing: 15) {
                         customButton(.updateInfo) {
-                            vm.profileRoutes.append(.addProfileInfo)
+                            vm.showAddProfileInfo()
                             dismiss()
                         }
 
                         customButton(.signOut) {
-                            vm.showSignOutAlert = true
+                            vm.requestSignOut()
                         }
 
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
-                            vm.showDeleteAccountAlert = true
+                            vm.requestAccountDeletion()
                         }
                         .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
                             deleteAccountAlertView()
