@@ -8,8 +8,7 @@
 import SwiftUI
 
 enum AppTheme: String, CaseIterable {
-    case light
-    case dark
+    case light, dark
 
     var colorScheme: ColorScheme {
         switch self {
@@ -20,11 +19,7 @@ enum AppTheme: String, CaseIterable {
 }
 
 enum AccentColorOption: String, CaseIterable, Identifiable {
-    case blue
-    case purple
-    case red
-    case teal
-    case orange
+    case blue, purple, red, teal, orange
 
     var id: String { rawValue }
 

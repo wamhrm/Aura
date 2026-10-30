@@ -48,17 +48,17 @@ final class MockContentService: ContentServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
-    func fetchDailyInsight() async throws -> DailyContentModel {
+    func fetchDailyInsight(for userId: UUID) async throws -> DailyContentModel {
         if let errorToThrow { throw errorToThrow }
         return Self.dailyContent
     }
 
-    func fetchDailyTip() async throws -> DailyContentModel {
+    func fetchDailyTip(for userId: UUID) async throws -> DailyContentModel {
         if let errorToThrow { throw errorToThrow }
         return Self.dailyContent
     }
 
-    func fetchCurrentHoroscope() async throws -> HoroscopeModel {
+    func fetchCurrentHoroscope(for userId: UUID) async throws -> HoroscopeModel {
         if let errorToThrow { throw errorToThrow }
         return .mock
     }

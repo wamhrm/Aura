@@ -73,25 +73,6 @@ final class LocalStorage: LocalStorageProtocol {
         try? fileManager.removeItem(at: directory(for: userId))
     }
 
-    func migrateLegacyUserDefaults(_ defaults: UserDefaults = .standard) {
-        if loadUser() == nil,
-           let data = defaults.data(forKey: Constants.userKey),
-           let user = try? JSONDecoder().decode(UserModel.self, from: data) {
-            saveUser(user)
-        }
-
-        let legacyPrefixes = [Constants.horoscopeKeyPrefix,
-                              Constants.personalityKeyPrefix,
-                              Constants.historyKeyPrefix,
-                              Constants.dailyInsightKeyPrefix,
-                              Constants.dailyTipKeyPrefix]
-
-        for key in defaults.dictionaryRepresentation().keys
-        where key == Constants.userKey || legacyPrefixes.contains(where: key.hasPrefix) {
-            defaults.removeObject(forKey: key)
-        }
-    }
-
     private var userURL: URL {
         baseURL.appending(path: "user.json")
     }

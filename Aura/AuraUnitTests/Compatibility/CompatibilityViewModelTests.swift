@@ -8,33 +8,6 @@ import XCTest
 
 @MainActor
 final class CompatibilityViewModelTests: XCTestCase {
-    // MARK: - Guards
-    func test_makeCompatibilityTest_whenSignedOut_showsSignInAlertAndDoesNotCallService() {
-        // Given
-        let (sut, _, content) = makeSUT(authState: .signedOut)
-
-        // When
-        sut.makeCompatibilityTest()
-
-        // Then
-        XCTAssertTrue(sut.showAlert)
-        XCTAssertEqual(sut.alertMessage, "Войдите или зарегистрируйтесь")
-        XCTAssertEqual(content.makeCompatibilityTestCallCount, 0)
-    }
-
-    func test_makeCompatibilityTest_whenProfileIncomplete_showsCompleteProfileAlertAndDoesNotCallService() {
-        // Given
-        let (sut, _, content) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-
-        // When
-        sut.makeCompatibilityTest()
-
-        // Then
-        XCTAssertTrue(sut.showAlert)
-        XCTAssertEqual(sut.alertMessage, "Заполните информацию о себе")
-        XCTAssertEqual(content.makeCompatibilityTestCallCount, 0)
-    }
-
     // MARK: - Success
 
     func test_makeCompatibilityTest_whenValid_callsServiceAndAppendsResultRoute() async {

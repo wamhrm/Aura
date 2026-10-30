@@ -15,13 +15,11 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack(path: $vm.profileRoutes) {
-            Group {
-                switch vm.authState {
-                    case .signedIn(let user):
-                        SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
-                            .transition(.opacity.combined(with: .move(edge: .trailing)))
-                    case .signedOut:
-                        BackgroundView()
+            ZStack {
+                BackgroundView()
+
+                if let user = vm.user {
+                    SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
                 }
             }
             .navigationTitle("Профиль")
@@ -60,8 +58,8 @@ extension ProfileView {
     }
     
     private func sheetView() -> some View {
-        SettingsSheetView(vm: vm, isSignedOut: vm.isSignedOut)
-            .presentationDetents([.height(vm.isSignedOut ? Adaptive.size(300, 320) : Adaptive.size(470, 490))])
+        SettingsSheetView(vm: vm)
+            .presentationDetents([.height(Adaptive.size(470, 490))])
     }
 }
 

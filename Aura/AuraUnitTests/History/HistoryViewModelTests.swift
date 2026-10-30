@@ -22,7 +22,6 @@ final class HistoryViewModelTests: XCTestCase {
 
         // Then
         XCTAssertEqual(sut.historyCells.count, 2)
-        XCTAssertTrue(sut.isSignedIn)
     }
 
     func test_deleteHistoryCell_removesItemFromList() async {
@@ -89,22 +88,6 @@ final class HistoryViewModelTests: XCTestCase {
         XCTAssertEqual(sut.alertMessage, "Не удалось открыть результат")
     }
 
-    func test_whenSignedOut_clearsState() async {
-        // Given
-        let content = MockContentService()
-        content.historyToReturn = [.personalityPlaceholder, .compatibilityPlaceholder]
-        let (sut, auth, _) = makeSUT(authState: .signedIn(user), content: content)
-        await waitUntil { sut.historyCells.count == 2 }
-
-        // When
-        auth.authState.send(.signedOut)
-        await waitUntil { !sut.isSignedIn }
-
-        // Then
-        XCTAssertTrue(sut.historyCells.isEmpty)
-        XCTAssertFalse(sut.isSignedIn)
-    }
-    
     // MARK: - Helpers
     private func makeSUT(authState: AuthState = .signedOut,
                          content: MockContentService)

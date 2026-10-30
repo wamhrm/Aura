@@ -34,13 +34,7 @@ struct UserModel: Codable, Equatable, Identifiable {
     }
 
     var hasCompletedProfileInfo: Bool {
-        dateOfBirth != nil &&
-        gender != nil &&
-        socialType != nil &&
-        conflictStyle != nil &&
-        emotionalCore != nil &&
-        decisionStyle != nil &&
-        coreFocus != nil
+        dateOfBirth != nil && profileInfo.hasAllAnswers
     }
 
     var allowsAIAnalysis: Bool {

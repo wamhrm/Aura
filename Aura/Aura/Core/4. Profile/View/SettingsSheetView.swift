@@ -9,7 +9,6 @@ import SwiftUI
 
 struct SettingsSheetView: View {
     @ObservedObject var vm: ProfileViewModel
-    let isSignedOut: Bool
     
     @AppStorage(Constants.selectedThemeKey) private var selectedTheme = AppTheme.light
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
@@ -48,28 +47,26 @@ struct SettingsSheetView: View {
                     }
                 }
 
-                if !isSignedOut {
-                    VStack(spacing: 15) {
-                        customButton(.updateInfo) {
-                            vm.showAddProfileInfo()
-                            dismiss()
-                        }
-
-                        customButton(.signOut) {
-                            vm.requestSignOut()
-                        }
-
-                        customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
-                            vm.requestAccountDeletion()
-                        }
-                        .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
-                            deleteAccountAlertView()
-                        } message: {
-                            Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
-                        }
+                VStack(spacing: 15) {
+                    customButton(.updateInfo) {
+                        vm.showAddProfileInfo()
+                        dismiss()
                     }
-                    .disabled(vm.isDeletingAccount)
+
+                    customButton(.signOut) {
+                        vm.requestSignOut()
+                    }
+
+                    customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
+                        vm.requestAccountDeletion()
+                    }
+                    .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
+                        deleteAccountAlertView()
+                    } message: {
+                        Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
+                    }
                 }
+                .disabled(vm.isDeletingAccount)
 
                 legalLinksView()
             }
@@ -255,5 +252,5 @@ fileprivate enum ThemeButtonTypes: String {
 
 #Preview {
     SettingsSheetView(vm: ProfileViewModel(authService: AuthService(),
-                                           contentService: ContentService()), isSignedOut: false)
+                                           contentService: ContentService()))
 }

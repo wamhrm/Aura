@@ -31,9 +31,6 @@ protocol AuthServiceProtocol {
 final class AuthService: ObservableObject, AuthServiceProtocol {
     private(set) var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
 
-    private let tokenPath = Constants.tokenPath
-    private let tokenKey = Constants.tokenKey
-
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
     private let storage: any LocalStorageProtocol
@@ -57,9 +54,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func signIn(email: String, password: String) async throws {
         let response = try await networkService.signIn(email: normalizeEmail(email), password: password)
-        saveToken(response.token)
-        saveUserLocally(response.user)
-        authState.send(.signedIn(response.user))
+        startSession(with: response)
     }
 
     func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
@@ -67,9 +62,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
                                                                 authorizationCode: authorizationCode,
                                                                 nonce: nonce,
                                                                 name: name)
-        saveToken(response.token)
-        saveUserLocally(response.user)
-        authState.send(.signedIn(response.user))
+        startSession(with: response)
     }
 
     func requestPasswordReset(email: String) async throws {
@@ -80,14 +73,15 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let response = try await networkService.resetPassword(email: normalizeEmail(email),
                                                               code: code,
                                                               password: newPassword)
-        saveToken(response.token)
-        saveUserLocally(response.user)
-        authState.send(.signedIn(response.user))
+        startSession(with: response)
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         let response = try await networkService.updateProfileInfo(request)
-        saveUserLocally(response.user)
+        storage.saveUser(response.user)
+        if let horoscope = response.horoscope {
+            storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
+        }
         authState.send(.signedIn(response.user))
         return response
     }
@@ -96,13 +90,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let user = try await networkService.giveAIConsent()
         guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else { return }
 
-        saveUserLocally(user)
+        storage.saveUser(user)
         authState.send(.signedIn(user))
     }
 
     func signOut() {
-        if let tokenData = keychain.getToken(path: tokenPath, key: tokenKey),
-           let token = String(data: tokenData, encoding: .utf8) {
+        if let token = keychain.loadAuthToken() {
             let networkService = networkService
             Task { try? await networkService.logout(token: token) }
         }
@@ -120,7 +113,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
             storage.deleteAll(for: user.id)
         }
 
-        keychain.deleteToken(path: tokenPath, key: tokenKey)
+        keychain.deleteAuthToken()
         storage.deleteUser()
         authState.send(.signedOut)
     }
@@ -137,7 +130,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     private func autoSignIn() {
-        let hasToken = keychain.getToken(path: tokenPath, key: tokenKey) != nil
+        let hasToken = keychain.loadAuthToken() != nil
 
         if hasToken, let user = storage.loadUser() {
             authState.send(.signedIn(user))
@@ -145,20 +138,16 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         }
 
         if hasToken {
-            keychain.deleteToken(path: tokenPath, key: tokenKey)
+            keychain.deleteAuthToken()
         }
 
         authState.send(.signedOut)
     }
 
-    private func saveUserLocally(_ user: UserModel) {
-        storage.saveUser(user)
-    }
-
-    private func saveToken(_ token: String) {
-        if let data = token.data(using: .utf8) {
-            keychain.saveToken(data, path: tokenPath, key: tokenKey)
-        }
+    private func startSession(with response: AuthTokenResponse) {
+        keychain.saveAuthToken(response.token)
+        storage.saveUser(response.user)
+        authState.send(.signedIn(response.user))
     }
 
     private func normalizeEmail(_ email: String) -> String {
