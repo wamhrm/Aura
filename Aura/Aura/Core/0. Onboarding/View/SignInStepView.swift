@@ -49,3 +49,8 @@ struct SignInStepView: View {
         .padding(.vertical, 10)
     }
 }
+
+#Preview {
+    SignInStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                           contentService: ContentService()) {})
+}

@@ -68,3 +68,8 @@ struct NameAndBirthStepView: View {
         .environment(\.locale, Locale(identifier: "ru_RU"))
     }
 }
+
+#Preview {
+    NameAndBirthStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                                 contentService: ContentService()) {})
+}

@@ -39,3 +39,8 @@ struct PsychotypeStepView: View {
         }
     }
 }
+
+#Preview {
+    PsychotypeStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                               contentService: ContentService()) {})
+}
