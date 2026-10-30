@@ -150,6 +150,12 @@ struct OnboardingAppleButton: View {
 
 struct OnboardingLegalText: View {
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+    
+    private var legalText: LocalizedStringKey {
+        let terms = Constants.termsOfUseURL?.absoluteString ?? ""
+        let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""
+        return "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))"
+    }
 
     var body: some View {
         Text(legalText)
@@ -158,14 +164,6 @@ struct OnboardingLegalText: View {
             .multilineTextAlignment(.center)
             .tint(AccentColorOption.color(accentColor))
             .frame(maxWidth: .infinity)
-    }
-}
-
-extension OnboardingLegalText {
-    private var legalText: LocalizedStringKey {
-        let terms = Constants.termsOfUseURL?.absoluteString ?? ""
-        let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""
-        return "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))"
     }
 }
 
@@ -217,4 +215,28 @@ enum OnboardingTextFieldTypes: String {
             case .newPassword: nil
         }
     }
+}
+
+#Preview {
+    VStack(spacing: 20) {
+        OnboardingTopBar(progress: 0.3)
+
+        OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 6 символов")
+
+        OnboardingTextField(type: .password, text: .constant(""))
+
+        OnboardingTextButton(title: "Забыли пароль?") {
+
+        }
+
+        OnboardingDivider()
+
+        OnboardingAppleButton(vm: OnboardingViewModel(authService: AuthService(),
+                                                      contentService: ContentService()) {})
+
+        OnboardingLegalText()
+
+        OnboardingIcon(icon: "bell.badge", size: 80)
+    }
+    .padding(.horizontal)
 }

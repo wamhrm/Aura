@@ -45,3 +45,8 @@ struct NotificationsStepView: View {
         }
     }
 }
+
+#Preview {
+    NotificationsStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                                  contentService: ContentService()) {})
+}

@@ -87,3 +87,8 @@ extension LoadingStepView {
         }
     }
 }
+
+#Preview {
+    LoadingStepView(vm: OnboardingViewModel(authService: AuthService(),
+                                            contentService: ContentService()) {})
+}
