@@ -38,7 +38,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                                 .bold()
                                 .padding(7)
                                 .background(.blue.opacity(0.1))
-                                .clipShape(Circle())
+                                .clipShape(.circle)
                             
                             Text(item)
                                 .font(Adaptive.size(.footnote, .system(size: 14)))

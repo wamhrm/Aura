@@ -78,7 +78,7 @@ extension AIConsentContentView {
                 .background(LinearGradient(colors: [.purple, .softPurple],
                                            startPoint: .topLeading,
                                            endPoint: .bottomTrailing))
-                .clipShape(Circle())
+                .clipShape(.circle)
 
             Text("Анализ с помощью AI")
                 .font(Adaptive.size(.default, .title3))

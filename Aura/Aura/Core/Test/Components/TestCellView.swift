@@ -46,9 +46,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Button {
-                onSelectionToggle()
-            } label: {
+            Button(action: onSelectionToggle) {
                 Circle()
                     .fill(hasChosenTest ? AccentColorOption.color(accentColor).opacity(0.85) : .clear)
                     .frame(width: Adaptive.size(23, 25),

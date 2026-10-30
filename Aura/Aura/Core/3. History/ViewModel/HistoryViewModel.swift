@@ -53,7 +53,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 guard let self, let userId = currentUserId else { return }
-                Task { await self.fetchHistory(for: userId) }
+                Task { await fetchHistory(for: userId) }
             }
             .store(in: &cancellables)
     }

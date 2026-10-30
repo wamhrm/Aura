@@ -21,7 +21,7 @@ struct CompatibilityTextFieldView: View {
                 .frame(height: Adaptive.size(46, 48))
                 .padding(.leading)
                 .background(Color.fieldBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(.rect(cornerRadius: 10))
                 .keyboardType(keyboardType)
                 .onChange(of: text) { _, newValue in
                     handleInputChange(newValue)
