@@ -19,6 +19,9 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var user: UserModel?
     @Published private(set) var profileDisplay: ProfileDisplayModel?
     @Published private(set) var dailyTip: DailyContentModel?
+    @Published private(set) var personalityState = LoadState.loading
+    @Published private(set) var tipState = LoadState.loading
+    @Published private(set) var profileForm: ProfileFormViewModel?
     
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -30,6 +33,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var isDeletingAccount = false
 
     private var personalityResult: PersonalityResultModel?
+    private var currentUserId: UUID?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -48,7 +52,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     var profileDisplayHandler: ProfileDisplayModel {
-        profileDisplay ?? .placeholder
+        guard hasPersonalityTests, let profileDisplay else { return .placeholder }
+        return profileDisplay
     }
 
     var needsAIConsent: Bool {
@@ -58,54 +63,121 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     private func setupSubscriptions() {
         authService.authState
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
-                guard let self, case .signedIn(let user) = $0 else { return }
-                handleSignIn(user)
+                guard let self else { return }
+                handleAuthState($0)
             }
             .store(in: &cancellables)
 
         contentService.historyDidChange
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
-                guard let self, let user else { return }
-                Task { await loadPersonality(for: user.id) }
+                guard let self, let userId = currentUserId else { return }
+                Task { await loadPersonality(for: userId) }
+            }
+            .store(in: &cancellables)
+
+        contentService.refreshRequested
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                Task { await refresh() }
             }
             .store(in: &cancellables)
     }
 
-    private func handleSignIn(_ user: UserModel) {
-        if let cached = storage.load(StorageKeys.personality, for: user.id) {
-            applyPersonality(result: cached.result)
+    private func handleAuthState(_ authState: AuthState) {
+        switch authState {
+            case .signedIn(let user):
+                handleUser(user)
+            case .signedOut:
+                guard currentUserId != nil else { return }
+                currentUserId = nil
+                cancellables.removeAll()
         }
+    }
 
-        dailyTip = storage.load(StorageKeys.dailyTip, for: user.id)
-        updateProfileDisplay()
+    private func handleUser(_ user: UserModel) {
+        let previousUser = self.user
+
         self.user = user
 
-        Task { await refreshContent(for: user) }
+        guard currentUserId == user.id else {
+            currentUserId = user.id
+
+            if let cached = storage.load(StorageKeys.personality, for: user.id) {
+                applyPersonality(result: cached.result)
+            }
+
+            let cachedTip = storage.load(StorageKeys.dailyTip, for: user.id)
+            dailyTip = cachedTip?.isFromToday == true ? cachedTip : nil
+            updateProfileDisplay()
+
+            Task { await refresh() }
+            return
+        }
+
+        if previousUser?.allowsAIAnalysis == false && user.allowsAIAnalysis {
+            Task { await loadDailyTip(for: user.id) }
+        }
     }
-    
-    private func refreshContent(for user: UserModel) async {
-        async let personality: Void = loadPersonality(for: user.id, showErrorOnFailure: false)
+
+    func refresh() async {
+        guard let user, let userId = currentUserId else { return }
+
+        async let personality: Void = loadPersonality(for: userId)
 
         if user.allowsAIAnalysis {
-            await loadDailyTip(for: user.id)
+            await loadDailyTip(for: userId)
         }
 
         await personality
     }
 
-    private func loadDailyTip(for userId: UUID) async {
-        guard let tip = try? await contentService.fetchDailyTip(for: userId) else { return }
+    // The only retry button on the locked screen, so it brings back the tip hidden behind the blur as well
+    func retryPersonality() {
+        Task { await refresh() }
+    }
 
-        dailyTip = tip
+    func retryDailyTip() {
+        guard let userId = currentUserId else { return }
+        Task { await loadDailyTip(for: userId) }
+    }
+
+    private func loadDailyTip(for userId: UUID) async {
+        if dailyTip == nil {
+            tipState = .loading
+        }
+
+        do {
+            let tip = try await contentService.fetchDailyTip(for: userId)
+            guard currentUserId == userId else { return }
+
+            dailyTip = tip
+            tipState = .loaded
+        } catch {
+            guard currentUserId == userId, !error.isCancellation else { return }
+
+            // Yesterday's tip must not stay on screen as today's
+            if dailyTip?.isFromToday != true {
+                dailyTip = nil
+                tipState = .failed(error.userMessage)
+            }
+        }
+
         updateProfileDisplay()
     }
 
-    private func loadPersonality(for userId: UUID, showErrorOnFailure: Bool = true) async {
+    private func loadPersonality(for userId: UUID) async {
+        if !hasPersonalityTests {
+            personalityState = .loading
+        }
+
         do {
             let history = try await contentService.fetchHistory()
+            guard currentUserId == userId else { return }
+
             storage.save(history, for: StorageKeys.history, userId: userId)
 
             guard let latest = history.first(where: { $0.kind == .personality }) else {
@@ -117,6 +189,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             }
 
             let historyDetails = try await contentService.fetchHistoryDetails(id: latest.id)
+            guard currentUserId == userId else { return }
+
             guard let result = historyDetails.personalityResult else {
                 return clearPersonality(for: userId)
             }
@@ -126,13 +200,18 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
                          for: StorageKeys.personality,
                          userId: userId)
         } catch {
-            if showErrorOnFailure {
-                presentAlert(error.userMessage)
+            guard currentUserId == userId, !error.isCancellation else { return }
+
+            if !hasPersonalityTests {
+                personalityState = .failed(error.userMessage)
             }
         }
     }
 
     func showAddProfileInfo() {
+        guard let user else { return }
+
+        profileForm = ProfileFormViewModel(authService: authService, user: user)
         profileRoutes.append(.addProfileInfo)
     }
 
@@ -181,12 +260,14 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     private func applyPersonality(result: PersonalityResultModel) {
         personalityResult = result
         hasPersonalityTests = true
+        personalityState = .loaded
         updateProfileDisplay()
     }
 
     private func clearPersonality(for userId: UUID) {
         hasPersonalityTests = false
         personalityResult = nil
+        personalityState = .loaded
         storage.delete(StorageKeys.personality, for: userId)
         updateProfileDisplay()
     }

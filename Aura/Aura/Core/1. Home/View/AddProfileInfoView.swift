@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 struct AddProfileInfoView: View {
-    @ObservedObject var vm: HomeViewModel
+    @ObservedObject var vm: ProfileFormViewModel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -111,7 +111,7 @@ enum ProfileInfoOption: String, CaseIterable {
 
 #Preview {
     NavigationStack {
-        AddProfileInfoView(vm: HomeViewModel(authService: AuthService(),
-                                             contentService: ContentService()))
+        AddProfileInfoView(vm: ProfileFormViewModel(authService: AuthService.preview,
+                                                    user: .mock))
     }
 }

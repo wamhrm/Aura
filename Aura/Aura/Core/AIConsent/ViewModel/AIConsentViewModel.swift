@@ -33,7 +33,7 @@ final class AIConsentViewModel: ObservableObject {
 
     private func setupSubscriptions() {
         authService.authState
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self, case .signedIn(let user) = $0 else { return }
                 promptIfNeeded(user)

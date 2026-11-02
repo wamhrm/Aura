@@ -8,15 +8,24 @@ import Foundation
 
 @MainActor
 final class MockNetworkService: NetworkServiceProtocol {
-    let sessionExpiredEvents = AsyncStream<Void> { _ in }
+    let sessionExpiredEvents: AsyncStream<String>
+    let sessionExpiredContinuation: AsyncStream<String>.Continuation
 
     var authTokenResponse = AuthTokenResponse(token: "test-token", user: .mock)
     var updateProfileInfoResponse = UpdateProfileInfoResponse(user: .mock, horoscope: .mock)
     var errorToThrow: Error?
+    var historyToReturn: [HistoryCellModel] = []
+    var historyDelay: Duration?
+    var sentRequestIDs: [UUID] = []
 
     private(set) var createAccountCallCount = 0
     private(set) var signInCallCount = 0
     private(set) var logoutCallCount = 0
+    private(set) var fetchHistoryCallCount = 0
+
+    init() {
+        (sessionExpiredEvents, sessionExpiredContinuation) = AsyncStream.makeStream(of: String.self)
+    }
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
         createAccountCallCount += 1
@@ -87,18 +96,23 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
+        sentRequestIDs.append(requestID)
         if let errorToThrow { throw errorToThrow }
         return .mock
     }
 
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel {
+        sentRequestIDs.append(requestID)
         if let errorToThrow { throw errorToThrow }
         return .mock
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
+        fetchHistoryCallCount += 1
+        let history = historyToReturn
+        if let historyDelay { try await Task.sleep(for: historyDelay) }
         if let errorToThrow { throw errorToThrow }
-        return []
+        return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {

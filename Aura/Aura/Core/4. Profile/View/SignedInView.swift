@@ -64,10 +64,19 @@ struct SignedInView: View {
                                 AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать совет дня",
                                               onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
-                            } else {
-                                Text(vm.profileDisplayHandler.dailyTip)
+                            } else if let dailyTip = vm.profileDisplayHandler.dailyTip {
+                                Text(dailyTip)
                                     .font(.system(size: Adaptive.size(14, 15))).italic()
                                     .fontWeight(.medium)
+                            } else if case .failed(let message) = vm.tipState {
+                                LoadFailedView(message: message) {
+                                    vm.retryDailyTip()
+                                }
+                                .tint(.white)
+                            } else {
+                                ProgressView()
+                                    .tint(.white)
+                                    .frame(maxWidth: .infinity)
                             }
                         }
                         .foregroundStyle(.white)
@@ -81,20 +90,30 @@ struct SignedInView: View {
                                 .font(Adaptive.size(.system(size: 15), .default))
                                 .bold()
 
-                            Text(vm.profileDisplayHandler.overview)
-                                .font(.system(size: Adaptive.size(14, 15)))
-                                .foregroundStyle(.deepGray)
-
-                            VStack {
-                                TestResultCellView(test: PersonalityCellTypes.socialFilter,
-                                                   description: vm.profileDisplayHandler.socialFilter)
-
-                                Divider()
-
-                                TestResultCellView(test: PersonalityCellTypes.emotionalDepth,
-                                                   description: vm.profileDisplayHandler.emotionalDepth)
+                            if let overview = vm.profileDisplayHandler.overview {
+                                Text(overview)
+                                    .font(.system(size: Adaptive.size(14, 15)))
+                                    .foregroundStyle(.deepGray)
                             }
-                            .testTopicsModifier()
+
+                            if vm.profileDisplayHandler.hasTopics {
+                                VStack {
+                                    if let socialFilter = vm.profileDisplayHandler.socialFilter {
+                                        TestResultCellView(test: PersonalityCellTypes.socialFilter,
+                                                           description: socialFilter)
+                                    }
+
+                                    if vm.profileDisplayHandler.hasBothTopics {
+                                        Divider()
+                                    }
+
+                                    if let emotionalDepth = vm.profileDisplayHandler.emotionalDepth {
+                                        TestResultCellView(test: PersonalityCellTypes.emotionalDepth,
+                                                           description: emotionalDepth)
+                                    }
+                                }
+                                .testTopicsModifier()
+                            }
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -106,10 +125,21 @@ struct SignedInView: View {
                                 .bold()
 
                             VStack(spacing: 15) {
-                                EmotionalProfileBar(type: .temperament, value: vm.profileDisplayHandler.temperament)
-                                EmotionalProfileBar(type: .thinking, value: vm.profileDisplayHandler.thinking)
-                                EmotionalProfileBar(type: .organization, value: vm.profileDisplayHandler.organization)
-                                EmotionalProfileBar(type: .relationships, value: vm.profileDisplayHandler.relationships)
+                                if let temperament = vm.profileDisplayHandler.temperament {
+                                    EmotionalProfileBar(type: .temperament, value: temperament)
+                                }
+
+                                if let thinking = vm.profileDisplayHandler.thinking {
+                                    EmotionalProfileBar(type: .thinking, value: thinking)
+                                }
+
+                                if let organization = vm.profileDisplayHandler.organization {
+                                    EmotionalProfileBar(type: .organization, value: organization)
+                                }
+
+                                if let relationships = vm.profileDisplayHandler.relationships {
+                                    EmotionalProfileBar(type: .relationships, value: relationships)
+                                }
                             }
                             .padding(.top, 5)
                         }
@@ -120,7 +150,7 @@ struct SignedInView: View {
                     .blur(radius: !vm.hasPersonalityTests ? 5 : 0)
                     .overlay {
                         if !vm.hasPersonalityTests {
-                            CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
+                            lockedContentView()
                                 .padding(.bottom, 500)
                         }
                     }
@@ -129,6 +159,9 @@ struct SignedInView: View {
                 .bottomAreaPadding(15)
             }
             .scrollIndicators(.hidden)
+            .refreshable {
+                await vm.refresh()
+            }
         }
         .navigationTitle("Профиль")
         .navigationBarTitleDisplayMode(.inline)
@@ -136,6 +169,23 @@ struct SignedInView: View {
 }
 
 extension SignedInView {
+    @ViewBuilder
+    private func lockedContentView() -> some View {
+        switch vm.personalityState {
+            case .loading:
+                ProgressView()
+            case .loaded:
+                CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
+            case .failed(let message):
+                LoadFailedView(message: message) {
+                    vm.retryPersonality()
+                }
+                .padding(20)
+                .backgroundWithShape(12, .cardBackground, true)
+                .padding(.horizontal)
+        }
+    }
+
     private func headerText(_ title: String) -> some View {
         Text(title)
             .fontWeight(.semibold)
@@ -145,8 +195,8 @@ extension SignedInView {
 
 #Preview {
     NavigationStack {
-        SignedInView(vm: ProfileViewModel(authService: AuthService(),
-                                          contentService: ContentService()),
+        SignedInView(vm: ProfileViewModel(authService: AuthService.preview,
+                                          contentService: ContentService.preview),
                      user: .mock) {
 
         }

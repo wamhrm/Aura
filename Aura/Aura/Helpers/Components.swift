@@ -165,6 +165,25 @@ struct EmotionalProfileBar: View {
     }
 }
 
+struct LoadFailedView: View {
+    let message: String
+    let onRetry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Text(message)
+                .font(Adaptive.size(.footnote, .system(size: 15)))
+                .fontWeight(.medium)
+                .multilineTextAlignment(.center)
+
+            Button("Повторить", action: onRetry)
+                .font(Adaptive.size(.footnote, .system(size: 15)))
+                .fontWeight(.semibold)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 enum EmotionalProfileTypes: String, Codable, CaseIterable {
     case temperament, thinking, organization, relationships, emotionalResonance, innerOpenness, soulAlignment, emotionalWarmth
 
@@ -215,6 +234,10 @@ enum EmotionalProfileTypes: String, Codable, CaseIterable {
         EmotionalProfileBar(type: .temperament, value: 7)
 
         CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
+
+        LoadFailedView(message: "Сервис временно недоступен. Попробуйте позже") {
+
+        }
 
         AIConsentLock(title: "Разрешите анализ с помощью AI") {
 

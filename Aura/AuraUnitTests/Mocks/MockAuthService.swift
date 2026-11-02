@@ -17,11 +17,14 @@ final class MockAuthService: AuthServiceProtocol {
 
     var updateProfileInfoResult: UpdateProfileInfoResponse?
     var errorToThrow: Error?
+    var stateAfterRestore: AuthState?
 
     private(set) var signInCallCount = 0
     private(set) var createAccountCallCount = 0
     private(set) var signOutCallCount = 0
     private(set) var updateProfileInfoCallCount = 0
+    private(set) var refreshUserCallCount = 0
+    private(set) var restoreSessionCallCount = 0
 
     init(state: AuthState = .signedOut) {
         authState = CurrentValueSubject<AuthState, Never>(state)
@@ -68,5 +71,14 @@ final class MockAuthService: AuthServiceProtocol {
     func deleteAccount() async throws {
         if let errorToThrow { throw errorToThrow }
         authState.send(.signedOut)
+    }
+
+    func refreshUser() {
+        refreshUserCallCount += 1
+    }
+
+    func restoreSessionIfNeeded() {
+        restoreSessionCallCount += 1
+        if let stateAfterRestore { authState.send(stateAfterRestore) }
     }
 }

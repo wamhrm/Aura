@@ -2,7 +2,7 @@
 //  HistoryViewModel.swift
 //  Aura
 //
-//  Created by wamhrm on 31.03.2026.
+//  Created by wamhrm on 18.05.2026.
 //
 
 import Combine
@@ -17,7 +17,9 @@ enum HistoryRoutes: Hashable {
 @MainActor
 final class HistoryViewModel: ObservableObject, AlertPresentable {
     @Published var historyRoutes: [HistoryRoutes] = []
+
     @Published private(set) var historyCells: [HistoryCellModel] = []
+    @Published private(set) var loadState = LoadState.loading
 
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -42,40 +44,80 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     private func setupSubscriptions() {
         authService.authState
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
-                guard let self, case .signedIn(let user) = $0 else { return }
-                handleSignIn(user)
+                guard let self else { return }
+                handleAuthState($0)
             }
             .store(in: &cancellables)
 
         contentService.historyDidChange
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self, let userId = currentUserId else { return }
-                Task { await fetchHistory(for: userId) }
+                Task { await loadHistory(for: userId) }
+            }
+            .store(in: &cancellables)
+
+        contentService.refreshRequested
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self, let userId = currentUserId else { return }
+                Task { await loadHistory(for: userId) }
             }
             .store(in: &cancellables)
     }
 
-    private func handleSignIn(_ user: UserModel) {
+    private func handleAuthState(_ authState: AuthState) {
+        switch authState {
+            case .signedIn(let user):
+                handleUser(user)
+            case .signedOut:
+                guard currentUserId != nil else { return }
+                currentUserId = nil
+                cancellables.removeAll()
+        }
+    }
+
+    private func handleUser(_ user: UserModel) {
+        guard currentUserId != user.id else { return }
+
         currentUserId = user.id
         historyCells = storage.load(StorageKeys.history, for: user.id) ?? []
-        Task { await fetchHistory(for: user.id) }
+        loadState = historyCells.isEmpty ? .loading : .loaded
+
+        Task { await loadHistory(for: user.id) }
     }
 
     func fetchHistory() async {
         guard let userId = currentUserId else { return }
-        await fetchHistory(for: userId)
+        await loadHistory(for: userId, showErrorOnFailure: true)
     }
 
-    private func fetchHistory(for userId: UUID) async {
+    func retry() {
+        guard let userId = currentUserId else { return }
+
+        loadState = .loading
+
+        Task { await loadHistory(for: userId) }
+    }
+
+    private func loadHistory(for userId: UUID, showErrorOnFailure: Bool = false) async {
         do {
             let history = try await contentService.fetchHistory()
+            guard currentUserId == userId else { return }
+
             historyCells = history
+            loadState = .loaded
             storage.save(history, for: StorageKeys.history, userId: userId)
         } catch {
-            presentAlert(error.userMessage)
+            guard currentUserId == userId, !error.isCancellation else { return }
+
+            if historyCells.isEmpty {
+                loadState = .failed(error.userMessage)
+            } else if showErrorOnFailure {
+                presentAlert(error.userMessage)
+            }
         }
     }
 
@@ -84,6 +126,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             do {
                 try await contentService.deleteHistory(id: item.id)
                 historyCells.removeAll { $0.id == item.id }
+
                 if let userId = currentUserId {
                     storage.save(historyCells, for: StorageKeys.history, userId: userId)
                 }
@@ -95,7 +138,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     func openHistoryCellDetails(_ item: HistoryCellModel) {
         guard !isLoading else { return }
-        
+
         isLoading = true
 
         Task {
@@ -119,7 +162,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             } catch {
                 presentAlert("Не удалось открыть результат")
             }
-            
+
             isLoading = false
         }
     }

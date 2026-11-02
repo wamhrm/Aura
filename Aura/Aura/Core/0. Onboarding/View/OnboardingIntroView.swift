@@ -74,6 +74,6 @@ extension OnboardingIntroView {
 }
 
 #Preview {
-    OnboardingIntroView(vm: OnboardingViewModel(authService: AuthService(),
-                                                contentService: ContentService()) {})
+    OnboardingIntroView(vm: OnboardingViewModel(authService: AuthService.preview,
+                                                contentService: ContentService.preview) {})
 }

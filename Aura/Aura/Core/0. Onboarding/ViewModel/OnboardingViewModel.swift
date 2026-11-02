@@ -15,7 +15,7 @@ enum OnboardingRoutes: Hashable {
     case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent, notifications, loading
 
     var progress: Double? {
-        let signUpRoutes: [OnboardingRoutes] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent, .notifications]
+        let signUpRoutes: [OnboardingRoutes] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent]
         guard let index = signUpRoutes.firstIndex(of: self) else { return nil }
         return Double(index + 1) / Double(signUpRoutes.count)
     }
@@ -87,6 +87,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     @Published var showAlert = false
     @Published var alertMessage = ""
+    @Published var showSignOutAlert = false
     @Published private(set) var isLoading = false
 
     // Server rule: from 16 to 100 years old. The extra day covers the time zone difference with the server.
@@ -100,6 +101,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false
     private var appleSignInNonce: String?
+    private var hasSession = false
+    private var cancellables = Set<AnyCancellable>()
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -116,6 +119,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             name = user.name
             onboardingRoutes = [.nameAndBirth]
         }
+
+        setupSubscriptions()
     }
 
     var isSignedIn: Bool {
@@ -167,8 +172,57 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         introPage == IntroPages.allCases.count - 1
     }
 
+    // There is nothing to go back to, only out of the account
+    private var isOnlyStepOfSignedInUser: Bool {
+        isSignedIn && onboardingRoutes.count == 1
+    }
+
+    private func setupSubscriptions() {
+        authService.authState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+
+                switch $0 {
+                    case .signedIn:
+                        hasSession = true
+                    case .signedOut:
+                        handleSessionEnd()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    // The steps ahead can't work without a session, so an expired one sends the user back to the start
+    private func handleSessionEnd() {
+        guard hasSession else { return }
+
+        hasSession = false
+        hasLoadingFailed = false
+        onboardingRoutes = []
+        presentAlert("Сессия истекла. Войдите снова")
+    }
+
     func isCompleted(_ stage: OnboardingLoadingStage) -> Bool {
         completedLoadingStages.contains(stage)
+    }
+
+    func hidesSystemBackButton(on route: OnboardingRoutes) -> Bool {
+        route == .loading || isOnlyStepOfSignedInUser
+    }
+
+    func goBack() {
+        if isOnlyStepOfSignedInUser {
+            showSignOutAlert = true
+        } else if !onboardingRoutes.isEmpty {
+            onboardingRoutes.removeLast()
+        }
+    }
+
+    func signOut() {
+        hasSession = false
+        onboardingRoutes = []
+        authService.signOut()
     }
 
     func showNextIntroPage() {
@@ -366,7 +420,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : onFinish()
         } else {
-            onboardingRoutes.append(.notifications)
+            // The notifications step stays hidden until the reminders are real
+            continueFromNotifications()
         }
     }
 

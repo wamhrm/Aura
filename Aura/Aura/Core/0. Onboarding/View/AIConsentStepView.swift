@@ -29,6 +29,6 @@ struct AIConsentStepView: View {
 }
 
 #Preview {
-    AIConsentStepView(vm: OnboardingViewModel(authService: AuthService(),
-                                              contentService: ContentService()) {})
+    AIConsentStepView(vm: OnboardingViewModel(authService: AuthService.preview,
+                                              contentService: ContentService.preview) {})
 }

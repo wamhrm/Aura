@@ -70,6 +70,6 @@ struct NameAndBirthStepView: View {
 }
 
 #Preview {
-    NameAndBirthStepView(vm: OnboardingViewModel(authService: AuthService(),
-                                                 contentService: ContentService()) {})
+    NameAndBirthStepView(vm: OnboardingViewModel(authService: AuthService.preview,
+                                                 contentService: ContentService.preview) {})
 }

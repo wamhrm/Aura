@@ -40,13 +40,22 @@ struct HomeView: View {
                                     .font(Adaptive.size(.callout, .default))
                                     .fontWeight(.heavy)
 
-                                if vm.allowsAIAnalysis {
-                                    Text(vm.dailyInsightHandler)
-                                        .font(.system(size: Adaptive.size(14, 15))).italic()
-                                        .fontWeight(.medium)
-                                } else {
+                                if !vm.allowsAIAnalysis {
                                     AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
                                                   onAllow: aiConsentButton)
+                                        .frame(maxWidth: .infinity)
+                                } else if let insight = vm.dailyInsight {
+                                    Text(insight.text)
+                                        .font(.system(size: Adaptive.size(14, 15))).italic()
+                                        .fontWeight(.medium)
+                                } else if case .failed(let message) = vm.insightState {
+                                    LoadFailedView(message: message) {
+                                        vm.retryDailyInsight()
+                                    }
+                                    .tint(.white)
+                                } else {
+                                    ProgressView()
+                                        .tint(.white)
                                         .frame(maxWidth: .infinity)
                                 }
                             }
@@ -67,6 +76,24 @@ struct HomeView: View {
                                     }
                                 }
                                 .padding(.top, 15)
+                            } else if case .failed(let message) = vm.horoscopeState {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Гороскоп на неделю")
+                                        .font(Adaptive.size(.system(size: 15), .default))
+                                        .fontWeight(.semibold)
+                                        .padding(.leading, 4)
+
+                                    LoadFailedView(message: message) {
+                                        vm.retryHoroscope()
+                                    }
+                                    .padding(20)
+                                    .backgroundWithShape(12, .cardBackground, true)
+                                }
+                                .padding(.top, 15)
+                            } else {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.top, 15)
                             }
 
                             Button(action: compatibilityButton) {
@@ -125,6 +152,9 @@ struct HomeView: View {
                     }
                     .bottomAreaPadding(50)
                     .scrollIndicators(.hidden)
+                    .refreshable {
+                        await vm.refresh()
+                    }
                 }
             }
             .navigationTitle("Главная")
@@ -132,9 +162,9 @@ struct HomeView: View {
             .navigationDestination(for: HomeRoutes.self) { destination in
                 destinationView(destination)
             }
-            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-                Button("OK", role: .cancel) {}
-            }
+        }
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("OK", role: .cancel) {}
         }
     }
 }
@@ -190,8 +220,8 @@ extension HomeView {
 }
 
 #Preview {
-    HomeView(vm: HomeViewModel(authService: AuthService(),
-                               contentService: ContentService())) {
+    HomeView(vm: HomeViewModel(authService: AuthService.preview,
+                               contentService: ContentService.preview)) {
 
     } aiConsentButton: {
 

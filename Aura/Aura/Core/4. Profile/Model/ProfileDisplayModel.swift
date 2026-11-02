@@ -8,31 +8,48 @@
 import Foundation
 
 struct ProfileDisplayModel: Equatable {
-    let dailyTip: String
-    let overview: String
-    let socialFilter: String
-    let emotionalDepth: String
-    let temperament: Int
-    let thinking: Int
-    let organization: Int
-    let relationships: Int
+    let dailyTip: String?
+    let overview: String?
+    let socialFilter: String?
+    let emotionalDepth: String?
+    let temperament: Int?
+    let thinking: Int?
+    let organization: Int?
+    let relationships: Int?
     let zodiacSignTitle: String?
+
+    var hasTopics: Bool {
+        socialFilter != nil || emotionalDepth != nil
+    }
+
+    var hasBothTopics: Bool {
+        socialFilter != nil && emotionalDepth != nil
+    }
 }
 
 extension ProfileDisplayModel {
-    static let placeholder = ProfileDisplayModel.make(personalityResult: nil, dailyTip: nil)
-    
+    // Sample text for the locked screen, it only ever appears behind the blur
+    static let placeholder = ProfileDisplayModel(dailyTip: ProfileDisplayPlaceholder.dailyTip,
+                                                 overview: ProfileDisplayPlaceholder.overview,
+                                                 socialFilter: ProfileDisplayPlaceholder.socialFilter,
+                                                 emotionalDepth: ProfileDisplayPlaceholder.emotionalDepth,
+                                                 temperament: ProfileDisplayPlaceholder.temperament,
+                                                 thinking: ProfileDisplayPlaceholder.thinking,
+                                                 organization: ProfileDisplayPlaceholder.organization,
+                                                 relationships: ProfileDisplayPlaceholder.relationships,
+                                                 zodiacSignTitle: nil)
+
     static func make(personalityResult: PersonalityResultModel?,
                      dailyTip: DailyContentModel?) -> ProfileDisplayModel {
         ProfileDisplayModel(
-            dailyTip: dailyTip?.text ?? ProfileDisplayPlaceholder.dailyTip,
-            overview: personalityResult?.overview.description ?? ProfileDisplayPlaceholder.overview,
-            socialFilter: sectionItem(.socialFilter, from: personalityResult) ?? ProfileDisplayPlaceholder.socialFilter,
-            emotionalDepth: sectionItem(.emotionalDepth, from: personalityResult) ?? ProfileDisplayPlaceholder.emotionalDepth,
-            temperament: barValue(.temperament, from: personalityResult) ?? ProfileDisplayPlaceholder.temperament,
-            thinking: barValue(.thinking, from: personalityResult) ?? ProfileDisplayPlaceholder.thinking,
-            organization: barValue(.organization, from: personalityResult) ?? ProfileDisplayPlaceholder.organization,
-            relationships: barValue(.relationships, from: personalityResult) ?? ProfileDisplayPlaceholder.relationships,
+            dailyTip: dailyTip?.text,
+            overview: personalityResult?.overview.description,
+            socialFilter: sectionItem(.socialFilter, from: personalityResult),
+            emotionalDepth: sectionItem(.emotionalDepth, from: personalityResult),
+            temperament: barValue(.temperament, from: personalityResult),
+            thinking: barValue(.thinking, from: personalityResult),
+            organization: barValue(.organization, from: personalityResult),
+            relationships: barValue(.relationships, from: personalityResult),
             zodiacSignTitle: personalityResult?.zodiacSign.title)
     }
 
