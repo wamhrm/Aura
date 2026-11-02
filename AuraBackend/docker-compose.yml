@@ -6,6 +6,9 @@ services:
     env_file: .env
     environment:
       PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
 
   migrate:
     build: .
@@ -13,3 +16,23 @@ services:
     command: ["migrate", "--yes"]
     profiles:
       - migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: aura
+      POSTGRES_PASSWORD: aura
+      POSTGRES_DB: aura
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aura -d aura"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  db-data:
