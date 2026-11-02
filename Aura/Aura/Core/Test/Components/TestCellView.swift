@@ -158,7 +158,6 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
     case attachmentCompatibility = "Стили привязанности"
     case loveLanguages = "Языки любви"
     case conflictResolution = "Конфликты и примирение"
-    case sexualCompatibility = "Сексуальная совместимость"
 
     var title: String { rawValue }
 
@@ -169,7 +168,6 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Безопасность и дистанция"
             case .loveLanguages: "Как вы даете и принимаете любовь"
             case .conflictResolution: "Триггеры и ссоры"
-            case .sexualCompatibility: "Химия и интимные ожидания"
         }
     }
 
@@ -180,7 +178,6 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "lock.heart"
             case .loveLanguages: "heart"
             case .conflictResolution: "bubble.left.and.bubble.right"
-            case .sexualCompatibility: "flame"
         }
     }
 
@@ -191,7 +188,6 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: .systemOrange
             case .loveLanguages: .systemRed
             case .conflictResolution: .systemBlue
-            case .sexualCompatibility: .systemPink
         }
     }
 
@@ -202,7 +198,6 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Поймите, насколько ваши стили привязанности подходят друг другу и какие сценарии могут создавать тревогу, холодность или ощущение безопасности."
             case .loveLanguages: "Сравните ваши способы проявлять любовь, принимать заботу и чувствовать значимость в отношениях."
             case .conflictResolution: "Узнайте, как вы оба ведете себя в конфликте, какие триггеры усиливают ссоры и какие способы примирения подходят вашей паре."
-            case .sexualCompatibility: "Исследуйте уровень интимной совместимости: желания, ожидания и скрытые несовпадения. Поймёте, где возникает напряжение и как усилить химию между вами."
         }
     }
 
@@ -228,10 +223,6 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
                         "Триггеры напряжения",
                         "Стратегии примирения",
                         "Зоны договоренностей"]
-            case .sexualCompatibility: ["Уровень влечения",
-                        "Интимные ожидания",
-                        "Совпадение желаний",
-                        "Потенциал химии"]
         }
     }
 }

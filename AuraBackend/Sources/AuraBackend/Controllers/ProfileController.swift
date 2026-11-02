@@ -38,6 +38,10 @@ struct ProfileController: RouteCollection {
             throw Abort(.badRequest, reason: "Укажите корректную дату рождения в формате ДД.ММ.ГГГГ")
         }
 
+        guard UserDateFormatter.isOldEnough(dateOfBirth) else {
+            throw Abort(.badRequest, reason: "Aura доступна с 16 лет")
+        }
+
         let birthTime = emptyStringToNil(profileInfo.birthTime)
 
         if let birthTime, !UserDateFormatter.isValidTime(birthTime) {
@@ -64,14 +68,8 @@ struct ProfileController: RouteCollection {
 
         try await user.save(on: req.db)
 
-        let horoscope: HoroscopeDTO?
-
-        do {
-            horoscope = try await horoscopeService.fetchCurrentHoroscope(for: user, req: req, on: req.db)
-        } catch {
-            req.logger.warning("Profile saved without horoscope: \(error)")
-            horoscope = nil
-        }
+        // Never waits for OpenAI: the app requests a missing horoscope on its own
+        let horoscope = try? await horoscopeService.findCurrentHoroscope(for: user, on: req.db)
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }

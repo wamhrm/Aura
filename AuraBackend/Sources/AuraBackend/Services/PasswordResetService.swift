@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import FluentPostgresDriver
 import Vapor
 
 struct PasswordResetService {
@@ -66,13 +67,17 @@ struct PasswordResetService {
               reset.expiresAt > Date()
         else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
 
-        guard reset.attempts < maxAttempts else {
+        // Takes the attempt in one statement, so parallel requests can't get more than maxAttempts checks
+        let resetID = try reset.requireID()
+        let takenAttempts = try await req.db.sql()
+            .raw("UPDATE password_resets SET attempts = attempts + 1 WHERE id = \(bind: resetID) AND attempts < \(bind: maxAttempts) RETURNING id")
+            .all()
+
+        guard !takenAttempts.isEmpty else {
             throw Abort(.tooManyRequests, reason: "Слишком много попыток. Запросите новый код")
         }
 
         guard reset.codeHash == hash(code, userID: userID) else {
-            reset.attempts += 1
-            try await reset.save(on: req.db)
             throw Abort(.badRequest, reason: "Неверный код")
         }
     }

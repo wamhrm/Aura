@@ -19,7 +19,7 @@ struct CompatibilityTestRequest: Content {
 
 enum PartnerInfoOptions {
     static let genders: Set<String> = ["Мужской", "Женский"]
-    static let ageRange = 1...120
+    static let ageRange = 16...120
 }
 
 struct CompatibilityResultDTO: Content {
@@ -83,7 +83,6 @@ enum CompatibilityTests: String, CaseIterable {
     case attachmentCompatibility
     case loveLanguages
     case conflictResolution
-    case sexualCompatibility
 
     var title: String {
         switch self {
@@ -97,8 +96,6 @@ enum CompatibilityTests: String, CaseIterable {
                 return "Языки любви"
             case .conflictResolution:
                 return "Конфликты и примирение"
-            case .sexualCompatibility:
-                return "Сексуальная совместимость"
         }
     }
 
@@ -118,7 +115,6 @@ enum CompatibilityItems {
     private static let attachmentCompatibility = ["Сцепка типов", "Дистанция комфорта"]
     private static let loveLanguages = ["Совпадение языков", "Трудности перевода"]
     private static let conflictResolution = ["Механика ссор", "Скорость примирения"]
-    private static let sexualCompatibility = ["Сексуальный темперамент", "Сексуальная химия"]
 
     static func allowed(for test: CompatibilityTests) -> [String] {
         switch test {
@@ -132,8 +128,6 @@ enum CompatibilityItems {
                 return loveLanguages
             case .conflictResolution:
                 return conflictResolution
-            case .sexualCompatibility:
-                return sexualCompatibility
         }
     }
 }

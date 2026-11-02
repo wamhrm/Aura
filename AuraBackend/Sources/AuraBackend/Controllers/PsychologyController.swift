@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import FluentPostgresDriver
 import Vapor
 
 struct PsychologyController: RouteCollection {
@@ -25,47 +26,68 @@ struct PsychologyController: RouteCollection {
     private func makePersonalityTest(_ req: Request) async throws -> PersonalityResultDTO {
         let user = try req.auth.require(User.self)
         let testTitles = try req.content.decode([String].self)
-        try await ensureDailyTestLimit(for: user, on: req.db)
-        let response = try await psychologyService.makePersonalityTest(user: user, testTitles: testTitles, req: req)
+        let usage = try await reserveTest(for: user, on: req.db)
 
-        try await saveTestResult(user: user,
-                                 kind: .personality,
-                                 selectedTests: response.selectedTests,
-                                 result: response,
-                                 on: req.db)
+        do {
+            let response = try await psychologyService.makePersonalityTest(user: user, testTitles: testTitles, req: req)
 
-        return response
+            try await saveTestResult(user: user,
+                                     kind: .personality,
+                                     selectedTests: response.selectedTests,
+                                     result: response,
+                                     on: req.db)
+
+            return response
+        } catch {
+            try? await usage.delete(on: req.db)
+            throw error
+        }
     }
 
     private func makeCompatibilityTest(_ req: Request) async throws -> CompatibilityResultDTO {
         let user = try req.auth.require(User.self)
         let request = try req.content.decode(CompatibilityTestRequest.self)
-        try await ensureDailyTestLimit(for: user, on: req.db)
-        let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
+        let usage = try await reserveTest(for: user, on: req.db)
 
-        try await saveTestResult(user: user,
-                                 kind: .compatibility,
-                                 selectedTests: response.selectedTests,
-                                 result: response,
-                                 on: req.db)
+        do {
+            let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
 
-        return response
+            try await saveTestResult(user: user,
+                                     kind: .compatibility,
+                                     selectedTests: response.selectedTests,
+                                     result: response,
+                                     on: req.db)
+
+            return response
+        } catch {
+            try? await usage.delete(on: req.db)
+            throw error
+        }
     }
 
-    private func ensureDailyTestLimit(for user: User, on database: any Database) async throws {
+    // Takes an attempt before OpenAI is called, so parallel requests can't pass the limit together
+    private func reserveTest(for user: User, on database: any Database) async throws -> TestUsage {
         let userID = try user.requireID()
 
-        try await TestUsage.query(on: database)
-            .filter(\.$user.$id == userID)
-            .filter(\.$createdAt < Date().addingTimeInterval(-dailyTestLimitWindow))
-            .delete()
+        return try await database.transaction { transaction in
+            try await transaction.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
 
-        let testsInLastDay = try await TestUsage.query(on: database)
-            .filter(\.$user.$id == userID)
-            .count()
+            try await TestUsage.query(on: transaction)
+                .filter(\.$user.$id == userID)
+                .filter(\.$createdAt < Date().addingTimeInterval(-dailyTestLimitWindow))
+                .delete()
 
-        guard testsInLastDay < dailyTestLimit else {
-            throw Abort(.tooManyRequests, reason: "Достигнут лимит тестов за сутки. Попробуйте позже")
+            let testsInLastDay = try await TestUsage.query(on: transaction)
+                .filter(\.$user.$id == userID)
+                .count()
+
+            guard testsInLastDay < dailyTestLimit else {
+                throw Abort(.tooManyRequests, reason: "Достигнут лимит тестов за сутки. Попробуйте позже")
+            }
+
+            let usage = TestUsage(userID: userID)
+            try await usage.save(on: transaction)
+            return usage
         }
     }
 
@@ -80,16 +102,11 @@ struct PsychologyController: RouteCollection {
             throw Abort(.internalServerError, reason: "Не удалось сохранить результат теста")
         }
 
-        let userID = try user.requireID()
-        let entry = History(userID: userID,
+        let entry = History(userID: try user.requireID(),
                             kind: kind,
                             selectedTests: selectedTests,
                             result: resultJSON)
-        let usage = TestUsage(userID: userID)
 
-        try await database.transaction { transaction in
-            try await entry.save(on: transaction)
-            try await usage.save(on: transaction)
-        }
+        try await entry.save(on: database)
     }
 }
