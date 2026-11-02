@@ -52,12 +52,7 @@ struct PersonalityTestContent: Codable {
 enum PersonalityTests: String, CaseIterable {
     static let minSelected = 2
 
-    case astrology
-    case behavioralPatterns
-    case decisionMaking
-    case attachmentStyle
-    case idealPartner
-    case loveLanguage
+    case astrology, behavioralPatterns, decisionMaking, attachmentStyle, idealPartner, loveLanguage
 
     var title: String {
         switch self {

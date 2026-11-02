@@ -78,6 +78,5 @@ final class History: Model, @unchecked Sendable {
 }
 
 enum TestKind: String, Codable, Sendable {
-    case personality
-    case compatibility
+    case personality, compatibility
 }
