@@ -9,8 +9,7 @@ import Fluent
 import Foundation
 
 enum DailyContentKind: String, Codable {
-    case insight
-    case tip
+    case insight, tip
 }
 
 final class DailyContent: Model, @unchecked Sendable {

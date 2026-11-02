@@ -10,7 +10,6 @@ import Vapor
 
 extension Application {
     func configureMigrations() {
-        self.migrations.add(DropLegacySchema())
         self.migrations.add(CreateSchema())
     }
 }

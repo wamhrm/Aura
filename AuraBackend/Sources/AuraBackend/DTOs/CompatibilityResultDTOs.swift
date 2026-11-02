@@ -79,11 +79,7 @@ struct CompatibilityTestContent: Codable {
 enum CompatibilityTests: String, CaseIterable {
     static let minSelected = 3
 
-    case astrology
-    case behavioralPatterns
-    case attachmentCompatibility
-    case loveLanguages
-    case conflictResolution
+    case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution
 
     var title: String {
         switch self {
