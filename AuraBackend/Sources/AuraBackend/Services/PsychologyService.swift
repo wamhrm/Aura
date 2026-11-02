@@ -53,8 +53,12 @@ struct PsychologyService {
 
         if request.exactDateOfBirth {
             guard let dateString = request.partnerDateOfBirth,
-                  UserDateFormatter.birthDate(from: dateString) != nil else {
+                  let dateOfBirth = UserDateFormatter.birthDate(from: dateString) else {
                 throw Abort(.badRequest, reason: "Укажите дату рождения партнёра в формате ДД.ММ.ГГГГ")
+            }
+
+            guard UserDateFormatter.isOldEnough(dateOfBirth) else {
+                throw Abort(.badRequest, reason: "Партнёру должно быть не меньше 16 лет")
             }
 
             if let birthTime = request.partnerBirthTime, !UserDateFormatter.isValidTime(birthTime) {
@@ -63,7 +67,7 @@ struct PsychologyService {
         } else {
             guard let age = request.partnerAge.flatMap(Int.init),
                   PartnerInfoOptions.ageRange.contains(age) else {
-                throw Abort(.badRequest, reason: "Укажите возраст партнёра")
+                throw Abort(.badRequest, reason: "Возраст партнёра должен быть от 16 до 120 лет")
             }
         }
 
@@ -81,10 +85,11 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
+        // Only the fields checked above may reach the prompt
         let partnerRequest = CompatibilityTestRequest(partnerName: partnerName,
-                                                          partnerDateOfBirth: request.partnerDateOfBirth,
-                                                          partnerBirthTime: request.partnerBirthTime,
-                                                          partnerAge: request.partnerAge,
+                                                          partnerDateOfBirth: request.exactDateOfBirth ? request.partnerDateOfBirth : nil,
+                                                          partnerBirthTime: request.exactDateOfBirth ? request.partnerBirthTime : nil,
+                                                          partnerAge: request.exactDateOfBirth ? nil : request.partnerAge,
                                                           partnerGender: partnerGender,
                                                           exactDateOfBirth: request.exactDateOfBirth,
                                                           selectedTests: request.selectedTests)

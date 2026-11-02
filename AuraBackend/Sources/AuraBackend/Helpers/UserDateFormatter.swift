@@ -9,6 +9,7 @@ import Foundation
 
 enum UserDateFormatter {
     private static let maxAgeInYears = 100
+    private static let minAgeInYears = 16
 
     private static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
@@ -26,11 +27,13 @@ enum UserDateFormatter {
     }()
 
     static func date(from string: String) -> Date? {
-        formatter.date(from: string)
+        // DateFormatter rolls impossible dates over: 31.02.2000 would become 02.03.2000
+        guard let date = formatter.date(from: string), formatter.string(from: date) == string else { return nil }
+        return date
     }
 
     static func birthDate(from string: String) -> Date? {
-        guard let date = formatter.date(from: string) else { return nil }
+        guard let date = date(from: string) else { return nil }
 
         let now = Date()
 
@@ -41,6 +44,14 @@ enum UserDateFormatter {
         }
 
         return date
+    }
+
+    static func isOldEnough(_ birthDate: Date) -> Bool {
+        guard let latestDate = calendar.date(byAdding: .year, value: -minAgeInYears, to: Date()) else {
+            return false
+        }
+
+        return birthDate <= latestDate
     }
 
     static func isValidTime(_ string: String) -> Bool {

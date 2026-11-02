@@ -89,7 +89,13 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var alertMessage = ""
     @Published private(set) var isLoading = false
 
-    static let birthDateRange = (Calendar.current.date(from: DateComponents(year: 1920)) ?? .distantPast)...Date()
+    // Server rule: from 16 to 100 years old. The extra day covers the time zone difference with the server.
+    static let birthDateRange: ClosedRange<Date> = {
+        let now = Date()
+        let earliest = Calendar.current.date(byAdding: DateComponents(year: -100, day: 1), to: now) ?? .distantPast
+        let latest = Calendar.current.date(byAdding: DateComponents(year: -16, day: -1), to: now) ?? now
+        return earliest...latest
+    }()
 
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false

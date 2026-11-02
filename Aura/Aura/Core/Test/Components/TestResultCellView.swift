@@ -101,10 +101,6 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
     case conflictMechanics = "Механика ссор"
     case peaceRecovery = "Скорость примирения"
     
-    // Сексуальная совместимость
-    case sexualTemperament = "Сексуальный темперамент"
-    case sexualChemistry = "Сексуальная химия"
-    
     var title: String { rawValue }
 
     var icon: String {
@@ -119,8 +115,6 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
             case .translationNeeds: "📖"
             case .conflictMechanics: "🧨"
             case .peaceRecovery: "🏳️"
-            case .sexualTemperament: "🔥"
-            case .sexualChemistry: "🧪"
         }
     }
 }

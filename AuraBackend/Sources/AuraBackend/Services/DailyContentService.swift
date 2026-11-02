@@ -35,14 +35,22 @@ struct DailyContentService {
             return try DailyContentDTOMapper.map(entry)
         }
 
-        let generatedText = try await generateText(kind: kind, for: user, req: req)
-        let entry = try await upsertEntry(kind: kind,
-                                          userID: userID,
-                                          text: generatedText,
-                                          generatedDate: today,
-                                          on: database)
+        return try await SingleFlight.shared.run(key: "daily:\(kind.rawValue):\(userID):\(today)") {
+            // Another request may have finished generating while this one was on its way here
+            if let entry = try await findEntry(kind: kind, userID: userID, on: database),
+               DailyDateHelper.isToday(entry.generatedDate) {
+                return try DailyContentDTOMapper.map(entry)
+            }
 
-        return try DailyContentDTOMapper.map(entry)
+            let generatedText = try await generateText(kind: kind, for: user, req: req)
+            let entry = try await upsertEntry(kind: kind,
+                                              userID: userID,
+                                              text: generatedText,
+                                              generatedDate: today,
+                                              on: database)
+
+            return try DailyContentDTOMapper.map(entry)
+        }
     }
 
     private func generateText(kind: DailyContentKind, for user: User, req: Request) async throws -> String {
