@@ -17,8 +17,10 @@ struct AuraApp: App {
 
     init() {
         let networkService = NetworkService()
-        _authService = StateObject(wrappedValue: AuthService(networkService: networkService))
-        _contentService = StateObject(wrappedValue: ContentService(networkService: networkService))
+        let authService = AuthService(networkService: networkService)
+        _authService = StateObject(wrappedValue: authService)
+        _contentService = StateObject(wrappedValue: ContentService(networkService: networkService,
+                                                                   authService: authService))
     }
 
     var body: some Scene {

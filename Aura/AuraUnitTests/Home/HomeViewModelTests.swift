@@ -3,6 +3,7 @@
 //  AuraUnitTests
 //
 
+import Combine
 import XCTest
 @testable import Aura
 
@@ -80,72 +81,174 @@ final class HomeViewModelTests: XCTestCase {
         XCTAssertFalse(sut.homeRoutes.contains(.testResults))
     }
 
-    // MARK: - saveProfileInfo
-    func test_saveProfileInfo_whenDateInvalid_showsAlertAndDoesNotProceed() async {
-        // Given
-        let (sut, auth, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-        await waitUntil { !sut.isLoadingScreen }
-        // profileInfo.dateOfBirth == "" (длина != 10)
-
-        // When
-        sut.saveProfileInfo {}
-        await waitUntil { sut.showAlert }
+    // MARK: - Loading content
+    func test_signIn_loadsHoroscopeAndInsight() async {
+        // Given / When
+        let (sut, _, content) = makeSUT(authState: .signedIn(.mock))
+        await waitUntil { sut.insightState == .loaded && sut.horoscopeState == .loaded }
 
         // Then
-        XCTAssertEqual(sut.alertMessage, "Укажите дату рождения в формате ДД.ММ.ГГГГ")
-        XCTAssertEqual(auth.updateProfileInfoCallCount, 0)
+        XCTAssertNotNil(sut.horoscope)
+        XCTAssertNotNil(sut.dailyInsight)
+        XCTAssertEqual(content.fetchHoroscopeCallCount, 1)
+        XCTAssertEqual(content.fetchInsightCallCount, 1)
     }
 
-    func test_saveProfileInfo_whenProfileIncomplete_showsAlertAndDoesNotProceed() async {
+    func test_signIn_whenLoadingFails_showsTheErrorOnScreenAndInventsNothing() async {
         // Given
-        let (sut, auth, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-        await waitUntil { !sut.isLoadingScreen }
-        sut.profileInfo.dateOfBirth = "01.01.2000"
-        // остальные поля nil
+        let content = MockContentService()
+        content.errorToThrow = MockError.notStubbed
 
         // When
-        sut.saveProfileInfo {}
-        await waitUntil { sut.showAlert }
+        let (sut, _, _) = makeSUT(authState: .signedIn(.mock), content: content)
+        await waitUntil { sut.insightState != .loading && sut.horoscopeState != .loading }
 
         // Then
-        XCTAssertEqual(sut.alertMessage, "Заполните все обязательные поля профиля")
-        XCTAssertEqual(auth.updateProfileInfoCallCount, 0)
-    }
-
-    func test_saveProfileInfo_whenValid_callsServiceAndUpdatesState() async {
-        // Given
-        let (sut, auth, _) = makeSUT(authState: .signedIn(makeIncompleteUser()))
-        await waitUntil { !sut.isLoadingScreen }
-        auth.updateProfileInfoResult = UpdateProfileInfoResponse(user: .mock, horoscope: .mock)
-        fillValidProfileInfo(sut)
-        var didSave = false
-
-        // When
-        sut.saveProfileInfo { didSave = true }
-        await waitUntil { didSave }
-
-        // Then
-        XCTAssertTrue(didSave)
-        XCTAssertEqual(auth.updateProfileInfoCallCount, 1)
+        XCTAssertEqual(sut.insightState, .failed("Что-то пошло не так. Попробуйте ещё раз"))
+        XCTAssertEqual(sut.horoscopeState, .failed("Что-то пошло не так. Попробуйте ещё раз"))
+        XCTAssertNil(sut.dailyInsight)
         XCTAssertFalse(sut.showAlert)
     }
-    
+
+    func test_retry_afterFailure_loadsTheContent() async {
+        // Given
+        let content = MockContentService()
+        content.errorToThrow = MockError.notStubbed
+        let (sut, _, _) = makeSUT(authState: .signedIn(.mock), content: content)
+        await waitUntil { sut.insightState != .loading && sut.horoscopeState != .loading }
+        content.errorToThrow = nil
+
+        // When
+        sut.retryDailyInsight()
+        sut.retryHoroscope()
+        await waitUntil { sut.insightState == .loaded && sut.horoscopeState == .loaded }
+
+        // Then
+        XCTAssertNotNil(sut.dailyInsight)
+        XCTAssertNotNil(sut.horoscope)
+    }
+
+    func test_cachedInsight_fromAnotherDay_isNotShown() async {
+        // Given
+        let storage = MockLocalStorage()
+        let content = MockContentService()
+        content.errorToThrow = MockError.notStubbed
+        storage.save(DailyContentModel(id: UUID(), text: "Вчерашний инсайт", dateCreated: "2000-01-01"),
+                     for: StorageKeys.dailyInsight,
+                     userId: UserModel.mock.id)
+
+        // When
+        let (sut, _, _) = makeSUT(authState: .signedIn(.mock), content: content, storage: storage)
+        await waitUntil { sut.insightState != .loading }
+
+        // Then
+        XCTAssertNil(sut.dailyInsight)
+    }
+
+    func test_withoutConsent_insightIsNotRequested() async {
+        // Given / When
+        let (sut, _, content) = makeSUT(authState: .signedIn(makeUser(hasAIConsent: false)))
+        await waitUntil { sut.horoscopeState == .loaded }
+
+        // Then
+        XCTAssertEqual(content.fetchInsightCallCount, 0)
+    }
+
+    // MARK: - Updates of the same user
+    func test_sameUserUpdate_doesNotReloadContent() async {
+        // Given
+        let (sut, auth, content) = makeSUT(authState: .signedIn(.mock))
+        await waitUntil { sut.insightState == .loaded && sut.horoscopeState == .loaded }
+
+        // When
+        auth.authState.send(.signedIn(.mock))
+        try? await Task.sleep(for: .milliseconds(100))
+
+        // Then
+        XCTAssertEqual(content.fetchHoroscopeCallCount, 1)
+        XCTAssertEqual(content.fetchInsightCallCount, 1)
+    }
+
+    func test_givenConsent_loadsOnlyTheInsight() async {
+        // Given
+        let (sut, auth, content) = makeSUT(authState: .signedIn(makeUser(hasAIConsent: false)))
+        await waitUntil { sut.horoscopeState == .loaded }
+
+        // When
+        auth.authState.send(.signedIn(makeUser(hasAIConsent: true)))
+        await waitUntil { sut.insightState == .loaded }
+
+        // Then
+        XCTAssertTrue(sut.allowsAIAnalysis)
+        XCTAssertEqual(content.fetchInsightCallCount, 1)
+        XCTAssertEqual(content.fetchHoroscopeCallCount, 1)
+    }
+
+    func test_newDateOfBirth_loadsOnlyTheHoroscope() async {
+        // Given
+        let (sut, auth, content) = makeSUT(authState: .signedIn(makeUser(hasAIConsent: true)))
+        await waitUntil { sut.insightState == .loaded && sut.horoscopeState == .loaded }
+
+        // When
+        auth.authState.send(.signedIn(makeUser(hasAIConsent: true, dateOfBirth: "20.01.1990")))
+        await waitUntil { content.fetchHoroscopeCallCount == 2 }
+
+        // Then
+        XCTAssertEqual(content.fetchInsightCallCount, 1)
+    }
+
+    func test_refreshRequest_reloadsContent() async {
+        // Given
+        let (sut, _, content) = makeSUT(authState: .signedIn(.mock))
+        await waitUntil { sut.insightState == .loaded && sut.horoscopeState == .loaded }
+
+        // When
+        content.refreshRequested.send()
+        await waitUntil { content.fetchHoroscopeCallCount == 2 && content.fetchInsightCallCount == 2 }
+
+        // Then
+        XCTAssertEqual(content.fetchHoroscopeCallCount, 2)
+    }
+
+    func test_signOut_stopsReactingToTheNextSession() async {
+        // Given
+        let (sut, auth, content) = makeSUT(authState: .signedIn(.mock))
+        await waitUntil { sut.insightState == .loaded && sut.horoscopeState == .loaded }
+
+        // When
+        auth.authState.send(.signedOut)
+        try? await Task.sleep(for: .milliseconds(50))
+        auth.authState.send(.signedIn(makeIncompleteUser()))
+        try? await Task.sleep(for: .milliseconds(100))
+
+        // Then
+        XCTAssertEqual(content.fetchHoroscopeCallCount, 1)
+    }
+
     // MARK: - Helpers
-    private func makeSUT(authState: AuthState = .signedOut)
+    private func makeSUT(authState: AuthState = .signedOut,
+                         content: MockContentService = MockContentService(),
+                         storage: MockLocalStorage = MockLocalStorage())
         -> (sut: HomeViewModel, auth: MockAuthService, content: MockContentService) {
         let auth = MockAuthService(state: authState)
-        let content = MockContentService()
-        let sut = HomeViewModel(authService: auth, contentService: content, storage: MockLocalStorage())
+        let sut = HomeViewModel(authService: auth, contentService: content, storage: storage)
         return (sut, auth, content)
     }
 
-    private func fillValidProfileInfo(_ sut: HomeViewModel) {
-        sut.profileInfo.dateOfBirth = "01.01.2000"
-        sut.profileInfo.gender = "man"
-        sut.profileInfo.socialType = "introvert"
-        sut.profileInfo.conflictStyle = "mediator"
-        sut.profileInfo.emotionalCore = "logic"
-        sut.profileInfo.decisionStyle = "planner"
-        sut.profileInfo.coreFocus = "stability"
+    private func makeUser(hasAIConsent: Bool, dateOfBirth: String = "13.05.2000") -> UserModel {
+        let user = UserModel.mock
+
+        return UserModel(id: user.id,
+                         name: user.name,
+                         email: user.email,
+                         dateOfBirth: dateOfBirth,
+                         birthTime: user.birthTime,
+                         gender: user.gender,
+                         socialType: user.socialType,
+                         conflictStyle: user.conflictStyle,
+                         emotionalCore: user.emotionalCore,
+                         decisionStyle: user.decisionStyle,
+                         coreFocus: user.coreFocus,
+                         hasAIConsent: hasAIConsent)
     }
 }

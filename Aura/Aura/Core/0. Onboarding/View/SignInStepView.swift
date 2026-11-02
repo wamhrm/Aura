@@ -33,6 +33,7 @@ struct SignInStepView: View {
             VStack(spacing: 15) {
                 OnboardingDivider()
                 OnboardingAppleButton(vm: vm)
+                OnboardingLegalText()
 
                 HStack(spacing: 4) {
                     Text("Нет аккаунта?")
@@ -51,6 +52,6 @@ struct SignInStepView: View {
 }
 
 #Preview {
-    SignInStepView(vm: OnboardingViewModel(authService: AuthService(),
-                                           contentService: ContentService()) {})
+    SignInStepView(vm: OnboardingViewModel(authService: AuthService.preview,
+                                           contentService: ContentService.preview) {})
 }

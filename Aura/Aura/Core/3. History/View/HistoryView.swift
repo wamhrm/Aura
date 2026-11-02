@@ -16,12 +16,11 @@ struct HistoryView: View {
                 BackgroundView()
 
                 VStack(alignment: .leading, spacing: 15) {
-                    if vm.historyCells.isEmpty {
-                        ContentUnavailableView {
-                            Label("История пуста", systemImage: "")
-                        }
-                    } else {
-                        ScrollView {
+                    ScrollView {
+                        if vm.historyCells.isEmpty {
+                            emptyListView()
+                                .containerRelativeFrame(.vertical)
+                        } else {
                             ForEach(vm.historyCells) { item in
                                 Button {
                                     vm.openHistoryCellDetails(item)
@@ -39,13 +38,13 @@ struct HistoryView: View {
                             .disabled(vm.isLoading)
                             .padding(.horizontal)
                         }
-                        .refreshable {
-                            await vm.fetchHistory()
-                        }
-                        .overlay {
-                            if vm.isLoading {
-                                ProgressView()
-                            }
+                    }
+                    .refreshable {
+                        await vm.fetchHistory()
+                    }
+                    .overlay {
+                        if vm.isLoading {
+                            ProgressView()
                         }
                     }
                 }
@@ -56,14 +55,31 @@ struct HistoryView: View {
             .navigationDestination(for: HistoryRoutes.self) { route in
                 destinationView(route)
             }
-            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-                Button("OK", role: .cancel) {}
-            }
+        }
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("OK", role: .cancel) {}
         }
     }
 }
 
 extension HistoryView {
+    @ViewBuilder
+    private func emptyListView() -> some View {
+        switch vm.loadState {
+            case .loading:
+                ProgressView()
+            case .loaded:
+                ContentUnavailableView {
+                    Label("История пуста", systemImage: "")
+                }
+            case .failed(let message):
+                LoadFailedView(message: message) {
+                    vm.retry()
+                }
+                .padding(.horizontal)
+        }
+    }
+
     @ViewBuilder
     private func destinationView(_ route: HistoryRoutes) -> some View {
         switch route {
@@ -76,6 +92,6 @@ extension HistoryView {
 }
 
 #Preview {
-    HistoryView(vm: HistoryViewModel(authService: AuthService(),
-                                     contentService: ContentService()))
+    HistoryView(vm: HistoryViewModel(authService: AuthService.preview,
+                                     contentService: ContentService.preview))
 }

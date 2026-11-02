@@ -10,14 +10,12 @@ import SwiftUI
 
 struct OnboardingTopBar: View {
     let progress: Double?
-    @Environment(\.dismiss) private var dismiss
+    let onBack: () -> Void
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         HStack(spacing: 15) {
-            Button {
-                dismiss()
-            } label: {
+            Button(action: onBack) {
                 Image(systemName: "chevron.left")
                     .font(Adaptive.size(.title3, .title2))
                     .fontWeight(.semibold)
@@ -154,7 +152,9 @@ struct OnboardingLegalText: View {
     private var legalText: LocalizedStringKey {
         let terms = Constants.termsOfUseURL?.absoluteString ?? ""
         let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""
-        return "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))"
+        // Built in advance: interpolation into a LocalizedStringKey leaves a placeholder in place of the address
+        let text = "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))"
+        return LocalizedStringKey(text)
     }
 
     var body: some View {
@@ -219,7 +219,9 @@ enum OnboardingTextFieldTypes: String {
 
 #Preview {
     VStack(spacing: 20) {
-        OnboardingTopBar(progress: 0.3)
+        OnboardingTopBar(progress: 0.3) {
+
+        }
 
         OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 6 символов")
 
@@ -231,8 +233,8 @@ enum OnboardingTextFieldTypes: String {
 
         OnboardingDivider()
 
-        OnboardingAppleButton(vm: OnboardingViewModel(authService: AuthService(),
-                                                      contentService: ContentService()) {})
+        OnboardingAppleButton(vm: OnboardingViewModel(authService: AuthService.preview,
+                                                      contentService: ContentService.preview) {})
 
         OnboardingLegalText()
 

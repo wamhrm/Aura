@@ -63,8 +63,7 @@ struct MainTabView: View {
             }
 
             Tab(value: .profile) {
-                ProfileView(vm: profileViewModel,
-                            homeViewModel: homeViewModel) {
+                ProfileView(vm: profileViewModel) {
                     aiConsentViewModel.request()
                 }
             } label: {
@@ -92,6 +91,6 @@ fileprivate enum Tabs {
 }
 
 #Preview {
-    MainTabView(authService: AuthService(),
-                contentService: ContentService())
+    MainTabView(authService: AuthService.preview,
+                contentService: ContentService.preview)
 }

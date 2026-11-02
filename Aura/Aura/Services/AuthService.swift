@@ -25,6 +25,8 @@ protocol AuthServiceProtocol {
     func giveAIConsent() async throws
     func signOut()
     func deleteAccount() async throws
+    func refreshUser()
+    func restoreSessionIfNeeded()
 }
 
 @MainActor
@@ -35,7 +37,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private let keychain: any KeychainHelperProtocol
     private let storage: any LocalStorageProtocol
 
-    init(networkService: any NetworkServiceProtocol = NetworkService(),
+    init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
          storage: any LocalStorageProtocol = LocalStorage()) {
         self.networkService = networkService
@@ -77,6 +79,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         let response = try await networkService.updateProfileInfo(request)
+
+        // The answer may arrive after sign-out and must not bring the session back
+        guard case .signedIn(let currentUser) = authState.value, currentUser.id == response.user.id else {
+            return response
+        }
+
         storage.saveUser(response.user)
         if let horoscope = response.horoscope {
             storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
@@ -121,8 +129,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let events = networkService.sessionExpiredEvents
 
         Task { [weak self] in
-            for await _ in events {
-                guard let self, case .signedIn = authState.value else { continue }
+            for await expiredToken in events {
+                // A late answer to a request of the previous session must not end the current one
+                guard let self, case .signedIn = authState.value, expiredToken == keychain.loadAuthToken() else { continue }
                 endSession()
             }
         }
@@ -144,8 +153,20 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         authState.send(.signedOut)
     }
 
+    // The Keychain is unreadable until the first unlock after a restart, so such a launch looks signed out
+    func restoreSessionIfNeeded() {
+        guard case .signedOut = authState.value,
+              keychain.loadAuthToken() != nil,
+              let user = storage.loadUser() else { return }
+
+        authState.send(.signedIn(user))
+        refreshUser()
+    }
+
     // The saved profile may be out of date: it could have changed on another device
-    private func refreshUser() {
+    func refreshUser() {
+        guard case .signedIn = authState.value else { return }
+
         let networkService = networkService
 
         Task { [weak self] in
@@ -169,4 +190,8 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private func normalizeEmail(_ email: String) -> String {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
+}
+
+extension AuthService {
+    static let preview = AuthService(networkService: NetworkService())
 }

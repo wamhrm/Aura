@@ -19,10 +19,11 @@ enum HomeRoutes: Hashable {
 final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published var homeRoutes: [HomeRoutes] = []
 
-    @Published var profileInfo = ProfileInfoModel()
     @Published private(set) var userName = ""
     @Published private(set) var horoscope: HoroscopeModel?
+    @Published private(set) var horoscopeState = LoadState.loading
     @Published private(set) var dailyInsight: DailyContentModel?
+    @Published private(set) var insightState = LoadState.loading
     @Published private(set) var personalityResult: PersonalityResultModel?
     @Published private(set) var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
 
@@ -36,6 +37,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private let contentService: any ContentServiceProtocol
     private let storage: any LocalStorageProtocol
 
+    private var currentUser: UserModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -48,10 +50,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         setupSubscriptions()
     }
 
-    var dailyInsightHandler: String {
-        dailyInsight?.text ?? "Сегодня у вас растет внутренее напряжение из-за невысказанных ожиданий."
-    }
-
     var greetingText: String {
         "Здравствуйте, \(userName.capitalized)"
     }
@@ -60,36 +58,61 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         isLoading ? "Готовим результат..." : "Проверить себя"
     }
 
-    var saveButtonTitle: String {
-        isLoading ? "Сохраняем..." : "Готово"
-    }
-
     func isSelected(_ test: PersonalityTestTypes) -> Bool {
         selectedTests.contains(test)
     }
 
     private func setupSubscriptions() {
         authService.authState
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self else { return }
-                handleProfileInfo($0)
+                handleAuthState($0)
+            }
+            .store(in: &cancellables)
+
+        contentService.refreshRequested
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                Task { await refresh() }
             }
             .store(in: &cancellables)
     }
 
-    private func handleProfileInfo(_ authState: AuthState) {
-        guard case .signedIn(let user) = authState else { return }
+    private func handleAuthState(_ authState: AuthState) {
+        switch authState {
+            case .signedIn(let user):
+                handleUser(user)
+            case .signedOut:
+                guard currentUser != nil else { return }
+                currentUser = nil
+                cancellables.removeAll()
+        }
+    }
 
-        profileInfo = user.profileInfo
+    private func handleUser(_ user: UserModel) {
+        let previousUser = currentUser
+
+        currentUser = user
         allowsAIAnalysis = user.allowsAIAnalysis
         userName = user.name
-        horoscope = storage.load(StorageKeys.horoscope, for: user.id)
-        dailyInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
         isLoadingScreen = false
 
-        if !isLoading {
-            Task { await refreshHomeContent(for: user.id) }
+        guard let previousUser, previousUser.id == user.id else {
+            horoscope = storage.load(StorageKeys.horoscope, for: user.id)
+            let cachedInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
+            dailyInsight = cachedInsight?.isFromToday == true ? cachedInsight : nil
+            Task { await refresh() }
+            return
+        }
+
+        if previousUser.dateOfBirth != user.dateOfBirth {
+            Task { await loadHoroscope(for: user.id) }
+        }
+
+        if !previousUser.allowsAIAnalysis && user.allowsAIAnalysis {
+            Task { await loadDailyInsight(for: user.id) }
         }
     }
 
@@ -103,35 +126,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     func showTestDetails(_ test: PersonalityTestTypes) {
         homeRoutes.append(.testDetails(test))
-    }
-
-    func saveProfileInfo(onSuccess: @escaping () -> Void) {
-        guard !isLoading else { return }
-
-        isLoading = true
-
-        Task {
-            do {
-                try validateProfileInfoForms()
-
-                let response = try await authService.updateProfileInfo(profileInfo)
-                profileInfo = response.user.profileInfo
-                allowsAIAnalysis = response.user.allowsAIAnalysis
-                if let horoscope = response.horoscope {
-                    self.horoscope = horoscope
-                } else {
-                    await loadHoroscope(for: response.user.id)
-                }
-                if allowsAIAnalysis {
-                    await loadDailyInsight(for: response.user.id)
-                }
-                onSuccess()
-            } catch {
-                presentAlert(error.userMessage)
-            }
-            
-            isLoading = false
-        }
     }
 
     func toggleTestSelection(_ test: PersonalityTestTypes) {
@@ -163,48 +157,67 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    private func loadHoroscope(for userId: UUID) async {
-        if let fetched = try? await contentService.fetchCurrentHoroscope(for: userId) {
-            horoscope = fetched
+    func refresh() async {
+        guard let user = currentUser else { return }
+
+        async let horoscopeLoad: Void = loadHoroscope(for: user.id)
+
+        if user.allowsAIAnalysis {
+            await loadDailyInsight(for: user.id)
         }
+
+        await horoscopeLoad
     }
 
-    private func loadDailyInsight(for userId: UUID, showErrorOnFailure: Bool = true) async {
+    func retryHoroscope() {
+        guard let user = currentUser else { return }
+        Task { await loadHoroscope(for: user.id) }
+    }
+
+    func retryDailyInsight() {
+        guard let user = currentUser else { return }
+        Task { await loadDailyInsight(for: user.id) }
+    }
+
+    private func loadHoroscope(for userId: UUID) async {
+        if horoscope == nil {
+            horoscopeState = .loading
+        }
+
         do {
-            dailyInsight = try await contentService.fetchDailyInsight(for: userId)
+            let fetched = try await contentService.fetchCurrentHoroscope(for: userId)
+            guard currentUser?.id == userId else { return }
+
+            horoscope = fetched
+            horoscopeState = .loaded
         } catch {
-            if showErrorOnFailure {
-                presentAlert(error.userMessage)
+            guard currentUser?.id == userId, !error.isCancellation else { return }
+
+            if horoscope == nil {
+                horoscopeState = .failed(error.userMessage)
             }
         }
     }
 
-    private func refreshHomeContent(for userId: UUID) async {
-        await loadHoroscope(for: userId)
-
-        guard allowsAIAnalysis else { return }
-        await loadDailyInsight(for: userId, showErrorOnFailure: false)
-    }
-
-    private func validateProfileInfoForms() throws {
-        guard profileInfo.dateOfBirth.count == 10 else {
-            throw ProfileInfoError.invalidDateOfBirth
+    private func loadDailyInsight(for userId: UUID) async {
+        if dailyInsight == nil {
+            insightState = .loading
         }
 
-        guard profileInfo.hasAllAnswers else {
-            throw ProfileInfoError.incompleteProfileInfo
-        }
-    }
+        do {
+            let fetched = try await contentService.fetchDailyInsight(for: userId)
+            guard currentUser?.id == userId else { return }
 
-}
+            dailyInsight = fetched
+            insightState = .loaded
+        } catch {
+            guard currentUser?.id == userId, !error.isCancellation else { return }
 
-fileprivate enum ProfileInfoError: LocalizedError {
-    case invalidDateOfBirth, incompleteProfileInfo
-
-    var errorDescription: String? {
-        switch self {
-            case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
-            case .incompleteProfileInfo: "Заполните все обязательные поля профиля"
+            // Yesterday's insight must not stay on screen as today's
+            if dailyInsight?.isFromToday != true {
+                dailyInsight = nil
+                insightState = .failed(error.userMessage)
+            }
         }
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import os
 
 fileprivate enum HTTPMethod: String {
     case get = "GET"
@@ -20,7 +21,7 @@ fileprivate enum RequestAuthorization {
 }
 
 protocol NetworkServiceProtocol: Sendable {
-    var sessionExpiredEvents: AsyncStream<Void> { get }
+    var sessionExpiredEvents: AsyncStream<String> { get }
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
@@ -46,11 +47,16 @@ protocol NetworkServiceProtocol: Sendable {
 }
 
 nonisolated final class NetworkService: NetworkServiceProtocol {
-    let sessionExpiredEvents: AsyncStream<Void>
+    private static let logger = Logger(subsystem: "ddorsat.Aura", category: "Network")
+    private static let defaultTimeout: TimeInterval = 20
+    // The server may wait for OpenAI up to 121 seconds
+    private static let aiTimeout: TimeInterval = 130
+
+    let sessionExpiredEvents: AsyncStream<String>
 
     private let baseURL: String
     private let session: URLSession
-    private let sessionExpiredContinuation: AsyncStream<Void>.Continuation
+    private let sessionExpiredContinuation: AsyncStream<String>.Continuation
 
     private let keychain: any KeychainHelperProtocol
 
@@ -60,12 +66,11 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         self.baseURL = baseURL
         self.session = session
         self.keychain = keychain
-        (sessionExpiredEvents, sessionExpiredContinuation) = AsyncStream.makeStream(of: Void.self)
+        (sessionExpiredEvents, sessionExpiredContinuation) = AsyncStream.makeStream(of: String.self)
     }
 
     private static func makeSession() -> URLSession {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 120
         configuration.timeoutIntervalForResource = 300
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: configuration)
@@ -131,29 +136,37 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        let data = try await request(endpoint: "/horoscope/current", method: .get)
+        let data = try await request(endpoint: "/horoscope/current", method: .get, timeout: Self.aiTimeout)
         return try decode(HoroscopeModel.self, from: data)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
-        let data = try await request(endpoint: "/daily/insight", method: .get)
+        let data = try await request(endpoint: "/daily/insight", method: .get, timeout: Self.aiTimeout)
         return try decode(DailyContentModel.self, from: data)
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
-        let data = try await request(endpoint: "/daily/tip", method: .get)
+        let data = try await request(endpoint: "/daily/tip", method: .get, timeout: Self.aiTimeout)
         return try decode(DailyContentModel.self, from: data)
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
         let bodyData = try JSONEncoder().encode(selectedTests)
-        let data = try await request(endpoint: "/history/personality", method: .post, body: bodyData, idempotencyKey: requestID)
+        let data = try await request(endpoint: "/history/personality",
+                                     method: .post,
+                                     body: bodyData,
+                                     idempotencyKey: requestID,
+                                     timeout: Self.aiTimeout)
         return try decode(PersonalityResultModel.self, from: data)
     }
 
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel {
         let bodyData = try JSONEncoder().encode(testRequest)
-        let data = try await request(endpoint: "/history/compatibility", method: .post, body: bodyData, idempotencyKey: requestID)
+        let data = try await request(endpoint: "/history/compatibility",
+                                     method: .post,
+                                     body: bodyData,
+                                     idempotencyKey: requestID,
+                                     timeout: Self.aiTimeout)
         return try decode(CompabilityResultModel.self, from: data)
     }
 
@@ -176,20 +189,23 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                          body: Data? = nil,
                          authorization: RequestAuthorization = .storedToken,
                          idempotencyKey: UUID? = nil,
+                         timeout: TimeInterval = NetworkService.defaultTimeout,
                          attempt: Int = 0) async throws -> Data {
         do {
             return try await performRequest(endpoint: endpoint,
                                             method: method,
                                             body: body,
                                             authorization: authorization,
-                                            idempotencyKey: idempotencyKey)
-        } catch let urlError as URLError where method == .get && Self.isRetryable(urlError) && attempt < 2 {
+                                            idempotencyKey: idempotencyKey,
+                                            timeout: timeout)
+        } catch let urlError as URLError where method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(for: attempt))
             return try await request(endpoint: endpoint,
                                      method: method,
                                      body: body,
                                      authorization: authorization,
                                      idempotencyKey: idempotencyKey,
+                                     timeout: timeout,
                                      attempt: attempt + 1)
         } catch let urlError as URLError {
             throw NetworkError(urlError: urlError)
@@ -200,7 +216,8 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                 method: HTTPMethod,
                                 body: Data?,
                                 authorization: RequestAuthorization,
-                                idempotencyKey: UUID?) async throws -> Data {
+                                idempotencyKey: UUID?,
+                                timeout: TimeInterval) async throws -> Data {
         guard let baseURL = URL(string: baseURL),
               let url = URL(string: Constants.apiPath + endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
@@ -208,6 +225,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = method.rawValue
+        urlRequest.timeoutInterval = timeout
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue(Constants.appVersion, forHTTPHeaderField: "X-App-Version")
         urlRequest.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Time-Zone")
@@ -231,10 +249,18 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         switch httpResponse.statusCode {
             case 200...299:
                 return data
-            case 401 where token != nil:
-                sessionExpiredContinuation.yield()
+            case 401:
+                guard let token else {
+                    throw NetworkError(statusCode: httpResponse.statusCode, data: data)
+                }
+
+                sessionExpiredContinuation.yield(token)
                 throw NetworkError.sessionExpired
             default:
+                if httpResponse.statusCode >= 500 {
+                    Self.logger.error("\(method.rawValue, privacy: .public) \(endpoint, privacy: .public) failed with status \(httpResponse.statusCode)")
+                }
+
                 throw NetworkError(statusCode: httpResponse.statusCode, data: data)
         }
     }
@@ -254,14 +280,17 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         do {
             return try decoder().decode(type, from: data)
         } catch {
+            Self.logger.error("Failed to decode \(String(describing: type), privacy: .public): \(String(describing: error), privacy: .public)")
             throw NetworkError.decodingError
         }
     }
 
-    private static func isRetryable(_ error: URLError) -> Bool {
+    private static func isRetryable(_ error: URLError, timeout: TimeInterval) -> Bool {
         switch error.code {
-            case .timedOut,
-                 .networkConnectionLost,
+            case .timedOut:
+                // Repeating a long AI wait would keep the screen busy for minutes
+                return timeout == defaultTimeout
+            case .networkConnectionLost,
                  .cannotConnectToHost,
                  .cannotFindHost,
                  .dnsLookupFailed,
@@ -325,8 +354,8 @@ nonisolated private struct ServerErrorResponse: Decodable {
     let reason: String
 }
 
-fileprivate enum NetworkError: LocalizedError {
-    case invalidURL, invalidResponse, decodingError, unauthorized, sessionExpired, userExists, notFound, tooManyRequests, serverUnavailable, timedOut, noConnection, cannotReachServer
+nonisolated enum NetworkError: LocalizedError {
+    case invalidURL, invalidResponse, decodingError, unauthorized, sessionExpired, userExists, notFound, tooManyRequests, serverUnavailable, timedOut, noConnection, cannotReachServer, cancelled
     case server(String)
 
     init(statusCode: Int, data: Data) {
@@ -358,12 +387,12 @@ fileprivate enum NetworkError: LocalizedError {
         switch urlError.code {
             case .timedOut:
                 self = .timedOut
+            case .cancelled:
+                self = .cancelled
             case .notConnectedToInternet, .networkConnectionLost:
                 self = .noConnection
-            case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
-                self = .cannotReachServer
             default:
-                self = .invalidResponse
+                self = .cannotReachServer
         }
     }
 
@@ -382,6 +411,7 @@ fileprivate enum NetworkError: LocalizedError {
             case .timedOut: "Сервер не ответил вовремя. Попробуйте ещё раз"
             case .noConnection: "Нет подключения к интернету"
             case .cannotReachServer: "Не удалось связаться с сервером. Попробуйте позже"
+            case .cancelled: "Запрос отменён"
         }
     }
 }

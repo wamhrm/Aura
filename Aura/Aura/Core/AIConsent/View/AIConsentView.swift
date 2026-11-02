@@ -98,5 +98,5 @@ extension AIConsentContentView {
 }
 
 #Preview {
-    AIConsentView(vm: AIConsentViewModel(authService: AuthService()))
+    AIConsentView(vm: AIConsentViewModel(authService: AuthService.preview))
 }

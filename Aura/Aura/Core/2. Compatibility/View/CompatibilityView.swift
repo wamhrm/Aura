@@ -140,9 +140,9 @@ struct CompatibilityView: View {
             .navigationDestination(for: CompatibilityRoutes.self) { destination in
                 destinationView(destination)
             }
-            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-                Button("OK", role: .cancel) {}
-            }
+        }
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("OK", role: .cancel) {}
         }
     }
 }
@@ -228,8 +228,8 @@ extension CompatibilityView {
 
 #Preview {
     NavigationStack {
-        CompatibilityView(vm: CompatibilityViewModel(authService: AuthService(),
-                                                     contentService: ContentService())) {
+        CompatibilityView(vm: CompatibilityViewModel(authService: AuthService.preview,
+                                                     contentService: ContentService.preview)) {
 
         }
     }

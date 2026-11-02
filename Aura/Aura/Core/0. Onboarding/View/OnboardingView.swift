@@ -34,6 +34,12 @@ struct OnboardingView: View {
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }
+        .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
+            Button("Отмена", role: .cancel) {}
+            Button("Выйти", role: .destructive) {
+                vm.signOut()
+            }
+        }
     }
 }
 
@@ -45,7 +51,9 @@ extension OnboardingView {
 
             VStack(spacing: 0) {
                 if route != .loading {
-                    OnboardingTopBar(progress: route.progress)
+                    OnboardingTopBar(progress: route.progress) {
+                        vm.goBack()
+                    }
                 }
 
                 stepView(route)
@@ -53,7 +61,7 @@ extension OnboardingView {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .navigationBarBackButtonHidden(route == .loading)
+        .navigationBarBackButtonHidden(vm.hidesSystemBackButton(on: route))
     }
 
     @ViewBuilder
@@ -82,6 +90,6 @@ extension OnboardingView {
 }
 
 #Preview {
-    OnboardingView(authService: AuthService(),
-                   contentService: ContentService()) {}
+    OnboardingView(authService: AuthService.preview,
+                   contentService: ContentService.preview) {}
 }

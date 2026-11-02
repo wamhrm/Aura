@@ -249,6 +249,6 @@ fileprivate enum ThemeButtonTypes: String {
 }
 
 #Preview {
-    SettingsSheetView(vm: ProfileViewModel(authService: AuthService(),
-                                           contentService: ContentService()))
+    SettingsSheetView(vm: ProfileViewModel(authService: AuthService.preview,
+                                           contentService: ContentService.preview))
 }

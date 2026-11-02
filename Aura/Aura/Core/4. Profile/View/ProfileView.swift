@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var vm: ProfileViewModel
-    @ObservedObject var homeViewModel: HomeViewModel
 
     let aiConsentButton: () -> Void
 
@@ -42,7 +41,9 @@ extension ProfileView {
     private func destinationView(_ route: ProfileRoutes) -> some View {
         switch route {
             case .addProfileInfo:
-                AddProfileInfoView(vm: homeViewModel)
+                if let profileForm = vm.profileForm {
+                    AddProfileInfoView(vm: profileForm)
+                }
         }
     }
     
@@ -64,14 +65,8 @@ extension ProfileView {
 }
 
 #Preview {
-    let authService = AuthService()
-    let contentService = ContentService()
-    let homeViewModel = HomeViewModel(authService: authService,
-                                      contentService: contentService)
-
-    ProfileView(vm: ProfileViewModel(authService: authService,
-                                     contentService: contentService),
-                homeViewModel: homeViewModel) {
+    ProfileView(vm: ProfileViewModel(authService: AuthService.preview,
+                                     contentService: ContentService.preview)) {
 
     }
 }

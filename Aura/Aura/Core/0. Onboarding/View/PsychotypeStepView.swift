@@ -41,6 +41,6 @@ struct PsychotypeStepView: View {
 }
 
 #Preview {
-    PsychotypeStepView(vm: OnboardingViewModel(authService: AuthService(),
-                                               contentService: ContentService()) {})
+    PsychotypeStepView(vm: OnboardingViewModel(authService: AuthService.preview,
+                                               contentService: ContentService.preview) {})
 }

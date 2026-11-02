@@ -4,13 +4,20 @@
 //
 
 import Foundation
+import XCTest
 @testable import Aura
 
 @MainActor
-func waitUntil(timeout: TimeInterval = 3, _ condition: () -> Bool) async {
+func waitUntil(timeout: TimeInterval = 3,
+               file: StaticString = #filePath,
+               line: UInt = #line,
+               _ condition: () -> Bool) async {
     let deadline = Date().addingTimeInterval(timeout)
     while !condition() {
-        if Date() >= deadline { break }
+        if Date() >= deadline {
+            XCTFail("The condition was not met in \(timeout) seconds", file: file, line: line)
+            break
+        }
         try? await Task.sleep(for: .milliseconds(10))
     }
 }

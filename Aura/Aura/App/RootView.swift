@@ -9,6 +9,7 @@ import SwiftUI
 
 struct RootView: View {
     @StateObject private var vm: RootViewModel
+    @Environment(\.scenePhase) private var scenePhase
 
     private let authService: AuthService
     private let contentService: ContentService
@@ -17,7 +18,8 @@ struct RootView: View {
          contentService: ContentService) {
         self.authService = authService
         self.contentService = contentService
-        _vm = StateObject(wrappedValue: RootViewModel(authService: authService))
+        _vm = StateObject(wrappedValue: RootViewModel(authService: authService,
+                                                      contentService: contentService))
     }
 
     var body: some View {
@@ -36,10 +38,13 @@ struct RootView: View {
                         .transition(.opacity)
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            vm.handleScenePhase(phase)
+        }
     }
 }
 
 #Preview {
-    RootView(authService: AuthService(),
-             contentService: ContentService())
+    RootView(authService: AuthService.preview,
+             contentService: ContentService.preview)
 }

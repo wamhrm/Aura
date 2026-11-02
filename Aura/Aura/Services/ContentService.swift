@@ -10,6 +10,7 @@ import Foundation
 
 protocol ContentServiceProtocol {
     var historyDidChange: PassthroughSubject<Void, Never> { get }
+    var refreshRequested: PassthroughSubject<Void, Never> { get }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel
@@ -23,34 +24,65 @@ protocol ContentServiceProtocol {
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
     let historyDidChange = PassthroughSubject<Void, Never>()
+    let refreshRequested = PassthroughSubject<Void, Never>()
 
     private let networkService: any NetworkServiceProtocol
     private let storage: any LocalStorageProtocol
     private var historyTask: Task<[HistoryCellModel], any Error>?
     private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
     private var pendingCompatibilityTest: (request: CompatibilityTestRequest, requestID: UUID)?
+    private var currentUserId: UUID?
+    private var cancellables = Set<AnyCancellable>()
 
-    init(networkService: any NetworkServiceProtocol = NetworkService(),
+    init(networkService: any NetworkServiceProtocol,
+         authService: any AuthServiceProtocol,
          storage: any LocalStorageProtocol = LocalStorage()) {
         self.networkService = networkService
         self.storage = storage
+
+        authService.authState
+            .sink { [weak self] in
+                guard let self else { return }
+                handleAuthState($0)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func handleAuthState(_ authState: AuthState) {
+        switch authState {
+            case .signedIn(let user):
+                if currentUserId != user.id {
+                    resetSessionState()
+                }
+                currentUserId = user.id
+            case .signedOut:
+                resetSessionState()
+                currentUserId = nil
+        }
+    }
+
+    private func resetSessionState() {
+        historyTask?.cancel()
+        historyTask = nil
+        pendingPersonalityTest = nil
+        pendingCompatibilityTest = nil
     }
 
     func fetchDailyInsight(for userId: UUID) async throws -> DailyContentModel {
         let insight = try await networkService.fetchDailyInsight()
-        storage.save(insight, for: StorageKeys.dailyInsight, userId: userId)
+        saveToCache(insight, for: StorageKeys.dailyInsight, userId: userId)
         return insight
     }
 
     func fetchDailyTip(for userId: UUID) async throws -> DailyContentModel {
         let tip = try await networkService.fetchDailyTip()
-        storage.save(tip, for: StorageKeys.dailyTip, userId: userId)
+        saveToCache(tip, for: StorageKeys.dailyTip, userId: userId)
         return tip
     }
 
     func fetchCurrentHoroscope(for userId: UUID) async throws -> HoroscopeModel {
         let horoscope = try await networkService.fetchCurrentHoroscope()
-        storage.save(horoscope, for: StorageKeys.horoscope, userId: userId)
+        saveToCache(horoscope, for: StorageKeys.horoscope, userId: userId)
         return horoscope
     }
 
@@ -113,8 +145,18 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         notifyHistoryChanged()
     }
 
+    // A late answer must not bring back the files of a finished session
+    private func saveToCache<Value>(_ value: Value, for key: StorageKey<Value>, userId: UUID) {
+        guard currentUserId == userId else { return }
+        storage.save(value, for: key, userId: userId)
+    }
+
     private func notifyHistoryChanged() {
         historyTask = nil
         historyDidChange.send(())
     }
+}
+
+extension ContentService {
+    static let preview = ContentService(networkService: NetworkService(), authService: AuthService.preview)
 }

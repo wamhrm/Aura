@@ -38,15 +38,12 @@ struct AllTestsView: View {
         }
         .navigationTitle("Проверить себя")
         .navigationBarTitleDisplayMode(.inline)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-            Button("OK", role: .cancel) {}
-        }
     }
 }
 
 #Preview {
     NavigationStack {
-        AllTestsView(vm: HomeViewModel(authService: AuthService(),
-                                       contentService: ContentService()))
+        AllTestsView(vm: HomeViewModel(authService: AuthService.preview,
+                                       contentService: ContentService.preview))
     }
 }

@@ -36,23 +36,7 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
 }
 
 enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
-    // Астрология
-    case natalChart, planetaryAspects
-    
-    // Поведенческие паттерны
-    case socialFilter, energyDrain
-    
-    // Стиль принятия решений
-    case logicBalance, intuitionFactor
-    
-    // Стиль привязанности
-    case autonomyNeed, securityBase
-    
-    // Идеальный партнер
-    case intellectualMatch, emotionalDepth
-
-    // Язык любви
-    case loveExpression, emotionalNeeds
+    case natalChart, planetaryAspects, socialFilter, energyDrain, logicBalance, intuitionFactor, autonomyNeed, securityBase, intellectualMatch, emotionalDepth, loveExpression, emotionalNeeds
 
     var title: String {
         switch self {
@@ -90,20 +74,7 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
 }
 
 enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
-    // Астрология пары
-    case synastry, karmicLesson
-    
-    // Паттерны отношений
-    case dominanceDynamics, emotionalResonance
-    
-    // Стили привязанности
-    case attachmentBond, comfortDistance
-    
-    // Языки любви
-    case languageMatch, translationNeeds
-    
-    // Конфликты и примирение
-    case conflictMechanics, peaceRecovery
+    case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery
     
     var title: String {
         switch self {
