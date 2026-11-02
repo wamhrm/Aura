@@ -18,9 +18,15 @@ final class MockNetworkService: NetworkServiceProtocol {
     private(set) var signInCallCount = 0
     private(set) var logoutCallCount = 0
 
-    func createAccount(name: String, email: String, password: String) async throws {
+    func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
         createAccountCallCount += 1
         if let errorToThrow { throw errorToThrow }
+        return authTokenResponse
+    }
+
+    func fetchCurrentUser() async throws -> UserModel {
+        if let errorToThrow { throw errorToThrow }
+        return authTokenResponse.user
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
@@ -80,12 +86,12 @@ final class MockNetworkService: NetworkServiceProtocol {
         return MockContentService.dailyContent
     }
 
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
         if let errorToThrow { throw errorToThrow }
         return .mock
     }
 
-    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel {
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel {
         if let errorToThrow { throw errorToThrow }
         return .mock
     }

@@ -19,6 +19,8 @@ struct OpenAIService {
     func makePersonalityTest(for user: User,
                              selectedTests: [PersonalityTests],
                              req: Request) async throws -> PersonalityResultDTO {
+        let userSign = try zodiacSign(of: user)
+
         let data = try await chatCompletion(
             messages: [OpenAIMessage(role: "system", content: personalitySystemPrompt),
                        OpenAIMessage(role: "user", content: personalityUserPrompt(for: user,
@@ -31,8 +33,8 @@ struct OpenAIService {
             let analysis = try JSONDecoder().decode(PersonalityTestContent.self, from: data)
 
             return PersonalityResultDTO(name: user.name,
-                                        zodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
-                                        selectedTests: selectedTests.map(\.title),
+                                        zodiacSign: userSign.rawValue,
+                                        selectedTests: selectedTests.map(\.rawValue),
                                         archetypeTitle: analysis.archetypeTitle,
                                         archetypeSubtitle: analysis.archetypeSubtitle,
                                         overview: analysis.overview,
@@ -46,30 +48,30 @@ struct OpenAIService {
     }
 
     private func personalitySchema(for selectedTests: [PersonalityTests]) -> JSONSchema {
-        let itemTitles = selectedTests.flatMap(PersonalityItems.allowed(for:))
+        let itemKeys = selectedTests.flatMap(PersonalityItems.allowed(for:)).map(\.rawValue)
 
         return .object([("archetypeTitle", .string),
                         ("archetypeSubtitle", .string),
                         ("overview", .titledText),
-                        ("emotionalBar", .array(.object([("title", .stringEnum(PersonalityEmotionalBar.titles)),
+                        ("emotionalBar", .array(.object([("key", .stringEnum(PersonalityEmotionalBar.keys)),
                                                          ("value", .integer)]))),
-                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.title))),
+                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.rawValue))),
                                                      ("description", .string),
-                                                     ("items", .array(.object([("title", .stringEnum(itemTitles)),
+                                                     ("items", .array(.object([("key", .stringEnum(itemKeys)),
                                                                                ("description", .string)])))])))])
     }
 
     private func personalityUserPrompt(for user: User, selectedTests: [PersonalityTests]) -> String {
         let selectedTestLines = selectedTests
-            .map { "- " + $0.title }
+            .map { "- " + $0.rawValue + " (" + $0.title + ")" }
             .joined(separator: "\n")
 
         let itemRules = selectedTests
             .map { test in
-                let titles = PersonalityItems.allowed(for: test)
-                    .map { "\"" + $0 + "\"" }
+                let keys = PersonalityItems.allowed(for: test)
+                    .map { "\"" + $0.rawValue + "\" (" + $0.title + ")" }
                     .joined(separator: ", ")
-                return "- " + test.title + ": ровно 2 пункта, title только из [" + titles + "]"
+                return "- " + test.rawValue + ": ровно 2 пункта, key только из [" + keys + "]"
             }
             .joined(separator: "\n")
 
@@ -96,23 +98,23 @@ struct OpenAIService {
             "description": "общий персональный вывод (20-25 слов)"
           },
           "emotionalBar": [
-            { "title": "Темперамент", "value": дай значение от 1 до 10 (1 это максимальный интроверт, 10 это максимальный экстраверт) },
-            { "title": "Мышление", "value": дай значение от 1 до 10 (1 это максимальная лоигка, 10 это максимальная интуиция) },
-            { "title": "Организованность", "value": дай значение от 1 до 10 (1 это максимальный хаос, 10 это максимальный контроль) },
-            { "title": "Отношения", "value": дай значение от 1 до 10 (1 это максимальная независимость, 10 это максимальная привязанность) }
+            { "key": "temperament", "value": дай значение от 1 до 10 (1 это максимальный интроверт, 10 это максимальный экстраверт) },
+            { "key": "thinking", "value": дай значение от 1 до 10 (1 это максимальная лоигка, 10 это максимальная интуиция) },
+            { "key": "organization", "value": дай значение от 1 до 10 (1 это максимальный хаос, 10 это максимальный контроль) },
+            { "key": "relationships", "value": дай значение от 1 до 10 (1 это максимальная независимость, 10 это максимальная привязанность) }
           ],
           "sections": [
             {
-              "selectedTest": "точное название одного из тестов из списка выбранных",
+              "selectedTest": "ключ одного из тестов из списка выбранных",
               "description": "основной текст секции (12-15 слов)",
               "items": [
-                { "title": "один из разрешённых title для этого теста", "description": "описание (7-10 слов)" }
+                { "key": "один из разрешённых key для этого теста", "description": "описание (7-10 слов)" }
               ]
             }
           ]
         }
 
-        Разрешённые title для items по тестам:
+        Разрешённые key для items по тестам:
         \(itemRules)
         """
     }
@@ -241,19 +243,19 @@ struct OpenAIService {
 
         В каждой секции:
         - ровно 2 items
-        - title только из разрешённого списка
+        - key только из разрешённого списка
 
         Не добавляй секции для тестов, которых нет в selectedTests.
 
         Сохраняй порядок selectedTests.
 
-        В поле selectedTest используй только точное название теста из списка.
+        В поле selectedTest используй только ключ теста из списка.
 
         В emotionalBar используй только:
-        - Темперамент
-        - Мышление
-        - Организованность
-        - Отношения
+        - temperament (Темперамент)
+        - thinking (Мышление)
+        - organization (Организованность)
+        - relationships (Отношения)
 
         Возвращай только валидный JSON.
         Без markdown.
@@ -265,23 +267,24 @@ struct OpenAIService {
     }
 
     private func validatedPersonalityBars(_ bars: [PersonalityEmotionalBar]) throws -> [PersonalityEmotionalBar] {
-        let values = Dictionary(bars.map { ($0.title, $0.value) }, uniquingKeysWith: { first, _ in first })
+        let values = Dictionary(bars.map { ($0.key, $0.value) }, uniquingKeysWith: { first, _ in first })
 
-        return try PersonalityEmotionalBar.titles.map { title in
-            guard let value = values[title] else { throw unexpectedFormatError }
-            return PersonalityEmotionalBar(title: title, value: clampedBarValue(value))
+        return try PersonalityEmotionalBar.keys.map { key in
+            guard let value = values[key] else { throw unexpectedFormatError }
+            return PersonalityEmotionalBar(key: key, value: clampedBarValue(value))
         }
     }
 
     private func validatedPersonalitySections(_ sections: [PersonalitySection],
                                               selectedTests: [PersonalityTests]) throws -> [PersonalitySection] {
         let validated = selectedTests.compactMap { test -> PersonalitySection? in
-            guard let section = sections.first(where: { $0.selectedTest == test.title }) else { return nil }
+            guard let section = sections.first(where: { $0.selectedTest == test.rawValue }) else { return nil }
 
-            let items = uniqueItems(section.items.filter { PersonalityItems.allowed(for: test).contains($0.title) },
-                                    title: \.title)
+            let allowedKeys = PersonalityItems.allowed(for: test).map(\.rawValue)
+            let items = uniqueItems(section.items.filter { allowedKeys.contains($0.key) },
+                                    key: \.key)
 
-            return items.isEmpty ? nil : PersonalitySection(selectedTest: test.title,
+            return items.isEmpty ? nil : PersonalitySection(selectedTest: test.rawValue,
                                                             description: section.description,
                                                             items: items)
         }
@@ -295,6 +298,8 @@ struct OpenAIService {
                                partner: CompatibilityTestRequest,
                                selectedTests: [CompatibilityTests],
                                req: Request) async throws -> CompatibilityResultDTO {
+        let userSign = try zodiacSign(of: user)
+
         let data = try await chatCompletion(
             messages: [OpenAIMessage(role: "system", content: compatibilitySystemPrompt),
                        OpenAIMessage(role: "user", content: compatibilityUserPrompt(for: user,
@@ -309,11 +314,11 @@ struct OpenAIService {
             let partnerDate = compatibilityPartnerDateOfBirth(from: partner)
 
             return CompatibilityResultDTO(userName: user.name,
-                                          userZodiacSign: zodiacSign(from: user.dateOfBirth) ?? "",
+                                          userZodiacSign: userSign.rawValue,
                                           partnerName: partner.partnerName,
-                                          partnerZodiacSign: zodiacSign(from: partnerDate) ?? "",
+                                          partnerZodiacSign: partnerDate.flatMap(HoroscopeSign.from(dateOfBirth:))?.rawValue,
                                           compatibilityScore: min(max(analysis.compatibilityScore, 0), 100),
-                                          selectedTests: selectedTests.map(\.title),
+                                          selectedTests: selectedTests.map(\.rawValue),
                                           title: analysis.title,
                                           subtitle: analysis.subtitle,
                                           overview: analysis.overview,
@@ -328,17 +333,17 @@ struct OpenAIService {
     }
 
     private func compatibilitySchema(for selectedTests: [CompatibilityTests]) -> JSONSchema {
-        let itemTitles = selectedTests.flatMap(CompatibilityItems.allowed(for:))
+        let itemKeys = selectedTests.flatMap(CompatibilityItems.allowed(for:)).map(\.rawValue)
 
         return .object([("title", .string),
                         ("subtitle", .string),
                         ("compatibilityScore", .integer),
                         ("overview", .titledText),
-                        ("emotionalBar", .array(.object([("title", .stringEnum(CompatibilityEmotionalBar.titles)),
+                        ("emotionalBar", .array(.object([("key", .stringEnum(CompatibilityEmotionalBar.keys)),
                                                          ("value", .integer)]))),
-                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.title))),
+                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.rawValue))),
                                                      ("description", .string),
-                                                     ("items", .array(.object([("title", .stringEnum(itemTitles)),
+                                                     ("items", .array(.object([("key", .stringEnum(itemKeys)),
                                                                                ("description", .string)])))]))),
                         ("forecast", .object([("recognitionTitle", .string),
                                               ("recognitionDescription", .string),
@@ -350,15 +355,15 @@ struct OpenAIService {
                                          partner: CompatibilityTestRequest,
                                          selectedTests: [CompatibilityTests]) -> String {
         let selectedTestLines = selectedTests
-            .map { "- " + $0.title }
+            .map { "- " + $0.rawValue + " (" + $0.title + ")" }
             .joined(separator: "\n")
 
         let itemRules = selectedTests
             .map { test in
-                let titles = CompatibilityItems.allowed(for: test)
-                    .map { "\"" + $0 + "\"" }
+                let keys = CompatibilityItems.allowed(for: test)
+                    .map { "\"" + $0.rawValue + "\" (" + $0.title + ")" }
                     .joined(separator: ", ")
-                return "- " + test.title + ": ровно 2 пункта, title только из [" + titles + "]"
+                return "- " + test.rawValue + ": ровно 2 пункта, key только из [" + keys + "]"
             }
             .joined(separator: "\n")
 
@@ -395,17 +400,17 @@ struct OpenAIService {
             "description": "общий вывод о паре (20-25 слов)"
           },
           "emotionalBar": [
-            { "title": "Эмоциональный резонанс", "value": от 1 до 10 },
-            { "title": "Внутренняя открытость", "value": от 1 до 10 },
-            { "title": "Гармония души", "value": от 1 до 10 },
-            { "title": "Эмоциональная теплота", "value": от 1 до 10 }
+            { "key": "emotionalResonance", "value": от 1 до 10 },
+            { "key": "innerOpenness", "value": от 1 до 10 },
+            { "key": "soulAlignment", "value": от 1 до 10 },
+            { "key": "emotionalWarmth", "value": от 1 до 10 }
           ],
           "sections": [
             {
-              "selectedTest": "точное название одного из тестов из списка выбранных",
+              "selectedTest": "ключ одного из тестов из списка выбранных",
               "description": "основной текст секции (12-15 слов)",
               "items": [
-                { "title": "один из разрешённых title для этого теста", "description": "описание (7-10 слов)" }
+                { "key": "один из разрешённых key для этого теста", "description": "описание (7-10 слов)" }
               ]
             }
           ],
@@ -417,7 +422,7 @@ struct OpenAIService {
           }
         }
 
-        Разрешённые title для items по тестам:
+        Разрешённые key для items по тестам:
         \(itemRules)
         """
     }
@@ -521,7 +526,7 @@ struct OpenAIService {
 
         В каждой секции:
         - ровно 2 items
-        - title item только из разрешённого списка
+        - key item только из разрешённого списка
 
         Возвращай только валидный JSON.
         Без markdown.
@@ -532,36 +537,37 @@ struct OpenAIService {
 
         Сохраняй порядок selectedTests.
 
-        В поле selectedTest используй только точное название теста из списка.
+        В поле selectedTest используй только ключ теста из списка.
 
         В emotionalBar используй только:
-        - Эмоциональный резонанс
-        - Внутренняя открытость
-        - Гармония души
-        - Эмоциональная теплота
+        - emotionalResonance (Эмоциональный резонанс)
+        - innerOpenness (Внутренняя открытость)
+        - soulAlignment (Гармония души)
+        - emotionalWarmth (Эмоциональная теплота)
 
         Не давай медицинских, юридических или финансовых советов.
         """
     }
 
     private func validatedCompatibilityBars(_ bars: [CompatibilityEmotionalBar]) throws -> [CompatibilityEmotionalBar] {
-        let values = Dictionary(bars.map { ($0.title, $0.value) }, uniquingKeysWith: { first, _ in first })
+        let values = Dictionary(bars.map { ($0.key, $0.value) }, uniquingKeysWith: { first, _ in first })
 
-        return try CompatibilityEmotionalBar.titles.map { title in
-            guard let value = values[title] else { throw unexpectedFormatError }
-            return CompatibilityEmotionalBar(title: title, value: clampedBarValue(value))
+        return try CompatibilityEmotionalBar.keys.map { key in
+            guard let value = values[key] else { throw unexpectedFormatError }
+            return CompatibilityEmotionalBar(key: key, value: clampedBarValue(value))
         }
     }
 
     private func validatedCompatibilitySections(_ sections: [CompatibilitySection],
                                                 selectedTests: [CompatibilityTests]) throws -> [CompatibilitySection] {
         let validated = selectedTests.compactMap { test -> CompatibilitySection? in
-            guard let section = sections.first(where: { $0.selectedTest == test.title }) else { return nil }
+            guard let section = sections.first(where: { $0.selectedTest == test.rawValue }) else { return nil }
 
-            let items = uniqueItems(section.items.filter { CompatibilityItems.allowed(for: test).contains($0.title) },
-                                    title: \.title)
+            let allowedKeys = CompatibilityItems.allowed(for: test).map(\.rawValue)
+            let items = uniqueItems(section.items.filter { allowedKeys.contains($0.key) },
+                                    key: \.key)
 
-            return items.isEmpty ? nil : CompatibilitySection(selectedTest: test.title,
+            return items.isEmpty ? nil : CompatibilitySection(selectedTest: test.rawValue,
                                                               description: section.description,
                                                               items: items)
         }
@@ -599,26 +605,26 @@ struct OpenAIService {
 
     private var horoscopeSchema: JSONSchema {
         .object([("description", .string),
-                 ("items", .array(.object([("title", .stringEnum(HoroscopeDTOMapper.sphereTitles)),
+                 ("items", .array(.object([("key", .stringEnum(HoroscopeDTOMapper.sphereKeys)),
                                            ("description", .string)])))])
     }
 
     private func horoscopeUserPrompt(for sign: HoroscopeSign, period: (start: String, end: String)) -> String {
         """
-        Знак зодиака: \(sign.rawValue)
+        Знак зодиака: \(sign.title)
         Текущий период прогноза: \(period.start) — \(period.end)
 
         Верни JSON строго такой формы:
         {
           "description": "краткий гороскоп на период (35-50 слов)",
           "items": [
-            { "title": "Любовь", "description": "прогноз по любви (20-30 слов)" },
-            { "title": "Здоровье", "description": "прогноз по здоровью и самочувствию (20-30 слов)" },
-            { "title": "Работа", "description": "прогноз по работе (20-30 слов)" }
+            { "key": "love", "description": "прогноз по любви (20-30 слов)" },
+            { "key": "health", "description": "прогноз по здоровью и самочувствию (20-30 слов)" },
+            { "key": "work", "description": "прогноз по работе (20-30 слов)" }
           ]
         }
 
-        В items ровно 3 элемента. title каждого item должен быть строго: Любовь, Здоровье, Работа.
+        В items ровно 3 элемента. key каждого item должен быть строго: love, health, work.
         """
     }
 
@@ -631,7 +637,7 @@ struct OpenAIService {
         Прогноз должен ощущаться персональным, живым и правдоподобным.
         Строго соблюдай указанные диапазоны количества слов для каждого текстового поля — не меньше и не больше.
         Отвечай только валидным JSON без markdown и без пояснений вокруг JSON.
-        В items ровно 3 элемента с title: Любовь, Здоровье, Работа.
+        В items ровно 3 элемента с key: love, health, work.
         Не давай медицинских, юридических или финансовых советов.
         """
     }
@@ -640,7 +646,7 @@ struct OpenAIService {
     func makeDailyInsight(for user: User, req: Request) async throws -> String {
         try await makeDailyContent(for: user,
                                    systemPrompt: dailyInsightSystemPrompt,
-                                   userPrompt: dailyInsightUserPrompt(for: user),
+                                   userPrompt: dailyInsightUserPrompt(for: user, today: DailyDateHelper.todayString(in: req.userTimeZone)),
                                    wordRange: 8...10,
                                    req: req)
     }
@@ -648,7 +654,7 @@ struct OpenAIService {
     func makeDailyTip(for user: User, req: Request) async throws -> String {
         try await makeDailyContent(for: user,
                                    systemPrompt: dailyTipSystemPrompt,
-                                   userPrompt: dailyTipUserPrompt(for: user),
+                                   userPrompt: dailyTipUserPrompt(for: user, today: DailyDateHelper.todayString(in: req.userTimeZone)),
                                    wordRange: 15...20,
                                    req: req)
     }
@@ -691,7 +697,7 @@ struct OpenAIService {
         }
     }
 
-    private func dailyInsightUserPrompt(for user: User) -> String {
+    private func dailyInsightUserPrompt(for user: User, today: String) -> String {
         """
         Данные пользователя:
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
@@ -702,8 +708,8 @@ struct OpenAIService {
         - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
         - стиль принятия решений: \(user.decisionStyle ?? "не указано")
         - фокус в отношениях: \(user.coreFocus ?? "не указано")
-        - знак зодиака: \(user.dateOfBirth.flatMap { zodiacSign(from: $0) } ?? "не указан")
-        - сегодня: \(DailyDateHelper.todayString())
+        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        - сегодня: \(today)
 
         Верни JSON строго такой формы:
         {
@@ -724,7 +730,7 @@ struct OpenAIService {
         """
     }
 
-    private func dailyTipUserPrompt(for user: User) -> String {
+    private func dailyTipUserPrompt(for user: User, today: String) -> String {
         """
         Данные пользователя:
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
@@ -735,8 +741,8 @@ struct OpenAIService {
         - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
         - стиль принятия решений: \(user.decisionStyle ?? "не указано")
         - фокус в отношениях: \(user.coreFocus ?? "не указано")
-        - знак зодиака: \(user.dateOfBirth.flatMap { zodiacSign(from: $0) } ?? "не указан")
-        - сегодня: \(DailyDateHelper.todayString())
+        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        - сегодня: \(today)
 
         Верни JSON строго такой формы:
         {
@@ -828,13 +834,16 @@ struct OpenAIService {
         min(max(value, 1), 10)
     }
 
-    private func uniqueItems<Item>(_ items: [Item], title: (Item) -> String) -> [Item] {
+    private func uniqueItems<Item>(_ items: [Item], key: (Item) -> String) -> [Item] {
         var seen = Set<String>()
-        return items.filter { seen.insert(title($0)).inserted }
+        return items.filter { seen.insert(key($0)).inserted }
     }
     
-    private func zodiacSign(from date: Date?) -> String? {
-        guard let date else { return nil }
-        return HoroscopeSign.from(dateOfBirth: date)?.emoji
+    private func zodiacSign(of user: User) throws -> HoroscopeSign {
+        guard let sign = user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:)) else {
+            throw Abort(.internalServerError, reason: "Не удалось определить знак зодиака")
+        }
+
+        return sign
     }
 }

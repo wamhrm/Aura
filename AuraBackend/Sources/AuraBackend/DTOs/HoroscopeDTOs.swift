@@ -18,7 +18,7 @@ struct HoroscopeDTO: Content {
 }
 
 struct HoroscopeItems: Content {
-    let title: String
+    let key: String
     let description: String
 }
 
@@ -27,39 +27,29 @@ struct HoroscopeContentResult: Codable {
     let items: [HoroscopeItems]
 }
 
-enum HoroscopeSign: String {
-    case aries = "Овен"
-    case taurus = "Телец"
-    case gemini = "Близнецы"
-    case cancer = "Рак"
-    case leo = "Лев"
-    case virgo = "Дева"
-    case libra = "Весы"
-    case scorpio = "Скорпион"
-    case sagittarius = "Стрелец"
-    case capricorn = "Козерог"
-    case aquarius = "Водолей"
-    case pisces = "Рыбы"
+enum HoroscopeSign: String, CaseIterable {
+    case aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius, pisces
 
-    var emoji: String {
+    var title: String {
         switch self {
-            case .aries: return "♈️"
-            case .taurus: return "♉️"
-            case .gemini: return "♊️"
-            case .cancer: return "♋️"
-            case .leo: return "♌️"
-            case .virgo: return "♍️"
-            case .libra: return "♎️"
-            case .scorpio: return "♏️"
-            case .sagittarius: return "♐️"
-            case .capricorn: return "♑️"
-            case .aquarius: return "♒️"
-            case .pisces: return "♓️"
+            case .aries: return "Овен"
+            case .taurus: return "Телец"
+            case .gemini: return "Близнецы"
+            case .cancer: return "Рак"
+            case .leo: return "Лев"
+            case .virgo: return "Дева"
+            case .libra: return "Весы"
+            case .scorpio: return "Скорпион"
+            case .sagittarius: return "Стрелец"
+            case .capricorn: return "Козерог"
+            case .aquarius: return "Водолей"
+            case .pisces: return "Рыбы"
         }
     }
 
     static func from(dateOfBirth: Date) -> HoroscopeSign? {
-        let calendar = Calendar(identifier: .gregorian)
+        // Birth dates are stored as midnight UTC, the server's own time zone must not move them to another day
+        let calendar = UserDateFormatter.calendar
         let day = calendar.component(.day, from: dateOfBirth)
         let month = calendar.component(.month, from: dateOfBirth)
 
@@ -95,7 +85,7 @@ enum HoroscopeSign: String {
 }
 
 enum HoroscopeDTOMapper {
-    static let sphereTitles = ["Любовь", "Здоровье", "Работа"]
+    static let sphereKeys = ["love", "health", "work"]
 
     static func map(_ horoscope: Horoscope) throws -> HoroscopeDTO {
         guard let id = horoscope.id else {
@@ -125,37 +115,22 @@ enum HoroscopeDTOMapper {
         return try normalizeItems(try JSONDecoder().decode([HoroscopeItems].self, from: data))
     }
 
-    private static func canonicalTitle(_ title: String) -> String? {
-        switch title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-            case "любовь", "love":
-                return "Любовь"
-            case "здоровье", "health":
-                return "Здоровье"
-            case "работа", "work":
-                return "Работа"
-            default:
-                return sphereTitles.first { $0.compare(title, options: .caseInsensitive) == .orderedSame }
-        }
-    }
-
     private static func normalizeItems(_ items: [HoroscopeItems]) throws -> [HoroscopeItems] {
         var descriptions: [String: String] = [:]
 
         for item in items {
-            guard let title = canonicalTitle(item.title) else { continue }
-
             let description = item.description.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !description.isEmpty else { continue }
 
-            descriptions[title] = description
+            descriptions[item.key] = description
         }
 
-        let normalized = sphereTitles.compactMap { title -> HoroscopeItems? in
-            guard let description = descriptions[title] else { return nil }
-            return HoroscopeItems(title: title, description: description)
+        let normalized = sphereKeys.compactMap { key -> HoroscopeItems? in
+            guard let description = descriptions[key] else { return nil }
+            return HoroscopeItems(key: key, description: description)
         }
 
-        guard normalized.count == sphereTitles.count else {
+        guard normalized.count == sphereKeys.count else {
             throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
         }
 

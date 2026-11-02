@@ -9,7 +9,7 @@ import Foundation
 
 struct PartnerInfoModel {
     var name = ""
-    var gender = "Мужской"
+    var gender = ProfileInfoOption.man.rawValue
     var exactDateOfBirth = true
     var dateOfBirth = ""
     var birthTime = ""

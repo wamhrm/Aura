@@ -18,7 +18,6 @@ struct CompatibilityTestRequest: Content {
 }
 
 enum PartnerInfoOptions {
-    static let genders: Set<String> = ["Мужской", "Женский"]
     static let ageRange = 16...120
 }
 
@@ -26,7 +25,7 @@ struct CompatibilityResultDTO: Content {
     let userName: String
     let userZodiacSign: String
     let partnerName: String
-    let partnerZodiacSign: String
+    let partnerZodiacSign: String?
     let compatibilityScore: Int
     let selectedTests: [String]
     let title: String
@@ -43,9 +42,9 @@ struct CompatibilityOverview: Content {
 }
 
 struct CompatibilityEmotionalBar: Content {
-    static let titles = ["Эмоциональный резонанс", "Внутренняя открытость", "Гармония души", "Эмоциональная теплота"]
+    static let keys = ["emotionalResonance", "innerOpenness", "soulAlignment", "emotionalWarmth"]
 
-    let title: String
+    let key: String
     let value: Int
 }
 
@@ -56,7 +55,7 @@ struct CompatibilitySection: Content {
 }
 
 struct CompatibilitySectionItem: Content {
-    let title: String
+    let key: String
     let description: String
 }
 
@@ -78,6 +77,8 @@ struct CompatibilityTestContent: Codable {
 }
 
 enum CompatibilityTests: String, CaseIterable {
+    static let minSelected = 3
+
     case astrology
     case behavioralPatterns
     case attachmentCompatibility
@@ -99,35 +100,52 @@ enum CompatibilityTests: String, CaseIterable {
         }
     }
 
-    private static func from(title: String) -> CompatibilityTests? {
-        allCases.first { $0.title == title }
-    }
-
-    static func from(titles: [String]) -> [CompatibilityTests]? {
-        let mapped = titles.compactMap(from(title:))
-        return mapped.count == titles.count ? mapped : nil
+    static func from(keys: [String]) -> [CompatibilityTests]? {
+        let mapped = keys.compactMap(CompatibilityTests.init(rawValue:))
+        return mapped.count == keys.count ? mapped : nil
     }
 }
 
-enum CompatibilityItems {
-    private static let astrology = ["Синастрия знаков", "Кармический урок"]
-    private static let behavioralPatterns = ["Динамика лидерства", "Эмоциональный резонанс"]
-    private static let attachmentCompatibility = ["Сцепка типов", "Дистанция комфорта"]
-    private static let loveLanguages = ["Совпадение языков", "Трудности перевода"]
-    private static let conflictResolution = ["Механика ссор", "Скорость примирения"]
+enum CompatibilityItems: String, CaseIterable {
+    case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery
 
-    static func allowed(for test: CompatibilityTests) -> [String] {
+    var title: String {
+        switch self {
+            case .synastry:
+                return "Синастрия знаков"
+            case .karmicLesson:
+                return "Кармический урок"
+            case .dominanceDynamics:
+                return "Динамика лидерства"
+            case .emotionalResonance:
+                return "Эмоциональный резонанс"
+            case .attachmentBond:
+                return "Сцепка типов"
+            case .comfortDistance:
+                return "Дистанция комфорта"
+            case .languageMatch:
+                return "Совпадение языков"
+            case .translationNeeds:
+                return "Трудности перевода"
+            case .conflictMechanics:
+                return "Механика ссор"
+            case .peaceRecovery:
+                return "Скорость примирения"
+        }
+    }
+
+    static func allowed(for test: CompatibilityTests) -> [CompatibilityItems] {
         switch test {
             case .astrology:
-                return astrology
+                return [.synastry, .karmicLesson]
             case .behavioralPatterns:
-                return behavioralPatterns
+                return [.dominanceDynamics, .emotionalResonance]
             case .attachmentCompatibility:
-                return attachmentCompatibility
+                return [.attachmentBond, .comfortDistance]
             case .loveLanguages:
-                return loveLanguages
+                return [.languageMatch, .translationNeeds]
             case .conflictResolution:
-                return conflictResolution
+                return [.conflictMechanics, .peaceRecovery]
         }
     }
 }

@@ -19,7 +19,7 @@ struct HoroscopeCellView: View {
                         .font(Adaptive.size(.title3, .title2))
                     
                     VStack(alignment: .leading, spacing: 5) {
-                        Text(horoscope.type.rawValue)
+                        Text(horoscope.type.title)
                             .font(Adaptive.size(.callout, .default))
                             .fontWeight(.semibold)
                         
@@ -48,18 +48,24 @@ struct HoroscopeCellView: View {
 }
 
 enum HoroscopeTypes: String, CaseIterable, Codable {
-    case aries = "Овен"
-    case taurus = "Телец"
-    case gemini = "Близнецы"
-    case cancer = "Рак"
-    case leo = "Лев"
-    case virgo = "Дева"
-    case libra = "Весы"
-    case scorpio = "Скорпион"
-    case sagittarius = "Стрелец"
-    case capricorn = "Козерог"
-    case aquarius = "Водолей"
-    case pisces = "Рыбы"
+    case aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius, pisces
+
+    var title: String {
+        switch self {
+            case .aries: "Овен"
+            case .taurus: "Телец"
+            case .gemini: "Близнецы"
+            case .cancer: "Рак"
+            case .leo: "Лев"
+            case .virgo: "Дева"
+            case .libra: "Весы"
+            case .scorpio: "Скорпион"
+            case .sagittarius: "Стрелец"
+            case .capricorn: "Козерог"
+            case .aquarius: "Водолей"
+            case .pisces: "Рыбы"
+        }
+    }
     
     var icon: String {
         switch self {

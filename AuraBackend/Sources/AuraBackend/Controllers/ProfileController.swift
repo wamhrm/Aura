@@ -15,8 +15,13 @@ struct ProfileController: RouteCollection {
         let auth = routes.grouped("auth")
             .grouped(UserAuthMiddleware())
 
+        auth.get("me", use: fetchCurrentUser)
         auth.patch("profileInfo", use: updateProfileInfo)
         auth.post("aiConsent", use: giveAIConsent)
+    }
+
+    private func fetchCurrentUser(_ req: Request) async throws -> UserDTO {
+        try req.auth.require(User.self).toDTO()
     }
 
     private func giveAIConsent(_ req: Request) async throws -> UserDTO {
@@ -69,7 +74,7 @@ struct ProfileController: RouteCollection {
         try await user.save(on: req.db)
 
         // Never waits for OpenAI: the app requests a missing horoscope on its own
-        let horoscope = try? await horoscopeService.findCurrentHoroscope(for: user, on: req.db)
+        let horoscope = try? await horoscopeService.findCurrentHoroscope(for: user, in: req.userTimeZone, on: req.db)
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }

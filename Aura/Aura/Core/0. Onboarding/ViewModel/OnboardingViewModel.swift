@@ -92,8 +92,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     // Server rule: from 16 to 100 years old. The extra day covers the time zone difference with the server.
     static let birthDateRange: ClosedRange<Date> = {
         let now = Date()
-        let earliest = Calendar.current.date(byAdding: DateComponents(year: -100, day: 1), to: now) ?? .distantPast
-        let latest = Calendar.current.date(byAdding: DateComponents(year: -16, day: -1), to: now) ?? now
+        let earliest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.maxUserAge, day: 1), to: now) ?? .distantPast
+        let latest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.minUserAge, day: -1), to: now) ?? now
         return earliest...latest
     }()
 
@@ -295,7 +295,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let code = resetCode.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard code.count == ResetInput.codeLength, code.allSatisfy(\.isNumber) else {
+        guard code.count == InputLimits.resetCodeLength, code.allSatisfy(\.isNumber) else {
             presentAlert("Введите 6-значный код из письма")
             return
         }
@@ -495,8 +495,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if name.isEmpty {
             return "Укажите имя"
         }
-        if name.count < AuthInput.minNameLength {
-            return "Имя должно содержать минимум \(AuthInput.minNameLength) символа"
+        if name.count < InputLimits.minNameLength {
+            return "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
         }
         return nil
     }
@@ -515,8 +515,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if password.isEmpty {
             return "Укажите пароль"
         }
-        if password.count < AuthInput.minPasswordLength {
-            return "Пароль должен быть не короче \(AuthInput.minPasswordLength) символов"
+        if password.count < InputLimits.minPasswordLength {
+            return "Пароль должен быть не короче \(InputLimits.minPasswordLength) символов"
         }
         return nil
     }
@@ -539,11 +539,3 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 }
 
-private enum AuthInput {
-    static let minPasswordLength = 6
-    static let minNameLength = 2
-}
-
-private enum ResetInput {
-    static let codeLength = 6
-}

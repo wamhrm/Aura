@@ -107,17 +107,6 @@ enum ProfileInfoOption: String, CaseIterable {
             case .peace: "🕊"
         }
     }
-    
-    static func normalizedKey(_ stored: String?) -> String? {
-        guard let stored, !stored.isEmpty else { return nil }
-        if let match = Self.allCases.first(where: { $0.rawValue == stored }) {
-            return match.rawValue
-        }
-        if let match = Self.allCases.first(where: { $0.title == stored }) {
-            return match.rawValue
-        }
-        return stored
-    }
 }
 
 #Preview {

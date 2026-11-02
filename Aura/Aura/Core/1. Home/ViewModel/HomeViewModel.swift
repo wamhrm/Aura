@@ -136,8 +136,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     func toggleTestSelection(_ test: PersonalityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
-            guard selectedTests.count > 2 else {
-                presentAlert("Нельзя выбрать меньше 2 тестов")
+            guard selectedTests.count > InputLimits.minPersonalityTests else {
+                presentAlert("Нельзя выбрать меньше \(InputLimits.minPersonalityTests) тестов")
                 return
             }
             selectedTests.remove(at: index)

@@ -69,14 +69,18 @@ struct TestCellView<Test: TestCellDisplayable>: View {
 }
 
 enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
-    case astrology = "Астрология"
-    case behavioralPatterns = "Поведенческие паттерны"
-    case decisionMaking = "Стиль принятия решений"
-    case attachmentStyle = "Стиль привязанности"
-    case idealPartner = "Идеальный партнер"
-    case loveLanguage = "Язык любви"
+    case astrology, behavioralPatterns, decisionMaking, attachmentStyle, idealPartner, loveLanguage
 
-    var title: String { rawValue }
+    var title: String {
+        switch self {
+            case .astrology: "Астрология"
+            case .behavioralPatterns: "Поведенческие паттерны"
+            case .decisionMaking: "Стиль принятия решений"
+            case .attachmentStyle: "Стиль привязанности"
+            case .idealPartner: "Идеальный партнер"
+            case .loveLanguage: "Язык любви"
+        }
+    }
 
     var description: String {
         switch self {
@@ -153,13 +157,17 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 }
 
 enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
-    case astrology = "Астрология пары"
-    case behavioralPatterns = "Поведенческие паттерны"
-    case attachmentCompatibility = "Стили привязанности"
-    case loveLanguages = "Языки любви"
-    case conflictResolution = "Конфликты и примирение"
+    case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution
 
-    var title: String { rawValue }
+    var title: String {
+        switch self {
+            case .astrology: "Астрология пары"
+            case .behavioralPatterns: "Поведенческие паттерны"
+            case .attachmentCompatibility: "Стили привязанности"
+            case .loveLanguages: "Языки любви"
+            case .conflictResolution: "Конфликты и примирение"
+        }
+    }
 
     var description: String {
         switch self {

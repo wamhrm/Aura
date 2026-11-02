@@ -18,6 +18,13 @@ enum CompatibilityButtons {
     enum genderOptions: String, CaseIterable {
         case male = "Мужской"
         case female = "Женский"
+
+        var key: String {
+            switch self {
+                case .male: ProfileInfoOption.man.rawValue
+                case .female: ProfileInfoOption.woman.rawValue
+            }
+        }
     }
 
     enum birthOptions: String, CaseIterable {
@@ -80,7 +87,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     func selectGender(_ option: CompatibilityButtons.genderOptions) {
-        partnerInfo.gender = option.rawValue
+        partnerInfo.gender = option.key
     }
 
     func selectBirthOption(_ option: CompatibilityButtons.birthOptions) {
@@ -89,8 +96,8 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
     func toggleTestSelection(_ test: CompatibilityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
-            guard selectedTests.count > 3 else {
-                presentAlert("Нельзя выбрать меньше 3 тестов")
+            guard selectedTests.count > InputLimits.minCompatibilityTests else {
+                presentAlert("Нельзя выбрать меньше \(InputLimits.minCompatibilityTests) тестов")
                 return
             }
 
@@ -122,7 +129,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     private func validatePartnerInfoForms() throws {
         let name = partnerInfo.name.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard name.count >= 2 else {
+        guard name.count >= InputLimits.minNameLength else {
             throw PartnerInfoError.invalidName
         }
 
@@ -132,7 +139,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             }
         } else {
             let age = partnerInfo.age.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let value = Int(age), value > 0 else {
+            guard let value = Int(age), (InputLimits.minPartnerAge...InputLimits.maxPartnerAge).contains(value) else {
                 throw PartnerInfoError.invalidAge
             }
         }
@@ -155,9 +162,9 @@ fileprivate enum PartnerInfoError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidName: "Имя партнёра должно содержать минимум 2 символа"
+            case .invalidName: "Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа"
             case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
-            case .invalidAge: "Укажите возраст партнёра"
+            case .invalidAge: "Возраст партнёра должен быть от \(InputLimits.minPartnerAge) до \(InputLimits.maxPartnerAge) лет"
         }
     }
 }

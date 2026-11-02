@@ -22,7 +22,7 @@ fileprivate enum RequestAuthorization {
 protocol NetworkServiceProtocol: Sendable {
     var sessionExpiredEvents: AsyncStream<Void> { get }
 
-    func createAccount(name: String, email: String, password: String) async throws
+    func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
     func signInWithApple(identityToken: String,
                          authorizationCode: String?,
@@ -32,13 +32,14 @@ protocol NetworkServiceProtocol: Sendable {
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse
     func deleteAccount() async throws
+    func fetchCurrentUser() async throws -> UserModel
     func giveAIConsent() async throws -> UserModel
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
     func fetchCurrentHoroscope() async throws -> HoroscopeModel
     func fetchDailyInsight() async throws -> DailyContentModel
     func fetchDailyTip() async throws -> DailyContentModel
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
-    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
@@ -70,9 +71,10 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         return URLSession(configuration: configuration)
     }
 
-    func createAccount(name: String, email: String, password: String) async throws {
+    func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
-        _ = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData, authorization: .none)
+        let data = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData, authorization: .none)
+        return try decode(AuthTokenResponse.self, from: data)
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
@@ -112,6 +114,11 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         _ = try await request(endpoint: "/auth/account", method: .delete)
     }
 
+    func fetchCurrentUser() async throws -> UserModel {
+        let data = try await request(endpoint: "/auth/me", method: .get)
+        return try decode(UserModel.self, from: data)
+    }
+
     func giveAIConsent() async throws -> UserModel {
         let data = try await request(endpoint: "/auth/aiConsent", method: .post)
         return try decode(UserModel.self, from: data)
@@ -138,15 +145,15 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         return try decode(DailyContentModel.self, from: data)
     }
 
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
         let bodyData = try JSONEncoder().encode(selectedTests)
-        let data = try await request(endpoint: "/history/personality", method: .post, body: bodyData)
+        let data = try await request(endpoint: "/history/personality", method: .post, body: bodyData, idempotencyKey: requestID)
         return try decode(PersonalityResultModel.self, from: data)
     }
 
-    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest) async throws -> CompabilityResultModel {
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel {
         let bodyData = try JSONEncoder().encode(testRequest)
-        let data = try await request(endpoint: "/history/compatibility", method: .post, body: bodyData)
+        let data = try await request(endpoint: "/history/compatibility", method: .post, body: bodyData, idempotencyKey: requestID)
         return try decode(CompabilityResultModel.self, from: data)
     }
 
@@ -168,15 +175,21 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                          method: HTTPMethod,
                          body: Data? = nil,
                          authorization: RequestAuthorization = .storedToken,
+                         idempotencyKey: UUID? = nil,
                          attempt: Int = 0) async throws -> Data {
         do {
-            return try await performRequest(endpoint: endpoint, method: method, body: body, authorization: authorization)
+            return try await performRequest(endpoint: endpoint,
+                                            method: method,
+                                            body: body,
+                                            authorization: authorization,
+                                            idempotencyKey: idempotencyKey)
         } catch let urlError as URLError where method == .get && Self.isRetryable(urlError) && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(for: attempt))
             return try await request(endpoint: endpoint,
                                      method: method,
                                      body: body,
                                      authorization: authorization,
+                                     idempotencyKey: idempotencyKey,
                                      attempt: attempt + 1)
         } catch let urlError as URLError {
             throw NetworkError(urlError: urlError)
@@ -186,16 +199,23 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private func performRequest(endpoint: String,
                                 method: HTTPMethod,
                                 body: Data?,
-                                authorization: RequestAuthorization) async throws -> Data {
+                                authorization: RequestAuthorization,
+                                idempotencyKey: UUID?) async throws -> Data {
         guard let baseURL = URL(string: baseURL),
-              let url = URL(string: endpoint, relativeTo: baseURL)?.absoluteURL else {
+              let url = URL(string: Constants.apiPath + endpoint, relativeTo: baseURL)?.absoluteURL else {
             throw NetworkError.invalidURL
         }
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = method.rawValue
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue(Constants.appVersion, forHTTPHeaderField: "X-App-Version")
+        urlRequest.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Time-Zone")
         urlRequest.httpBody = body
+
+        if let idempotencyKey {
+            urlRequest.setValue(idempotencyKey.uuidString, forHTTPHeaderField: "Idempotency-Key")
+        }
 
         let token = bearerToken(for: authorization)
         if let token {

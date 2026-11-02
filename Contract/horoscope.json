@@ -1,0 +1,12 @@
+{
+  "id": "1B4E28BA-2FA1-11D2-883F-0016D3CCA427",
+  "type": "taurus",
+  "dateStart": "2 нояб.",
+  "dateEnd": "8 нояб.",
+  "description": "Краткий гороскоп на неделю",
+  "items": [
+    { "key": "love", "description": "Прогноз по любви" },
+    { "key": "health", "description": "Прогноз по здоровью" },
+    { "key": "work", "description": "Прогноз по работе" }
+  ]
+}

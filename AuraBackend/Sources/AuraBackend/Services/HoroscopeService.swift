@@ -17,7 +17,7 @@ struct HoroscopeService {
             throw Abort(.notFound, reason: "Гороскоп не найден")
         }
 
-        let week = DailyDateHelper.currentWeek()
+        let week = DailyDateHelper.currentWeek(in: req.userTimeZone)
 
         if let entry = try await findHoroscope(sign: sign, weekStart: week.key, on: database) {
             return try HoroscopeDTOMapper.map(entry)
@@ -54,13 +54,15 @@ struct HoroscopeService {
         }
     }
 
-    func findCurrentHoroscope(for user: User, on database: any Database) async throws -> HoroscopeDTO? {
+    func findCurrentHoroscope(for user: User,
+                              in timeZone: TimeZone,
+                              on database: any Database) async throws -> HoroscopeDTO? {
         guard let dateOfBirth = user.dateOfBirth,
               let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
             return nil
         }
 
-        let week = DailyDateHelper.currentWeek()
+        let week = DailyDateHelper.currentWeek(in: timeZone)
         let entry = try await findHoroscope(sign: sign, weekStart: week.key, on: database)
         return try entry.map(HoroscopeDTOMapper.map)
     }

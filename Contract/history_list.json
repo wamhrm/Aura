@@ -1,0 +1,23 @@
+[
+  {
+    "id": "7C9E6679-7425-40DE-944B-E07FC1F90AE7",
+    "kind": "compatibility",
+    "createdAt": "2026-11-03T09:30:00Z",
+    "selectedTests": ["astrology", "behavioralPatterns", "attachmentCompatibility"],
+    "archetypeTitle": "Спокойный союз",
+    "archetypeSubtitle": "Вы сближаетесь медленно, но надолго",
+    "zodiacSign": "taurus",
+    "compatibilityScore": 64,
+    "partnerName": "Иван",
+    "partnerZodiacSign": "aquarius"
+  },
+  {
+    "id": "16FD2706-8BAF-433B-82EB-8C7FADA847DA",
+    "kind": "personality",
+    "createdAt": "2026-11-03T09:00:00Z",
+    "selectedTests": ["astrology", "behavioralPatterns"],
+    "archetypeTitle": "Тихий стратег",
+    "archetypeSubtitle": "Вы думаете дольше других и редко ошибаетесь",
+    "zodiacSign": "taurus"
+  }
+]

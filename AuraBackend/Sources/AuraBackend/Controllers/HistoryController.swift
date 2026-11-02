@@ -21,19 +21,23 @@ struct HistoryController: RouteCollection {
     private func fetchHistory(_ req: Request) async throws -> [HistoryItemDTO] {
         let userID = try req.auth.require(User.self).requireID()
 
+        // Everything except the full result, which may be large
         let entries = try await History.query(on: req.db)
             .filter(\.$user.$id == userID)
             .sort(\.$createdAt, .descending)
+            .field(\.$id)
+            .field(\.$kind)
+            .field(\.$createdAt)
+            .field(\.$selectedTests)
+            .field(\.$title)
+            .field(\.$subtitle)
+            .field(\.$zodiacSign)
+            .field(\.$compatibilityScore)
+            .field(\.$partnerName)
+            .field(\.$partnerZodiacSign)
             .all()
 
-        return entries.compactMap { entry in
-            do {
-                return try HistoryDTOMapper.getHistoryItem(from: entry)
-            } catch {
-                req.logger.warning("Skipping corrupted history entry \(entry.id?.uuidString ?? "unknown"): \(error)")
-                return nil
-            }
-        }
+        return try entries.map(HistoryDTOMapper.getHistoryItem(from:))
     }
 
     private func fetchHistoryDetails(_ req: Request) async throws -> HistoryItemDTO {

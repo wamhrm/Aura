@@ -33,23 +33,17 @@ extension ProfileDisplayModel {
             thinking: barValue(.thinking, from: personalityResult) ?? ProfileDisplayPlaceholder.thinking,
             organization: barValue(.organization, from: personalityResult) ?? ProfileDisplayPlaceholder.organization,
             relationships: barValue(.relationships, from: personalityResult) ?? ProfileDisplayPlaceholder.relationships,
-            zodiacSignTitle: zodiacSignTitle(from: personalityResult?.zodiacSign))
+            zodiacSignTitle: personalityResult?.zodiacSign.title)
     }
 
-    private static func sectionItem(_ title: PersonalityCellTypes,
+    private static func sectionItem(_ key: PersonalityCellTypes,
                                     from result: PersonalityResultModel?) -> String? {
-        result?.sections.flatMap(\.items).first(where: { $0.title == title })?.description
+        result?.sections.flatMap(\.items).first(where: { $0.key == key })?.description
     }
 
-    private static func barValue(_ title: EmotionalProfileTypes,
+    private static func barValue(_ key: EmotionalProfileTypes,
                                  from result: PersonalityResultModel?) -> Int? {
-        result?.emotionalBar.first(where: { $0.title == title })?.value
-    }
-
-    private static func zodiacSignTitle(from sign: String?) -> String? {
-        guard let sign else { return nil }
-        return HoroscopeTypes.allCases
-            .first { $0.icon.contains(sign) || sign.contains($0.icon) }?.rawValue
+        result?.emotionalBar.first(where: { $0.key == key })?.value
     }
 }
 

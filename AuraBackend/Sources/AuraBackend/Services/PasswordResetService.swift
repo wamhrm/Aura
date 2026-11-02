@@ -10,6 +10,8 @@ import FluentPostgresDriver
 import Vapor
 
 struct PasswordResetService {
+    static let codeLength = 6
+
     private let codeLifetime: TimeInterval = 15 * 60
     private let resendInterval: TimeInterval = 60
     private let limitWindow: TimeInterval = 24 * 60 * 60
@@ -39,7 +41,7 @@ struct PasswordResetService {
             throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
         }
 
-        let code = (0..<6).map { _ in String(Int.random(in: 0...9)) }.joined()
+        let code = (0..<Self.codeLength).map { _ in String(Int.random(in: 0...9)) }.joined()
         let reset = PasswordReset(userID: userID,
                                   codeHash: hash(code, userID: userID),
                                   expiresAt: Date().addingTimeInterval(codeLifetime))

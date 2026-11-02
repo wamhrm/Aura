@@ -8,10 +8,10 @@
 import Foundation
 
 enum UserDateFormatter {
-    private static let maxAgeInYears = 100
-    private static let minAgeInYears = 16
+    static let maxAgeInYears = 100
+    static let minAgeInYears = 16
 
-    private static let calendar: Calendar = {
+    static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         return calendar
