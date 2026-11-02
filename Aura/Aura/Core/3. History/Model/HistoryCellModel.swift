@@ -14,10 +14,10 @@ struct HistoryCellModel: Codable, Identifiable, Hashable {
     let selectedTests: [String]
     let archetypeTitle: String
     let archetypeSubtitle: String
-    let zodiacSign: String
+    let zodiacSign: HoroscopeTypes
     let compatibilityScore: Int?
     let partnerName: String?
-    let partnerZodiacSign: String?
+    let partnerZodiacSign: HoroscopeTypes?
     let personalityResult: PersonalityResultModel?
     let compatibilityResult: CompabilityResultModel?
 }
@@ -31,7 +31,7 @@ extension HistoryCellModel {
         id: UUID(),
         kind: .personality,
         createdAt: "2026-05-19T12:00:00Z",
-        selectedTests: ["Астрология", "Стиль привязанности"],
+        selectedTests: [PersonalityTestTypes.astrology.rawValue, PersonalityTestTypes.attachmentStyle.rawValue],
         archetypeTitle: PersonalityResultModel.mock.archetypeTitle,
         archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
         zodiacSign: PersonalityResultModel.mock.zodiacSign,
@@ -46,7 +46,7 @@ extension HistoryCellModel {
         id: UUID(),
         kind: .compatibility,
         createdAt: "2026-05-19T12:00:00Z",
-        selectedTests: ["Поведенческие паттерны"],
+        selectedTests: [CompatibilityTestTypes.behavioralPatterns.rawValue],
         archetypeTitle: CompabilityResultModel.mock.title,
         archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
         zodiacSign: PersonalityResultModel.mock.zodiacSign,
@@ -67,17 +67,16 @@ extension HistoryCellModel {
         partnerName ?? compatibilityResult?.partnerName
     }
 
-    var resolvedPartnerZodiacSign: String? {
+    var resolvedPartnerZodiacSign: HoroscopeTypes? {
         partnerZodiacSign ?? compatibilityResult?.partnerZodiacSign
     }
 
     var iconHandler: String {
         switch kind {
             case .personality:
-                return zodiacSign
+                return zodiacSign.icon
             case .compatibility:
-                let sign = resolvedPartnerZodiacSign ?? ""
-                return sign.isEmpty ? "👤" : sign
+                return resolvedPartnerZodiacSign?.icon ?? "👤"
         }
     }
 

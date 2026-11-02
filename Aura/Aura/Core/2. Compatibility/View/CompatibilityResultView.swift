@@ -22,7 +22,7 @@ struct CompatibilityResultView: View {
 
                     HStack(spacing: 75) {
                         VStack {
-                            Text(result.userZodiacSign)
+                            Text(result.userZodiacSign.icon)
                                 .compatibilityResultZodiacsModifier()
 
                             Text(result.userNameCapitalized)
@@ -71,21 +71,21 @@ struct CompatibilityResultView: View {
                     ResultSectionView(title: "Эмоциональная совместимость") {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
-                                EmotionalProfileBar(type: bar.title, value: bar.value)
+                                EmotionalProfileBar(type: bar.key, value: bar.value)
                             }
                         }
                         .padding(.top, 5)
                     }
 
                     ForEach(result.sections, id: \.self) { section in
-                        ResultSectionView(title: section.selectedTest.rawValue) {
+                        ResultSectionView(title: section.selectedTest.title) {
                             Text(section.description)
                                 .font(.system(size: Adaptive.size(14, 15)))
                                 .foregroundStyle(.deepGray)
 
                             VStack(spacing: 12) {
                                 ForEach(section.items.enumerated(), id: \.element) { index, item in
-                                    TestResultCellView(test: item.title,
+                                    TestResultCellView(test: item.key,
                                                        description: item.description)
 
                                     if index < section.items.count - 1 {

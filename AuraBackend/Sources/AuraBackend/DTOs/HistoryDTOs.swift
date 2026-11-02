@@ -25,46 +25,37 @@ struct HistoryItemDTO: Content {
 
 enum HistoryDTOMapper {
     static func getHistoryItem(from history: History) throws -> HistoryItemDTO {
-        try makeHistoryItem(from: history, includeResult: false)
+        try makeHistoryItem(from: history, personalityResult: nil, compatibilityResult: nil)
     }
 
     static func getHistoryItemDetails(from history: History) throws -> HistoryItemDTO {
-        try makeHistoryItem(from: history, includeResult: true)
-    }
-
-    private static func makeHistoryItem(from history: History, includeResult: Bool) throws -> HistoryItemDTO {
         switch history.kind {
             case .personality:
-                let result = try decodePersonalityResult(from: history.result)
-
-                return HistoryItemDTO(id: try history.requireID(),
-                                      kind: history.kind,
-                                      createdAt: createdAtString(from: history.createdAt),
-                                      selectedTests: history.selectedTests,
-                                      archetypeTitle: result.archetypeTitle,
-                                      archetypeSubtitle: result.archetypeSubtitle,
-                                      zodiacSign: result.zodiacSign,
-                                      compatibilityScore: nil,
-                                      partnerName: nil,
-                                      partnerZodiacSign: nil,
-                                      personalityResult: includeResult ? result : nil,
-                                      compatibilityResult: nil)
+                return try makeHistoryItem(from: history,
+                                           personalityResult: try decodePersonalityResult(from: history.result),
+                                           compatibilityResult: nil)
             case .compatibility:
-                let result = try decodeCompatibilityResult(from: history.result)
-
-                return HistoryItemDTO(id: try history.requireID(),
-                                      kind: history.kind,
-                                      createdAt: createdAtString(from: history.createdAt),
-                                      selectedTests: history.selectedTests,
-                                      archetypeTitle: result.title,
-                                      archetypeSubtitle: result.subtitle,
-                                      zodiacSign: result.userZodiacSign,
-                                      compatibilityScore: result.compatibilityScore,
-                                      partnerName: result.partnerName,
-                                      partnerZodiacSign: result.partnerZodiacSign,
-                                      personalityResult: nil,
-                                      compatibilityResult: includeResult ? result : nil)
+                return try makeHistoryItem(from: history,
+                                           personalityResult: nil,
+                                           compatibilityResult: try decodeCompatibilityResult(from: history.result))
         }
+    }
+
+    private static func makeHistoryItem(from history: History,
+                                        personalityResult: PersonalityResultDTO?,
+                                        compatibilityResult: CompatibilityResultDTO?) throws -> HistoryItemDTO {
+        HistoryItemDTO(id: try history.requireID(),
+                       kind: history.kind,
+                       createdAt: createdAtString(from: history.createdAt),
+                       selectedTests: history.selectedTests,
+                       archetypeTitle: history.title,
+                       archetypeSubtitle: history.subtitle,
+                       zodiacSign: history.zodiacSign,
+                       compatibilityScore: history.compatibilityScore,
+                       partnerName: history.partnerName,
+                       partnerZodiacSign: history.partnerZodiacSign,
+                       personalityResult: personalityResult,
+                       compatibilityResult: compatibilityResult)
     }
 
     private static func createdAtString(from date: Date?) -> String {
@@ -74,7 +65,7 @@ enum HistoryDTOMapper {
         return formatter.string(from: date)
     }
 
-    private static func decodePersonalityResult(from resultJSON: String) throws -> PersonalityResultDTO {
+    static func decodePersonalityResult(from resultJSON: String) throws -> PersonalityResultDTO {
         guard let data = resultJSON.data(using: .utf8) else {
             throw Abort(.internalServerError, reason: "Некорректная запись истории")
         }
@@ -82,7 +73,7 @@ enum HistoryDTOMapper {
         return try JSONDecoder().decode(PersonalityResultDTO.self, from: data)
     }
 
-    private static func decodeCompatibilityResult(from resultJSON: String) throws -> CompatibilityResultDTO {
+    static func decodeCompatibilityResult(from resultJSON: String) throws -> CompatibilityResultDTO {
         guard let data = resultJSON.data(using: .utf8) else {
             throw Abort(.internalServerError, reason: "Некорректная запись истории")
         }

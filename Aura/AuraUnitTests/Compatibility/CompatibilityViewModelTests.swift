@@ -69,7 +69,7 @@ final class CompatibilityViewModelTests: XCTestCase {
         await waitUntil { sut.showAlert }
 
         // Then
-        XCTAssertEqual(sut.alertMessage, "Укажите возраст партнёра")
+        XCTAssertEqual(sut.alertMessage, "Возраст партнёра должен быть от 16 до 120 лет")
     }
 
     // MARK: - Test selection
@@ -123,7 +123,7 @@ final class CompatibilityViewModelTests: XCTestCase {
         sut.partnerInfo.dateOfBirth = "01.01.2000"
         sut.partnerInfo.birthTime = "12:00"
         sut.partnerInfo.age = "25"
-        sut.partnerInfo.gender = "Женский"
+        sut.partnerInfo.gender = "woman"
         sut.partnerInfo.exactDateOfBirth = false
 
         // When
@@ -134,7 +134,7 @@ final class CompatibilityViewModelTests: XCTestCase {
         XCTAssertEqual(sut.partnerInfo.dateOfBirth, "")
         XCTAssertEqual(sut.partnerInfo.birthTime, "")
         XCTAssertEqual(sut.partnerInfo.age, "")
-        XCTAssertEqual(sut.partnerInfo.gender, "Женский")
+        XCTAssertEqual(sut.partnerInfo.gender, "woman")
         XCTAssertFalse(sut.partnerInfo.exactDateOfBirth)
     }
     

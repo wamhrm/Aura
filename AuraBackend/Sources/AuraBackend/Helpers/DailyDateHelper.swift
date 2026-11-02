@@ -6,53 +6,53 @@
 //
 
 import Foundation
+import Vapor
 
 enum DailyDateHelper {
-    private static let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
-        return calendar
-    }()
-
-    private static let weekCalendar: Calendar = {
-        var weekCalendar = calendar
-        weekCalendar.firstWeekday = 2
-        return weekCalendar
-    }()
-
-    private static let storageFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
-
-    private static let periodFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = Locale(identifier: "ru_RU")
-        formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "d MMM"
-        return formatter
-    }()
-
-    static func todayString() -> String {
-        storageFormatter.string(from: Date())
+    static func todayString(in timeZone: TimeZone, now: Date = Date()) -> String {
+        storageFormatter(in: timeZone).string(from: now)
     }
 
-    static func currentWeek() -> (key: String, start: String, end: String) {
-        let now = Date()
-        let startDate = weekCalendar.dateInterval(of: .weekOfYear, for: now)?.start ?? calendar.startOfDay(for: now)
+    static func currentWeek(in timeZone: TimeZone, now: Date = Date()) -> (key: String, start: String, end: String) {
+        let calendar = weekCalendar(in: timeZone)
+        let startDate = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? calendar.startOfDay(for: now)
         let endDate = calendar.date(byAdding: .day, value: 6, to: startDate) ?? startDate
+        let periodFormatter = periodFormatter(in: timeZone)
 
-        return (storageFormatter.string(from: startDate),
+        return (storageFormatter(in: timeZone).string(from: startDate),
                 periodFormatter.string(from: startDate),
                 periodFormatter.string(from: endDate))
     }
 
-    static func isToday(_ generatedDate: String) -> Bool {
-        generatedDate == todayString()
+    private static func weekCalendar(in timeZone: TimeZone) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        calendar.firstWeekday = 2
+        return calendar
+    }
+
+    private static func storageFormatter(in timeZone: TimeZone) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.calendar = weekCalendar(in: timeZone)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }
+
+    private static func periodFormatter(in timeZone: TimeZone) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.calendar = weekCalendar(in: timeZone)
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "d MMM"
+        return formatter
+    }
+}
+
+extension Request {
+    // The day and the week follow the user's clock. A missing or unknown zone means UTC.
+    var userTimeZone: TimeZone {
+        headers.first(name: "X-Time-Zone").flatMap(TimeZone.init(identifier:)) ?? .gmt
     }
 }

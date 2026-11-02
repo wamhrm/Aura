@@ -27,6 +27,8 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private let networkService: any NetworkServiceProtocol
     private let storage: any LocalStorageProtocol
     private var historyTask: Task<[HistoryCellModel], any Error>?
+    private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
+    private var pendingCompatibilityTest: (request: CompatibilityTestRequest, requestID: UUID)?
 
     init(networkService: any NetworkServiceProtocol = NetworkService(),
          storage: any LocalStorageProtocol = LocalStorage()) {
@@ -53,13 +55,33 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
-        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests)
+        var requestID = UUID()
+
+        // A repeat keeps its key: if the first answer was lost, the server returns the saved result
+        if let pending = pendingPersonalityTest, pending.tests == selectedTests {
+            requestID = pending.requestID
+        }
+
+        pendingPersonalityTest = (selectedTests, requestID)
+
+        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
+        pendingPersonalityTest = nil
         notifyHistoryChanged()
         return result
     }
 
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
-        let result = try await networkService.makeCompatibilityTest(request)
+        var requestID = UUID()
+
+        // A repeat keeps its key: if the first answer was lost, the server returns the saved result
+        if let pending = pendingCompatibilityTest, pending.request == request {
+            requestID = pending.requestID
+        }
+
+        pendingCompatibilityTest = (request, requestID)
+
+        let result = try await networkService.makeCompatibilityTest(request, requestID: requestID)
+        pendingCompatibilityTest = nil
         notifyHistoryChanged()
         return result
     }

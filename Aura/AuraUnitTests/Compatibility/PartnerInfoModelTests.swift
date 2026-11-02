@@ -12,7 +12,7 @@ final class PartnerInfoModelTests: XCTestCase {
         // Given
         var info = PartnerInfoModel()
         info.name = "  Анна  "
-        info.gender = "Женский"
+        info.gender = "woman"
         info.exactDateOfBirth = true
         info.dateOfBirth = "01.01.2000"
         info.birthTime = "12:00"
@@ -26,7 +26,7 @@ final class PartnerInfoModelTests: XCTestCase {
         XCTAssertEqual(request.partnerDateOfBirth, "01.01.2000")
         XCTAssertEqual(request.partnerBirthTime, "12:00")
         XCTAssertNil(request.partnerAge)
-        XCTAssertEqual(request.partnerGender, "Женский")
+        XCTAssertEqual(request.partnerGender, "woman")
         XCTAssertTrue(request.exactDateOfBirth)
         XCTAssertEqual(request.selectedTests, [CompatibilityTestTypes.astrology.rawValue])
     }

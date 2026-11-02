@@ -10,18 +10,7 @@ import Vapor
 
 extension Application {
     func configureMigrations() {
-        self.migrations.add(CreateUser())
-        self.migrations.add(CreateToken())
-        self.migrations.add(CreateUserProfileInfo())
-        self.migrations.add(CreateHistory())
-        self.migrations.add(CreateHoroscope())
-        self.migrations.add(CreateDailyContent())
-        self.migrations.add(HashTokens())
-        self.migrations.add(CreateSharedHoroscopes())
-        self.migrations.add(CreateIndexes())
-        self.migrations.add(CreateTestUsages())
-        self.migrations.add(AddAIConsent())
-        self.migrations.add(AddAppleSignIn())
-        self.migrations.add(CreatePasswordResets())
+        self.migrations.add(DropLegacySchema())
+        self.migrations.add(CreateSchema())
     }
 }

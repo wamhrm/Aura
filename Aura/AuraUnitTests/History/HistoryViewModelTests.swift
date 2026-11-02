@@ -104,7 +104,7 @@ final class HistoryViewModelTests: XCTestCase {
                          selectedTests: [],
                          archetypeTitle: "",
                          archetypeSubtitle: "",
-                         zodiacSign: "",
+                         zodiacSign: .aquarius,
                          compatibilityScore: nil,
                          partnerName: nil,
                          partnerZodiacSign: nil,

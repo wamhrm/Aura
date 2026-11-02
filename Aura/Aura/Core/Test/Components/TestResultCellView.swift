@@ -37,30 +37,39 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
 
 enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
     // Астрология
-    case natalChart = "Анализ натальной карты"
-    case planetaryAspects = "Планетарные аспекты"
+    case natalChart, planetaryAspects
     
     // Поведенческие паттерны
-    case socialFilter = "Социальный фильтр"
-    case energyDrain = "Источник истощения"
+    case socialFilter, energyDrain
     
     // Стиль принятия решений
-    case logicBalance = "Баланс логики"
-    case intuitionFactor = "Фактор интуиции"
+    case logicBalance, intuitionFactor
     
     // Стиль привязанности
-    case autonomyNeed = "Потребность в автономии"
-    case securityBase = "База безопасности"
+    case autonomyNeed, securityBase
     
     // Идеальный партнер
-    case intellectualMatch = "Интеллектуальная схожесть"
-    case emotionalDepth = "Глубина связи"
+    case intellectualMatch, emotionalDepth
 
     // Язык любви
-    case loveExpression = "Способы проявления чувств"
-    case emotionalNeeds = "Эмоциональные потребности"
+    case loveExpression, emotionalNeeds
 
-    var title: String { rawValue }
+    var title: String {
+        switch self {
+            case .natalChart: "Анализ натальной карты"
+            case .planetaryAspects: "Планетарные аспекты"
+            case .socialFilter: "Социальный фильтр"
+            case .energyDrain: "Источник истощения"
+            case .logicBalance: "Баланс логики"
+            case .intuitionFactor: "Фактор интуиции"
+            case .autonomyNeed: "Потребность в автономии"
+            case .securityBase: "База безопасности"
+            case .intellectualMatch: "Интеллектуальная схожесть"
+            case .emotionalDepth: "Глубина связи"
+            case .loveExpression: "Способы проявления чувств"
+            case .emotionalNeeds: "Эмоциональные потребности"
+        }
+    }
 
     var icon: String {
         switch self {
@@ -82,26 +91,34 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
 
 enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
     // Астрология пары
-    case synastry = "Синастрия знаков"
-    case karmicLesson = "Кармический урок"
+    case synastry, karmicLesson
     
     // Паттерны отношений
-    case dominanceDynamics = "Динамика лидерства"
-    case emotionalResonance = "Эмоциональный резонанс"
+    case dominanceDynamics, emotionalResonance
     
     // Стили привязанности
-    case attachmentBond = "Сцепка типов"
-    case comfortDistance = "Дистанция комфорта"
+    case attachmentBond, comfortDistance
     
     // Языки любви
-    case languageMatch = "Совпадение языков"
-    case translationNeeds = "Трудности перевода"
+    case languageMatch, translationNeeds
     
     // Конфликты и примирение
-    case conflictMechanics = "Механика ссор"
-    case peaceRecovery = "Скорость примирения"
+    case conflictMechanics, peaceRecovery
     
-    var title: String { rawValue }
+    var title: String {
+        switch self {
+            case .synastry: "Синастрия знаков"
+            case .karmicLesson: "Кармический урок"
+            case .dominanceDynamics: "Динамика лидерства"
+            case .emotionalResonance: "Эмоциональный резонанс"
+            case .attachmentBond: "Сцепка типов"
+            case .comfortDistance: "Дистанция комфорта"
+            case .languageMatch: "Совпадение языков"
+            case .translationNeeds: "Трудности перевода"
+            case .conflictMechanics: "Механика ссор"
+            case .peaceRecovery: "Скорость примирения"
+        }
+    }
 
     var icon: String {
         switch self {

@@ -22,7 +22,7 @@ struct HoroscopeDetailsView: View {
                             .padding(.top, 8)
                             .padding(.vertical, 18)
                         
-                        Text(horoscope.type.rawValue)
+                        Text(horoscope.type.title)
                             .font(.title3)
                             .fontDesign(.monospaced)
                             .bold()
@@ -73,7 +73,7 @@ struct HoroscopeDetailsView: View {
                         .font(Adaptive.size(.system(size: 15), .default))
                         
                         ForEach(horoscope.items, id: \.self) { item in
-                            HoroscopeDetailsCellView(type: item.title, description: item.description)
+                            HoroscopeDetailsCellView(type: item.key, description: item.description)
                         }
                     }
                 }

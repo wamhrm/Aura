@@ -47,9 +47,8 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func createAccount(name: String, email: String, password: String) async throws {
-        let normalizedEmail = normalizeEmail(email)
-        try await networkService.createAccount(name: name, email: normalizedEmail, password: password)
-        try await signIn(email: normalizedEmail, password: password)
+        let response = try await networkService.createAccount(name: name, email: normalizeEmail(email), password: password)
+        startSession(with: response)
     }
 
     func signIn(email: String, password: String) async throws {
@@ -134,6 +133,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
         if hasToken, let user = storage.loadUser() {
             authState.send(.signedIn(user))
+            refreshUser()
             return
         }
 
@@ -142,6 +142,22 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         }
 
         authState.send(.signedOut)
+    }
+
+    // The saved profile may be out of date: it could have changed on another device
+    private func refreshUser() {
+        let networkService = networkService
+
+        Task { [weak self] in
+            guard let user = try? await networkService.fetchCurrentUser(),
+                  let self,
+                  case .signedIn(let currentUser) = authState.value,
+                  currentUser.id == user.id,
+                  currentUser != user else { return }
+
+            storage.saveUser(user)
+            authState.send(.signedIn(user))
+        }
     }
 
     private func startSession(with response: AuthTokenResponse) {

@@ -165,15 +165,8 @@ struct EmotionalProfileBar: View {
     }
 }
 
-enum EmotionalProfileTypes: String, Codable {
-    case temperament = "Темперамент"
-    case thinking = "Мышление"
-    case organization = "Организованность"
-    case relationships = "Отношения"
-    case emotionalResonance = "Эмоциональный резонанс"
-    case innerOpenness = "Внутренняя открытость"
-    case soulAlignment = "Гармония души"
-    case emotionalWarmth = "Эмоциональная теплота"
+enum EmotionalProfileTypes: String, Codable, CaseIterable {
+    case temperament, thinking, organization, relationships, emotionalResonance, innerOpenness, soulAlignment, emotionalWarmth
 
     var leftSide: String {
         switch self {

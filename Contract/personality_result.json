@@ -1,0 +1,35 @@
+{
+  "name": "Анна",
+  "zodiacSign": "taurus",
+  "selectedTests": ["astrology", "behavioralPatterns"],
+  "archetypeTitle": "Тихий стратег",
+  "archetypeSubtitle": "Вы думаете дольше других и редко ошибаетесь",
+  "overview": {
+    "title": "Основная характеристика",
+    "description": "Общий персональный вывод"
+  },
+  "emotionalBar": [
+    { "key": "temperament", "value": 3 },
+    { "key": "thinking", "value": 8 },
+    { "key": "organization", "value": 7 },
+    { "key": "relationships", "value": 5 }
+  ],
+  "sections": [
+    {
+      "selectedTest": "astrology",
+      "description": "Основной текст секции",
+      "items": [
+        { "key": "natalChart", "description": "Описание пункта" },
+        { "key": "planetaryAspects", "description": "Описание пункта" }
+      ]
+    },
+    {
+      "selectedTest": "behavioralPatterns",
+      "description": "Основной текст секции",
+      "items": [
+        { "key": "socialFilter", "description": "Описание пункта" },
+        { "key": "energyDrain", "description": "Описание пункта" }
+      ]
+    }
+  ]
+}

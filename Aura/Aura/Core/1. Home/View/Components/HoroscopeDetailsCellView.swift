@@ -22,7 +22,7 @@ struct HoroscopeDetailsCellView: View {
                            height: Adaptive.size(35, 35))
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(type.color).opacity(0.2)))
                 
-                Text(type.rawValue)
+                Text(type.title)
                     .font(Adaptive.size(.callout, .default))
                     .bold()
             }
@@ -39,9 +39,15 @@ struct HoroscopeDetailsCellView: View {
 }
 
 enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
-    case love = "Любовь"
-    case health = "Здоровье"
-    case work = "Работа"
+    case love, health, work
+
+    var title: String {
+        switch self {
+            case .love: "Любовь"
+            case .health: "Здоровье"
+            case .work: "Работа"
+        }
+    }
     
     var icon: String {
         switch self {

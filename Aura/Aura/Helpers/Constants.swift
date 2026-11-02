@@ -8,7 +8,8 @@
 import Foundation
 
 nonisolated enum Constants {
-    static let productionBaseURL = "https://aura-mogr.onrender.com"
+    static let productionBaseURL = "https://aurawamhrm.space"
+    static let apiPath = "/v1"
     static let tokenPath = "com.aura.auth.token"
 
     static var baseURL: String {
@@ -18,6 +19,10 @@ nonisolated enum Constants {
         }
         #endif
         return productionBaseURL
+    }
+
+    static var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
     }
 
     static var privacyPolicyURL: URL? {
@@ -32,4 +37,17 @@ nonisolated enum Constants {
 
     static let selectedThemeKey = "selectedTheme"
     static let accentColorKey = "accentColor"
+}
+
+// Copies of the server rules for instant feedback. ContractTests compares them with Contract/keys.json.
+nonisolated enum InputLimits {
+    static let minNameLength = 2
+    static let minPasswordLength = 6
+    static let resetCodeLength = 6
+    static let minUserAge = 16
+    static let maxUserAge = 100
+    static let minPartnerAge = 16
+    static let maxPartnerAge = 120
+    static let minPersonalityTests = 2
+    static let minCompatibilityTests = 3
 }

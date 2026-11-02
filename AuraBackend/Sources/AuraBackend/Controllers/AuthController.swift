@@ -27,7 +27,7 @@ struct AuthController: RouteCollection {
         authenticated.delete("account", use: deleteAccount)
     }
 
-    private func createAccount(_ req: Request) async throws -> HTTPStatus {
+    private func createAccount(_ req: Request) async throws -> Response {
         let data = try req.content.decode(CreateAccountRequest.self)
         let name = data.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let email = normalizedEmail(data.email)
@@ -58,7 +58,7 @@ struct AuthController: RouteCollection {
             throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
         }
 
-        return .created
+        return try await issueToken(for: user, on: req).encodeResponse(status: .created, for: req)
     }
 
     private func signIn(_ req: Request) async throws -> AuthDTO {

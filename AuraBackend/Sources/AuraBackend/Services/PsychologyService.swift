@@ -12,15 +12,15 @@ struct PsychologyService {
     private let openAIService = OpenAIService()
 
     func makePersonalityTest(user: User,
-                             testTitles: [String],
+                             testKeys: [String],
                              req: Request) async throws -> PersonalityResultDTO {
-        guard let selectedTests = PersonalityTests.from(titles: testTitles) else {
+        guard let selectedTests = PersonalityTests.from(keys: testKeys) else {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
         let uniqueSelectedTests = unique(selectedTests)
 
-        guard uniqueSelectedTests.count >= 2 else {
+        guard uniqueSelectedTests.count >= PersonalityTests.minSelected else {
             throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
         }
 
@@ -47,7 +47,7 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Имя партнёра должно быть не длиннее 50 символов")
         }
 
-        guard PartnerInfoOptions.genders.contains(partnerGender) else {
+        guard ProfileInfoOptions.genders.contains(partnerGender) else {
             throw Abort(.badRequest, reason: "Укажите пол партнёра")
         }
 
@@ -71,14 +71,14 @@ struct PsychologyService {
             }
         }
 
-        guard let selectedTests = CompatibilityTests.from(titles: request.selectedTests) else {
+        guard let selectedTests = CompatibilityTests.from(keys: request.selectedTests) else {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
         let uniqueSelectedTests = unique(selectedTests)
 
-        guard uniqueSelectedTests.count >= 2 else {
-            throw Abort(.badRequest, reason: "Выберите минимум 2 теста")
+        guard uniqueSelectedTests.count >= CompatibilityTests.minSelected else {
+            throw Abort(.badRequest, reason: "Выберите минимум 3 теста")
         }
 
         guard user.hasCompletedProfileInfo else {

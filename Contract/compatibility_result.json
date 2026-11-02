@@ -1,0 +1,52 @@
+{
+  "userName": "Анна",
+  "userZodiacSign": "taurus",
+  "partnerName": "Иван",
+  "partnerZodiacSign": "aquarius",
+  "compatibilityScore": 64,
+  "selectedTests": ["astrology", "behavioralPatterns", "attachmentCompatibility"],
+  "title": "Спокойный союз",
+  "subtitle": "Вы сближаетесь медленно, но надолго",
+  "overview": {
+    "title": "Основная динамика",
+    "description": "Общий вывод о паре"
+  },
+  "emotionalBar": [
+    { "key": "emotionalResonance", "value": 6 },
+    { "key": "innerOpenness", "value": 4 },
+    { "key": "soulAlignment", "value": 7 },
+    { "key": "emotionalWarmth", "value": 5 }
+  ],
+  "sections": [
+    {
+      "selectedTest": "astrology",
+      "description": "Основной текст секции",
+      "items": [
+        { "key": "synastry", "description": "Описание пункта" },
+        { "key": "karmicLesson", "description": "Описание пункта" }
+      ]
+    },
+    {
+      "selectedTest": "behavioralPatterns",
+      "description": "Основной текст секции",
+      "items": [
+        { "key": "dominanceDynamics", "description": "Описание пункта" },
+        { "key": "emotionalResonance", "description": "Описание пункта" }
+      ]
+    },
+    {
+      "selectedTest": "attachmentCompatibility",
+      "description": "Основной текст секции",
+      "items": [
+        { "key": "attachmentBond", "description": "Описание пункта" },
+        { "key": "comfortDistance", "description": "Описание пункта" }
+      ]
+    }
+  ],
+  "forecast": {
+    "recognitionTitle": "Редкое узнавание",
+    "recognitionDescription": "Описание",
+    "potentialTitle": "Стабильный союз",
+    "potentialDescription": "Описание"
+  }
+}

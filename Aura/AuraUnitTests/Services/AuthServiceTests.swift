@@ -46,7 +46,7 @@ final class AuthServiceTests: XCTestCase {
         }
     }
 
-    func test_createAccount_callsNetworkThenSignsIn() async throws {
+    func test_createAccount_startsSessionWithoutSeparateSignIn() async throws {
         // Given
         let network = MockNetworkService()
         let sut = makeSUT(network: network)
@@ -56,7 +56,7 @@ final class AuthServiceTests: XCTestCase {
 
         // Then
         XCTAssertEqual(network.createAccountCallCount, 1)
-        XCTAssertEqual(network.signInCallCount, 1)
+        XCTAssertEqual(network.signInCallCount, 0)
         guard case .signedIn = sut.authState.value else {
             return XCTFail("Ожидался signedIn")
         }

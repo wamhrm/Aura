@@ -1,0 +1,40 @@
+{
+  "personalityTests": {
+    "astrology": ["natalChart", "planetaryAspects"],
+    "behavioralPatterns": ["socialFilter", "energyDrain"],
+    "decisionMaking": ["logicBalance", "intuitionFactor"],
+    "attachmentStyle": ["autonomyNeed", "securityBase"],
+    "idealPartner": ["intellectualMatch", "emotionalDepth"],
+    "loveLanguage": ["loveExpression", "emotionalNeeds"]
+  },
+  "compatibilityTests": {
+    "astrology": ["synastry", "karmicLesson"],
+    "behavioralPatterns": ["dominanceDynamics", "emotionalResonance"],
+    "attachmentCompatibility": ["attachmentBond", "comfortDistance"],
+    "loveLanguages": ["languageMatch", "translationNeeds"],
+    "conflictResolution": ["conflictMechanics", "peaceRecovery"]
+  },
+  "personalityBars": ["temperament", "thinking", "organization", "relationships"],
+  "compatibilityBars": ["emotionalResonance", "innerOpenness", "soulAlignment", "emotionalWarmth"],
+  "zodiacSigns": ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"],
+  "horoscopeItems": ["love", "health", "work"],
+  "profileOptions": {
+    "gender": ["man", "woman"],
+    "socialType": ["introvert", "ambivert", "extrovert"],
+    "conflictStyle": ["mediator", "direct", "avoider"],
+    "emotionalCore": ["logic", "intuitive"],
+    "decisionStyle": ["planner", "spontaneous", "procrastinator"],
+    "coreFocus": ["stability", "growth", "peace"]
+  },
+  "limits": {
+    "minNameLength": 2,
+    "minPasswordLength": 6,
+    "resetCodeLength": 6,
+    "minUserAge": 16,
+    "maxUserAge": 100,
+    "minPartnerAge": 16,
+    "maxPartnerAge": 120,
+    "minPersonalityTests": 2,
+    "minCompatibilityTests": 3
+  }
+}

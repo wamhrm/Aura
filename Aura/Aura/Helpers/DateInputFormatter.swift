@@ -36,7 +36,7 @@ enum DateInputFormatter {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let currentYear = calendar.component(.year, from: today)
-        let minYear = currentYear - 100
+        let minYear = currentYear - InputLimits.maxUserAge
 
         guard year >= minYear, year <= currentYear else { return false }
 
@@ -55,7 +55,7 @@ enum DateInputFormatter {
         let birthDate = calendar.startOfDay(for: date)
         guard birthDate <= today else { return false }
 
-        guard let earliestBirthDate = calendar.date(byAdding: .year, value: -100, to: today) else {
+        guard let earliestBirthDate = calendar.date(byAdding: .year, value: -InputLimits.maxUserAge, to: today) else {
             return false
         }
 

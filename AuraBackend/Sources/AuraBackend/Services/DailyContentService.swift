@@ -28,17 +28,17 @@ struct DailyContentService {
         }
 
         let userID = try user.requireID()
-        let today = DailyDateHelper.todayString()
+        let today = DailyDateHelper.todayString(in: req.userTimeZone)
 
         if let entry = try await findEntry(kind: kind, userID: userID, on: database),
-           DailyDateHelper.isToday(entry.generatedDate) {
+           entry.generatedDate == today {
             return try DailyContentDTOMapper.map(entry)
         }
 
         return try await SingleFlight.shared.run(key: "daily:\(kind.rawValue):\(userID):\(today)") {
             // Another request may have finished generating while this one was on its way here
             if let entry = try await findEntry(kind: kind, userID: userID, on: database),
-               DailyDateHelper.isToday(entry.generatedDate) {
+               entry.generatedDate == today {
                 return try DailyContentDTOMapper.map(entry)
             }
 

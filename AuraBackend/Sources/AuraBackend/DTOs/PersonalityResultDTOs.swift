@@ -24,9 +24,9 @@ struct PersonalityOverview: Content {
 }
 
 struct PersonalityEmotionalBar: Content {
-    static let titles = ["Темперамент", "Мышление", "Организованность", "Отношения"]
+    static let keys = ["temperament", "thinking", "organization", "relationships"]
 
-    let title: String
+    let key: String
     let value: Int
 }
 
@@ -37,7 +37,7 @@ struct PersonalitySection: Content {
 }
 
 struct PersonalitySectionItems: Content {
-    let title: String
+    let key: String
     let description: String
 }
 
@@ -50,6 +50,8 @@ struct PersonalityTestContent: Codable {
 }
 
 enum PersonalityTests: String, CaseIterable {
+    static let minSelected = 2
+
     case astrology
     case behavioralPatterns
     case decisionMaking
@@ -74,38 +76,58 @@ enum PersonalityTests: String, CaseIterable {
         }
     }
 
-    private static func from(title: String) -> PersonalityTests? {
-        allCases.first { $0.title == title }
-    }
-
-    static func from(titles: [String]) -> [PersonalityTests]? {
-        let mapped = titles.compactMap(from(title:))
-        return mapped.count == titles.count ? mapped : nil
+    static func from(keys: [String]) -> [PersonalityTests]? {
+        let mapped = keys.compactMap(PersonalityTests.init(rawValue:))
+        return mapped.count == keys.count ? mapped : nil
     }
 }
 
-enum PersonalityItems {
-    private static let astrology = ["Анализ натальной карты", "Планетарные аспекты"]
-    private static let behavioralPatterns = ["Социальный фильтр", "Источник истощения"]
-    private static let decisionMaking = ["Баланс логики", "Фактор интуиции"]
-    private static let attachmentStyle = ["Потребность в автономии", "База безопасности"]
-    private static let idealPartner = ["Интеллектуальная схожесть", "Глубина связи"]
-    private static let loveLanguage = ["Способы проявления чувств", "Эмоциональные потребности"]
+enum PersonalityItems: String, CaseIterable {
+    case natalChart, planetaryAspects, socialFilter, energyDrain, logicBalance, intuitionFactor, autonomyNeed, securityBase, intellectualMatch, emotionalDepth, loveExpression, emotionalNeeds
 
-    static func allowed(for test: PersonalityTests) -> [String] {
+    var title: String {
+        switch self {
+            case .natalChart:
+                return "Анализ натальной карты"
+            case .planetaryAspects:
+                return "Планетарные аспекты"
+            case .socialFilter:
+                return "Социальный фильтр"
+            case .energyDrain:
+                return "Источник истощения"
+            case .logicBalance:
+                return "Баланс логики"
+            case .intuitionFactor:
+                return "Фактор интуиции"
+            case .autonomyNeed:
+                return "Потребность в автономии"
+            case .securityBase:
+                return "База безопасности"
+            case .intellectualMatch:
+                return "Интеллектуальная схожесть"
+            case .emotionalDepth:
+                return "Глубина связи"
+            case .loveExpression:
+                return "Способы проявления чувств"
+            case .emotionalNeeds:
+                return "Эмоциональные потребности"
+        }
+    }
+
+    static func allowed(for test: PersonalityTests) -> [PersonalityItems] {
         switch test {
-            case .behavioralPatterns:
-                return behavioralPatterns
-            case .decisionMaking:
-                return decisionMaking
-            case .attachmentStyle:
-                return attachmentStyle
-            case .idealPartner:
-                return idealPartner
             case .astrology:
-                return astrology
+                return [.natalChart, .planetaryAspects]
+            case .behavioralPatterns:
+                return [.socialFilter, .energyDrain]
+            case .decisionMaking:
+                return [.logicBalance, .intuitionFactor]
+            case .attachmentStyle:
+                return [.autonomyNeed, .securityBase]
+            case .idealPartner:
+                return [.intellectualMatch, .emotionalDepth]
             case .loveLanguage:
-                return loveLanguage
+                return [.loveExpression, .emotionalNeeds]
         }
     }
 }

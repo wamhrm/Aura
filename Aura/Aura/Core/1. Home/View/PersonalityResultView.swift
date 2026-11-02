@@ -19,7 +19,7 @@ struct PersonalityResultView: View {
                 VStack(alignment: .leading, spacing: 15) {
                     VStack {
                         HStack(spacing: 15) {
-                            Text(result.zodiacSign)
+                            Text(result.zodiacSign.icon)
                                 .font(Adaptive.size(.default, .title3))
                                 .fontWeight(.semibold)
                                 .padding(10)
@@ -65,21 +65,21 @@ struct PersonalityResultView: View {
                     ResultSectionView(title: "Внутренний мир") {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
-                                EmotionalProfileBar(type: bar.title, value: bar.value)
+                                EmotionalProfileBar(type: bar.key, value: bar.value)
                             }
                         }
                         .padding(.top, 5)
                     }
                     
                     ForEach(result.sections, id: \.self) { test in
-                        ResultSectionView(title: test.selectedTest.rawValue) {
+                        ResultSectionView(title: test.selectedTest.title) {
                             Text(test.description)
                                 .font(Adaptive.size(.system(size: 15), .callout))
                                 .foregroundStyle(.deepGray)
                             
                             VStack(spacing: 15) {
                                 ForEach(test.items.enumerated(), id: \.element) { index, item in
-                                    TestResultCellView(test: item.title,
+                                    TestResultCellView(test: item.key,
                                                        description: item.description)
                                     
                                     if index < test.items.count - 1 {
