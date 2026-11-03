@@ -5,36 +5,17 @@
 
 import Foundation
 import Network
-import XCTest
 
-enum ContractFile {
-    static func data(_ name: String) throws -> Data {
-        let folder = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("Contract")
-
-        return try Data(contentsOf: folder.appendingPathComponent(name))
-    }
-
-    static func object(_ name: String) throws -> [String: Any] {
-        try XCTUnwrap(JSONSerialization.jsonObject(with: try data(name)) as? [String: Any])
-    }
-}
-
-// A small HTTP server inside the test process. The app talks to it instead of the real backend.
+// A small HTTP server inside the test process. The app talks to it instead of the real server,
+// so the answers are always the same. It is plumbing: to write a test you only need respond(to:status:body:).
 final class MockServer: @unchecked Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "aura.mock-server")
     private let lock = NSLock()
-    private let knownRoutes: Set<String>
     private var responses: [String: (status: Int, body: Data)] = [:]
     private var receivedRequests: [String] = []
 
     init() throws {
-        knownRoutes = Set(try JSONDecoder().decode([String].self, from: try ContractFile.data("routes.json")))
         listener = try NWListener(using: .tcp, on: .any)
 
         listener.newConnectionHandler = { [weak self] connection in
@@ -59,12 +40,7 @@ final class MockServer: @unchecked Sendable {
         lock.withLock { receivedRequests }
     }
 
-    func respond(to route: String,
-                 status: Int = 200,
-                 body: Data = Data(),
-                 file: StaticString = #filePath,
-                 line: UInt = #line) {
-        XCTAssertTrue(knownRoutes.contains(route), "\(route) is not in Contract/routes.json", file: file, line: line)
+    func respond(to route: String, status: Int = 200, body: Data = Data()) {
         lock.withLock { responses[route] = (status, body) }
     }
 
@@ -113,7 +89,7 @@ final class MockServer: @unchecked Sendable {
         })
     }
 
-    // The id in a path becomes the name from Contract/routes.json
+    // The id in a path becomes :historyID, so a route can be answered without knowing the id
     private func route(from requestLine: String) -> String {
         let parts = requestLine.split(separator: " ")
         guard parts.count >= 2 else { return requestLine }

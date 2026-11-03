@@ -41,6 +41,17 @@
                ReferencedContainer = "container:Aura.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "36F589A42FCDFE3900091154"
+               BuildableName = "AuraUITests.xctest"
+               BlueprintName = "AuraUITests"
+               ReferencedContainer = "container:Aura.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
