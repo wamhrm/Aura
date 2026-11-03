@@ -42,8 +42,7 @@ struct CompatibilityView: View {
                                 headerText("Имя *")
 
                                 CompatibilityTextFieldView(title: "Введите имя",
-                                                           text: $vm.partnerInfo.name,
-                                                           type: .name())
+                                                           text: $vm.partnerInfo.name)
                             }
 
                             VStack(alignment: .leading) {
@@ -57,25 +56,23 @@ struct CompatibilityView: View {
                             VStack(alignment: .leading) {
                                 headerText("Дата рождения")
 
-                                SelectionButtons<CompatibilityButtons.birthOptions> { button in
-                                    vm.selectBirthOption(button)
-                                }
-                                .padding(.bottom, 10)
-
-                                if vm.partnerInfo.exactDateOfBirth {
-                                    BirthDateFieldsView(birthDate: $vm.partnerInfo.birthDate,
-                                                        knowsBirthTime: $vm.partnerInfo.knowsBirthTime,
-                                                        birthTime: $vm.partnerInfo.birthTime,
-                                                        dateRange: BirthDateFormatter.partnerDateRange)
-                                } else {
-                                    CompatibilityTextFieldView(title: "Возраст (лет)",
-                                                               text: $vm.partnerInfo.age,
-                                                               type: .age(maxAge: InputLimits.maxPartnerAge))
-                                }
+                                BirthDateFieldsView(birthDate: $vm.partnerInfo.birthDate,
+                                                    knowsBirthTime: $vm.partnerInfo.knowsBirthTime,
+                                                    birthTime: $vm.partnerInfo.birthTime,
+                                                    dateRange: BirthDateFormatter.dateRange)
                             }
                         }
                         .padding(20)
                         .backgroundWithShape(12, .cardBackground, true)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Как ответил бы партнёр?")
+                                .font(Adaptive.size(.system(size: 15), .default))
+                                .fontWeight(.semibold)
+                                .padding(.leading, 4)
+
+                            PsychotypeSectionsView(profileInfo: $vm.partnerInfo.answers)
+                        }
 
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {

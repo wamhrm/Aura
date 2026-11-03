@@ -11,8 +11,13 @@ enum BirthDateFormatter {
     static let defaultDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
     static let defaultTime = Calendar.current.date(from: DateComponents(hour: 12, minute: 0)) ?? Date()
 
-    static let userDateRange = dateRange(minAge: InputLimits.minUserAge, maxAge: InputLimits.maxUserAge)
-    static let partnerDateRange = dateRange(minAge: InputLimits.minPartnerAge, maxAge: InputLimits.maxPartnerAge)
+    // Server rule for the user and the partner. The extra day covers the time zone difference with the server.
+    static let dateRange: ClosedRange<Date> = {
+        let now = Date()
+        let earliest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.maxUserAge, day: 1), to: now) ?? now
+        let latest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.minUserAge, day: -1), to: now) ?? now
+        return earliest...latest
+    }()
 
     static func dateString(from date: Date) -> String {
         formatter("dd.MM.yyyy").string(from: date)
@@ -28,14 +33,6 @@ enum BirthDateFormatter {
 
     static func time(from string: String) -> Date? {
         formatter("HH:mm").date(from: string)
-    }
-
-    // The extra day covers the time zone difference with the server
-    private static func dateRange(minAge: Int, maxAge: Int) -> ClosedRange<Date> {
-        let now = Date()
-        let earliest = Calendar.current.date(byAdding: DateComponents(year: -maxAge, day: 1), to: now) ?? now
-        let latest = Calendar.current.date(byAdding: DateComponents(year: -minAge, day: -1), to: now) ?? now
-        return earliest...latest
     }
 
     private static func formatter(_ dateFormat: String) -> DateFormatter {

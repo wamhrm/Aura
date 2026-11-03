@@ -10,24 +10,30 @@ import Foundation
 struct PartnerInfoModel {
     var name = ""
     var gender = ProfileInfoOption.man.rawValue
-    var exactDateOfBirth = true
     var birthDate = BirthDateFormatter.defaultDate
     var knowsBirthTime = false
     var birthTime = BirthDateFormatter.defaultTime
-    var age = ""
+    var answers = ProfileInfoModel()
+
+    var hasAllAnswers: Bool {
+        answers.socialType != nil &&
+        answers.conflictStyle != nil &&
+        answers.emotionalCore != nil &&
+        answers.decisionStyle != nil &&
+        answers.coreFocus != nil
+    }
 
     func compatibilityTestRequest(selectedTests: [CompatibilityTestTypes]) -> CompatibilityTestRequest {
-        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let gender = gender.trimmingCharacters(in: .whitespacesAndNewlines)
-        let age = age.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        return CompatibilityTestRequest(
-            partnerName: name,
-            partnerDateOfBirth: exactDateOfBirth ? BirthDateFormatter.dateString(from: birthDate) : nil,
-            partnerBirthTime: exactDateOfBirth && knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : nil,
-            partnerAge: !exactDateOfBirth && !age.isEmpty ? age : nil,
+        CompatibilityTestRequest(
+            partnerName: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            partnerDateOfBirth: BirthDateFormatter.dateString(from: birthDate),
+            partnerBirthTime: knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : nil,
             partnerGender: gender,
-            exactDateOfBirth: exactDateOfBirth,
+            partnerSocialType: answers.socialType ?? "",
+            partnerConflictStyle: answers.conflictStyle ?? "",
+            partnerEmotionalCore: answers.emotionalCore ?? "",
+            partnerDecisionStyle: answers.decisionStyle ?? "",
+            partnerCoreFocus: answers.coreFocus ?? "",
             selectedTests: selectedTests.map(\.rawValue))
     }
 }

@@ -9,16 +9,15 @@ import Vapor
 
 struct CompatibilityTestRequest: Content {
     let partnerName: String
-    let partnerDateOfBirth: String?
+    let partnerDateOfBirth: String
     let partnerBirthTime: String?
-    let partnerAge: String?
     let partnerGender: String
-    let exactDateOfBirth: Bool
+    let partnerSocialType: String
+    let partnerConflictStyle: String
+    let partnerEmotionalCore: String
+    let partnerDecisionStyle: String
+    let partnerCoreFocus: String
     let selectedTests: [String]
-}
-
-enum PartnerInfoOptions {
-    static let ageRange = 16...120
 }
 
 struct CompatibilityResultDTO: Content {
@@ -69,7 +68,6 @@ struct CompatibilityForecast: Content {
 struct CompatibilityTestContent: Codable {
     let title: String
     let subtitle: String
-    let compatibilityScore: Int
     let overview: CompatibilityOverview
     let emotionalBar: [CompatibilityEmotionalBar]
     let sections: [CompatibilitySection]
@@ -108,7 +106,7 @@ enum CompatibilityItems: String, CaseIterable {
     var title: String {
         switch self {
             case .synastry:
-                return "Синастрия знаков"
+                return "Совместимость знаков"
             case .karmicLesson:
                 return "Кармический урок"
             case .dominanceDynamics:

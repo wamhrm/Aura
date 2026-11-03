@@ -129,6 +129,16 @@ struct AIConsentLock: View {
     }
 }
 
+struct AIResultDisclaimerView: View {
+    var body: some View {
+        Text("Результат создан AI на основе ваших ответов и даты рождения. Это повод задуматься, а не диагноз и не совет специалиста")
+            .font(Adaptive.size(.caption, .footnote))
+            .foregroundStyle(.deepGray)
+            .multilineTextAlignment(.center)
+            .padding(.top, 5)
+    }
+}
+
 struct BirthDateFieldsView: View {
     @Binding var birthDate: Date
     @Binding var knowsBirthTime: Bool

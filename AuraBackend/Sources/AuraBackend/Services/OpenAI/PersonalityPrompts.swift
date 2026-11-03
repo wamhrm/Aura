@@ -46,6 +46,7 @@ enum PersonalityPrompts {
         - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
         - стиль принятия решений: \(user.decisionStyle ?? "не указано")
         - фокус в отношениях: \(user.coreFocus ?? "не указано")
+        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
 
         Выбранные тесты:
         \(selectedTestLines)
@@ -56,7 +57,7 @@ enum PersonalityPrompts {
           "archetypeSubtitle": "1 предложение общего вывода (8-10 слов)",
           "overview": {
             "title": "Основная характеристика",
-            "description": "общий персональный вывод (20-25 слов)"
+            "description": "общий персональный вывод (40-60 слов)"
           },
           "emotionalBar": [
             { "key": "temperament", "value": дай значение от 1 до 10 (1 это максимальный интроверт, 10 это максимальный экстраверт) },
@@ -67,9 +68,9 @@ enum PersonalityPrompts {
           "sections": [
             {
               "selectedTest": "ключ одного из тестов из списка выбранных",
-              "description": "основной текст секции (12-15 слов)",
+              "description": "основной текст секции (30-40 слов)",
               "items": [
-                { "key": "один из разрешённых key для этого теста", "description": "описание (7-10 слов)" }
+                { "key": "один из разрешённых key для этого теста", "description": "описание (20-30 слов)" }
               ]
             }
           ]
@@ -205,6 +206,8 @@ enum PersonalityPrompts {
         В каждой секции:
         - ровно 2 items
         - key только из разрешённого списка
+
+        Для теста astrology опирайся только на знак зодиака и дату рождения. Не упоминай положение планет, дома, асцендент и натальную карту: их расчёта нет.
 
         Не добавляй секции для тестов, которых нет в selectedTests.
 

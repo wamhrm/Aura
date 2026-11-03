@@ -50,17 +50,19 @@ struct OpenAIService {
                                selectedTests: [CompatibilityTests],
                                req: Request) async throws -> CompatibilityResultDTO {
         let userSign = try zodiacSign(of: user)
+        let score = CompatibilityScore.calculate(user: user, partner: partner)
 
         return try await client.generate(
             messages: [OpenAIMessage(role: "system", content: CompatibilityPrompts.system),
                        OpenAIMessage(role: "user", content: CompatibilityPrompts.user(for: user,
                                                                                       partner: partner,
+                                                                                      score: score,
                                                                                       selectedTests: selectedTests))],
             responseFormat: OpenAIResponseFormat(name: "compatibility_result",
                                                  schema: CompatibilityPrompts.schema(for: selectedTests)),
             req: req) { data in
                 let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
-                let partnerDate = compatibilityPartnerDateOfBirth(from: partner)
+                let partnerDate = UserDateFormatter.date(from: partner.partnerDateOfBirth)
 
                 try validator.requireText(analysis.title,
                                           analysis.subtitle,
@@ -75,7 +77,7 @@ struct OpenAIService {
                                               userZodiacSign: userSign.rawValue,
                                               partnerName: partner.partnerName,
                                               partnerZodiacSign: partnerDate.flatMap(HoroscopeSign.from(dateOfBirth:))?.rawValue,
-                                              compatibilityScore: min(max(analysis.compatibilityScore, 0), 100),
+                                              compatibilityScore: score,
                                               selectedTests: selectedTests.map(\.rawValue),
                                               title: analysis.title,
                                               subtitle: analysis.subtitle,
@@ -85,15 +87,6 @@ struct OpenAIService {
                                                                                             selectedTests: selectedTests),
                                               forecast: analysis.forecast)
             }
-    }
-
-    private func compatibilityPartnerDateOfBirth(from partner: CompatibilityTestRequest) -> Date? {
-        guard partner.exactDateOfBirth,
-              let dateString = partner.partnerDateOfBirth else {
-            return nil
-        }
-
-        return UserDateFormatter.date(from: dateString)
     }
 
     // MARK: - Horoscope

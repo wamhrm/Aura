@@ -39,15 +39,14 @@ nonisolated enum Constants {
     static let accentColorKey = "accentColor"
 }
 
-// Copies of the server rules for instant feedback. ContractTests compares them with Contract/keys.json.
+// Copies of the server rules for instant feedback
 nonisolated enum InputLimits {
     static let minNameLength = 2
+    static let maxNameLength = 50
     static let minPasswordLength = 8
     static let resetCodeLength = 6
     static let minUserAge = 16
     static let maxUserAge = 100
-    static let minPartnerAge = 16
-    static let maxPartnerAge = 120
     static let minPersonalityTests = 2
     static let minCompatibilityTests = 3
 }

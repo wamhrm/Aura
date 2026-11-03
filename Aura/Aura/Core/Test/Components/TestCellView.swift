@@ -72,7 +72,7 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 
     var title: String {
         switch self {
-            case .astrology: "Астрология"
+            case .astrology: "Астрологический портрет"
             case .behavioralPatterns: "Поведенческие паттерны"
             case .decisionMaking: "Стиль принятия решений"
             case .attachmentStyle: "Стиль привязанности"
@@ -83,7 +83,7 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 
     var description: String {
         switch self {
-            case .astrology: "Узнайте силу ваших планет"
+            case .astrology: "Что говорит ваш знак"
             case .behavioralPatterns: "Разберите свои реакции"
             case .decisionMaking: "Поймите, как вы выбираете"
             case .attachmentStyle: "Определите ваш стиль отношений"
@@ -116,7 +116,7 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 
     var deepDescription: String {
         switch self {
-            case .astrology: "Получите подробный разбор вашей натальной карты: положение планет, сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение."
+            case .astrology: "Получите разбор по вашему знаку зодиака: сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение."
             case .behavioralPatterns: "Разберите повторяющиеся сценарии поведения: как вы реагируете на стресс, близость, неопределенность и эмоциональное напряжение."
             case .decisionMaking: "Поймите, что сильнее влияет на ваши решения: эмоции, логика, интуиция или потребность в стабильности. Это поможет выбирать спокойнее и увереннее."
             case .attachmentStyle: "Определите свой стиль привязанности и разберите модели поведения в отношениях. Узнаете, почему вы реагируете определённым образом и какие сценарии повторяются чаще всего."
@@ -127,8 +127,8 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 
     var includedItems: [String] {
         switch self {
-            case .astrology: ["Анализ натальной карты",
-                        "Планетарные аспекты",
+            case .astrology: ["Черты вашего знака",
+                        "Знак и ваш характер",
                         "Сильные и слабые стороны",
                         "Личностные особенности"]
             case .behavioralPatterns: ["Повторяющиеся реакции",
@@ -170,7 +170,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 
     var description: String {
         switch self {
-            case .astrology: "Общая динамика"
+            case .astrology: "Совместимость ваших знаков"
             case .behavioralPatterns: "Как вы ведете себя"
             case .attachmentCompatibility: "Безопасность и дистанция"
             case .loveLanguages: "Как вы даете и принимаете любовь"
@@ -200,7 +200,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 
     var deepDescription: String {
         switch self {
-            case .astrology: "Сравните ваши натальные показатели и узнайте, где между вами возникает легкость, напряжение, притяжение и долгосрочный потенциал."
+            case .astrology: "Сравните ваши знаки зодиака и узнайте, где между вами возникает легкость, напряжение, притяжение и долгосрочный потенциал."
             case .behavioralPatterns: "Разберите, как ваши привычные реакции сочетаются в паре: кто сближается, кто отдаляется, где возникает поддержка, а где недопонимание."
             case .attachmentCompatibility: "Поймите, насколько ваши стили привязанности подходят друг другу и какие сценарии могут создавать тревогу, холодность или ощущение безопасности."
             case .loveLanguages: "Сравните ваши способы проявлять любовь, принимать заботу и чувствовать значимость в отношениях."
@@ -210,8 +210,8 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 
     var includedItems: [String] {
         switch self {
-            case .astrology: ["Синастрия пары",
-                        "Солнце, Луна и Венера",
+            case .astrology: ["Совместимость знаков",
+                        "Сильные и слабые стороны пары",
                         "Точки притяжения",
                         "Потенциал отношений"]
             case .behavioralPatterns: ["Реакции в близости",

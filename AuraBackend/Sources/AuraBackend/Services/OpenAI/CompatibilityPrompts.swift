@@ -13,7 +13,6 @@ enum CompatibilityPrompts {
 
         return .object([("title", .string),
                         ("subtitle", .string),
-                        ("compatibilityScore", .integer),
                         ("overview", .titledText),
                         ("emotionalBar", .array(.object([("key", .stringEnum(CompatibilityEmotionalBar.keys)),
                                                          ("value", .integer)]))),
@@ -29,6 +28,7 @@ enum CompatibilityPrompts {
 
     static func user(for user: User,
                      partner: CompatibilityTestRequest,
+                     score: Int,
                      selectedTests: [CompatibilityTests]) -> String {
         let selectedTestLines = selectedTests
             .map { "- " + $0.rawValue + " (" + $0.title + ")" }
@@ -43,10 +43,6 @@ enum CompatibilityPrompts {
             }
             .joined(separator: "\n")
 
-        let partnerBirthDate = partner.exactDateOfBirth
-            ? (partner.partnerDateOfBirth ?? "не указана")
-            : (partner.partnerAge.map { $0 + " лет" } ?? "не указан")
-
         return """
         Данные пользователя:
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
@@ -57,11 +53,20 @@ enum CompatibilityPrompts {
         - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
         - стиль принятия решений: \(user.decisionStyle ?? "не указано")
         - фокус в отношениях: \(user.coreFocus ?? "не указано")
+        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
 
         Данные партнёра:
-        - дата рождения или возраст: \(partnerBirthDate)
+        - дата рождения: \(partner.partnerDateOfBirth)
         - время рождения: \(partner.partnerBirthTime ?? "не указано")
         - пол: \(partner.partnerGender)
+        - социальный тип: \(partner.partnerSocialType)
+        - стиль конфликта: \(partner.partnerConflictStyle)
+        - эмоциональное ядро: \(partner.partnerEmotionalCore)
+        - стиль принятия решений: \(partner.partnerDecisionStyle)
+        - фокус в отношениях: \(partner.partnerCoreFocus)
+        - знак зодиака: \(UserDateFormatter.date(from: partner.partnerDateOfBirth).flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+
+        Совместимость пары: \(score)%. Это число уже посчитано, не меняй его и объясни, почему получилось именно так.
 
         Выбранные тесты:
         \(selectedTestLines)
@@ -70,10 +75,9 @@ enum CompatibilityPrompts {
         {
           "title": "короткий вывод о паре (2-3 слова)",
           "subtitle": "1 предложение о динамике пары (8-10 слов)",
-          "compatibilityScore": целое число от 0 до 100,
           "overview": {
             "title": "Основная динамика",
-            "description": "общий вывод о паре (20-25 слов)"
+            "description": "общий вывод о паре и объяснение процента (40-60 слов)"
           },
           "emotionalBar": [
             { "key": "emotionalResonance", "value": от 1 до 10 },
@@ -84,17 +88,17 @@ enum CompatibilityPrompts {
           "sections": [
             {
               "selectedTest": "ключ одного из тестов из списка выбранных",
-              "description": "основной текст секции (12-15 слов)",
+              "description": "основной текст секции (30-40 слов)",
               "items": [
-                { "key": "один из разрешённых key для этого теста", "description": "описание (7-10 слов)" }
+                { "key": "один из разрешённых key для этого теста", "description": "описание (20-30 слов)" }
               ]
             }
           ],
           "forecast": {
             "recognitionTitle": "короткий заголовок (2-4 слова)",
-            "recognitionDescription": "описание (15-20 слов)",
+            "recognitionDescription": "описание (30-40 слов)",
             "potentialTitle": "короткий заголовок (2-4 слова)",
-            "potentialDescription": "описание (15-20 слов)"
+            "potentialDescription": "описание (30-40 слов)"
           }
         }
 
@@ -118,52 +122,16 @@ enum CompatibilityPrompts {
 
         Главная задача — показать реальную динамику пары, даже если вывод неприятный.
 
-        compatibilityScore должен вычисляться строго по входным данным, а не по общему впечатлению.
+        Процент совместимости уже посчитан по ответам обоих и дан во входных данных. Не пересчитывай его.
+        Объясни, какие совпадения в ответах его поднимают, а какие различия снижают.
 
-        Правила расчёта compatibilityScore:
-
-        1. Начинай с 50.
-
-        2. Повышай score:
-        +15 — сильное совпадение эмоционального ядра
-        +12 — совместимые стили конфликтов
-        +10 — одинаковый фокус в отношениях
-        +8 — совместимые стили принятия решений
-        +7 — высокий уровень эмоциональной открытости у обоих
-        +5 — схожий темп отношений и ожиданий
-        +5 — высокая эмоциональная зрелость обоих
-
-        3. Понижай score:
-        -15 — противоположные эмоциональные потребности
-        -12 — конфликтующие стили поведения
-        -10 — эмоциональная дистанция и закрытость
-        -10 — разные ожидания от отношений
-        -8 — нестабильность и импульсивность
-        -8 — борьба за контроль
-        -5 — слабая эмоциональная вовлечённость
-
-        4. После расчёта:
-        - ограничь результат диапазоном 0...100
-        - используй только целые числа
-        - не округляй оценки к среднему диапазону
-
-        Используй ВЕСЬ диапазон оценок:
+        Выводы должны соответствовать проценту:
 
         0-20 — крайне тяжёлая совместимость
         21-40 — высокая конфликтность и слабая устойчивость
         41-60 — нестабильная или противоречивая совместимость
         61-80 — хорошая совместимость с отдельными проблемами
         81-100 — редкая и действительно сильная совместимость
-
-        Большинство пар НЕ должны получать 55-70.
-
-        Если есть явные противоречия:
-        - смело ставь ниже 40
-        - не пытайся смягчать вывод
-
-        Высокий compatibilityScore допустим только если совпадают сразу несколько ключевых параметров.
-
-        Если данные выглядят эмоционально холодными, нестабильными или конфликтными — score должен заметно снижаться.
 
         Текст должен ощущаться как личный разбор отношений.
 
@@ -197,7 +165,7 @@ enum CompatibilityPrompts {
         emotionalBar:
         - значения только от 1 до 10
         - целые числа
-        - показатели должны логически соответствовать compatibilityScore
+        - показатели должны логически соответствовать проценту совместимости
         - при низкой совместимости НЕ ставь высокие emotionalBar значения
 
         В каждой секции:
@@ -208,6 +176,8 @@ enum CompatibilityPrompts {
         Без markdown.
         Без пояснений.
         Без текста вокруг JSON.
+
+        Для теста astrology опирайся только на знаки зодиака и даты рождения. Не упоминай положение планет, дома, асцендент и натальную карту: их расчёта нет.
 
         Не добавляй секции для тестов, которых нет в selectedTests.
 
