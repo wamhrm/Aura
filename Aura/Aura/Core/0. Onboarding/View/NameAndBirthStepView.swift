@@ -28,7 +28,7 @@ struct NameAndBirthStepView: View {
 
                     DatePicker("",
                                selection: $vm.birthDate,
-                               in: BirthDateFormatter.userDateRange,
+                               in: BirthDateFormatter.dateRange,
                                displayedComponents: .date)
                         .datePickerStyle(.wheel)
                         .labelsHidden()

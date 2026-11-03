@@ -57,7 +57,7 @@ enum PersonalityTests: String, CaseIterable {
     var title: String {
         switch self {
             case .astrology:
-                return "Астрология"
+                return "Астрологический портрет"
             case .behavioralPatterns:
                 return "Поведенческие паттерны"
             case .decisionMaking:
@@ -83,9 +83,9 @@ enum PersonalityItems: String, CaseIterable {
     var title: String {
         switch self {
             case .natalChart:
-                return "Анализ натальной карты"
+                return "Черты вашего знака"
             case .planetaryAspects:
-                return "Планетарные аспекты"
+                return "Знак и ваш характер"
             case .socialFilter:
                 return "Социальный фильтр"
             case .energyDrain:

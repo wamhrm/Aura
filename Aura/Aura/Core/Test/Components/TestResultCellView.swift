@@ -40,8 +40,8 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
 
     var title: String {
         switch self {
-            case .natalChart: "Анализ натальной карты"
-            case .planetaryAspects: "Планетарные аспекты"
+            case .natalChart: "Черты вашего знака"
+            case .planetaryAspects: "Знак и ваш характер"
             case .socialFilter: "Социальный фильтр"
             case .energyDrain: "Источник истощения"
             case .logicBalance: "Баланс логики"
@@ -78,7 +78,7 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
     
     var title: String {
         switch self {
-            case .synastry: "Синастрия знаков"
+            case .synastry: "Совместимость знаков"
             case .karmicLesson: "Кармический урок"
             case .dominanceDynamics: "Динамика лидерства"
             case .emotionalResonance: "Эмоциональный резонанс"

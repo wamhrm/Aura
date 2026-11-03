@@ -26,11 +26,6 @@ enum CompatibilityButtons {
             }
         }
     }
-
-    enum birthOptions: String, CaseIterable {
-        case exactDate = "Точная"
-        case approximateDate = "Примерная"
-    }
 }
 
 @MainActor
@@ -92,10 +87,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         partnerInfo.gender = option.key
     }
 
-    func selectBirthOption(_ option: CompatibilityButtons.birthOptions) {
-        partnerInfo.exactDateOfBirth = option == .exactDate
-    }
-
     func toggleTestSelection(_ test: CompatibilityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > InputLimits.minCompatibilityTests else {
@@ -141,11 +132,8 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             throw PartnerInfoError.invalidName
         }
 
-        if !partnerInfo.exactDateOfBirth {
-            let age = partnerInfo.age.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let value = Int(age), (InputLimits.minPartnerAge...InputLimits.maxPartnerAge).contains(value) else {
-                throw PartnerInfoError.invalidAge
-            }
+        guard partnerInfo.hasAllAnswers else {
+            throw PartnerInfoError.incompleteAnswers
         }
     }
     
@@ -154,17 +142,17 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         partnerInfo.birthDate = BirthDateFormatter.defaultDate
         partnerInfo.knowsBirthTime = false
         partnerInfo.birthTime = BirthDateFormatter.defaultTime
-        partnerInfo.age = ""
+        partnerInfo.answers = ProfileInfoModel()
     }
 }
 
 fileprivate enum PartnerInfoError: LocalizedError {
-    case invalidName, invalidAge
+    case invalidName, incompleteAnswers
 
     var errorDescription: String? {
         switch self {
             case .invalidName: "Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа"
-            case .invalidAge: "Возраст партнёра должен быть от \(InputLimits.minPartnerAge) до \(InputLimits.maxPartnerAge) лет"
+            case .incompleteAnswers: "Ответьте на все вопросы о партнёре"
         }
     }
 }

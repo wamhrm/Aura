@@ -20,8 +20,7 @@ struct AddProfileInfoView: View {
                 VStack(spacing: 16) {
                     ProfileInfoSection(title: "Ваше имя") {
                         CompatibilityTextFieldView(title: "Введите имя",
-                                                   text: $vm.name,
-                                                   type: .name())
+                                                   text: $vm.name)
                     }
 
                     ProfileInfoSection(title: "Ваш пол") {
@@ -37,7 +36,7 @@ struct AddProfileInfoView: View {
                         BirthDateFieldsView(birthDate: $vm.birthDate,
                                             knowsBirthTime: $vm.knowsBirthTime,
                                             birthTime: $vm.birthTime,
-                                            dateRange: BirthDateFormatter.userDateRange)
+                                            dateRange: BirthDateFormatter.dateRange)
                     }
 
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)

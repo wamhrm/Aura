@@ -51,24 +51,24 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Укажите пол партнёра")
         }
 
-        if request.exactDateOfBirth {
-            guard let dateString = request.partnerDateOfBirth,
-                  let dateOfBirth = UserDateFormatter.birthDate(from: dateString) else {
-                throw Abort(.badRequest, reason: "Укажите дату рождения партнёра в формате ДД.ММ.ГГГГ")
-            }
+        guard let dateOfBirth = UserDateFormatter.birthDate(from: request.partnerDateOfBirth) else {
+            throw Abort(.badRequest, reason: "Укажите дату рождения партнёра в формате ДД.ММ.ГГГГ")
+        }
 
-            guard UserDateFormatter.isOldEnough(dateOfBirth) else {
-                throw Abort(.badRequest, reason: "Партнёру должно быть не меньше 16 лет")
-            }
+        guard UserDateFormatter.isOldEnough(dateOfBirth) else {
+            throw Abort(.badRequest, reason: "Партнёру должно быть не меньше 16 лет")
+        }
 
-            if let birthTime = request.partnerBirthTime, !UserDateFormatter.isValidTime(birthTime) {
-                throw Abort(.badRequest, reason: "Укажите время рождения партнёра в формате ЧЧ:ММ")
-            }
-        } else {
-            guard let age = request.partnerAge.flatMap(Int.init),
-                  PartnerInfoOptions.ageRange.contains(age) else {
-                throw Abort(.badRequest, reason: "Возраст партнёра должен быть от 16 до 120 лет")
-            }
+        if let birthTime = request.partnerBirthTime, !UserDateFormatter.isValidTime(birthTime) {
+            throw Abort(.badRequest, reason: "Укажите время рождения партнёра в формате ЧЧ:ММ")
+        }
+
+        guard ProfileInfoOptions.socialTypes.contains(request.partnerSocialType),
+              ProfileInfoOptions.conflictStyles.contains(request.partnerConflictStyle),
+              ProfileInfoOptions.emotionalCores.contains(request.partnerEmotionalCore),
+              ProfileInfoOptions.decisionStyles.contains(request.partnerDecisionStyle),
+              ProfileInfoOptions.coreFocuses.contains(request.partnerCoreFocus) else {
+            throw Abort(.badRequest, reason: "Ответьте на все вопросы о партнёре")
         }
 
         guard let selectedTests = CompatibilityTests.from(keys: request.selectedTests) else {
@@ -85,14 +85,16 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
-        // Only the fields checked above may reach the prompt
         let partnerRequest = CompatibilityTestRequest(partnerName: partnerName,
-                                                          partnerDateOfBirth: request.exactDateOfBirth ? request.partnerDateOfBirth : nil,
-                                                          partnerBirthTime: request.exactDateOfBirth ? request.partnerBirthTime : nil,
-                                                          partnerAge: request.exactDateOfBirth ? nil : request.partnerAge,
-                                                          partnerGender: partnerGender,
-                                                          exactDateOfBirth: request.exactDateOfBirth,
-                                                          selectedTests: request.selectedTests)
+                                                      partnerDateOfBirth: request.partnerDateOfBirth,
+                                                      partnerBirthTime: request.partnerBirthTime,
+                                                      partnerGender: partnerGender,
+                                                      partnerSocialType: request.partnerSocialType,
+                                                      partnerConflictStyle: request.partnerConflictStyle,
+                                                      partnerEmotionalCore: request.partnerEmotionalCore,
+                                                      partnerDecisionStyle: request.partnerDecisionStyle,
+                                                      partnerCoreFocus: request.partnerCoreFocus,
+                                                      selectedTests: request.selectedTests)
 
         return try await openAIService.makeCompatibilityTest(for: user,
                                                              partner: partnerRequest,

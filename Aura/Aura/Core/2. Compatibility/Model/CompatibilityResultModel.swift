@@ -9,11 +9,14 @@ import Foundation
 
 struct CompatibilityTestRequest: Encodable, Equatable {
     let partnerName: String
-    let partnerDateOfBirth: String?
+    let partnerDateOfBirth: String
     let partnerBirthTime: String?
-    let partnerAge: String?
     let partnerGender: String
-    let exactDateOfBirth: Bool
+    let partnerSocialType: String
+    let partnerConflictStyle: String
+    let partnerEmotionalCore: String
+    let partnerDecisionStyle: String
+    let partnerCoreFocus: String
     let selectedTests: [String]
 }
 
