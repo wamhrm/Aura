@@ -19,7 +19,7 @@ struct HistoryCellModel: Codable, Identifiable, Hashable {
     let partnerName: String?
     let partnerZodiacSign: HoroscopeTypes?
     let personalityResult: PersonalityResultModel?
-    let compatibilityResult: CompabilityResultModel?
+    let compatibilityResult: CompatibilityResultModel?
 }
 
 enum HistoryTestKind: String, Codable, Hashable {
@@ -47,36 +47,24 @@ extension HistoryCellModel {
         kind: .compatibility,
         createdAt: "2026-05-19T12:00:00Z",
         selectedTests: [CompatibilityTestTypes.behavioralPatterns.rawValue],
-        archetypeTitle: CompabilityResultModel.mock.title,
+        archetypeTitle: CompatibilityResultModel.mock.title,
         archetypeSubtitle: PersonalityResultModel.mock.archetypeSubtitle,
         zodiacSign: PersonalityResultModel.mock.zodiacSign,
-        compatibilityScore: CompabilityResultModel.mock.compatibilityScore,
-        partnerName: CompabilityResultModel.mock.partnerName,
-        partnerZodiacSign: CompabilityResultModel.mock.partnerZodiacSign,
+        compatibilityScore: CompatibilityResultModel.mock.compatibilityScore,
+        partnerName: CompatibilityResultModel.mock.partnerName,
+        partnerZodiacSign: CompatibilityResultModel.mock.partnerZodiacSign,
         personalityResult: nil,
-        compatibilityResult: CompabilityResultModel.mock
+        compatibilityResult: CompatibilityResultModel.mock
     )
 }
 
 extension HistoryCellModel {
-    var resolvedCompatibilityScore: Int? {
-        compatibilityScore ?? compatibilityResult?.compatibilityScore
-    }
-
-    var resolvedPartnerName: String? {
-        partnerName ?? compatibilityResult?.partnerName
-    }
-
-    var resolvedPartnerZodiacSign: HoroscopeTypes? {
-        partnerZodiacSign ?? compatibilityResult?.partnerZodiacSign
-    }
-
     var iconHandler: String {
         switch kind {
             case .personality:
                 zodiacSign.icon
             case .compatibility:
-                resolvedPartnerZodiacSign?.icon ?? "👤"
+                partnerZodiacSign?.icon ?? "👤"
         }
     }
 
@@ -85,7 +73,7 @@ extension HistoryCellModel {
             case .personality:
                 archetypeTitle
             case .compatibility:
-                resolvedPartnerName ?? ""
+                partnerName ?? ""
         }
     }
 
@@ -96,6 +84,6 @@ extension HistoryCellModel {
     }
 
     var compatibilityScoreText: String {
-        "\(resolvedCompatibilityScore ?? 0)%"
+        "\(compatibilityScore ?? 0)%"
     }
 }

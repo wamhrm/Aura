@@ -12,6 +12,9 @@ import Foundation
 final class ProfileFormViewModel: ObservableObject, AlertPresentable {
     @Published var profileInfo: ProfileInfoModel
     @Published var name: String
+    @Published var birthDate: Date
+    @Published var knowsBirthTime: Bool
+    @Published var birthTime: Date
 
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -23,6 +26,9 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
         self.authService = authService
         profileInfo = user.profileInfo
         name = user.name
+        birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(from:)) ?? BirthDateFormatter.defaultDate
+        knowsBirthTime = user.birthTime != nil
+        birthTime = user.birthTime.flatMap(BirthDateFormatter.time(from:)) ?? BirthDateFormatter.defaultTime
     }
 
     var saveButtonTitle: String {
@@ -38,6 +44,8 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
             do {
                 try validateProfileInfoForms()
                 profileInfo.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                profileInfo.dateOfBirth = BirthDateFormatter.dateString(from: birthDate)
+                profileInfo.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : ""
                 _ = try await authService.updateProfileInfo(profileInfo)
                 onSuccess()
             } catch {
@@ -53,10 +61,6 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
             throw ProfileInfoError.invalidName
         }
 
-        guard profileInfo.dateOfBirth.count == 10 else {
-            throw ProfileInfoError.invalidDateOfBirth
-        }
-
         guard profileInfo.hasAllAnswers else {
             throw ProfileInfoError.incompleteProfileInfo
         }
@@ -64,12 +68,11 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
 }
 
 fileprivate enum ProfileInfoError: LocalizedError {
-    case invalidName, invalidDateOfBirth, incompleteProfileInfo
+    case invalidName, incompleteProfileInfo
 
     var errorDescription: String? {
         switch self {
             case .invalidName: "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
-            case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
             case .incompleteProfileInfo: "Заполните все обязательные поля профиля"
         }
     }

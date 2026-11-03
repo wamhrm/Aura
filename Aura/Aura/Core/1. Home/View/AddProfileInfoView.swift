@@ -34,15 +34,10 @@ struct AddProfileInfoView: View {
                     }
 
                     ProfileInfoSection(title: "Дата рождения") {
-                        VStack(spacing: 10) {
-                            CompatibilityDateOfBirthView(title: "День/Месяц/Год",
-                                                         text: $vm.profileInfo.dateOfBirth,
-                                                         isTime: false)
-
-                            CompatibilityDateOfBirthView(title: "Время (необязательно)",
-                                                         text: $vm.profileInfo.birthTime,
-                                                         isTime: true)
-                        }
+                        BirthDateFieldsView(birthDate: $vm.birthDate,
+                                            knowsBirthTime: $vm.knowsBirthTime,
+                                            birthTime: $vm.birthTime,
+                                            dateRange: BirthDateFormatter.userDateRange)
                     }
 
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)

@@ -42,7 +42,7 @@ protocol NetworkServiceProtocol: Sendable {
     func fetchDailyInsight() async throws -> DailyContentModel
     func fetchDailyTip() async throws -> DailyContentModel
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel
-    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
@@ -172,14 +172,14 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         return try decode(PersonalityResultModel.self, from: data)
     }
 
-    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel {
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
         let bodyData = try JSONEncoder().encode(testRequest)
         let data = try await request(endpoint: "/history/compatibility",
                                      method: .post,
                                      body: bodyData,
                                      idempotencyKey: requestID,
                                      timeout: Self.aiTimeout)
-        return try decode(CompabilityResultModel.self, from: data)
+        return try decode(CompatibilityResultModel.self, from: data)
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
@@ -290,7 +290,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     private func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
         do {
-            return try decoder().decode(type, from: data)
+            return try JSONDecoder().decode(type, from: data)
         } catch {
             Self.logger.error("Failed to decode \(String(describing: type), privacy: .public): \(String(describing: error), privacy: .public)")
             throw NetworkError.decodingError
@@ -315,12 +315,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     private static func retryDelay(for attempt: Int) -> Duration {
         .seconds(Double(attempt) + 0.5)
-    }
-
-    private func decoder() -> JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
     }
 }
 

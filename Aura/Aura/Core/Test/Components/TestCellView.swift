@@ -22,7 +22,6 @@ struct TestCellView<Test: TestCellDisplayable>: View {
     let onSelectionToggle: () -> Void
     let onTapHandler: () -> Void
     
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         Button(action: onTapHandler) {
@@ -48,7 +47,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
 
             Button(action: onSelectionToggle) {
                 Circle()
-                    .fill(hasChosenTest ? AccentColorOption.color(accentColor).opacity(0.85) : .clear)
+                    .fill(.tint.opacity(hasChosenTest ? 0.85 : 0))
                     .frame(width: Adaptive.size(23, 25),
                            height: Adaptive.size(23, 25))
                     .overlay(Circle().stroke(Color.fieldBackground, lineWidth: 2))

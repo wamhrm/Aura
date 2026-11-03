@@ -9,7 +9,6 @@ import SwiftUI
 
 struct OnboardingIntroView: View {
     @ObservedObject var vm: OnboardingViewModel
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         VStack(spacing: 20) {
@@ -24,7 +23,7 @@ struct OnboardingIntroView: View {
             HStack(spacing: 8) {
                 ForEach(IntroPages.allCases, id: \.self) { item in
                     Capsule()
-                        .fill(item.rawValue == vm.introPage ? AccentColorOption.color(accentColor) : Color.fieldBorder)
+                        .fill(item.rawValue == vm.introPage ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.fieldBorder))
                         .frame(width: item.rawValue == vm.introPage ? 22 : 8, height: 8)
                 }
             }

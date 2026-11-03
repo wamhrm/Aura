@@ -9,7 +9,6 @@ import SwiftUI
 
 struct NameAndBirthStepView: View {
     @ObservedObject var vm: OnboardingViewModel
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         ScrollView {
@@ -29,7 +28,7 @@ struct NameAndBirthStepView: View {
 
                     DatePicker("",
                                selection: $vm.birthDate,
-                               in: OnboardingViewModel.birthDateRange,
+                               in: BirthDateFormatter.userDateRange,
                                displayedComponents: .date)
                         .datePickerStyle(.wheel)
                         .labelsHidden()
@@ -41,7 +40,6 @@ struct NameAndBirthStepView: View {
                 VStack(spacing: 15) {
                     Toggle("Я знаю время рождения", isOn: $vm.knowsBirthTime.animation())
                         .fontWeight(.semibold)
-                        .tint(AccentColorOption.color(accentColor))
 
                     if vm.knowsBirthTime {
                         Divider()

@@ -9,7 +9,6 @@ import SwiftUI
 
 struct CompatibilityView: View {
     @ObservedObject var vm: CompatibilityViewModel
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     let aiConsentButton: () -> Void
 
@@ -26,7 +25,7 @@ struct CompatibilityView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: "heart")
                                     .font(Adaptive.size(.callout, .default))
-                                    .foregroundStyle(AccentColorOption.color(accentColor))
+                                    .foregroundStyle(.tint)
                                     .fontWeight(.semibold)
                                     .padding(Adaptive.size(7, 9))
                                     .background(.capsuleBackground)
@@ -64,21 +63,14 @@ struct CompatibilityView: View {
                                 .padding(.bottom, 10)
 
                                 if vm.partnerInfo.exactDateOfBirth {
-                                    CompatibilityDateOfBirthView(
-                                        title: "День/Месяц/Год",
-                                        text: $vm.partnerInfo.dateOfBirth,
-                                        isTime: false) {
-                                            vm.showInvalidDateOfBirthday()
-                                        }
-
-                                    CompatibilityDateOfBirthView(
-                                        title: "Время (необязательно)",
-                                        text: $vm.partnerInfo.birthTime,
-                                        isTime: true)
+                                    BirthDateFieldsView(birthDate: $vm.partnerInfo.birthDate,
+                                                        knowsBirthTime: $vm.partnerInfo.knowsBirthTime,
+                                                        birthTime: $vm.partnerInfo.birthTime,
+                                                        dateRange: BirthDateFormatter.partnerDateRange)
                                 } else {
                                     CompatibilityTextFieldView(title: "Возраст (лет)",
                                                                text: $vm.partnerInfo.age,
-                                                               type: .age(maxAge: 100))
+                                                               type: .age(maxAge: InputLimits.maxPartnerAge))
                                 }
                             }
                         }
@@ -97,7 +89,7 @@ struct CompatibilityView: View {
                                     vm.selectAllTests()
                                 } label: {
                                     Text("Выбрать все")
-                                        .foregroundStyle(AccentColorOption.color(accentColor))
+                                        .foregroundStyle(.tint)
                                         .fontWeight(.medium)
                                 }
                             }
@@ -193,9 +185,6 @@ extension CompatibilityView {
             case .compatibilityResults:
                 if let result = vm.compatibilityResult {
                     CompatibilityResultView(result: result)
-                        .onDisappear {
-                            vm.clearFields()
-                        }
                 }
         }
     }
@@ -204,7 +193,6 @@ extension CompatibilityView {
         let onTapHandler: (T) -> Void
 
         @State private var selected = T.allCases.first!
-        @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
         var body: some View {
             HStack(spacing: 12) {
@@ -219,7 +207,7 @@ extension CompatibilityView {
                             .bold()
                             .padding(.vertical, Adaptive.size(10, 11))
                             .padding(.horizontal, Adaptive.size(20, 21))
-                            .background(selected == item ? AccentColorOption.color(accentColor) : .clear)
+                            .background(selected == item ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.clear))
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(.gray, lineWidth: 1))
                             .clipShape(.rect(cornerRadius: 10))
                     }

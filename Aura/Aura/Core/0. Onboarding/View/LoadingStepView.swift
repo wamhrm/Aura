@@ -10,7 +10,6 @@ import SwiftUI
 struct LoadingStepView: View {
     @ObservedObject var vm: OnboardingViewModel
     @State private var isRotating = false
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         VStack(spacing: 30) {
@@ -57,7 +56,7 @@ extension LoadingStepView {
 
             Circle()
                 .trim(from: 0, to: 0.3)
-                .stroke(AccentColorOption.color(accentColor), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(.tint, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                 .rotationEffect(.degrees(isRotating ? 360 : 0))
                 .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isRotating)
                 .opacity(vm.hasLoadingFailed ? 0 : 1)
@@ -65,7 +64,7 @@ extension LoadingStepView {
             Image(systemName: vm.loadingIcon)
                 .font(.system(size: 40))
                 .fontWeight(.semibold)
-                .foregroundStyle(AccentColorOption.color(accentColor))
+                .foregroundStyle(.tint)
         }
         .frame(width: 130, height: 130)
     }
@@ -75,7 +74,7 @@ extension LoadingStepView {
             if vm.isCompleted(stage) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
-                    .foregroundStyle(AccentColorOption.color(accentColor))
+                    .foregroundStyle(.tint)
             } else {
                 ProgressView()
                     .frame(width: 22, height: 22)

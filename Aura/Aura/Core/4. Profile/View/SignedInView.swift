@@ -11,7 +11,6 @@ struct SignedInView: View {
     @ObservedObject var vm: ProfileViewModel
     let user: UserModel
     let aiConsentButton: () -> Void
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         ZStack {
@@ -82,7 +81,7 @@ struct SignedInView: View {
                         .foregroundStyle(.white)
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AccentColorOption.color(accentColor))
+                        .background(.tint)
                         .clipShape(.rect(cornerRadius: 12))
 
                         VStack(alignment: .leading, spacing: 10) {
@@ -184,12 +183,6 @@ extension SignedInView {
                 .backgroundWithShape(12, .cardBackground, true)
                 .padding(.horizontal)
         }
-    }
-
-    private func headerText(_ title: String) -> some View {
-        Text(title)
-            .fontWeight(.semibold)
-            .padding(.leading, 4)
     }
 }
 
