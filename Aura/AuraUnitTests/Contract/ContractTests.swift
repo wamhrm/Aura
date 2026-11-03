@@ -50,9 +50,7 @@ final class ContractTests: XCTestCase {
     }
 
     private func decodeContract<T: Decodable>(_ type: T.Type, from name: String) throws -> T {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(type, from: try contractData(name))
+        try JSONDecoder().decode(type, from: try contractData(name))
     }
 
     // MARK: - Keys and limits
@@ -109,7 +107,7 @@ final class ContractTests: XCTestCase {
         let auth = try decodeContract(AuthTokenResponse.self, from: "auth.json")
         let horoscope = try decodeContract(HoroscopeModel.self, from: "horoscope.json")
         let personality = try decodeContract(PersonalityResultModel.self, from: "personality_result.json")
-        let compatibility = try decodeContract(CompabilityResultModel.self, from: "compatibility_result.json")
+        let compatibility = try decodeContract(CompatibilityResultModel.self, from: "compatibility_result.json")
         let history = try decodeContract([HistoryCellModel].self, from: "history_list.json")
         let daily = try decodeContract(DailyContentModel.self, from: "daily.json")
 

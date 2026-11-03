@@ -1,5 +1,5 @@
 //
-//  CompabilityResultModel.swift
+//  CompatibilityResultModel.swift
 //  Aura
 //
 //  Created by wamhrm on 18.05.2026.
@@ -17,7 +17,7 @@ struct CompatibilityTestRequest: Encodable, Equatable {
     let selectedTests: [String]
 }
 
-struct CompabilityResultModel: Codable, Hashable {
+struct CompatibilityResultModel: Codable, Hashable {
     let userName: String
     let userZodiacSign: HoroscopeTypes
     let partnerName: String
@@ -72,8 +72,8 @@ struct CompatibilityForecast: Codable, Hashable {
     let potentialDescription: String
 }
 
-extension CompabilityResultModel {
-    static let mock = CompabilityResultModel(
+extension CompatibilityResultModel {
+    static let mock = CompatibilityResultModel(
         userName: "Роберт",
         userZodiacSign: .capricorn,
         partnerName: "Мария",

@@ -72,9 +72,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var name = ""
     @Published var email = ""
     @Published var password = ""
-    @Published var birthDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
+    @Published var birthDate = BirthDateFormatter.defaultDate
     @Published var knowsBirthTime = false
-    @Published var birthTime = Calendar.current.date(from: DateComponents(hour: 12, minute: 0)) ?? Date()
+    @Published var birthTime = BirthDateFormatter.defaultTime
     @Published var profileInfo = ProfileInfoModel()
 
     @Published var resetCode = ""
@@ -89,14 +89,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var alertMessage = ""
     @Published var showSignOutAlert = false
     @Published private(set) var isLoading = false
-
-    // Server rule: from 16 to 100 years old. The extra day covers the time zone difference with the server.
-    static let birthDateRange: ClosedRange<Date> = {
-        let now = Date()
-        let earliest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.maxUserAge, day: 1), to: now) ?? .distantPast
-        let latest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.minUserAge, day: -1), to: now) ?? now
-        return earliest...latest
-    }()
 
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false
@@ -477,8 +469,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         loadingStages = allowsAIAnalysis ? OnboardingLoadingStage.allCases : [.profile, .horoscope]
 
         var request = profileInfo
-        request.dateOfBirth = format(birthDate, "dd.MM.yyyy")
-        request.birthTime = knowsBirthTime ? format(birthTime, "HH:mm") : ""
+        request.dateOfBirth = BirthDateFormatter.dateString(from: birthDate)
+        request.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : ""
 
         Task {
             do {
@@ -528,13 +520,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         } else {
             onboardingRoutes = [.nameAndBirth]
         }
-    }
-
-    private func format(_ date: Date, _ dateFormat: String) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = dateFormat
-        return formatter.string(from: date)
     }
 
     private func validateSignIn(email: String, password: String) -> String? {

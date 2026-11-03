@@ -74,7 +74,6 @@ struct ProfileInfoSection<Content: View>: View {
 struct ProfileInfoOptionView: View {
     let type: ProfileInfoOption
     @Binding var selection: String?
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
     
     private var isSelected: Bool {
         selection == type.rawValue
@@ -92,7 +91,7 @@ struct ProfileInfoOptionView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity)
-        .background(isSelected ? AccentColorOption.color(accentColor) : Color.fieldBackground)
+        .background(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.fieldBackground))
         .clipShape(.rect(cornerRadius: 10))
         .onTapGesture { selection = type.rawValue }
         .animation(.easeInOut(duration: 0.15), value: isSelected)

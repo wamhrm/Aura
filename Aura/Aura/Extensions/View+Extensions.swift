@@ -95,13 +95,12 @@ extension View {
 }
 
 private struct CompatibilityResultZodiacsModifier: ViewModifier {
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     func body(content: Content) -> some View {
         content
             .font(Adaptive.size(.callout, .default))
             .padding(Adaptive.size(10, 12))
-            .background(AccentColorOption.color(accentColor).opacity(0.25))
+            .background(.tint.opacity(0.25))
             .clipShape(.circle)
     }
 }

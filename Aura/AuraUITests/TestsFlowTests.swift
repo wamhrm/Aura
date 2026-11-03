@@ -150,7 +150,6 @@ final class TestsFlowTests: FlowTestCase {
             app.swipeDown()
         }
         fillField(app.textFields["Введите имя"].firstMatch, with: "Иван")
-        fillField(app.textFields["День/Месяц/Год"].firstMatch, with: "01012015")
         app.swipeUp()
         tapButton("Узнать совместимость")
 

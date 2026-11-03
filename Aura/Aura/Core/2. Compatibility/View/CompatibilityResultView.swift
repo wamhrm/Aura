@@ -8,8 +8,7 @@
 import SwiftUI
 
 struct CompatibilityResultView: View {
-    let result: CompabilityResultModel
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+    let result: CompatibilityResultModel
 
     var body: some View {
         ZStack {
@@ -52,7 +51,7 @@ struct CompatibilityResultView: View {
                     VStack(spacing: Adaptive.size(12, 13)) {
                         Text(result.title)
                             .font(Adaptive.size(.callout, .default))
-                            .foregroundStyle(AccentColorOption.color(accentColor))
+                            .foregroundStyle(.tint)
                             .bold()
 
                         Text(result.subtitle)
@@ -104,7 +103,7 @@ struct CompatibilityResultView: View {
                                                       result.forecast.recognitionTitle,
                                                       result.forecast.recognitionDescription)
 
-                            resultsWithNumbersSection(.potentional,
+                            resultsWithNumbersSection(.potential,
                                                       result.forecast.potentialTitle,
                                                       result.forecast.potentialDescription)
                         }
@@ -125,18 +124,18 @@ extension CompatibilityResultView {
     private func compatibilityScaleBar(_ value: Int) -> some View {
         ZStack {
             Circle()
-                .stroke(AccentColorOption.color(accentColor).opacity(0.18), lineWidth: 8)
+                .stroke(.tint.opacity(0.18), lineWidth: 8)
 
             Circle()
                 .trim(from: 0, to: CGFloat(min(max(value, 0), 100)) / 100)
-                .stroke(AccentColorOption.color(accentColor), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .stroke(.tint, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
             VStack(spacing: 5) {
                 Text("\(min(max(value, 0), 100))%")
                     .font(Adaptive.size(.title3, .system(size: 21)))
                     .bold()
-                    .foregroundStyle(AccentColorOption.color(accentColor))
+                    .foregroundStyle(.tint)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
 
@@ -156,9 +155,9 @@ extension CompatibilityResultView {
             Text(type.number)
                 .font(Adaptive.size(.callout, .default))
                 .fontWeight(.semibold)
-                .foregroundStyle(numberColor(for: type))
+                .foregroundStyle(numberStyle(for: type))
                 .padding(10)
-                .background(numberColor(for: type).opacity(0.15))
+                .background(numberStyle(for: type).opacity(0.15))
                 .clipShape(.circle)
                 .frame(width: 35, alignment: .leading)
 
@@ -181,25 +180,22 @@ extension CompatibilityResultView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func numberColor(for type: LoveLanguageTypes) -> Color {
+    private func numberStyle(for type: LoveLanguageTypes) -> AnyShapeStyle {
         switch type {
-            case .main: .red
-            case .additional, .spark: AccentColorOption.color(accentColor)
-            case .potentional: .yellow
+            case .spark: AnyShapeStyle(.tint)
+            case .potential: AnyShapeStyle(.yellow)
         }
     }
 }
 
 fileprivate enum LoveLanguageTypes: String {
-    case main = "Основной"
-    case additional = "Дополнительный"
     case spark = "Искра"
-    case potentional = "Потенциал"
+    case potential = "Потенциал"
 
     var number: String {
         switch self {
-            case .main, .spark: "1"
-            case .additional, .potentional: "2"
+            case .spark: "1"
+            case .potential: "2"
         }
     }
 }

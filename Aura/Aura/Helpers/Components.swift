@@ -48,7 +48,6 @@ struct LogoImage: View {
 }
 
 struct ClassicButton: View {
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
     let title: String
     let action: () -> Void
 
@@ -60,7 +59,7 @@ struct ClassicButton: View {
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding()
-                .background(AccentColorOption.color(accentColor))
+                .background(.tint)
                 .clipShape(.rect(cornerRadius: 10))
         }
     }
@@ -110,7 +109,6 @@ struct CompleteProfileLock: View {
 struct AIConsentLock: View {
     let title: String
     let onAllow: () -> Void
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         VStack(spacing: 0) {
@@ -120,7 +118,7 @@ struct AIConsentLock: View {
                 Text("Разрешить")
                     .font(Adaptive.size(.system(size: 15), .callout))
                     .fontWeight(.semibold)
-                    .foregroundStyle(AccentColorOption.color(accentColor))
+                    .foregroundStyle(.tint)
                     .padding(.horizontal, 28)
                     .padding(.vertical, 11)
                     .background(.white)
@@ -128,6 +126,33 @@ struct AIConsentLock: View {
                     .overlay(Capsule().stroke(Color.fieldBorder, lineWidth: 1))
             }
         }
+    }
+}
+
+struct BirthDateFieldsView: View {
+    @Binding var birthDate: Date
+    @Binding var knowsBirthTime: Bool
+    @Binding var birthTime: Date
+    let dateRange: ClosedRange<Date>
+
+    var body: some View {
+        VStack(spacing: 12) {
+            DatePicker("Дата",
+                       selection: $birthDate,
+                       in: dateRange,
+                       displayedComponents: .date)
+
+            Toggle("Я знаю время рождения", isOn: $knowsBirthTime.animation())
+
+            if knowsBirthTime {
+                DatePicker("Время",
+                           selection: $birthTime,
+                           displayedComponents: .hourAndMinute)
+            }
+        }
+        .font(Adaptive.size(.footnote, .system(size: 14)))
+        .fontWeight(.medium)
+        .environment(\.locale, Locale(identifier: "ru_RU"))
     }
 }
 

@@ -11,7 +11,7 @@ import SwiftUI
 
 enum HistoryRoutes: Hashable {
     case personalityResult(PersonalityResultModel)
-    case compatibilityResult(CompabilityResultModel)
+    case compatibilityResult(CompatibilityResultModel)
 }
 
 @MainActor

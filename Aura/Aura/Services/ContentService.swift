@@ -13,7 +13,7 @@ protocol ContentServiceProtocol {
     var refreshRequested: PassthroughSubject<Void, Never> { get }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
-    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel
+    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
@@ -102,7 +102,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         return result
     }
 
-    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompabilityResultModel {
+    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel {
         var requestID = UUID()
 
         // A repeat keeps its key: if the first answer was lost, the server returns the saved result

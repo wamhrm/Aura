@@ -9,7 +9,6 @@ import SwiftUI
 
 struct PersonalityResultView: View {
     let result: PersonalityResultModel
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         ZStack {
@@ -45,7 +44,7 @@ struct PersonalityResultView: View {
                             
                             Text(result.archetypeTitle)
                                 .font(Adaptive.size(.default, .system(size: 19)))
-                                .foregroundStyle(AccentColorOption.color(accentColor))
+                                .foregroundStyle(.tint)
                                 .fontWeight(.semibold)
                             
                             Text(result.archetypeSubtitle)

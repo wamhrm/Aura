@@ -9,7 +9,6 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var vm: HomeViewModel
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     let compatibilityButton: () -> Void
     let aiConsentButton: () -> Void
@@ -62,7 +61,7 @@ struct HomeView: View {
                             .foregroundStyle(.white)
                             .padding(20)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(AccentColorOption.color(accentColor).opacity(0.85))
+                            .background(.tint.opacity(0.85))
                             .clipShape(.rect(cornerRadius: 12))
 
                             if let horoscope = vm.horoscope {
@@ -185,7 +184,7 @@ extension HomeView {
 
             Button(action: onTapHandler) {
                 Text(buttonTitle)
-                    .foregroundStyle(AccentColorOption.color(accentColor))
+                    .foregroundStyle(.tint)
                     .fontWeight(.medium)
             }
         }

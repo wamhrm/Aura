@@ -38,7 +38,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
     @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
     @Published var partnerInfo = PartnerInfoModel()
-    @Published private(set) var compatibilityResult: CompabilityResultModel?
+    @Published private(set) var compatibilityResult: CompatibilityResultModel?
 
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -125,6 +125,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
                 let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
                 compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
                 compatibilityRoutes.append(.compatibilityResults)
+                clearFields()
             } catch {
                 presentAlert(error.userMessage)
             }
@@ -140,11 +141,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             throw PartnerInfoError.invalidName
         }
 
-        if partnerInfo.exactDateOfBirth {
-            guard partnerInfo.dateOfBirth.trimmingCharacters(in: .whitespacesAndNewlines).count == 10 else {
-                throw PartnerInfoError.invalidDateOfBirth
-            }
-        } else {
+        if !partnerInfo.exactDateOfBirth {
             let age = partnerInfo.age.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let value = Int(age), (InputLimits.minPartnerAge...InputLimits.maxPartnerAge).contains(value) else {
                 throw PartnerInfoError.invalidAge
@@ -152,25 +149,21 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         }
     }
     
-    func showInvalidDateOfBirthday() {
-        presentAlert("Укажите корректную дату рождения")
-    }
-
-    func clearFields() {
+    private func clearFields() {
         partnerInfo.name = ""
-        partnerInfo.dateOfBirth = ""
-        partnerInfo.birthTime = ""
+        partnerInfo.birthDate = BirthDateFormatter.defaultDate
+        partnerInfo.knowsBirthTime = false
+        partnerInfo.birthTime = BirthDateFormatter.defaultTime
         partnerInfo.age = ""
     }
 }
 
 fileprivate enum PartnerInfoError: LocalizedError {
-    case invalidName, invalidDateOfBirth, invalidAge
+    case invalidName, invalidAge
 
     var errorDescription: String? {
         switch self {
             case .invalidName: "Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа"
-            case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
             case .invalidAge: "Возраст партнёра должен быть от \(InputLimits.minPartnerAge) до \(InputLimits.maxPartnerAge) лет"
         }
     }

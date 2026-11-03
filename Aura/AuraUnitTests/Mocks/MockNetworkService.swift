@@ -104,7 +104,7 @@ final class MockNetworkService: NetworkServiceProtocol {
         return .mock
     }
 
-    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompabilityResultModel {
+    func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
         sentRequestIDs.append(requestID)
         if let errorToThrow { throw errorToThrow }
         return .mock

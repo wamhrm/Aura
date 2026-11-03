@@ -9,7 +9,6 @@ import AuthenticationServices
 import SwiftUI
 
 struct OnboardingTopBar: View {
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
     let progress: Double?
     let onBack: () -> Void
 
@@ -34,7 +33,7 @@ struct OnboardingTopBar: View {
                             .fill(Color.fieldBorder)
 
                         Capsule()
-                            .fill(AccentColorOption.color(accentColor))
+                            .fill(.tint)
                             .frame(width: bar.size.width * progress)
                     }
                 }
@@ -107,14 +106,13 @@ struct OnboardingTextField: View {
 struct OnboardingTextButton: View {
     let title: String
     let action: () -> Void
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(Adaptive.size(.footnote, .callout))
                 .fontWeight(.semibold)
-                .foregroundStyle(AccentColorOption.color(accentColor))
+                .foregroundStyle(.tint)
         }
     }
 }
@@ -152,7 +150,6 @@ struct OnboardingAppleButton: View {
 }
 
 struct OnboardingLegalText: View {
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
     
     private var legalText: LocalizedStringKey {
         let terms = Constants.termsOfUseURL?.absoluteString ?? ""
@@ -167,7 +164,6 @@ struct OnboardingLegalText: View {
             .font(Adaptive.size(.caption2, .caption))
             .foregroundStyle(.deepGray)
             .multilineTextAlignment(.center)
-            .tint(AccentColorOption.color(accentColor))
             .frame(maxWidth: .infinity)
     }
 }

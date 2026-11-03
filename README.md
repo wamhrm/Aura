@@ -8,7 +8,7 @@ Full-stack iOS приложение с психологическими тест
 | Фреймворки              | SwiftUI, Vapor                                       |
 | ORM                     | Fluent                                               |
 | Облачная база данных    | PostgreSQL (Timeweb Cloud)                           |
-| Локальное хранение      | UserDefaults, Keychain                               |
+| Локальное хранение      | JSON-файлы, Keychain                               |
 | ИИ                      | OpenAI API (GPT-5.4)                                 |
 | Инфраструктура          | Render, Docker                                       |
 | Сетевое взаимодействие  | URLSession, REST API                                 |
