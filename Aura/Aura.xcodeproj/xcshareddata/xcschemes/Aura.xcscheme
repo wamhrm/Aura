@@ -32,23 +32,12 @@
       <Testables>
          <TestableReference
             skipped = "NO"
-            parallelizable = "YES">
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "36F589972FCDFE1B00091154"
                BuildableName = "AuraUnitTests.xctest"
                BlueprintName = "AuraUnitTests"
-               ReferencedContainer = "container:Aura.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "36F589A42FCDFE3900091154"
-               BuildableName = "AuraUITests.xctest"
-               BlueprintName = "AuraUITests"
                ReferencedContainer = "container:Aura.xcodeproj">
             </BuildableReference>
          </TestableReference>

@@ -111,6 +111,7 @@ final class ContractTests: XCTestCase {
         let personality = try decodeContract(PersonalityResultModel.self, from: "personality_result.json")
         let compatibility = try decodeContract(CompabilityResultModel.self, from: "compatibility_result.json")
         let history = try decodeContract([HistoryCellModel].self, from: "history_list.json")
+        let daily = try decodeContract(DailyContentModel.self, from: "daily.json")
 
         // Then
         XCTAssertEqual(auth.user.gender, ProfileInfoOption.woman.rawValue)
@@ -123,5 +124,6 @@ final class ContractTests: XCTestCase {
         XCTAssertEqual(compatibility.sections.first?.items.first?.key, .synastry)
         XCTAssertEqual(history.map(\.kind), [.compatibility, .personality])
         XCTAssertNil(history.last?.partnerZodiacSign)
+        XCTAssertFalse(daily.text.isEmpty)
     }
 }

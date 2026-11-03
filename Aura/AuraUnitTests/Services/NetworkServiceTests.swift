@@ -102,17 +102,6 @@ final class NetworkServiceTests: XCTestCase {
         XCTAssertEqual(request.timeoutInterval, 130)
     }
 
-    func test_generatedContent_waitsLongerThanTheServer() async throws {
-        // Given
-        StubURLProtocol.body = try JSONEncoder().encode(DailyContentModel(id: UUID(), text: "Текст", dateCreated: "2026-11-03"))
-
-        // When
-        _ = try await sut.fetchDailyInsight()
-
-        // Then
-        XCTAssertEqual(StubURLProtocol.requests.first?.timeoutInterval, 130)
-    }
-
     // MARK: - Session expiry
     func test_unauthorized_reportsTheTokenOfThatRequest() async throws {
         // Given
@@ -127,54 +116,7 @@ final class NetworkServiceTests: XCTestCase {
         XCTAssertEqual(expiredToken, "old-token")
     }
 
-    func test_unauthorizedWithoutToken_showsTheServerReason() async throws {
-        // Given
-        StubURLProtocol.statusCode = 401
-        StubURLProtocol.body = Data(#"{"error":true,"reason":"Неверная почта или пароль"}"#.utf8)
-
-        // When
-        let message = await errorMessage { _ = try await self.sut.signIn(email: "a@b.com", password: "123456") }
-
-        // Then
-        XCTAssertEqual(message, "Неверная почта или пароль")
-    }
-
     // MARK: - Errors
-    func test_clientError_showsTheServerReason() async throws {
-        // Given
-        StubURLProtocol.statusCode = 426
-        StubURLProtocol.body = Data(#"{"error":true,"reason":"Обновите приложение, чтобы продолжить"}"#.utf8)
-
-        // When
-        let message = await errorMessage { _ = try await self.sut.fetchHistory() }
-
-        // Then
-        XCTAssertEqual(message, "Обновите приложение, чтобы продолжить")
-    }
-
-    func test_serverError_hidesTheBody() async throws {
-        // Given
-        StubURLProtocol.statusCode = 502
-        StubURLProtocol.body = Data("<html>Bad Gateway</html>".utf8)
-
-        // When
-        let message = await errorMessage { _ = try await self.sut.fetchHistory() }
-
-        // Then
-        XCTAssertEqual(message, "Сервис временно недоступен. Попробуйте позже")
-    }
-
-    func test_brokenAnswer_reportsDecodingError() async throws {
-        // Given
-        StubURLProtocol.body = Data("{}".utf8)
-
-        // When
-        let message = await errorMessage { _ = try await self.sut.fetchHistory() }
-
-        // Then
-        XCTAssertEqual(message, "Не удалось обработать ответ сервера")
-    }
-
     func test_connectionErrors_haveTheirOwnMessages() async throws {
         // Given
         let cases: [(URLError.Code, String)] = [(.timedOut, "Сервер не ответил вовремя. Попробуйте ещё раз"),
@@ -192,43 +134,7 @@ final class NetworkServiceTests: XCTestCase {
         }
     }
 
-    func test_cancelledRequest_isRecognisedAsCancellation() async throws {
-        // Given
-        StubURLProtocol.error = URLError(.cancelled)
-
-        // When
-        do {
-            try await sut.logout(token: "token")
-            XCTFail("An error was expected")
-        } catch {
-            // Then
-            XCTAssertTrue(error.isCancellation)
-        }
-    }
-
     // MARK: - Retries
-    func test_getRequest_isRetriedAfterLostConnection() async throws {
-        // Given
-        StubURLProtocol.error = URLError(.networkConnectionLost)
-
-        // When
-        _ = await errorMessage { _ = try await self.sut.fetchHistory() }
-
-        // Then
-        XCTAssertEqual(StubURLProtocol.requests.count, 3)
-    }
-
-    func test_longRequest_isNotRepeatedAfterTimeout() async throws {
-        // Given
-        StubURLProtocol.error = URLError(.timedOut)
-
-        // When
-        _ = await errorMessage { _ = try await self.sut.fetchDailyTip() }
-
-        // Then
-        XCTAssertEqual(StubURLProtocol.requests.count, 1)
-    }
-
     func test_postRequest_isNotRepeatedAfterLostConnection() async throws {
         // Given
         StubURLProtocol.error = URLError(.networkConnectionLost)

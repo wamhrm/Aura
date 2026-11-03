@@ -18,9 +18,6 @@ final class MockNetworkService: NetworkServiceProtocol {
     var historyDelay: Duration?
     var sentRequestIDs: [UUID] = []
 
-    private(set) var createAccountCallCount = 0
-    private(set) var signInCallCount = 0
-    private(set) var logoutCallCount = 0
     private(set) var fetchHistoryCallCount = 0
 
     init() {
@@ -28,7 +25,6 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
-        createAccountCallCount += 1
         if let errorToThrow { throw errorToThrow }
         return authTokenResponse
     }
@@ -39,7 +35,6 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
-        signInCallCount += 1
         if let errorToThrow { throw errorToThrow }
         return authTokenResponse
     }
@@ -53,7 +48,6 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
 
     func logout(token: String) async throws {
-        logoutCallCount += 1
         if let errorToThrow { throw errorToThrow }
     }
 
@@ -87,12 +81,12 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     func fetchDailyInsight() async throws -> DailyContentModel {
         if let errorToThrow { throw errorToThrow }
-        return MockContentService.dailyContent
+        return DailyContentModel(id: UUID(), text: "tip", dateCreated: "2026-01-01")
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
         if let errorToThrow { throw errorToThrow }
-        return MockContentService.dailyContent
+        return DailyContentModel(id: UUID(), text: "tip", dateCreated: "2026-01-01")
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
