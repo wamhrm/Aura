@@ -1,21 +1,21 @@
 //
-//  FlowTestCase.swift
+//  AuraUITestCase.swift
 //  AuraUITests
 //
 
 import XCTest
 
-// Every flow runs the real app against MockServer, which answers from the Contract folder.
-// If a text on a screen changes, the helpers below are usually the only place to fix.
+// Every UI test runs the real app against MockServer, so it never reaches production.
+// If a text on a screen changes, fix it in the test that looks for it.
 @MainActor
-class FlowTestCase: XCTestCase {
+class AuraUITestCase: XCTestCase {
     private(set) var server: MockServer!
     private(set) var app: XCUIApplication!
 
     let email = "anna@example.test"
     let password = "password-1"
-    let serverError = "Сервис временно недоступен. Попробуйте позже"
     let dailyText = "Сегодня вы спокойнее, чем кажется"
+    let serverError = "Сервис временно недоступен. Попробуйте позже"
 
     override func setUp() async throws {
         continueAfterFailure = false
@@ -32,58 +32,68 @@ class FlowTestCase: XCTestCase {
         server.stop()
     }
 
-    // MARK: - Responses
+    // MARK: - Server answers
     private func setDefaultResponses() throws {
-        let auth = try ContractFile.object("auth.json")
-        let user = try XCTUnwrap(auth["user"])
-        let horoscope = try ContractFile.object("horoscope.json")
-        let profileResponse: [String: Any] = ["user": user, "horoscope": horoscope]
+        let user = try sampleUser()
 
-        server.respond(to: "POST /v1/auth/createAccount", status: 201, body: try newUserAuth())
-        server.respond(to: "POST /v1/auth/signIn", body: try ContractFile.data("auth.json"))
+        server.respond(to: "POST /v1/auth/createAccount", status: 201, body: try authBody(user: newUser()))
+        server.respond(to: "POST /v1/auth/signIn", body: SampleResponses.auth)
         server.respond(to: "POST /v1/auth/password/forgot", status: 204)
-        server.respond(to: "POST /v1/auth/password/reset", body: try ContractFile.data("auth.json"))
+        server.respond(to: "POST /v1/auth/password/reset", body: SampleResponses.auth)
         server.respond(to: "POST /v1/auth/logout", status: 204)
         server.respond(to: "DELETE /v1/auth/account", status: 204)
-        server.respond(to: "PATCH /v1/auth/profileInfo", body: try JSONSerialization.data(withJSONObject: profileResponse))
-        server.respond(to: "POST /v1/auth/aiConsent", body: try JSONSerialization.data(withJSONObject: user))
-        server.respond(to: "GET /v1/horoscope/current", body: try ContractFile.data("horoscope.json"))
-        server.respond(to: "GET /v1/daily/insight", body: try ContractFile.data("daily.json"))
-        server.respond(to: "GET /v1/daily/tip", body: try ContractFile.data("daily.json"))
+        server.respond(to: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
+        server.respond(to: "POST /v1/auth/aiConsent", body: try json(user))
+        server.respond(to: "GET /v1/horoscope/current", body: SampleResponses.horoscope)
+        server.respond(to: "GET /v1/daily/insight", body: SampleResponses.daily)
+        server.respond(to: "GET /v1/daily/tip", body: SampleResponses.daily)
         server.respond(to: "GET /v1/history", body: Data("[]".utf8))
-        server.respond(to: "POST /v1/history/personality", body: try ContractFile.data("personality_result.json"))
-        server.respond(to: "POST /v1/history/compatibility", body: try ContractFile.data("compatibility_result.json"))
+        server.respond(to: "POST /v1/history/personality", body: SampleResponses.personalityResult)
+        server.respond(to: "POST /v1/history/compatibility", body: SampleResponses.compatibilityResult)
     }
 
-    // A user who has just registered: no profile answers and no consent yet
-    func newUserAuth() throws -> Data {
-        var auth = try ContractFile.object("auth.json")
-        let user = try XCTUnwrap(auth["user"] as? [String: Any])
-        auth["user"] = ["id": user["id"], "name": user["name"], "email": user["email"], "hasAIConsent": false, "isEmailConfirmed": false]
-        return try JSONSerialization.data(withJSONObject: auth)
-    }
-
-    func newUser() throws -> Data {
-        let auth = try XCTUnwrap(JSONSerialization.jsonObject(with: try newUserAuth()) as? [String: Any])
-        return try JSONSerialization.data(withJSONObject: try XCTUnwrap(auth["user"]))
-    }
-
-    func completeUser() throws -> Data {
-        try JSONSerialization.data(withJSONObject: try XCTUnwrap(try ContractFile.object("auth.json")["user"]))
-    }
-
-    // A registered user who answered everything but has not confirmed the email yet
-    func unconfirmedUser() throws -> [String: Any] {
-        var user = try XCTUnwrap(try ContractFile.object("auth.json")["user"] as? [String: Any])
-        user["isEmailConfirmed"] = false
-        return user
+    func json(_ object: Any) throws -> Data {
+        try JSONSerialization.data(withJSONObject: object)
     }
 
     func failingBody(_ reason: String) throws -> Data {
-        try JSONSerialization.data(withJSONObject: ["error": true, "reason": reason])
+        try json(["error": true, "reason": reason])
     }
 
-    // MARK: - Launch and sign-in
+    // A user who answered everything. Pass changes to get another one, for example without the AI consent.
+    func sampleUser(_ changes: [String: Any] = [:]) throws -> [String: Any] {
+        let user = try XCTUnwrap(try SampleResponses.object(SampleResponses.auth)["user"] as? [String: Any])
+        return user.merging(changes) { _, new in new }
+    }
+
+    // A user who has just registered: no answers yet
+    func newUser() throws -> [String: Any] {
+        let user = try sampleUser()
+        return ["id": try XCTUnwrap(user["id"]), "name": "Анна", "email": email, "hasAIConsent": false, "isEmailConfirmed": false]
+    }
+
+    func authBody(user: [String: Any]) throws -> Data {
+        try json(["token": "sample-token", "user": user])
+    }
+
+    func profileBody(user: [String: Any]) throws -> Data {
+        try json(["user": user, "horoscope": try SampleResponses.object(SampleResponses.horoscope)])
+    }
+
+    // One entry of the given kind in the history, and its details when it is opened
+    func setHistory(kind: String, resultKey: String, result: Data) throws {
+        let list = try XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
+        var entry = try XCTUnwrap(list.first { $0["kind"] as? String == kind })
+
+        server.respond(to: "GET /v1/history", body: try json([entry]))
+
+        entry[resultKey] = try SampleResponses.object(result)
+
+        server.respond(to: "GET /v1/history/:historyID", body: try json(entry))
+        server.respond(to: "DELETE /v1/history/:historyID", status: 204)
+    }
+
+    // MARK: - Launch
     var welcomeButton: XCUIElement {
         app.buttons["У меня уже есть аккаунт"].firstMatch
     }
@@ -93,11 +103,14 @@ class FlowTestCase: XCTestCase {
         server.respond(to: "GET /v1/auth/me", status: 401, body: try failingBody("Неверный токен"))
         app.launch()
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 20), "the welcome screen did not open")
-        server.respond(to: "GET /v1/auth/me", body: try completeUser())
+        server.respond(to: "GET /v1/auth/me", body: try json(try sampleUser()))
     }
 
-    func launchSignedIn() throws {
+    func launchSignedIn(user: [String: Any]? = nil) throws {
+        let user = try user ?? sampleUser()
+        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
         try launchOnWelcome()
+        server.respond(to: "GET /v1/auth/me", body: try json(user))
         signIn()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
     }
@@ -109,12 +122,9 @@ class FlowTestCase: XCTestCase {
         tapButton("Войти")
     }
 
-    func signOut() {
+    func openSettings() {
         openProfile()
         app.buttons["gearshape"].firstMatch.tap()
-        tapButton("Выйти")
-        confirmAlert("Выйти")
-        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15), "did not return to the welcome screen")
     }
 
     // MARK: - Actions
@@ -135,6 +145,22 @@ class FlowTestCase: XCTestCase {
         button.tap()
     }
 
+    func chooseAnswers(_ answers: [String]) {
+        for answer in answers {
+            let chip = text(answer)
+            for _ in 0..<5 where !chip.isHittable {
+                app.swipeUp()
+            }
+            chip.tap()
+        }
+    }
+
+    func scrollUp(to element: XCUIElement) {
+        for _ in 0..<8 where !element.isHittable {
+            app.swipeDown()
+        }
+    }
+
     func goBack() {
         app.navigationBars.buttons.element(boundBy: 0).tap()
         sleep(1)
@@ -144,6 +170,7 @@ class FlowTestCase: XCTestCase {
         let confirm = app.alerts.buttons[button].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "no alert with \(button)")
         confirm.tap()
+        sleep(1)
     }
 
     func alertText() -> String {
@@ -187,7 +214,7 @@ class FlowTestCase: XCTestCase {
         openTab(3, showing: "Профиль")
     }
 
-    // MARK: - Checks
+    // MARK: - Finding things
     func text(_ value: String) -> XCUIElement {
         app.staticTexts[value].firstMatch
     }
@@ -198,10 +225,6 @@ class FlowTestCase: XCTestCase {
 
     func button(containing part: String) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "label CONTAINS %@", part)).firstMatch
-    }
-
-    var retryButtons: XCUIElementQuery {
-        app.buttons.matching(NSPredicate(format: "label == %@", "Повторить"))
     }
 
     func assertOnMainScreen(file: StaticString = #filePath, line: UInt = #line) {
