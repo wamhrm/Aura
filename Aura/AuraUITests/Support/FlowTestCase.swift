@@ -59,7 +59,7 @@ class FlowTestCase: XCTestCase {
     func newUserAuth() throws -> Data {
         var auth = try ContractFile.object("auth.json")
         let user = try XCTUnwrap(auth["user"] as? [String: Any])
-        auth["user"] = ["id": user["id"], "name": user["name"], "email": user["email"], "hasAIConsent": false]
+        auth["user"] = ["id": user["id"], "name": user["name"], "email": user["email"], "hasAIConsent": false, "isEmailConfirmed": false]
         return try JSONSerialization.data(withJSONObject: auth)
     }
 
@@ -70,6 +70,13 @@ class FlowTestCase: XCTestCase {
 
     func completeUser() throws -> Data {
         try JSONSerialization.data(withJSONObject: try XCTUnwrap(try ContractFile.object("auth.json")["user"]))
+    }
+
+    // A registered user who answered everything but has not confirmed the email yet
+    func unconfirmedUser() throws -> [String: Any] {
+        var user = try XCTUnwrap(try ContractFile.object("auth.json")["user"] as? [String: Any])
+        user["isEmailConfirmed"] = false
+        return user
     }
 
     func failingBody(_ reason: String) throws -> Data {

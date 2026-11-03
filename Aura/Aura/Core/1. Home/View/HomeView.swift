@@ -67,7 +67,7 @@ struct HomeView: View {
 
                             if let horoscope = vm.horoscope {
                                 VStack(alignment: .leading, spacing: 10) {
-                                    headerText("Гороскоп на неделю", "Читать") {
+                                    headerText(title: "Гороскоп на неделю", buttonTitle: "Читать") {
                                         vm.showHoroscopeDetails()
                                     }
 
@@ -117,7 +117,7 @@ struct HomeView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 10) {
-                                headerText("Проверьте себя", "Все тесты") {
+                                headerText(title: "Проверьте себя", buttonTitle: "Все тесты") {
                                     vm.showAllTests()
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
@@ -166,13 +166,16 @@ struct HomeView: View {
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }
+        .sheet(item: $vm.emailConfirmation) { confirmation in
+            EmailConfirmationSheetView(vm: confirmation)
+        }
     }
 }
 
 extension HomeView {
-    private func headerText(_ title: String,
-                            _ buttonTitle: String,
-                            _ onTapHandler: @escaping () -> Void) -> some View {
+    private func headerText(title: String,
+                            buttonTitle: String,
+                            onTapHandler: @escaping () -> Void) -> some View {
         HStack {
             Text(title)
                 .fontWeight(.semibold)

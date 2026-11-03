@@ -11,5 +11,6 @@ import Vapor
 extension Application {
     func configureMigrations() {
         self.migrations.add(CreateSchema())
+        self.migrations.add(AddAccountProtection())
     }
 }

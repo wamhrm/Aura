@@ -23,6 +23,8 @@ protocol AuthServiceProtocol {
     func resetPassword(email: String, code: String, newPassword: String) async throws
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
     func giveAIConsent() async throws
+    func sendEmailConfirmationCode() async throws
+    func confirmEmail(code: String) async throws
     func signOut()
     func deleteAccount() async throws
     func refreshUser()
@@ -95,6 +97,18 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func giveAIConsent() async throws {
         let user = try await networkService.giveAIConsent()
+        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else { return }
+
+        storage.saveUser(user)
+        authState.send(.signedIn(user))
+    }
+
+    func sendEmailConfirmationCode() async throws {
+        try await networkService.sendEmailConfirmationCode()
+    }
+
+    func confirmEmail(code: String) async throws {
+        let user = try await networkService.confirmEmail(code: code)
         guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else { return }
 
         storage.saveUser(user)

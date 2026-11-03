@@ -11,11 +11,13 @@ struct OpenAIChatDTO: Encodable {
     let model: String
     let messages: [OpenAIMessage]
     let responseFormat: OpenAIResponseFormat
+    let maxCompletionTokens: Int
 
     private enum CodingKeys: String, CodingKey {
         case model
         case messages
         case responseFormat = "response_format"
+        case maxCompletionTokens = "max_completion_tokens"
     }
 }
 
@@ -98,6 +100,17 @@ indirect enum JSONSchema: Encodable, Sendable {
 
 struct OpenAIChatResponse: Content {
     let choices: [OpenAIChoice]
+    let usage: OpenAIUsage?
+}
+
+struct OpenAIUsage: Content {
+    let promptTokens: Int
+    let completionTokens: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case promptTokens = "prompt_tokens"
+        case completionTokens = "completion_tokens"
+    }
 }
 
 struct OpenAIChoice: Content {

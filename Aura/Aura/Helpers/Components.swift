@@ -48,9 +48,9 @@ struct LogoImage: View {
 }
 
 struct ClassicButton: View {
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
     let title: String
     let action: () -> Void
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         Button(action: action) {

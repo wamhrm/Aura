@@ -115,6 +115,7 @@ final class ContractTests: XCTestCase {
 
         // Then
         XCTAssertEqual(auth.user.gender, ProfileInfoOption.woman.rawValue)
+        XCTAssertTrue(auth.user.hasConfirmedEmail)
         XCTAssertEqual(horoscope.type, .taurus)
         XCTAssertEqual(horoscope.items.map(\.key), [.love, .health, .work])
         XCTAssertEqual(personality.zodiacSign, .taurus)

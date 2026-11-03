@@ -4,6 +4,7 @@
 .cursor/
 .vscode/
 CLAUDE.md
+TODO.md
 xcuserdata/
 DerivedData/
 *.xcresult

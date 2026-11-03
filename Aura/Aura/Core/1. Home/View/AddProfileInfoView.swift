@@ -20,8 +20,10 @@ struct AddProfileInfoView: View {
                 VStack(spacing: 16) {
                     ProfileInfoSection(title: "Ваш пол") {
                         HStack {
-                            ProfileInfoOptionView(type: .man, selection: $vm.profileInfo.gender)
-                            ProfileInfoOptionView(type: .woman, selection: $vm.profileInfo.gender)
+                            ProfileInfoOptionView(type: .man,
+                                                  selection: $vm.profileInfo.gender)
+                            ProfileInfoOptionView(type: .woman,
+                                                  selection: $vm.profileInfo.gender)
                         }
                     }
 

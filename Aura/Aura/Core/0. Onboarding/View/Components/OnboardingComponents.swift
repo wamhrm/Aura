@@ -223,7 +223,7 @@ enum OnboardingTextFieldTypes: String {
 
         }
 
-        OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 6 символов")
+        OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 8 символов")
 
         OnboardingTextField(type: .password, text: .constant(""))
 

@@ -6,11 +6,16 @@
 //
 
 import JWTKit
+import NIOCore
 import Vapor
 
 struct AppleAuthService {
+    private static let publicKeysCache = ApplePublicKeysCache()
+
     private let baseURL = Environment.get("APPLE_AUTH_BASE_URL") ?? "https://appleid.apple.com"
     private let bundleID = Environment.get("APPLE_BUNDLE_ID")
+    private let requestTimeout: TimeAmount = .seconds(10)
+    private let tokenCipher = AppleTokenCipher()
 
     func verifyIdentityToken(_ identityToken: String, nonce: String, req: Request) async throws -> AppleIdentityToken {
         guard let bundleID else {
@@ -18,11 +23,10 @@ struct AppleAuthService {
             throw Abort(.serviceUnavailable, reason: "Вход через Apple временно недоступен")
         }
 
-        let keys = JWTKeyCollection()
-        try await keys.add(jwksJSON: fetchPublicKeys(req: req))
+        let publicKeys = try await cachedPublicKeys(req: req)
 
         do {
-            let token = try await keys.verify(identityToken, as: AppleIdentityToken.self)
+            let token = try await verifiedToken(identityToken, publicKeys: publicKeys, req: req)
             try token.audience.verifyIntendedAudience(includes: bundleID)
 
             guard token.nonce == SHA256.hash(data: Data(nonce.utf8)).hex else {
@@ -36,7 +40,8 @@ struct AppleAuthService {
         }
     }
 
-    func refreshToken(for authorizationCode: String, req: Request) async -> String? {
+    // The token gives access to the user's Apple ID, so only its encrypted form may reach the database
+    func encryptedRefreshToken(for authorizationCode: String, req: Request) async -> String? {
         guard let bundleID, let clientSecret = await makeClientSecret(req: req) else {
             req.logger.warning("Apple refresh token not requested: Sign in with Apple keys are not configured")
             return nil
@@ -44,6 +49,7 @@ struct AppleAuthService {
 
         do {
             let response = try await req.client.post(URI(string: baseURL + "/auth/token")) { request in
+                request.timeout = requestTimeout
                 try request.content.encode(AppleTokenRequest(clientID: bundleID,
                                                              clientSecret: clientSecret,
                                                              code: authorizationCode),
@@ -55,21 +61,23 @@ struct AppleAuthService {
                 return nil
             }
 
-            return try response.content.decode(AppleTokenResponse.self).refreshToken
+            return try response.content.decode(AppleTokenResponse.self).refreshToken.map(tokenCipher.encrypt)
         } catch {
             req.logger.warning("Apple code exchange failed: \(error)")
             return nil
         }
     }
 
-    func revoke(refreshToken: String, req: Request) async {
+    func revoke(encryptedRefreshToken: String, req: Request) async {
         guard let bundleID, let clientSecret = await makeClientSecret(req: req) else {
             req.logger.warning("Apple token not revoked: Sign in with Apple keys are not configured")
             return
         }
 
         do {
+            let refreshToken = try tokenCipher.decrypt(encryptedRefreshToken)
             let response = try await req.client.post(URI(string: baseURL + "/auth/revoke")) { request in
+                request.timeout = requestTimeout
                 try request.content.encode(AppleRevokeRequest(clientID: bundleID,
                                                               clientSecret: clientSecret,
                                                               token: refreshToken),
@@ -84,11 +92,31 @@ struct AppleAuthService {
         }
     }
 
+    private func verifiedToken(_ identityToken: String, publicKeys: String, req: Request) async throws -> AppleIdentityToken {
+        do {
+            return try await JWTKeyCollection().add(jwksJSON: publicKeys).verify(identityToken, as: AppleIdentityToken.self)
+        } catch let error as JWTError where error.errorType == .unknownKID {
+            // Apple has changed its keys since they were cached
+            let freshKeys = try await fetchPublicKeys(req: req)
+            return try await JWTKeyCollection().add(jwksJSON: freshKeys).verify(identityToken, as: AppleIdentityToken.self)
+        }
+    }
+
+    private func cachedPublicKeys(req: Request) async throws -> String {
+        if let cached = await Self.publicKeysCache.keys() {
+            return cached
+        }
+
+        return try await fetchPublicKeys(req: req)
+    }
+
     private func fetchPublicKeys(req: Request) async throws -> String {
         let response: ClientResponse
 
         do {
-            response = try await req.client.get(URI(string: baseURL + "/auth/keys"))
+            response = try await req.client.get(URI(string: baseURL + "/auth/keys")) { request in
+                request.timeout = requestTimeout
+            }
         } catch {
             req.logger.error("Apple public keys request failed: \(error)")
             throw Abort(.badGateway, reason: "Не удалось связаться с Apple. Попробуйте позже")
@@ -99,7 +127,9 @@ struct AppleAuthService {
             throw Abort(.badGateway, reason: "Не удалось связаться с Apple. Попробуйте позже")
         }
 
-        return String(buffer: body)
+        let keys = String(buffer: body)
+        await Self.publicKeysCache.save(keys)
+        return keys
     }
 
     private func makeClientSecret(req: Request) async -> String? {
@@ -123,6 +153,46 @@ struct AppleAuthService {
             req.logger.error("Apple client secret could not be created: \(error)")
             return nil
         }
+    }
+}
+
+private actor ApplePublicKeysCache {
+    private let lifetime: TimeInterval = 60 * 60
+    private var storedKeys: String?
+    private var loadedAt = Date.distantPast
+
+    func keys() -> String? {
+        Date().timeIntervalSince(loadedAt) < lifetime ? storedKeys : nil
+    }
+
+    func save(_ keys: String) {
+        storedKeys = keys
+        loadedAt = Date()
+    }
+}
+
+private struct AppleTokenCipher {
+    private struct MissingKey: Error {}
+
+    func encrypt(_ token: String) throws -> String {
+        guard let sealed = try AES.GCM.seal(Data(token.utf8), using: try key()).combined else { throw MissingKey() }
+        return sealed.base64EncodedString()
+    }
+
+    func decrypt(_ encrypted: String) throws -> String {
+        guard let sealed = Data(base64Encoded: encrypted) else { throw MissingKey() }
+        let opened = try AES.GCM.open(AES.GCM.SealedBox(combined: sealed), using: try key())
+        return String(decoding: opened, as: UTF8.self)
+    }
+
+    // 32 random bytes in base64: openssl rand -base64 32
+    private func key() throws -> SymmetricKey {
+        guard let value = Environment.get("APPLE_TOKEN_ENCRYPTION_KEY"),
+              let data = Data(base64Encoded: value),
+              data.count == 32
+        else { throw MissingKey() }
+
+        return SymmetricKey(data: data)
     }
 }
 

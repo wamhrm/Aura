@@ -36,9 +36,7 @@ enum CompatibilityButtons {
 @MainActor
 final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
-
-    @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns,
-                                                              .attachmentCompatibility]
+    @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
     @Published var partnerInfo = PartnerInfoModel()
     @Published private(set) var compatibilityResult: CompabilityResultModel?
 
@@ -46,10 +44,12 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var alertMessage = ""
     @Published private(set) var isLoading = false
     @Published private(set) var needsAIConsent = false
+    @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
     
+    private var currentUser: UserModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -69,7 +69,9 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self, case .signedIn(let user) = $0 else { return }
+                currentUser = user
                 needsAIConsent = !user.allowsAIAnalysis
+                if user.hasConfirmedEmail { emailConfirmation = nil }
             }
             .store(in: &cancellables)
     }
@@ -109,6 +111,11 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
     func makeCompatibilityTest() {
         guard !isLoading else { return }
+
+        if let currentUser, !currentUser.hasConfirmedEmail {
+            emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
+            return
+        }
 
         isLoading = true
 

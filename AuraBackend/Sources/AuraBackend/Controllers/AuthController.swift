@@ -6,11 +6,14 @@
 //
 
 import Fluent
+import FluentPostgresDriver
 import Vapor
 
 struct AuthController: RouteCollection {
     private let appleAuthService = AppleAuthService()
     private let passwordResetService = PasswordResetService()
+    private let emailConfirmationService = EmailConfirmationService()
+    private let maxSignInAttempts = 10
 
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
@@ -25,6 +28,8 @@ struct AuthController: RouteCollection {
         let authenticated = auth.grouped(UserAuthMiddleware())
         authenticated.post("logout", use: logout)
         authenticated.delete("account", use: deleteAccount)
+        authenticated.post("email", "sendCode", use: sendEmailConfirmationCode)
+        authenticated.post("email", "confirm", use: confirmEmail)
     }
 
     private func createAccount(_ req: Request) async throws -> Response {
@@ -71,11 +76,42 @@ struct AuthController: RouteCollection {
               let passwordHash = user.passwordHash
         else { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
+        try await takeSignInAttempt(of: user, on: req)
+
         let isPasswordCorrect = try await req.password.async.verify(signInData.password, created: passwordHash)
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
+        try await clearSignInAttempts(of: user, on: req.db)
+
         return try await issueToken(for: user, on: req)
+    }
+
+    // Guessing a password from many addresses is limited too. The attempt is taken in one statement,
+    // so parallel requests can't check more passwords than the limit.
+    private func takeSignInAttempt(of user: User, on req: Request) async throws {
+        let userID = try user.requireID()
+        let takenAttempts = try await req.db.sql()
+            .raw("""
+                UPDATE users
+                SET sign_in_attempts = CASE WHEN sign_in_window_start > now() - interval '15 minutes' THEN sign_in_attempts + 1 ELSE 1 END,
+                    sign_in_window_start = CASE WHEN sign_in_window_start > now() - interval '15 minutes' THEN sign_in_window_start ELSE now() END
+                WHERE id = \(bind: userID)
+                  AND (sign_in_window_start IS NULL
+                       OR sign_in_window_start <= now() - interval '15 minutes'
+                       OR sign_in_attempts < \(bind: maxSignInAttempts))
+                RETURNING id
+                """)
+            .all()
+
+        guard !takenAttempts.isEmpty else {
+            throw Abort(.tooManyRequests, reason: "Слишком много попыток входа. Попробуйте через 15 минут или сбросьте пароль")
+        }
+    }
+
+    private func clearSignInAttempts(of user: User, on database: any Database) async throws {
+        let userID = try user.requireID()
+        try await database.sql().raw("UPDATE users SET sign_in_attempts = 0 WHERE id = \(bind: userID)").run()
     }
 
     private func requestPasswordReset(_ req: Request) async throws -> HTTPStatus {
@@ -109,13 +145,33 @@ struct AuthController: RouteCollection {
         let userID = try user.requireID()
         user.passwordHash = try await req.password.async.hash(data.password)
 
+        // The code came to this address, so the address is confirmed too
+        user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
+
         try await req.db.transaction { database in
             try await user.save(on: database)
+            try await clearSignInAttempts(of: user, on: database)
             try await Token.query(on: database).filter(\.$user.$id == userID).delete()
             try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
         }
 
         return try await issueToken(for: user, on: req)
+    }
+
+    private func sendEmailConfirmationCode(_ req: Request) async throws -> HTTPStatus {
+        try await emailConfirmationService.sendCode(to: try req.auth.require(User.self), req: req)
+        return .noContent
+    }
+
+    private func confirmEmail(_ req: Request) async throws -> UserDTO {
+        let user = try req.auth.require(User.self)
+        let data = try req.content.decode(ConfirmEmailRequest.self)
+
+        try await emailConfirmationService.confirm(data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                   for: user,
+                                                   req: req)
+
+        return try user.toDTO()
     }
 
     private func signInWithApple(_ req: Request) async throws -> AuthDTO {
@@ -131,7 +187,7 @@ struct AuthController: RouteCollection {
         }
 
         if user.appleRefreshToken == nil, let authorizationCode = data.authorizationCode {
-            user.appleRefreshToken = await appleAuthService.refreshToken(for: authorizationCode, req: req)
+            user.appleRefreshToken = await appleAuthService.encryptedRefreshToken(for: authorizationCode, req: req)
             try await user.save(on: req.db)
         }
 
@@ -182,7 +238,7 @@ struct AuthController: RouteCollection {
         let user = try req.auth.require(User.self)
 
         if let appleRefreshToken = user.appleRefreshToken {
-            await appleAuthService.revoke(refreshToken: appleRefreshToken, req: req)
+            await appleAuthService.revoke(encryptedRefreshToken: appleRefreshToken, req: req)
         } else if user.appleUserID != nil {
             req.logger.warning("Apple token not revoked: no refresh token stored")
         }
@@ -193,7 +249,7 @@ struct AuthController: RouteCollection {
 
     private func validatePassword(_ password: String) throws {
         guard password.count >= InputLimits.minPasswordLength else {
-            throw Abort(.badRequest, reason: "Пароль должен быть не короче 6 символов")
+            throw Abort(.badRequest, reason: "Пароль должен быть не короче \(InputLimits.minPasswordLength) символов")
         }
         guard password.utf8.count <= InputLimits.maxPasswordBytes else {
             throw Abort(.badRequest, reason: "Пароль слишком длинный")

@@ -75,6 +75,10 @@ struct ProfileInfoOptionView: View {
     let type: ProfileInfoOption
     @Binding var selection: String?
     @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+    
+    private var isSelected: Bool {
+        selection == type.rawValue
+    }
 
     var body: some View {
         HStack {
@@ -92,12 +96,6 @@ struct ProfileInfoOptionView: View {
         .clipShape(.rect(cornerRadius: 10))
         .onTapGesture { selection = type.rawValue }
         .animation(.easeInOut(duration: 0.15), value: isSelected)
-    }
-}
-
-extension ProfileInfoOptionView {
-    private var isSelected: Bool {
-        selection == type.rawValue
     }
 }
 

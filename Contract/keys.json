@@ -28,7 +28,7 @@
   },
   "limits": {
     "minNameLength": 2,
-    "minPasswordLength": 6,
+    "minPasswordLength": 8,
     "resetCodeLength": 6,
     "minUserAge": 16,
     "maxUserAge": 100,
