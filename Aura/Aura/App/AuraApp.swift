@@ -8,6 +8,30 @@
 import SwiftUI
 
 @main
+enum AuraEntryPoint {
+    static func main() {
+        #if DEBUG
+        // Unit tests run inside the app process, the real app must not start and reach the server
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            UnitTestHostApp.main()
+            return
+        }
+        #endif
+
+        AuraApp.main()
+    }
+}
+
+#if DEBUG
+private struct UnitTestHostApp: App {
+    var body: some Scene {
+        WindowGroup {
+            EmptyView()
+        }
+    }
+}
+#endif
+
 struct AuraApp: App {
     @StateObject private var authService: AuthService
     @StateObject private var contentService: ContentService

@@ -15,70 +15,31 @@ enum MockError: Error {
 final class MockAuthService: AuthServiceProtocol {
     let authState: CurrentValueSubject<AuthState, Never>
 
-    var updateProfileInfoResult: UpdateProfileInfoResponse?
-    var errorToThrow: Error?
-    var stateAfterRestore: AuthState?
-
-    private(set) var signInCallCount = 0
-    private(set) var createAccountCallCount = 0
-    private(set) var signOutCallCount = 0
-    private(set) var updateProfileInfoCallCount = 0
-    private(set) var refreshUserCallCount = 0
-    private(set) var restoreSessionCallCount = 0
-
     init(state: AuthState = .signedOut) {
         authState = CurrentValueSubject<AuthState, Never>(state)
     }
 
-    func createAccount(name: String, email: String, password: String) async throws {
-        createAccountCallCount += 1
-        if let errorToThrow { throw errorToThrow }
-    }
+    func createAccount(name: String, email: String, password: String) async throws {}
 
-    func signIn(email: String, password: String) async throws {
-        signInCallCount += 1
-        if let errorToThrow { throw errorToThrow }
-    }
+    func signIn(email: String, password: String) async throws {}
 
-    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
-        if let errorToThrow { throw errorToThrow }
-    }
+    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {}
 
-    func requestPasswordReset(email: String) async throws {
-        if let errorToThrow { throw errorToThrow }
-    }
+    func requestPasswordReset(email: String) async throws {}
 
-    func resetPassword(email: String, code: String, newPassword: String) async throws {
-        if let errorToThrow { throw errorToThrow }
-    }
+    func resetPassword(email: String, code: String, newPassword: String) async throws {}
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
-        updateProfileInfoCallCount += 1
-        if let errorToThrow { throw errorToThrow }
-        guard let updateProfileInfoResult else { throw MockError.notStubbed }
-        return updateProfileInfoResult
+        UpdateProfileInfoResponse(user: .mock, horoscope: .mock)
     }
 
-    func giveAIConsent() async throws {
-        if let errorToThrow { throw errorToThrow }
-    }
+    func giveAIConsent() async throws {}
 
-    func signOut() {
-        signOutCallCount += 1
-        authState.send(.signedOut)
-    }
+    func signOut() {}
 
-    func deleteAccount() async throws {
-        if let errorToThrow { throw errorToThrow }
-        authState.send(.signedOut)
-    }
+    func deleteAccount() async throws {}
 
-    func refreshUser() {
-        refreshUserCallCount += 1
-    }
+    func refreshUser() {}
 
-    func restoreSessionIfNeeded() {
-        restoreSessionCallCount += 1
-        if let stateAfterRestore { authState.send(stateAfterRestore) }
-    }
+    func restoreSessionIfNeeded() {}
 }
