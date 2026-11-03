@@ -23,7 +23,9 @@ struct HoroscopeCellView: View {
                             .font(Adaptive.size(.callout, .default))
                             .fontWeight(.semibold)
                         
-                        HoroscopeDateView(dateStart: horoscope.dateStart, dateEnd: horoscope.dateEnd, isCellDetails: false)
+                        HoroscopeDateView(dateStart: horoscope.dateStart,
+                                          dateEnd: horoscope.dateEnd,
+                                          isCellDetails: false)
                     }
                 }
                 

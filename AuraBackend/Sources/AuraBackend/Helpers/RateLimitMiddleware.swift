@@ -22,17 +22,9 @@ struct RateLimitMiddleware: AsyncMiddleware {
         return try await next.respond(to: req)
     }
 
+    // Cloudflare in front of the server overwrites this header, X-Forwarded-For can be sent by anyone
     private func clientIP(of req: Request) -> String {
-        if let ip = req.headers.first(name: "CF-Connecting-IP") {
-            return ip
-        }
-
-        if let forwarded = req.headers.first(name: .xForwardedFor),
-           let ip = forwarded.split(separator: ",").first {
-            return ip.trimmingCharacters(in: .whitespaces)
-        }
-
-        return req.remoteAddress?.ipAddress ?? "unknown"
+        req.headers.first(name: "CF-Connecting-IP") ?? req.remoteAddress?.ipAddress ?? "unknown"
     }
 }
 

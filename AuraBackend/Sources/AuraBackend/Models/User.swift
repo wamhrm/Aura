@@ -47,6 +47,9 @@ final class User: Model, Authenticatable, @unchecked Sendable {
     @OptionalField(key: "ai_consent_at")
     var aiConsentAt: Date?
 
+    @OptionalField(key: "email_confirmed_at")
+    var emailConfirmedAt: Date?
+
     @OptionalField(key: "password_hash")
     var passwordHash: String?
 
@@ -76,6 +79,11 @@ final class User: Model, Authenticatable, @unchecked Sendable {
 }
 
 extension User {
+    // Apple has already checked its accounts, and we don't store their email
+    var isEmailConfirmed: Bool {
+        emailConfirmedAt != nil || appleUserID != nil
+    }
+
     var hasCompletedProfileInfo: Bool {
         dateOfBirth != nil &&
         gender != nil &&
@@ -98,6 +106,7 @@ extension User {
                 emotionalCore: emotionalCore,
                 decisionStyle: decisionStyle,
                 coreFocus: coreFocus,
-                hasAIConsent: aiConsentAt != nil)
+                hasAIConsent: aiConsentAt != nil,
+                isEmailConfirmed: isEmailConfirmed)
     }
 }

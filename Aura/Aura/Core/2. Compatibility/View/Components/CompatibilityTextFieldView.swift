@@ -43,7 +43,6 @@ extension CompatibilityTextFieldView {
             case .name(let max):
                 let filtered = newValue.filter { $0.isLetter || $0.isWhitespace }
                 text = String(filtered.prefix(max))
-
             case .age(let max):
                 let filtered = newValue.filter { $0.isNumber }
 

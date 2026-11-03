@@ -34,5 +34,6 @@ func makeIncompleteUser() -> UserModel {
               emotionalCore: nil,
               decisionStyle: nil,
               coreFocus: nil,
-              hasAIConsent: nil)
+              hasAIConsent: nil,
+              isEmailConfirmed: nil)
 }

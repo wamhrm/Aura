@@ -35,6 +35,8 @@ protocol NetworkServiceProtocol: Sendable {
     func deleteAccount() async throws
     func fetchCurrentUser() async throws -> UserModel
     func giveAIConsent() async throws -> UserModel
+    func sendEmailConfirmationCode() async throws
+    func confirmEmail(code: String) async throws -> UserModel
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
     func fetchCurrentHoroscope() async throws -> HoroscopeModel
     func fetchDailyInsight() async throws -> DailyContentModel
@@ -126,6 +128,16 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func giveAIConsent() async throws -> UserModel {
         let data = try await request(endpoint: "/auth/aiConsent", method: .post)
+        return try decode(UserModel.self, from: data)
+    }
+
+    func sendEmailConfirmationCode() async throws {
+        _ = try await request(endpoint: "/auth/email/sendCode", method: .post)
+    }
+
+    func confirmEmail(code: String) async throws -> UserModel {
+        let bodyData = try JSONEncoder().encode(EmailConfirmationBody(code: code))
+        let data = try await request(endpoint: "/auth/email/confirm", method: .post, body: bodyData)
         return try decode(UserModel.self, from: data)
     }
 
@@ -343,6 +355,10 @@ private struct PasswordResetBody: Encodable {
     let password: String
 }
 
+private struct EmailConfirmationBody: Encodable {
+    let code: String
+}
+
 private struct AppleSignInBody: Encodable {
     let identityToken: String
     let authorizationCode: String?
@@ -356,7 +372,7 @@ nonisolated private struct ServerErrorResponse: Decodable {
 
 nonisolated enum NetworkError: LocalizedError {
     case invalidURL, invalidResponse, decodingError, unauthorized, sessionExpired, userExists, notFound, tooManyRequests, serverUnavailable, timedOut, noConnection, cannotReachServer, cancelled
-    case server(String)
+    case server(String), limited(String)
 
     init(statusCode: Int, data: Data) {
         if (500...599).contains(statusCode) {
@@ -365,7 +381,7 @@ nonisolated enum NetworkError: LocalizedError {
         }
 
         if let reason = try? JSONDecoder().decode(ServerErrorResponse.self, from: data).reason, !reason.isEmpty {
-            self = .server(reason)
+            self = statusCode == 429 ? .limited(reason) : .server(reason)
             return
         }
 
@@ -407,7 +423,7 @@ nonisolated enum NetworkError: LocalizedError {
             case .notFound: "Данные не найдены"
             case .tooManyRequests: "Слишком много запросов. Попробуйте позже"
             case .serverUnavailable: "Сервис временно недоступен. Попробуйте позже"
-            case .server(let message): message
+            case .server(let message), .limited(let message): message
             case .timedOut: "Сервер не ответил вовремя. Попробуйте ещё раз"
             case .noConnection: "Нет подключения к интернету"
             case .cannotReachServer: "Не удалось связаться с сервером. Попробуйте позже"

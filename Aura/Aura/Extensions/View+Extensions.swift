@@ -77,11 +77,10 @@ extension View {
     
     func dismissKeyboardOnTap() -> some View {
         simultaneousGesture(TapGesture().onEnded { _ in
-            UIApplication.shared.sendAction(
-                #selector(UIResponder.resignFirstResponder),
-                to: nil,
-                from: nil,
-                for: nil)
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                            to: nil,
+                                            from: nil,
+                                            for: nil)
             }
         )
     }

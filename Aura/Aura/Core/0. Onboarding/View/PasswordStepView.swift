@@ -13,7 +13,7 @@ struct PasswordStepView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             OnboardingHeader(title: "Придумайте пароль",
-                             subtitle: "Не меньше 6 символов")
+                             subtitle: "Не меньше \(InputLimits.minPasswordLength) символов")
 
             OnboardingTextField(type: .password, text: $vm.password)
 

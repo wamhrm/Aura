@@ -42,7 +42,7 @@ nonisolated enum Constants {
 // Copies of the server rules for instant feedback. ContractTests compares them with Contract/keys.json.
 nonisolated enum InputLimits {
     static let minNameLength = 2
-    static let minPasswordLength = 6
+    static let minPasswordLength = 8
     static let resetCodeLength = 6
     static let minUserAge = 16
     static let maxUserAge = 100

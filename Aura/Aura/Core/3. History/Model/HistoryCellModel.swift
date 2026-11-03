@@ -74,16 +74,18 @@ extension HistoryCellModel {
     var iconHandler: String {
         switch kind {
             case .personality:
-                return zodiacSign.icon
+                zodiacSign.icon
             case .compatibility:
-                return resolvedPartnerZodiacSign?.icon ?? "👤"
+                resolvedPartnerZodiacSign?.icon ?? "👤"
         }
     }
 
     var titleText: String {
         switch kind {
-            case .personality: archetypeTitle
-            case .compatibility: resolvedPartnerName ?? ""
+            case .personality:
+                archetypeTitle
+            case .compatibility:
+                resolvedPartnerName ?? ""
         }
     }
 

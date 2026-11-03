@@ -35,6 +35,10 @@ final class MockAuthService: AuthServiceProtocol {
 
     func giveAIConsent() async throws {}
 
+    func sendEmailConfirmationCode() async throws {}
+
+    func confirmEmail(code: String) async throws {}
+
     func signOut() {}
 
     func deleteAccount() async throws {}

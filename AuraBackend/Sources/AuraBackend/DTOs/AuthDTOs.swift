@@ -28,6 +28,10 @@ struct ResetPasswordRequest: Content {
     let password: String
 }
 
+struct ConfirmEmailRequest: Content {
+    let code: String
+}
+
 struct AppleSignInRequest: Content {
     let identityToken: String
     let authorizationCode: String?
@@ -48,6 +52,7 @@ struct UserDTO: Content {
     let decisionStyle: String?
     let coreFocus: String?
     let hasAIConsent: Bool
+    let isEmailConfirmed: Bool
 }
 
 struct AuthDTO: Content {
@@ -75,7 +80,7 @@ enum InputLimits {
     static let minNameLength = 2
     static let maxNameLength = 50
     static let maxEmailLength = 254
-    static let minPasswordLength = 6
+    static let minPasswordLength = 8
     static let maxPasswordBytes = 72
 }
 

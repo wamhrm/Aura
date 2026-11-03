@@ -36,6 +36,68 @@ final class TestsFlowTests: FlowTestCase {
         XCTAssertTrue(app.buttons["Убрать"].firstMatch.exists, "the test was removed below the minimum")
     }
 
+    func test_tests_whenEmailNotConfirmed_askForTheCode_andThenWork() throws {
+        // Given
+        var auth = try ContractFile.object("auth.json")
+        auth["user"] = try unconfirmedUser()
+        server.respond(to: "POST /v1/auth/signIn", body: try JSONSerialization.data(withJSONObject: auth))
+        server.respond(to: "POST /v1/auth/email/sendCode", status: 204)
+        server.respond(to: "POST /v1/auth/email/confirm", status: 400, body: try failingBody("Неверный код"))
+        try launchOnWelcome()
+        server.respond(to: "GET /v1/auth/me", body: try JSONSerialization.data(withJSONObject: try unconfirmedUser()))
+        signIn()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
+
+        // When the test on the main screen is started
+        tapButton("Проверить себя")
+
+        // Then
+        XCTAssertTrue(app.navigationBars["Подтвердите почту"].waitForExistence(timeout: 5), "the sheet did not open")
+        XCTAssertFalse(server.requests.contains("POST /v1/history/personality"))
+
+        // When the code is sent, the sheet is closed and the compatibility test is started
+        tapButton("Подтвердить")
+        XCTAssertTrue(app.textFields["Код из 6 цифр"].firstMatch.waitForExistence(timeout: 10), "no code field")
+        app.navigationBars["Подтвердите почту"].buttons.firstMatch.tap()
+        openCompatibility()
+        tapButton("Узнать совместимость")
+
+        // Then
+        XCTAssertTrue(app.navigationBars["Подтвердите почту"].waitForExistence(timeout: 5), "the sheet did not open")
+
+        // When a new code is refused because the last one is too recent
+        let tooSoon = "Код уже отправлен. Запросить новый можно через минуту"
+        server.respond(to: "POST /v1/auth/email/sendCode", status: 429, body: try failingBody(tooSoon))
+        tapButton("Подтвердить")
+
+        // Then the code from the first email can still be entered
+        XCTAssertEqual(alertText(), tooSoon)
+        closeAlert()
+
+        // When a wrong code is entered
+        fillField(app.textFields["Код из 6 цифр"].firstMatch, with: "000000")
+        tapButton("Проверить код")
+
+        // Then
+        XCTAssertEqual(alertText(), "Неверный код")
+        closeAlert()
+
+        // When the right code is entered
+        server.respond(to: "POST /v1/auth/email/confirm", body: try completeUser())
+        tapButton("Проверить код")
+
+        // Then
+        XCTAssertTrue(app.navigationBars["Подтвердите почту"].waitForNonExistence(timeout: 10), "the sheet did not close")
+        XCTAssertTrue(server.requests.contains("POST /v1/auth/email/sendCode"))
+
+        // When
+        openHome()
+        tapButton("Проверить себя")
+
+        // Then
+        XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the result did not open")
+    }
+
     func test_personalityTest_showsTheAIResult() throws {
         // Given
         try launchSignedIn()

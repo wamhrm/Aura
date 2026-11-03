@@ -10,6 +10,12 @@ enum Entrypoint {
 
         do {
             try await configure(app)
+
+            // Commands like `migrate` do their own work
+            if (env.commandInput.arguments.first ?? "serve") == "serve" {
+                app.startBackgroundWork()
+            }
+
             try await app.execute()
         } catch {
             app.logger.report(error: error)

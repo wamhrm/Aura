@@ -36,7 +36,10 @@ struct PersonalityResultView: View {
                         VStack(alignment: .center, spacing: Adaptive.size(15, 17)) {
                             HStack {
                                 ForEach(result.selectedTests, id: \.self) { test in
-                                    TestCellImage(icon: test.icon, color: test.color, iconSize: .default, backgroundSize: 30, isResults: true)
+                                    TestCellImage(icon: test.icon,
+                                                  color: test.color,
+                                                  iconSize: .default,
+                                                  backgroundSize: 30, isResults: true)
                                 }
                             }
                             

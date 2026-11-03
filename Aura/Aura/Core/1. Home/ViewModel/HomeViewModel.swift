@@ -32,6 +32,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var allowsAIAnalysis = false
     @Published private(set) var isLoading = false
     @Published private(set) var isLoadingScreen = true
+    @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -96,6 +97,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
         currentUser = user
         allowsAIAnalysis = user.allowsAIAnalysis
+        if user.hasConfirmedEmail { emailConfirmation = nil }
         userName = user.name
         isLoadingScreen = false
 
@@ -142,6 +144,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     func makePersonalityTest() {
         guard !isLoading else { return }
+
+        if let currentUser, !currentUser.hasConfirmedEmail {
+            emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
+            return
+        }
 
         isLoading = true
 

@@ -69,6 +69,15 @@ final class MockNetworkService: NetworkServiceProtocol {
         return .mock
     }
 
+    func sendEmailConfirmationCode() async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
+
+    func confirmEmail(code: String) async throws -> UserModel {
+        if let errorToThrow { throw errorToThrow }
+        return .mock
+    }
+
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         if let errorToThrow { throw errorToThrow }
         return updateProfileInfoResponse

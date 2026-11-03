@@ -18,6 +18,7 @@ struct PsychologyController: RouteCollection {
         let history = routes.grouped("history")
             .grouped(UserAuthMiddleware())
             .grouped(AIConsentMiddleware())
+            .grouped(EmailConfirmedMiddleware())
 
         history.post("personality", use: makePersonalityTest)
         history.post("compatibility", use: makeCompatibilityTest)
