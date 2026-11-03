@@ -93,6 +93,16 @@ final class LocalStorage: LocalStorageProtocol {
     private func write<T: Encodable>(_ value: T, to url: URL) {
         guard let data = try? JSONEncoder().encode(value) else { return }
         try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        excludeFromBackup()
         try? data.write(to: url, options: .atomic)
+    }
+
+    // The birth date, the answers and the results must not stay in backups out of the app's control
+    private func excludeFromBackup() {
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+
+        var directory = baseURL
+        try? directory.setResourceValues(values)
     }
 }

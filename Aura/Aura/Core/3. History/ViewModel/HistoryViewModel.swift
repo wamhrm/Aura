@@ -23,6 +23,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     @Published var showAlert = false
     @Published var alertMessage = ""
+    @Published var showDeleteAlert = false
     @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol
@@ -30,6 +31,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     private let storage: any LocalStorageProtocol
 
     private var currentUserId: UUID?
+    private var cellToDelete: HistoryCellModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -121,7 +123,16 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    func deleteHistoryCell(_ item: HistoryCellModel) {
+    func requestDeletion(of item: HistoryCellModel) {
+        cellToDelete = item
+        showDeleteAlert = true
+    }
+
+    func deleteRequestedCell() {
+        guard let item = cellToDelete else { return }
+
+        cellToDelete = nil
+
         Task {
             do {
                 try await contentService.deleteHistory(id: item.id)

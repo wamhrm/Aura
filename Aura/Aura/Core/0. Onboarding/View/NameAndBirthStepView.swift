@@ -18,7 +18,7 @@ struct NameAndBirthStepView: View {
                                  subtitle: "По дате рождения мы определим ваш знак зодиака")
 
                 if !vm.isSignedIn {
-                    OnboardingTextField(type: .name, text: $vm.name)
+                    OnboardingTextField(text: $vm.name, type: .name)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {

@@ -38,6 +38,7 @@ struct CompatibilityResultView: View {
                             Text(result.partnerNameCapitalized)
                                 .font(Adaptive.size(.callout, .default))
                                 .bold()
+                                .lineLimit(2)
                         }
                         .frame(width: 150, alignment: .leading)
                     }

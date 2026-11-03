@@ -44,7 +44,7 @@ struct CompatibilityView: View {
 
                                 CompatibilityTextFieldView(title: "Введите имя",
                                                            text: $vm.partnerInfo.name,
-                                                           type: .name(maxLength: 10))
+                                                           type: .name())
                             }
 
                             VStack(alignment: .leading) {

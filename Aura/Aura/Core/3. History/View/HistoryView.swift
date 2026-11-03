@@ -21,18 +21,20 @@ struct HistoryView: View {
                             emptyListView()
                                 .containerRelativeFrame(.vertical)
                         } else {
-                            ForEach(vm.historyCells) { item in
-                                Button {
-                                    vm.openHistoryCellDetails(item)
-                                } label: {
-                                    HistoryCellView(cell: item)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .tint(.primaryText)
-                                        .contextMenu {
-                                            Button("Удалить", role: .destructive) {
-                                                vm.deleteHistoryCell(item)
+                            LazyVStack {
+                                ForEach(vm.historyCells) { item in
+                                    Button {
+                                        vm.openHistoryCellDetails(item)
+                                    } label: {
+                                        HistoryCellView(cell: item)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .tint(.primaryText)
+                                            .contextMenu {
+                                                Button("Удалить", role: .destructive) {
+                                                    vm.requestDeletion(of: item)
+                                                }
                                             }
-                                        }
+                                    }
                                 }
                             }
                             .disabled(vm.isLoading)
@@ -58,6 +60,14 @@ struct HistoryView: View {
         }
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
+        }
+        .alert("Удалить результат?", isPresented: $vm.showDeleteAlert) {
+            Button("Отмена", role: .cancel) {}
+            Button("Удалить", role: .destructive) {
+                vm.deleteRequestedCell()
+            }
+        } message: {
+            Text("Результат теста нельзя будет восстановить")
         }
     }
 }

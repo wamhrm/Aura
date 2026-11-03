@@ -8,6 +8,7 @@
 import Foundation
 
 struct ProfileInfoModel: Codable {
+    var name: String?
     var dateOfBirth = ""
     var birthTime = ""
     var gender: String?

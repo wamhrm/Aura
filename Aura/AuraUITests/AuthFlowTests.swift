@@ -62,14 +62,15 @@ final class AuthFlowTests: FlowTestCase {
         XCTAssertTrue(server.requests.contains("POST /v1/auth/logout"))
     }
 
-    func test_signIn_withWrongPassword_showsAlert() throws {
+    // The password is shorter than the current minimum: old accounts have such passwords and must reach the server
+    func test_signIn_withWrongShortPassword_showsTheServerAlert() throws {
         // Given
         let reason = "Неверная почта или пароль"
         server.respond(to: "POST /v1/auth/signIn", status: 401, body: try failingBody(reason))
         try launchOnWelcome()
 
         // When
-        signIn()
+        signIn(password: "short6")
 
         // Then
         XCTAssertEqual(alertText(), reason)
@@ -121,7 +122,9 @@ final class AuthFlowTests: FlowTestCase {
         app.terminate()
         app.launch()
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not reopen")
-        tapOnboardingBackArrow()
+        let arrow = app.buttons["chevron.left"].firstMatch
+        XCTAssertTrue(arrow.waitForExistence(timeout: 10), "no back arrow")
+        arrow.tap()
         confirmAlert("Выйти")
 
         // Then
