@@ -16,8 +16,8 @@ struct SignInStepView: View {
                              subtitle: "Войдите в свой аккаунт")
 
             VStack(alignment: .trailing, spacing: 10) {
-                OnboardingTextField(type: .email, text: $vm.email)
-                OnboardingTextField(type: .password, text: $vm.password)
+                OnboardingTextField(text: $vm.email, type: .email)
+                OnboardingTextField(text: $vm.password, type: .password)
 
                 OnboardingTextButton(title: "Забыли пароль?") {
                     vm.showPasswordReset()

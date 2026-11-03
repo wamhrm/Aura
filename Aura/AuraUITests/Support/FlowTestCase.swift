@@ -102,10 +102,10 @@ class FlowTestCase: XCTestCase {
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
     }
 
-    func signIn() {
+    func signIn(password: String? = nil) {
         welcomeButton.tap()
         fillField(app.textFields["Электронная почта"].firstMatch, with: email)
-        fillField(app.secureTextFields["Пароль"].firstMatch, with: password)
+        fillField(app.secureTextFields["Пароль"].firstMatch, with: password ?? self.password)
         tapButton("Войти")
     }
 
@@ -133,13 +133,6 @@ class FlowTestCase: XCTestCase {
         }
 
         button.tap()
-    }
-
-    // The onboarding arrow reacts to a tap on the chevron itself, the middle of its frame is empty
-    func tapOnboardingBackArrow() {
-        let arrow = app.buttons["chevron.left"].firstMatch
-        XCTAssertTrue(arrow.waitForExistence(timeout: 10), "no back arrow")
-        arrow.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.4)).tap()
     }
 
     func goBack() {

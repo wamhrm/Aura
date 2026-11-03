@@ -41,7 +41,7 @@ extension CompatibilityTextFieldView {
     private func handleInputChange(_ newValue: String) {
         switch type {
             case .name(let max):
-                let filtered = newValue.filter { $0.isLetter || $0.isWhitespace }
+                let filtered = newValue.filter { $0.isLetter || $0.isWhitespace || $0 == "-" }
                 text = String(filtered.prefix(max))
             case .age(let max):
                 let filtered = newValue.filter { $0.isNumber }
@@ -56,7 +56,7 @@ extension CompatibilityTextFieldView {
 }
 
 enum CompatibilityTextFieldTypes {
-    case name(maxLength: Int = 10)
+    case name(maxLength: Int = 50)
     case age(maxAge: Int = 100)
 }
 

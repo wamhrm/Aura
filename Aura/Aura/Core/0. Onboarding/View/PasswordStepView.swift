@@ -15,7 +15,7 @@ struct PasswordStepView: View {
             OnboardingHeader(title: "Придумайте пароль",
                              subtitle: "Не меньше \(InputLimits.minPasswordLength) символов")
 
-            OnboardingTextField(type: .password, text: $vm.password)
+            OnboardingTextField(text: $vm.password, type: .password)
 
             ClassicButton(title: vm.createAccountButtonTitle) {
                 vm.createAccount()

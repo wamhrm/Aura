@@ -16,8 +16,8 @@ struct ResetPasswordStepView: View {
                 OnboardingHeader(title: "Введите код из письма",
                                  subtitle: "Если аккаунт с почтой \(vm.email) есть, мы отправили на неё код. Он действует 15 минут.")
 
-                OnboardingTextField(type: .code, text: $vm.resetCode)
-                OnboardingTextField(type: .newPassword, text: $vm.newPassword)
+                OnboardingTextField(text: $vm.resetCode, type: .code)
+                OnboardingTextField(text: $vm.newPassword, type: .newPassword)
 
                 ClassicButton(title: vm.resetPasswordButtonTitle) {
                     vm.resetPassword()
@@ -31,7 +31,7 @@ struct ResetPasswordStepView: View {
                 OnboardingHeader(title: "Сброс пароля",
                                  subtitle: "Введите почту аккаунта, и мы отправим на неё код для сброса пароля")
 
-                OnboardingTextField(type: .email, text: $vm.email)
+                OnboardingTextField(text: $vm.email, type: .email)
 
                 ClassicButton(title: vm.sendCodeButtonTitle) {
                     vm.requestPasswordReset()

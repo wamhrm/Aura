@@ -11,6 +11,7 @@ import Foundation
 @MainActor
 final class ProfileFormViewModel: ObservableObject, AlertPresentable {
     @Published var profileInfo: ProfileInfoModel
+    @Published var name: String
 
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -21,6 +22,7 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
     init(authService: any AuthServiceProtocol, user: UserModel) {
         self.authService = authService
         profileInfo = user.profileInfo
+        name = user.name
     }
 
     var saveButtonTitle: String {
@@ -35,6 +37,7 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
         Task {
             do {
                 try validateProfileInfoForms()
+                profileInfo.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
                 _ = try await authService.updateProfileInfo(profileInfo)
                 onSuccess()
             } catch {
@@ -46,6 +49,10 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
     }
 
     private func validateProfileInfoForms() throws {
+        guard name.trimmingCharacters(in: .whitespacesAndNewlines).count >= InputLimits.minNameLength else {
+            throw ProfileInfoError.invalidName
+        }
+
         guard profileInfo.dateOfBirth.count == 10 else {
             throw ProfileInfoError.invalidDateOfBirth
         }
@@ -57,10 +64,11 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
 }
 
 fileprivate enum ProfileInfoError: LocalizedError {
-    case invalidDateOfBirth, incompleteProfileInfo
+    case invalidName, invalidDateOfBirth, incompleteProfileInfo
 
     var errorDescription: String? {
         switch self {
+            case .invalidName: "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
             case .invalidDateOfBirth: "Укажите дату рождения в формате ДД.ММ.ГГГГ"
             case .incompleteProfileInfo: "Заполните все обязательные поля профиля"
         }

@@ -69,6 +69,7 @@ final class ContentFlowTests: FlowTestCase {
         openHistory()
         let entry = button(containing: "Тихий стратег")
         XCTAssertTrue(entry.waitForExistence(timeout: 10), "the entry is not in the history")
+        XCTAssertTrue(text(containing: "ноября 2026").exists, "the entry has no date")
 
         // When
         entry.tap()
@@ -81,6 +82,16 @@ final class ContentFlowTests: FlowTestCase {
         server.respond(to: "GET /v1/history", body: Data("[]".utf8))
         entry.press(forDuration: 1.5)
         tapButton("Удалить")
+        confirmAlert("Отмена")
+
+        // Then
+        XCTAssertTrue(entry.waitForExistence(timeout: 5), "the entry was removed without a confirmation")
+        XCTAssertFalse(server.requests.contains("DELETE /v1/history/:historyID"))
+
+        // When
+        entry.press(forDuration: 1.5)
+        tapButton("Удалить")
+        confirmAlert("Удалить")
 
         // Then
         XCTAssertTrue(entry.waitForNonExistence(timeout: 5), "the entry was not removed")
@@ -104,6 +115,7 @@ final class ContentFlowTests: FlowTestCase {
         app.buttons["gearshape"].firstMatch.tap()
         tapButton("Обновить информацию о себе")
         XCTAssertTrue(app.navigationBars["О вас"].waitForExistence(timeout: 5), "the form did not open")
+        fillField(app.textFields["Введите имя"].firstMatch, with: "-Мария")
         tapButton("Готово")
 
         // Then

@@ -18,6 +18,12 @@ struct AddProfileInfoView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
+                    ProfileInfoSection(title: "Ваше имя") {
+                        CompatibilityTextFieldView(title: "Введите имя",
+                                                   text: $vm.name,
+                                                   type: .name())
+                    }
+
                     ProfileInfoSection(title: "Ваш пол") {
                         HStack {
                             ProfileInfoOptionView(type: .man,

@@ -15,7 +15,7 @@ struct EmailStepView: View {
             OnboardingHeader(title: "Какая у вас почта, \(vm.displayName)?",
                              subtitle: "На неё придёт код, если вы забудете пароль")
 
-            OnboardingTextField(type: .email, text: $vm.email)
+            OnboardingTextField(text: $vm.email, type: .email)
 
             ClassicButton(title: "Далее") {
                 vm.continueFromEmail()

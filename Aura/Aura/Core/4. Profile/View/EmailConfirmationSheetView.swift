@@ -20,7 +20,7 @@ struct EmailConfirmationSheetView: View {
                     .foregroundStyle(.secondary)
 
                 if vm.isCodeSent {
-                    OnboardingTextField(type: .code, text: $vm.code)
+                    OnboardingTextField(text: $vm.code, type: .code)
 
                     ClassicButton(title: vm.confirmButtonTitle) {
                         vm.confirm()

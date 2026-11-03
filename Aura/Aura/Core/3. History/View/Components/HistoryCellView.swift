@@ -20,12 +20,18 @@ struct HistoryCellView: View {
                 Text(cell.titleText)
                     .font(Adaptive.size(.callout, .default))
                     .bold()
+                    .lineLimit(1)
+                    .padding(.trailing, cell.kind == .compatibility ? 50 : 0)
 
                 Text(cell.archetypeSubtitle)
                     .font(.system(size: Adaptive.size(14, 15)))
                     .foregroundStyle(.deepGray)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+
+                Text(cell.dateText)
+                    .font(Adaptive.size(.caption, .footnote))
+                    .foregroundStyle(.deepGray)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .topTrailing) {
@@ -42,7 +48,7 @@ struct HistoryCellView: View {
             }
         }
         .padding(.horizontal)
-        .frame(height: Adaptive.size(93, 97))
+        .frame(height: Adaptive.size(112, 118))
         .frame(maxWidth: .infinity, alignment: .leading)
         .backgroundWithShape(12, .cardBackground, true)
     }

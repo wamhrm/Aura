@@ -541,9 +541,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         guard !email.isEmpty, !password.isEmpty else {
             return "Заполните почту и пароль"
         }
-        if let error = emailError(email) { return error }
-        if let error = passwordError(password) { return error }
-        return nil
+        return emailError(email)
     }
 
     private func nameError(_ name: String) -> String? {

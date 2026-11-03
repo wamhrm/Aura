@@ -62,6 +62,17 @@ struct ProfileController: RouteCollection {
             throw Abort(.badRequest, reason: "Некорректные данные профиля")
         }
 
+        if let name = profileInfo.name?.trimmingCharacters(in: .whitespacesAndNewlines) {
+            guard name.count >= InputLimits.minNameLength else {
+                throw Abort(.badRequest, reason: "Имя должно содержать минимум 2 символа")
+            }
+            guard name.count <= InputLimits.maxNameLength else {
+                throw Abort(.badRequest, reason: "Имя должно быть не длиннее 50 символов")
+            }
+
+            user.name = name
+        }
+
         user.dateOfBirth = dateOfBirth
         user.birthTime = birthTime
         user.gender = profileInfo.gender

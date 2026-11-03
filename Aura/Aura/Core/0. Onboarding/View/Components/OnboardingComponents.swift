@@ -9,9 +9,9 @@ import AuthenticationServices
 import SwiftUI
 
 struct OnboardingTopBar: View {
+    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
     let progress: Double?
     let onBack: () -> Void
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
 
     var body: some View {
         HStack(spacing: 15) {
@@ -20,7 +20,12 @@ struct OnboardingTopBar: View {
                     .font(Adaptive.size(.title3, .title2))
                     .fontWeight(.semibold)
                     .foregroundStyle(.deepGray)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            // The arrow keeps its small place in the layout, only the area for the finger is bigger
+            .padding(.horizontal, -14)
+            .padding(.vertical, -11)
 
             if let progress {
                 GeometryReader { bar in
@@ -63,9 +68,9 @@ struct OnboardingHeader: View {
 }
 
 struct OnboardingTextField: View {
-    let type: OnboardingTextFieldTypes
-    @Binding var text: String
     @State private var isTextVisible = false
+    @Binding var text: String
+    let type: OnboardingTextFieldTypes
 
     var body: some View {
         HStack {
@@ -225,7 +230,7 @@ enum OnboardingTextFieldTypes: String {
 
         OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 8 символов")
 
-        OnboardingTextField(type: .password, text: .constant(""))
+        OnboardingTextField(text: .constant(""), type: .password)
 
         OnboardingTextButton(title: "Забыли пароль?") {
 
