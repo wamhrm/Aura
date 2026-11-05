@@ -16,13 +16,7 @@ struct OpenAIClient {
     private let retryDelay: Duration = .seconds(1)
     private let retryableStatusCodes: Set<UInt> = [429, 500, 502, 503, 504]
 
-    private struct RetryableFailure: Error {
-        let reason: String
-        let error: any Error
-    }
-
-    // A failed or incomplete answer gets one more attempt. Two attempts of 60 seconds stay inside
-    // the 130 seconds the app waits for a generated result.
+    // Only transient HTTP errors get one retry. Invalid generated content is returned as an error.
     func generate<Result>(messages: [OpenAIMessage],
                           responseFormat: OpenAIResponseFormat,
                           req: Request,
@@ -33,44 +27,24 @@ struct OpenAIClient {
                                     responseFormat: responseFormat,
                                     maxCompletionTokens: maxCompletionTokens)
 
-        do {
-            return try await attempt(request: request, apiKey: apiKey, req: req, parse: parse)
-        } catch let failure as RetryableFailure {
-            req.logger.warning("OpenAI \(responseFormat.jsonSchema.name): \(failure.reason), retrying once")
+        var response = try await send(request: request, apiKey: apiKey, req: req)
+
+        if retryableStatusCodes.contains(response.status.code) {
+            req.logger.warning("OpenAI \(responseFormat.jsonSchema.name): HTTP \(response.status.code), retrying once")
+            try await Task.sleep(for: retryDelay)
+            response = try await send(request: request, apiKey: apiKey, req: req)
         }
-
-        try await Task.sleep(for: retryDelay)
-
-        do {
-            return try await attempt(request: request, apiKey: apiKey, req: req, parse: parse)
-        } catch let failure as RetryableFailure {
-            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): \(failure.reason)")
-            throw failure.error
-        }
-    }
-
-    private func attempt<Result>(request: OpenAIChatDTO,
-                                 apiKey: String,
-                                 req: Request,
-                                 parse: (Data) throws -> Result) async throws -> Result {
-        let response = try await send(request: request, apiKey: apiKey, req: req)
 
         guard response.status == .ok else {
             let error = try? response.content.decode(OpenAIErrorResponse.self)
-            let reason = "request failed with status \(response.status.code): \(error?.error.message ?? "no error message")"
-            let abort = Abort(.badGateway, reason: "OpenAI вернул ошибку")
-
-            guard retryableStatusCodes.contains(response.status.code) else {
-                req.logger.error("OpenAI \(reason)")
-                throw abort
-            }
-
-            throw RetryableFailure(reason: reason, error: abort)
+            req.logger.error("OpenAI request failed with status \(response.status.code): \(error?.error.message ?? "no error message")")
+            throw Abort(.badGateway, reason: "OpenAI вернул ошибку")
         }
 
         guard let chatResponse = try? response.content.decode(OpenAIChatResponse.self),
               let choice = chatResponse.choices.first else {
-            throw RetryableFailure(reason: "the answer has no choices", error: emptyAnswerError)
+            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): the answer has no choices")
+            throw emptyAnswerError
         }
 
         if let usage = chatResponse.usage {
@@ -82,14 +56,16 @@ struct OpenAIClient {
             throw emptyAnswerError
         }
 
-        guard choice.finishReason != "length", let data = choice.message.content?.data(using: .utf8) else {
-            throw RetryableFailure(reason: "the answer is cut, finish reason: \(choice.finishReason ?? "none")", error: emptyAnswerError)
+        guard choice.finishReason != "length", let content = choice.message.content else {
+            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): missing or incomplete content, finish reason: \(choice.finishReason ?? "none")")
+            throw emptyAnswerError
         }
 
         do {
-            return try parse(data)
+            return try parse(Data(content.utf8))
         } catch {
-            throw RetryableFailure(reason: "unexpected answer: \(error)", error: error as? Abort ?? OpenAIResultValidator.unexpectedFormatError)
+            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): unexpected answer: \(error)")
+            throw error as? Abort ?? OpenAIResultValidator.unexpectedFormatError
         }
     }
 
