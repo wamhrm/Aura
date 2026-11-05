@@ -12,5 +12,6 @@ extension Application {
     func configureMigrations() {
         self.migrations.add(CreateSchema())
         self.migrations.add(AddAccountProtection())
+        self.migrations.add(AddDailyGenerationProtection())
     }
 }
