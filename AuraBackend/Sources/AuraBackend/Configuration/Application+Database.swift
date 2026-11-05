@@ -36,8 +36,15 @@ extension Application {
     private func databaseTLSConfiguration() throws -> PostgresConnection.Configuration.TLS {
         let certPath = Environment.get("POSTGRESQL_CA_CERT_PATH") ?? Environment.get("POSTGRESQL_SSL_ROOT_CERT")
 
-        guard let certPath, !certPath.isEmpty, FileManager.default.fileExists(atPath: certPath) else {
+        guard let certPath, !certPath.isEmpty else {
+            guard environment != .production else {
+                throw Abort(.internalServerError, reason: "PostgreSQL CA certificate is required in production")
+            }
             return .disable
+        }
+
+        guard FileManager.default.isReadableFile(atPath: certPath) else {
+            throw Abort(.internalServerError, reason: "PostgreSQL CA certificate is not readable at the configured path")
         }
 
         var tlsConfig = TLSConfiguration.makeClientConfiguration()

@@ -29,9 +29,13 @@ actor SingleFlight {
         }
 
         guard let value = try await task.value as? Value else {
-            preconditionFailure("SingleFlight key '\(key)' is used with different value types")
+            throw SingleFlightError.valueTypeMismatch
         }
 
         return value
     }
+}
+
+private enum SingleFlightError: Error {
+    case valueTypeMismatch
 }

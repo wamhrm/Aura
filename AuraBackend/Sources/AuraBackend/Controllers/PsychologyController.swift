@@ -30,7 +30,7 @@ struct PsychologyController: RouteCollection {
         let testKeys = try req.content.decode([String].self)
         let requestID = try idempotencyKey(of: req)
 
-        return try await SingleFlight.shared.run(key: "test:\(userID):\(requestID)") {
+        return try await SingleFlight.shared.run(key: "test:personality:\(userID):\(requestID)") {
             if let entry = try await findEntry(kind: .personality, requestID: requestID, userID: userID, on: req.db) {
                 return try HistoryDTOMapper.decodePersonalityResult(from: entry.result)
             }
@@ -64,7 +64,7 @@ struct PsychologyController: RouteCollection {
         let request = try req.content.decode(CompatibilityTestRequest.self)
         let requestID = try idempotencyKey(of: req)
 
-        return try await SingleFlight.shared.run(key: "test:\(userID):\(requestID)") {
+        return try await SingleFlight.shared.run(key: "test:compatibility:\(userID):\(requestID)") {
             if let entry = try await findEntry(kind: .compatibility, requestID: requestID, userID: userID, on: req.db) {
                 return try HistoryDTOMapper.decodeCompatibilityResult(from: entry.result)
             }
