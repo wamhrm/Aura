@@ -46,23 +46,6 @@ final class ModelTests: XCTestCase {
         XCTAssertNotNil(withTime.partnerBirthTime)
     }
 
-    func test_partnerAnswers_mustAllBeFilled() {
-        // Given
-        var partner = PartnerInfoModel()
-        partner.answers.socialType = "introvert"
-        partner.answers.conflictStyle = "direct"
-        partner.answers.emotionalCore = "logic"
-        partner.answers.decisionStyle = "planner"
-
-        // When
-        let beforeTheLastAnswer = partner.hasAllAnswers
-        partner.answers.coreFocus = "growth"
-
-        // Then
-        XCTAssertFalse(beforeTheLastAnswer)
-        XCTAssertTrue(partner.hasAllAnswers)
-    }
-
     func test_historyCell_showsADateAPersonCanRead() {
         // Given
         let cell = HistoryCellModel.personalityPlaceholder

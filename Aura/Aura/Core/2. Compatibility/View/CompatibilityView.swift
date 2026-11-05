@@ -66,15 +66,6 @@ struct CompatibilityView: View {
                         .backgroundWithShape(12, .cardBackground, true)
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Как ответил бы партнёр?")
-                                .font(Adaptive.size(.system(size: 15), .default))
-                                .fontWeight(.semibold)
-                                .padding(.leading, 4)
-
-                            PsychotypeSectionsView(profileInfo: $vm.partnerInfo.answers)
-                        }
-
-                        VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text("Выберите тесты")
                                     .fontWeight(.semibold)

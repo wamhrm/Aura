@@ -6,8 +6,6 @@
 import XCTest
 
 final class CompatibilityUITests: AuraUITestCase {
-    private let answers = ["Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"]
-
     func test_form_checksTheFields_andShowsTheResult() throws {
         // Given
         try launchSignedIn()
@@ -20,18 +18,9 @@ final class CompatibilityUITests: AuraUITestCase {
         XCTAssertTrue(alertText().contains("Имя партнёра"))
         closeAlert()
 
-        // When the questions about the partner are not answered
+        // When the name is filled in
         scrollUp(to: app.textFields["Введите имя"].firstMatch)
         fillField(app.textFields["Введите имя"].firstMatch, with: "Анна-Мария")
-        tapButton("Узнать совместимость")
-
-        // Then
-        XCTAssertEqual(alertText(), "Ответьте на все вопросы о партнёре")
-        closeAlert()
-
-        // When everything is filled in
-        scrollUp(to: text("Интроверт"))
-        chooseAnswers(answers)
         tapButton("Узнать совместимость")
 
         // Then
@@ -46,7 +35,6 @@ final class CompatibilityUITests: AuraUITestCase {
         try launchSignedIn()
         openCompatibility()
         fillField(app.textFields["Введите имя"].firstMatch, with: "Иван")
-        chooseAnswers(answers)
 
         // When
         tapButton("Узнать совместимость")
@@ -60,7 +48,6 @@ final class CompatibilityUITests: AuraUITestCase {
         try launchSignedIn()
         openCompatibility()
         fillField(app.textFields["Введите имя"].firstMatch, with: "Иван")
-        chooseAnswers(answers)
         tapButton("Узнать совместимость")
         XCTAssertTrue(app.navigationBars["Результат теста на совместимость"].waitForExistence(timeout: 15), "the result did not open")
 

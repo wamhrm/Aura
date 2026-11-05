@@ -8,20 +8,10 @@ import XCTest
 
 @MainActor
 final class CompatibilityViewModelTests: XCTestCase {
-    private func fillPartnerForm(_ viewModel: CompatibilityViewModel) {
-        viewModel.partnerInfo.name = "Анна"
-        viewModel.partnerInfo.answers.socialType = "introvert"
-        viewModel.partnerInfo.answers.conflictStyle = "direct"
-        viewModel.partnerInfo.answers.emotionalCore = "logic"
-        viewModel.partnerInfo.answers.decisionStyle = "planner"
-        viewModel.partnerInfo.answers.coreFocus = "growth"
-    }
-
     func test_partnerName_ofSpacesAndOneLetter_showsAlert_andSendsNothing() async {
         // Given
         let content = MockContentService()
         let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
-        fillPartnerForm(viewModel)
         viewModel.partnerInfo.name = "  А  "
 
         // When
@@ -33,27 +23,11 @@ final class CompatibilityViewModelTests: XCTestCase {
         XCTAssertTrue(content.compatibilityRequests.isEmpty)
     }
 
-    func test_missingPartnerAnswer_showsAlert_andSendsNothing() async {
-        // Given
-        let content = MockContentService()
-        let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
-        fillPartnerForm(viewModel)
-        viewModel.partnerInfo.answers.coreFocus = nil
-
-        // When
-        viewModel.makeCompatibilityTest()
-        await waitUntil { viewModel.showAlert }
-
-        // Then
-        XCTAssertEqual(viewModel.alertMessage, "Ответьте на все вопросы о партнёре")
-        XCTAssertTrue(content.compatibilityRequests.isEmpty)
-    }
-
     func test_chosenGender_goesToTheServerAsItsKey() async {
         // Given
         let content = MockContentService()
         let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
-        fillPartnerForm(viewModel)
+        viewModel.partnerInfo.name = "Анна"
 
         // When
         viewModel.selectGender(.female)
@@ -69,7 +43,7 @@ final class CompatibilityViewModelTests: XCTestCase {
         let content = MockContentService()
         content.errorToThrow = serverError
         let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
-        fillPartnerForm(viewModel)
+        viewModel.partnerInfo.name = "Анна"
 
         // When
         viewModel.makeCompatibilityTest()
@@ -78,7 +52,6 @@ final class CompatibilityViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
         XCTAssertEqual(viewModel.partnerInfo.name, "Анна")
-        XCTAssertTrue(viewModel.partnerInfo.hasAllAnswers)
         XCTAssertTrue(viewModel.compatibilityRoutes.isEmpty)
     }
 
@@ -87,7 +60,7 @@ final class CompatibilityViewModelTests: XCTestCase {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false, isEmailConfirmed: false))
         let viewModel = CompatibilityViewModel(authService: auth, contentService: MockContentService())
         await waitUntil { viewModel.needsAIConsent }
-        fillPartnerForm(viewModel)
+        viewModel.partnerInfo.name = "Анна"
 
         // When
         viewModel.makeCompatibilityTest()
