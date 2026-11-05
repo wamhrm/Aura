@@ -5,18 +5,21 @@
 
 import Combine
 import Foundation
+import XCTest
 @testable import Aura
 
 let serverError = NetworkError.server("Ошибка сервера")
 
 // View models work in a Task, so a test waits until the result appears.
-// If it never does, the checks under "Then" fail.
+// A missing state change must fail at the waiting call, even if later assertions happen to pass.
 @MainActor
-func waitUntil(_ condition: () -> Bool) async {
+func waitUntil(file: StaticString = #filePath, line: UInt = #line, _ condition: () -> Bool) async {
     for _ in 0..<300 {
         if condition() { return }
         try? await Task.sleep(for: .milliseconds(10))
     }
+
+    XCTFail("The expected state did not appear within 3 seconds", file: file, line: line)
 }
 
 // A filled profile by default, a test changes only what it checks

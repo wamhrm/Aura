@@ -25,6 +25,7 @@ class AuraUITestCase: XCTestCase {
 
         app = XCUIApplication()
         app.launchEnvironment["AURA_BASE_URL"] = server.baseURL
+        app.launchEnvironment["AURA_UI_TEST_ID"] = UUID().uuidString
     }
 
     override func tearDown() async throws {
@@ -37,9 +38,10 @@ class AuraUITestCase: XCTestCase {
         let user = try sampleUser()
 
         server.respond(to: "POST /v1/auth/createAccount", status: 201, body: try authBody(user: newUser()))
-        server.respond(to: "POST /v1/auth/signIn", body: SampleResponses.auth)
+        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
         server.respond(to: "POST /v1/auth/password/forgot", status: 204)
-        server.respond(to: "POST /v1/auth/password/reset", body: SampleResponses.auth)
+        server.respond(to: "POST /v1/auth/password/reset", body: try authBody(user: user))
+        server.respond(to: "GET /v1/auth/me", body: try json(user))
         server.respond(to: "POST /v1/auth/logout", status: 204)
         server.respond(to: "DELETE /v1/auth/account", status: 204)
         server.respond(to: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
@@ -98,19 +100,17 @@ class AuraUITestCase: XCTestCase {
         app.buttons["У меня уже есть аккаунт"].firstMatch
     }
 
-    // A session left by an earlier test ends at launch, so every test starts on the welcome screen
+    // A test keeps its storage across relaunches and starts separately from every other test.
     func launchOnWelcome() throws {
-        server.respond(to: "GET /v1/auth/me", status: 401, body: try failingBody("Неверный токен"))
         app.launch()
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 20), "the welcome screen did not open")
-        server.respond(to: "GET /v1/auth/me", body: try json(try sampleUser()))
     }
 
     func launchSignedIn(user: [String: Any]? = nil) throws {
         let user = try user ?? sampleUser()
         server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
-        try launchOnWelcome()
         server.respond(to: "GET /v1/auth/me", body: try json(user))
+        try launchOnWelcome()
         signIn()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
     }

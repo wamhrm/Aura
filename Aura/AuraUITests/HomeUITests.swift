@@ -154,10 +154,11 @@ final class HomeUITests: AuraUITestCase {
         server.respond(to: "GET /v1/daily/insight", body: SampleResponses.daily)
         server.respond(to: "GET /v1/horoscope/current", body: SampleResponses.horoscope)
 
-        while retry.exists {
+        for _ in 0..<3 where retry.exists {
             retry.tap()
             sleep(1)
         }
+        XCTAssertFalse(retry.exists, "the retry controls did not disappear")
 
         // Then
         assertOnMainScreen()

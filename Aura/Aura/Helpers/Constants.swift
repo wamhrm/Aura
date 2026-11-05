@@ -10,7 +10,30 @@ import Foundation
 nonisolated enum Constants {
     static let productionBaseURL = "https://aurawamhrm.space"
     static let apiPath = "/v1"
-    static let tokenPath = "com.aura.auth.token"
+    static var uiTestID: String? {
+        guard let value = ProcessInfo.processInfo.environment["AURA_UI_TEST_ID"],
+              let id = UUID(uuidString: value) else { return nil }
+        return id.uuidString
+    }
+
+    static var tokenPath: String {
+        guard let uiTestID else { return "com.aura.auth.token" }
+        return "com.aura.auth.token.ui-tests.\(uiTestID)"
+    }
+
+    static var localStorageDirectory: URL {
+        let directory = URL.applicationSupportDirectory
+            .appending(path: "LocalStorage", directoryHint: .isDirectory)
+
+        guard let uiTestID else { return directory }
+        return directory.appending(path: "UITests", directoryHint: .isDirectory)
+            .appending(path: uiTestID, directoryHint: .isDirectory)
+    }
+
+    static var userDefaults: UserDefaults {
+        guard let uiTestID else { return .standard }
+        return UserDefaults(suiteName: "com.aura.ui-tests.\(uiTestID)") ?? .standard
+    }
 
     static var baseURL: String {
         #if DEBUG
@@ -39,7 +62,6 @@ nonisolated enum Constants {
     static let accentColorKey = "accentColor"
 }
 
-// Copies of the server rules for instant feedback
 nonisolated enum InputLimits {
     static let minNameLength = 2
     static let maxNameLength = 50

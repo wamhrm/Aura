@@ -39,7 +39,7 @@ final class LocalStorage: LocalStorageProtocol {
     private let baseURL: URL
     private let fileManager: FileManager
 
-    init(baseURL: URL = .applicationSupportDirectory.appending(path: "LocalStorage", directoryHint: .isDirectory),
+    init(baseURL: URL = Constants.localStorageDirectory,
          fileManager: FileManager = .default) {
         self.baseURL = baseURL
         self.fileManager = fileManager

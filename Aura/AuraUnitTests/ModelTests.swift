@@ -8,6 +8,19 @@ import XCTest
 
 @MainActor
 final class ModelTests: XCTestCase {
+    func test_testHost_usesAnIsolatedEnvironment() throws {
+        // Given
+        let serverURL = try XCTUnwrap(URL(string: Constants.baseURL))
+
+        // When
+        let testID = try XCTUnwrap(Constants.uiTestID)
+
+        // Then
+        XCTAssertEqual(serverURL.host, "127.0.0.1")
+        XCTAssertEqual(Constants.localStorageDirectory.lastPathComponent, testID)
+        XCTAssertTrue(Constants.tokenPath.hasSuffix(testID))
+    }
+
     func test_birthDate_keepsTheFormatTheServerExpects() {
         // Given
         let text = "13.05.2000"

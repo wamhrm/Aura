@@ -26,10 +26,19 @@ final class MockServer: @unchecked Sendable {
 
         let ready = DispatchSemaphore(value: 0)
         listener.stateUpdateHandler = { state in
-            if case .ready = state { ready.signal() }
+            switch state {
+                case .ready, .failed, .cancelled:
+                    ready.signal()
+                default:
+                    break
+            }
         }
         listener.start(queue: queue)
-        ready.wait()
+
+        guard ready.wait(timeout: .now() + 5) == .success, case .ready = listener.state else {
+            listener.cancel()
+            throw MockServerError.startupFailed
+        }
     }
 
     var baseURL: String {
@@ -101,4 +110,8 @@ final class MockServer: @unchecked Sendable {
 
         return "\(parts[0]) /\(path)"
     }
+}
+
+private enum MockServerError: Error {
+    case startupFailed
 }

@@ -6,6 +6,47 @@
 import XCTest
 
 final class SignInUITests: AuraUITestCase {
+    func test_testSessions_keepTheirOwnSessionAndProfile() throws {
+        // Given
+        try launchSignedIn()
+        let originalTestID = try XCTUnwrap(app.launchEnvironment["AURA_UI_TEST_ID"])
+        let otherTestID = UUID().uuidString
+
+        // When another test starts
+        app.terminate()
+        app.launchEnvironment["AURA_UI_TEST_ID"] = otherTestID
+        app.launch()
+
+        // Then it has no saved session
+        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15))
+
+        // When the original test resumes
+        app.terminate()
+        app.launchEnvironment["AURA_UI_TEST_ID"] = originalTestID
+        app.launch()
+
+        // Then its session is still available
+        assertOnMainScreen()
+
+        // When another test saves a different profile
+        app.terminate()
+        app.launchEnvironment["AURA_UI_TEST_ID"] = otherTestID
+        let otherUser = try sampleUser(["name": "Мария"])
+        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: otherUser))
+        server.respond(to: "GET /v1/auth/me", body: try json(otherUser))
+        app.launch()
+        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15))
+        signIn()
+        XCTAssertTrue(text("Здравствуйте, Мария").waitForExistence(timeout: 15))
+
+        // Then the original profile restores even when the server is unavailable
+        app.terminate()
+        app.launchEnvironment["AURA_UI_TEST_ID"] = originalTestID
+        server.respond(to: "GET /v1/auth/me", status: 503, body: try failingBody(serverError))
+        app.launch()
+        XCTAssertTrue(text("Здравствуйте, Анна").waitForExistence(timeout: 15))
+    }
+
     func test_signIn_keepsTheSessionAfterRelaunch() throws {
         // Given
         try launchOnWelcome()
