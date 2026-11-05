@@ -131,10 +131,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         guard name.count >= InputLimits.minNameLength else {
             throw PartnerInfoError.invalidName
         }
-
-        guard partnerInfo.hasAllAnswers else {
-            throw PartnerInfoError.incompleteAnswers
-        }
     }
     
     private func clearFields() {
@@ -142,17 +138,15 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         partnerInfo.birthDate = BirthDateFormatter.defaultDate
         partnerInfo.knowsBirthTime = false
         partnerInfo.birthTime = BirthDateFormatter.defaultTime
-        partnerInfo.answers = ProfileInfoModel()
     }
 }
 
 fileprivate enum PartnerInfoError: LocalizedError {
-    case invalidName, incompleteAnswers
+    case invalidName
 
     var errorDescription: String? {
         switch self {
             case .invalidName: "Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа"
-            case .incompleteAnswers: "Ответьте на все вопросы о партнёре"
         }
     }
 }

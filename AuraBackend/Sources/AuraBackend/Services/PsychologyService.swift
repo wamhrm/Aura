@@ -63,14 +63,6 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Укажите время рождения партнёра в формате ЧЧ:ММ")
         }
 
-        guard ProfileInfoOptions.socialTypes.contains(request.partnerSocialType),
-              ProfileInfoOptions.conflictStyles.contains(request.partnerConflictStyle),
-              ProfileInfoOptions.emotionalCores.contains(request.partnerEmotionalCore),
-              ProfileInfoOptions.decisionStyles.contains(request.partnerDecisionStyle),
-              ProfileInfoOptions.coreFocuses.contains(request.partnerCoreFocus) else {
-            throw Abort(.badRequest, reason: "Ответьте на все вопросы о партнёре")
-        }
-
         guard let selectedTests = CompatibilityTests.from(keys: request.selectedTests) else {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
@@ -89,11 +81,6 @@ struct PsychologyService {
                                                       partnerDateOfBirth: request.partnerDateOfBirth,
                                                       partnerBirthTime: request.partnerBirthTime,
                                                       partnerGender: partnerGender,
-                                                      partnerSocialType: request.partnerSocialType,
-                                                      partnerConflictStyle: request.partnerConflictStyle,
-                                                      partnerEmotionalCore: request.partnerEmotionalCore,
-                                                      partnerDecisionStyle: request.partnerDecisionStyle,
-                                                      partnerCoreFocus: request.partnerCoreFocus,
                                                       selectedTests: request.selectedTests)
 
         return try await openAIService.makeCompatibilityTest(for: user,

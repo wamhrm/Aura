@@ -50,7 +50,8 @@ struct OpenAIService {
                                selectedTests: [CompatibilityTests],
                                req: Request) async throws -> CompatibilityResultDTO {
         let userSign = try zodiacSign(of: user)
-        let score = CompatibilityScore.calculate(user: user, partner: partner)
+        let partnerSign = try zodiacSign(of: partner)
+        let score = CompatibilityScore.calculate(userSign: userSign, partnerSign: partnerSign)
 
         return try await client.generate(
             messages: [OpenAIMessage(role: "system", content: CompatibilityPrompts.system),
@@ -62,7 +63,6 @@ struct OpenAIService {
                                                  schema: CompatibilityPrompts.schema(for: selectedTests)),
             req: req) { data in
                 let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
-                let partnerDate = UserDateFormatter.date(from: partner.partnerDateOfBirth)
 
                 try validator.requireText(analysis.title,
                                           analysis.subtitle,
@@ -76,7 +76,7 @@ struct OpenAIService {
                 return CompatibilityResultDTO(userName: user.name,
                                               userZodiacSign: userSign.rawValue,
                                               partnerName: partner.partnerName,
-                                              partnerZodiacSign: partnerDate.flatMap(HoroscopeSign.from(dateOfBirth:))?.rawValue,
+                                              partnerZodiacSign: partnerSign.rawValue,
                                               compatibilityScore: score,
                                               selectedTests: selectedTests.map(\.rawValue),
                                               title: analysis.title,
@@ -155,6 +155,14 @@ struct OpenAIService {
     private func zodiacSign(of user: User) throws -> HoroscopeSign {
         guard let sign = user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:)) else {
             throw Abort(.internalServerError, reason: "Не удалось определить знак зодиака")
+        }
+
+        return sign
+    }
+
+    private func zodiacSign(of partner: CompatibilityTestRequest) throws -> HoroscopeSign {
+        guard let sign = UserDateFormatter.date(from: partner.partnerDateOfBirth).flatMap(HoroscopeSign.from(dateOfBirth:)) else {
+            throw Abort(.badRequest, reason: "Не удалось определить знак зодиака партнёра")
         }
 
         return sign

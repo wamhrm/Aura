@@ -92,8 +92,6 @@ struct PersonalityResultView: View {
                             .testTopicsModifier()
                         }
                     }
-
-                    AIResultDisclaimerView()
                 }
                 .bottomAreaPadding(15)
                 .padding(.horizontal)

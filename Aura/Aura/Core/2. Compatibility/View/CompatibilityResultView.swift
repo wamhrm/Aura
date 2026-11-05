@@ -108,8 +108,6 @@ struct CompatibilityResultView: View {
                                                       result.forecast.potentialDescription)
                         }
                     }
-
-                    AIResultDisclaimerView()
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal)

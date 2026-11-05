@@ -151,9 +151,6 @@ struct HomeView: View {
                     }
                     .bottomAreaPadding(50)
                     .scrollIndicators(.hidden)
-                    .refreshable {
-                        await vm.refresh()
-                    }
                 }
             }
             .navigationTitle("Главная")
