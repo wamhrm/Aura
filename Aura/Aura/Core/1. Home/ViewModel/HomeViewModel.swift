@@ -102,19 +102,19 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         isLoadingScreen = false
 
         guard let previousUser, previousUser.id == user.id else {
-            horoscope = storage.load(StorageKeys.horoscope, for: user.id)
-            let cachedInsight = storage.load(StorageKeys.dailyInsight, for: user.id)
+            horoscope = storage.load(StorageKeys.horoscope, userId: user.id)
+            let cachedInsight = storage.load(StorageKeys.dailyInsight, userId: user.id)
             dailyInsight = cachedInsight?.isFromToday == true ? cachedInsight : nil
             Task { await refresh() }
             return
         }
 
         if previousUser.dateOfBirth != user.dateOfBirth {
-            Task { await loadHoroscope(for: user.id) }
+            Task { await loadHoroscope(userId: user.id) }
         }
 
         if !previousUser.allowsAIAnalysis && user.allowsAIAnalysis {
-            Task { await loadDailyInsight(for: user.id) }
+            Task { await loadDailyInsight(userId: user.id) }
         }
     }
 
@@ -167,10 +167,10 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     func refresh() async {
         guard let user = currentUser else { return }
 
-        async let horoscopeLoad: Void = loadHoroscope(for: user.id)
+        async let horoscopeLoad: Void = loadHoroscope(userId: user.id)
 
         if user.allowsAIAnalysis {
-            await loadDailyInsight(for: user.id)
+            await loadDailyInsight(userId: user.id)
         }
 
         await horoscopeLoad
@@ -178,21 +178,21 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     func retryHoroscope() {
         guard let user = currentUser else { return }
-        Task { await loadHoroscope(for: user.id) }
+        Task { await loadHoroscope(userId: user.id) }
     }
 
     func retryDailyInsight() {
         guard let user = currentUser else { return }
-        Task { await loadDailyInsight(for: user.id) }
+        Task { await loadDailyInsight(userId: user.id) }
     }
 
-    private func loadHoroscope(for userId: UUID) async {
+    private func loadHoroscope(userId: UUID) async {
         if horoscope == nil {
             horoscopeState = .loading
         }
 
         do {
-            let fetched = try await contentService.fetchCurrentHoroscope(for: userId)
+            let fetched = try await contentService.fetchCurrentHoroscope(userId: userId)
             guard currentUser?.id == userId else { return }
 
             horoscope = fetched
@@ -206,13 +206,13 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    private func loadDailyInsight(for userId: UUID) async {
+    private func loadDailyInsight(userId: UUID) async {
         if dailyInsight == nil {
             insightState = .loading
         }
 
         do {
-            let fetched = try await contentService.fetchDailyInsight(for: userId)
+            let fetched = try await contentService.fetchDailyInsight(userId: userId)
             guard currentUser?.id == userId else { return }
 
             dailyInsight = fetched

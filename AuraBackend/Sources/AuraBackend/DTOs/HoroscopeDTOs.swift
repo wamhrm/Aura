@@ -47,7 +47,7 @@ enum HoroscopeSign: String, CaseIterable {
         }
     }
 
-    static func from(dateOfBirth: Date) -> HoroscopeSign? {
+    static func from(_ dateOfBirth: Date) -> HoroscopeSign? {
         // Birth dates are stored as midnight UTC, the server's own time zone must not move them to another day
         let calendar = UserDateFormatter.calendar
         let day = calendar.component(.day, from: dateOfBirth)
@@ -97,21 +97,16 @@ enum HoroscopeDTOMapper {
                             dateStart: horoscope.dateStart,
                             dateEnd: horoscope.dateEnd,
                             description: horoscope.description,
-                            items: try decodeItems(from: horoscope.items))
+                            items: try decodeItems(horoscope.items))
     }
 
     static func encodeItems(_ items: [HoroscopeItems]) throws -> String {
         let data = try JSONEncoder().encode(try normalizeItems(items))
-        guard let json = String(data: data, encoding: .utf8) else {
-            throw Abort(.internalServerError, reason: "Не удалось сохранить сферы гороскопа")
-        }
-        return json
+        return String(decoding: data, as: UTF8.self)
     }
 
-    private static func decodeItems(from json: String) throws -> [HoroscopeItems] {
-        guard let data = json.data(using: .utf8) else {
-            throw Abort(.internalServerError, reason: "Не удалось прочитать сферы гороскопа")
-        }
+    private static func decodeItems(_ json: String) throws -> [HoroscopeItems] {
+        let data = Data(json.utf8)
         return try normalizeItems(try JSONDecoder().decode([HoroscopeItems].self, from: data))
     }
 

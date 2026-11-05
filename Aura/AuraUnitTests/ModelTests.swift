@@ -26,10 +26,10 @@ final class ModelTests: XCTestCase {
         let text = "13.05.2000"
 
         // When
-        let date = BirthDateFormatter.date(from: text)
+        let date = BirthDateFormatter.date(string: text)
 
         // Then
-        XCTAssertEqual(date.map(BirthDateFormatter.dateString(from:)), text)
+        XCTAssertEqual(date.map(BirthDateFormatter.dateString(date:)), text)
     }
 
     func test_birthTime_keepsTheFormatTheServerExpects() {
@@ -37,10 +37,10 @@ final class ModelTests: XCTestCase {
         let text = "08:15"
 
         // When
-        let time = BirthDateFormatter.time(from: text)
+        let time = BirthDateFormatter.time(string: text)
 
         // Then
-        XCTAssertEqual(time.map(BirthDateFormatter.timeString(from:)), text)
+        XCTAssertEqual(time.map(BirthDateFormatter.timeString(date:)), text)
     }
 
     func test_partnerRequest_trimsTheName_andSendsTimeOnlyWhenItIsKnown() {
@@ -89,15 +89,15 @@ final class ModelTests: XCTestCase {
         let anna = UUID()
         let ivan = UUID()
         let insight = DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: todayText())
-        storage.save(insight, for: StorageKeys.dailyInsight, userId: anna)
-        storage.save(insight, for: StorageKeys.dailyInsight, userId: ivan)
+        storage.save(insight, key: StorageKeys.dailyInsight, userId: anna)
+        storage.save(insight, key: StorageKeys.dailyInsight, userId: ivan)
 
         // When
-        storage.deleteAll(for: anna)
+        storage.deleteAll(userId: anna)
 
         // Then
-        XCTAssertNil(storage.load(StorageKeys.dailyInsight, for: anna))
-        XCTAssertEqual(storage.load(StorageKeys.dailyInsight, for: ivan), insight)
+        XCTAssertNil(storage.load(StorageKeys.dailyInsight, userId: anna))
+        XCTAssertEqual(storage.load(StorageKeys.dailyInsight, userId: ivan), insight)
     }
 
     // MARK: - Birth date

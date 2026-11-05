@@ -155,9 +155,9 @@ extension CompatibilityResultView {
             Text(type.number)
                 .font(Adaptive.size(.callout, .default))
                 .fontWeight(.semibold)
-                .foregroundStyle(numberStyle(for: type))
+                .foregroundStyle(numberStyle(type: type))
                 .padding(10)
-                .background(numberStyle(for: type).opacity(0.15))
+                .background(numberStyle(type: type).opacity(0.15))
                 .clipShape(.circle)
                 .frame(width: 35, alignment: .leading)
 
@@ -180,7 +180,7 @@ extension CompatibilityResultView {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func numberStyle(for type: LoveLanguageTypes) -> AnyShapeStyle {
+    private func numberStyle(type: LoveLanguageTypes) -> AnyShapeStyle {
         switch type {
             case .spark: AnyShapeStyle(.tint)
             case .potential: AnyShapeStyle(.yellow)

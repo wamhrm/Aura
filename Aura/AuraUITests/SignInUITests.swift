@@ -32,8 +32,8 @@ final class SignInUITests: AuraUITestCase {
         app.terminate()
         app.launchEnvironment["AURA_UI_TEST_ID"] = otherTestID
         let otherUser = try sampleUser(["name": "Мария"])
-        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: otherUser))
-        server.respond(to: "GET /v1/auth/me", body: try json(otherUser))
+        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: otherUser))
+        server.respond(route: "GET /v1/auth/me", body: try json(otherUser))
         app.launch()
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15))
         signIn()
@@ -42,7 +42,7 @@ final class SignInUITests: AuraUITestCase {
         // Then the original profile restores even when the server is unavailable
         app.terminate()
         app.launchEnvironment["AURA_UI_TEST_ID"] = originalTestID
-        server.respond(to: "GET /v1/auth/me", status: 503, body: try failingBody(serverError))
+        server.respond(route: "GET /v1/auth/me", status: 503, body: try failingBody(serverError))
         app.launch()
         XCTAssertTrue(text("Здравствуйте, Анна").waitForExistence(timeout: 15))
     }
@@ -69,7 +69,7 @@ final class SignInUITests: AuraUITestCase {
     func test_signIn_withWrongShortPassword_showsTheServerAlert() throws {
         // Given
         let reason = "Неверная почта или пароль"
-        server.respond(to: "POST /v1/auth/signIn", status: 401, body: try failingBody(reason))
+        server.respond(route: "POST /v1/auth/signIn", status: 401, body: try failingBody(reason))
         try launchOnWelcome()
 
         // When
@@ -92,8 +92,8 @@ final class SignInUITests: AuraUITestCase {
         closeAlert()
 
         // When the email has no @
-        fillField(app.textFields["Электронная почта"].firstMatch, with: "no-at-sign")
-        fillField(app.secureTextFields["Пароль"].firstMatch, with: password)
+        fillField(app.textFields["Электронная почта"].firstMatch, text: "no-at-sign")
+        fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
         tapButton("Войти")
 
         // Then
@@ -104,7 +104,7 @@ final class SignInUITests: AuraUITestCase {
         // Given
         try launchOnWelcome()
         welcomeButton.tap()
-        fillField(app.secureTextFields["Пароль"].firstMatch, with: password)
+        fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
 
         // When
         app.buttons["eye"].firstMatch.tap()
@@ -122,20 +122,20 @@ final class SignInUITests: AuraUITestCase {
         tapButton("Создать")
 
         // Then
-        XCTAssertTrue(text(containing: "Как вас зовут").waitForExistence(timeout: 5), "the registration did not open")
+        XCTAssertTrue(text(part: "Как вас зовут").waitForExistence(timeout: 5), "the registration did not open")
     }
 
     func test_passwordReset_reachesMainScreen() throws {
         // Given
         try launchOnWelcome()
         welcomeButton.tap()
-        fillField(app.textFields["Электронная почта"].firstMatch, with: email)
+        fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Забыли пароль?")
 
         // When
         tapButton("Отправить код")
-        fillField(app.textFields["Код из 6 цифр"].firstMatch, with: "123456")
-        fillField(app.secureTextFields["Новый пароль"].firstMatch, with: "new-password-1")
+        fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "123456")
+        fillField(app.secureTextFields["Новый пароль"].firstMatch, text: "new-password-1")
         tapButton("Сохранить пароль")
 
         // Then
@@ -145,10 +145,10 @@ final class SignInUITests: AuraUITestCase {
     func test_passwordReset_showsAlertsForWrongCode() throws {
         // Given
         let reason = "Неверный код"
-        server.respond(to: "POST /v1/auth/password/reset", status: 400, body: try failingBody(reason))
+        server.respond(route: "POST /v1/auth/password/reset", status: 400, body: try failingBody(reason))
         try launchOnWelcome()
         welcomeButton.tap()
-        fillField(app.textFields["Электронная почта"].firstMatch, with: email)
+        fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Забыли пароль?")
         tapButton("Отправить код")
         XCTAssertTrue(app.textFields["Код из 6 цифр"].firstMatch.waitForExistence(timeout: 10), "no code field")
@@ -161,8 +161,8 @@ final class SignInUITests: AuraUITestCase {
         closeAlert()
 
         // When the server refuses the code
-        fillField(app.textFields["Код из 6 цифр"].firstMatch, with: "123456")
-        fillField(app.secureTextFields["Новый пароль"].firstMatch, with: "new-password-1")
+        fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "123456")
+        fillField(app.secureTextFields["Новый пароль"].firstMatch, text: "new-password-1")
         tapButton("Сохранить пароль")
 
         // Then
@@ -171,7 +171,7 @@ final class SignInUITests: AuraUITestCase {
 
     func test_whenTheServerEndsTheSession_appReturnsToWelcome() throws {
         // Given
-        server.respond(to: "GET /v1/history", status: 401, body: try failingBody("Неверный токен"))
+        server.respond(route: "GET /v1/history", status: 401, body: try failingBody("Неверный токен"))
         try launchOnWelcome()
 
         // When

@@ -61,7 +61,7 @@ extension OnboardingView {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .navigationBarBackButtonHidden(vm.hidesSystemBackButton(on: route))
+        .navigationBarBackButtonHidden(vm.hidesSystemBackButton(route: route))
     }
 
     @ViewBuilder

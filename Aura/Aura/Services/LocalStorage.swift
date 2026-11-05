@@ -29,10 +29,10 @@ protocol LocalStorageProtocol {
     func saveUser(_ user: UserModel)
     func deleteUser()
 
-    func load<Value>(_ key: StorageKey<Value>, for userId: UUID) -> Value?
-    func save<Value>(_ value: Value, for key: StorageKey<Value>, userId: UUID)
-    func delete<Value>(_ key: StorageKey<Value>, for userId: UUID)
-    func deleteAll(for userId: UUID)
+    func load<Value>(_ key: StorageKey<Value>, userId: UUID) -> Value?
+    func save<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID)
+    func delete<Value>(_ key: StorageKey<Value>, userId: UUID)
+    func deleteAll(userId: UUID)
 }
 
 final class LocalStorage: LocalStorageProtocol {
@@ -46,51 +46,51 @@ final class LocalStorage: LocalStorageProtocol {
     }
 
     func loadUser() -> UserModel? {
-        read(UserModel.self, at: userURL)
+        read(UserModel.self, url: userURL)
     }
 
     func saveUser(_ user: UserModel) {
-        write(user, to: userURL)
+        write(user, url: userURL)
     }
 
     func deleteUser() {
         try? fileManager.removeItem(at: userURL)
     }
 
-    func load<Value>(_ key: StorageKey<Value>, for userId: UUID) -> Value? {
-        read(Value.self, at: fileURL(for: key, userId: userId))
+    func load<Value>(_ key: StorageKey<Value>, userId: UUID) -> Value? {
+        read(Value.self, url: fileURL(key: key, userId: userId))
     }
 
-    func save<Value>(_ value: Value, for key: StorageKey<Value>, userId: UUID) {
-        write(value, to: fileURL(for: key, userId: userId))
+    func save<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID) {
+        write(value, url: fileURL(key: key, userId: userId))
     }
 
-    func delete<Value>(_ key: StorageKey<Value>, for userId: UUID) {
-        try? fileManager.removeItem(at: fileURL(for: key, userId: userId))
+    func delete<Value>(_ key: StorageKey<Value>, userId: UUID) {
+        try? fileManager.removeItem(at: fileURL(key: key, userId: userId))
     }
 
-    func deleteAll(for userId: UUID) {
-        try? fileManager.removeItem(at: directory(for: userId))
+    func deleteAll(userId: UUID) {
+        try? fileManager.removeItem(at: directory(userId: userId))
     }
 
     private var userURL: URL {
         baseURL.appending(path: "user.json")
     }
 
-    private func directory(for userId: UUID) -> URL {
+    private func directory(userId: UUID) -> URL {
         baseURL.appending(path: userId.uuidString, directoryHint: .isDirectory)
     }
 
-    private func fileURL<Value>(for key: StorageKey<Value>, userId: UUID) -> URL {
-        directory(for: userId).appending(path: key.name + ".json")
+    private func fileURL<Value>(key: StorageKey<Value>, userId: UUID) -> URL {
+        directory(userId: userId).appending(path: key.name + ".json")
     }
 
-    private func read<T: Decodable>(_ type: T.Type, at url: URL) -> T? {
+    private func read<T: Decodable>(_ type: T.Type, url: URL) -> T? {
         guard let data = try? Data(contentsOf: url) else { return nil }
         return try? JSONDecoder().decode(type, from: data)
     }
 
-    private func write<T: Encodable>(_ value: T, to url: URL) {
+    private func write<T: Encodable>(_ value: T, url: URL) {
         guard let data = try? JSONEncoder().encode(value) else { return }
         try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         excludeFromBackup()

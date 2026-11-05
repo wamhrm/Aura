@@ -11,14 +11,14 @@ final class ProfileViewModelTests: XCTestCase {
     func test_lastResultDeleted_returnsToTheLockedScreen_andForgetsTheSavedResult() async {
         // Given
         let storage = makeStorage()
-        storage.save(StoredPersonality(historyId: UUID(), result: .mock), for: StorageKeys.personality, userId: UserModel.mock.id)
+        storage.save(StoredPersonality(historyId: UUID(), result: .mock), key: StorageKeys.personality, userId: UserModel.mock.id)
 
         // When
         let viewModel = ProfileViewModel(authService: MockAuthService(user: .mock), contentService: MockContentService(), storage: storage)
-        await waitUntil { viewModel.user != nil && storage.load(StorageKeys.personality, for: UserModel.mock.id) == nil }
+        await waitUntil { viewModel.user != nil && storage.load(StorageKeys.personality, userId: UserModel.mock.id) == nil }
 
         // Then
-        XCTAssertNil(storage.load(StorageKeys.personality, for: UserModel.mock.id))
+        XCTAssertNil(storage.load(StorageKeys.personality, userId: UserModel.mock.id))
         XCTAssertFalse(viewModel.hasPersonalityTests)
         XCTAssertEqual(viewModel.profileDisplayHandler, .placeholder)
     }

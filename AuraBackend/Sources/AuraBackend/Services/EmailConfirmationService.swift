@@ -10,6 +10,7 @@ import FluentPostgresDriver
 import Vapor
 
 struct EmailConfirmationService {
+    private let codeLength = 6
     private let codeLifetime: TimeInterval = 15 * 60
     private let resendInterval: TimeInterval = 60
     private let limitWindow: TimeInterval = 24 * 60 * 60
@@ -17,7 +18,7 @@ struct EmailConfirmationService {
     private let maxAttempts = 5
     private let emailService = EmailService()
 
-    func sendCode(to user: User, req: Request) async throws {
+    func sendCode(_ user: User, _ req: Request) async throws {
         guard !user.isEmailConfirmed, let email = user.email else { return }
         let userID = try user.requireID()
 
@@ -39,25 +40,25 @@ struct EmailConfirmationService {
             throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
         }
 
-        let code = (0..<PasswordResetService.codeLength).map { _ in String(Int.random(in: 0...9)) }.joined()
+        let code = (0..<codeLength).map { _ in String(Int.random(in: 0...9)) }.joined()
         let confirmation = EmailConfirmation(userID: userID,
                                              codeHash: hash(code, userID: userID),
                                              expiresAt: Date().addingTimeInterval(codeLifetime))
         try await confirmation.save(on: req.db)
 
         do {
-            try await emailService.send(to: email,
+            try await emailService.send(recipient: email,
                                         subject: "Код для подтверждения почты Aura",
-                                        html: emailHTML(code: code),
-                                        text: emailText(code: code),
-                                        req: req)
+                                        html: emailHTML(code),
+                                        text: emailText(code),
+                                        req)
         } catch {
             try? await confirmation.delete(on: req.db)
             throw error
         }
     }
 
-    func confirm(_ code: String, for user: User, req: Request) async throws {
+    func confirm(_ code: String, _ user: User, _ req: Request) async throws {
         guard !user.isEmailConfirmed else { return }
         let userID = try user.requireID()
 
@@ -94,7 +95,7 @@ struct EmailConfirmationService {
         SHA256.hash(data: Data("\(userID.uuidString):\(code)".utf8)).hex
     }
 
-    private func emailText(code: String) -> String {
+    private func emailText(_ code: String) -> String {
         """
         Ваш код для подтверждения почты в Aura: \(code)
 
@@ -102,7 +103,7 @@ struct EmailConfirmationService {
         """
     }
 
-    private func emailHTML(code: String) -> String {
+    private func emailHTML(_ code: String) -> String {
         """
         <div style="font-family: -apple-system, 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1c1c1e;">
           <h2 style="margin: 0 0 16px;">Подтверждение почты в Aura</h2>

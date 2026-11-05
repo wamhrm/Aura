@@ -37,7 +37,7 @@ struct HistoryController: RouteCollection {
             .field(\.$partnerZodiacSign)
             .all()
 
-        return try entries.map(HistoryDTOMapper.getHistoryItem(from:))
+        return try entries.map(HistoryDTOMapper.getHistoryItem)
     }
 
     private func fetchHistoryDetails(_ req: Request) async throws -> HistoryItemDTO {
@@ -56,7 +56,7 @@ struct HistoryController: RouteCollection {
         }
 
         do {
-            return try HistoryDTOMapper.getHistoryItemDetails(from: entry)
+            return try HistoryDTOMapper.getHistoryItemDetails(entry)
         } catch {
             req.logger.error("Failed to decode history entry \(historyID): \(error)")
             throw Abort(.internalServerError, reason: "Не удалось открыть запись истории")

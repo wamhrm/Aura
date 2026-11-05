@@ -7,7 +7,7 @@ import Foundation
 import Network
 
 // A small HTTP server inside the test process. The app talks to it instead of the real server,
-// so the answers are always the same. It is plumbing: to write a test you only need respond(to:status:body:).
+// so the answers are always the same. It is plumbing: to write a test you only need respond(route:status:body:).
 final class MockServer: @unchecked Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "aura.mock-server")
@@ -21,7 +21,7 @@ final class MockServer: @unchecked Sendable {
         listener.newConnectionHandler = { [weak self] connection in
             guard let self else { return }
             connection.start(queue: queue)
-            receive(from: connection, buffer: Data())
+            receive(connection: connection, buffer: Data())
         }
 
         let ready = DispatchSemaphore(value: 0)
@@ -49,7 +49,7 @@ final class MockServer: @unchecked Sendable {
         lock.withLock { receivedRequests }
     }
 
-    func respond(to route: String, status: Int = 200, body: Data = Data()) {
+    func respond(route: String, status: Int = 200, body: Data = Data()) {
         lock.withLock { responses[route] = (status, body) }
     }
 
@@ -57,14 +57,14 @@ final class MockServer: @unchecked Sendable {
         listener.cancel()
     }
 
-    private func receive(from connection: NWConnection, buffer: Data) {
+    private func receive(connection: NWConnection, buffer: Data) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, _ in
             guard let self else { return }
 
             let buffer = buffer + (data ?? Data())
 
             guard let headerEnd = buffer.range(of: Data("\r\n\r\n".utf8)) else {
-                if !isComplete { receive(from: connection, buffer: buffer) }
+                if !isComplete { receive(connection: connection, buffer: buffer) }
                 return
             }
 
@@ -75,7 +75,7 @@ final class MockServer: @unchecked Sendable {
                 .flatMap { Int($0.split(separator: ":")[1].trimmingCharacters(in: .whitespaces)) } ?? 0
 
             guard buffer.count - headerEnd.upperBound >= contentLength else {
-                receive(from: connection, buffer: buffer)
+                receive(connection: connection, buffer: buffer)
                 return
             }
 
@@ -84,7 +84,7 @@ final class MockServer: @unchecked Sendable {
     }
 
     private func answer(_ connection: NWConnection, requestLine: String) {
-        let route = route(from: requestLine)
+        let route = route(requestLine: requestLine)
         let (status, body) = lock.withLock { () -> (Int, Data) in
             self.receivedRequests.append(route)
             return self.responses[route] ?? (404, Data(#"{"error":true,"reason":"Не найдено"}"#.utf8))
@@ -99,7 +99,7 @@ final class MockServer: @unchecked Sendable {
     }
 
     // The id in a path becomes :historyID, so a route can be answered without knowing the id
-    private func route(from requestLine: String) -> String {
+    private func route(requestLine: String) -> String {
         let parts = requestLine.split(separator: " ")
         guard parts.count >= 2 else { return requestLine }
 

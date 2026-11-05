@@ -42,7 +42,7 @@ struct OpenAIResultValidator {
                 throw Self.unexpectedFormatError
             }
 
-            let allowedKeys = PersonalityItems.allowed(for: test).map(\.rawValue)
+            let allowedKeys = PersonalityItems.allowed(test).map(\.rawValue)
             let items = uniqueItems(section.items.filter { allowedKeys.contains($0.key) && isFilled($0.description) },
                                     key: \.key)
 
@@ -72,7 +72,7 @@ struct OpenAIResultValidator {
                 throw Self.unexpectedFormatError
             }
 
-            let allowedKeys = CompatibilityItems.allowed(for: test).map(\.rawValue)
+            let allowedKeys = CompatibilityItems.allowed(test).map(\.rawValue)
             let items = uniqueItems(section.items.filter { allowedKeys.contains($0.key) && isFilled($0.description) },
                                     key: \.key)
 

@@ -37,21 +37,21 @@ class AuraUITestCase: XCTestCase {
     private func setDefaultResponses() throws {
         let user = try sampleUser()
 
-        server.respond(to: "POST /v1/auth/createAccount", status: 201, body: try authBody(user: newUser()))
-        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
-        server.respond(to: "POST /v1/auth/password/forgot", status: 204)
-        server.respond(to: "POST /v1/auth/password/reset", body: try authBody(user: user))
-        server.respond(to: "GET /v1/auth/me", body: try json(user))
-        server.respond(to: "POST /v1/auth/logout", status: 204)
-        server.respond(to: "DELETE /v1/auth/account", status: 204)
-        server.respond(to: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
-        server.respond(to: "POST /v1/auth/aiConsent", body: try json(user))
-        server.respond(to: "GET /v1/horoscope/current", body: SampleResponses.horoscope)
-        server.respond(to: "GET /v1/daily/insight", body: SampleResponses.daily)
-        server.respond(to: "GET /v1/daily/tip", body: SampleResponses.daily)
-        server.respond(to: "GET /v1/history", body: Data("[]".utf8))
-        server.respond(to: "POST /v1/history/personality", body: SampleResponses.personalityResult)
-        server.respond(to: "POST /v1/history/compatibility", body: SampleResponses.compatibilityResult)
+        server.respond(route: "POST /v1/auth/createAccount", status: 201, body: try authBody(user: newUser()))
+        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
+        server.respond(route: "POST /v1/auth/password/forgot", status: 204)
+        server.respond(route: "POST /v1/auth/password/reset", body: try authBody(user: user))
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
+        server.respond(route: "POST /v1/auth/logout", status: 204)
+        server.respond(route: "DELETE /v1/auth/account", status: 204)
+        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
+        server.respond(route: "POST /v1/auth/aiConsent", body: try json(user))
+        server.respond(route: "GET /v1/horoscope/current", body: SampleResponses.horoscope)
+        server.respond(route: "GET /v1/daily/insight", body: SampleResponses.daily)
+        server.respond(route: "GET /v1/daily/tip", body: SampleResponses.daily)
+        server.respond(route: "GET /v1/history", body: Data("[]".utf8))
+        server.respond(route: "POST /v1/history/personality", body: SampleResponses.personalityResult)
+        server.respond(route: "POST /v1/history/compatibility", body: SampleResponses.compatibilityResult)
     }
 
     func json(_ object: Any) throws -> Data {
@@ -87,12 +87,12 @@ class AuraUITestCase: XCTestCase {
         let list = try XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
         var entry = try XCTUnwrap(list.first { $0["kind"] as? String == kind })
 
-        server.respond(to: "GET /v1/history", body: try json([entry]))
+        server.respond(route: "GET /v1/history", body: try json([entry]))
 
         entry[resultKey] = try SampleResponses.object(result)
 
-        server.respond(to: "GET /v1/history/:historyID", body: try json(entry))
-        server.respond(to: "DELETE /v1/history/:historyID", status: 204)
+        server.respond(route: "GET /v1/history/:historyID", body: try json(entry))
+        server.respond(route: "DELETE /v1/history/:historyID", status: 204)
     }
 
     // MARK: - Launch
@@ -108,8 +108,8 @@ class AuraUITestCase: XCTestCase {
 
     func launchSignedIn(user: [String: Any]? = nil) throws {
         let user = try user ?? sampleUser()
-        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
-        server.respond(to: "GET /v1/auth/me", body: try json(user))
+        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
         try launchOnWelcome()
         signIn()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
@@ -117,8 +117,8 @@ class AuraUITestCase: XCTestCase {
 
     func signIn(password: String? = nil) {
         welcomeButton.tap()
-        fillField(app.textFields["Электронная почта"].firstMatch, with: email)
-        fillField(app.secureTextFields["Пароль"].firstMatch, with: password ?? self.password)
+        fillField(app.textFields["Электронная почта"].firstMatch, text: email)
+        fillField(app.secureTextFields["Пароль"].firstMatch, text: password ?? self.password)
         tapButton("Войти")
     }
 
@@ -128,7 +128,7 @@ class AuraUITestCase: XCTestCase {
     }
 
     // MARK: - Actions
-    func fillField(_ field: XCUIElement, with text: String) {
+    func fillField(_ field: XCUIElement, text: String) {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "no field \(field.description)")
         field.tap()
         field.typeText(text)
@@ -155,7 +155,7 @@ class AuraUITestCase: XCTestCase {
         }
     }
 
-    func scrollUp(to element: XCUIElement) {
+    func scrollUp(element: XCUIElement) {
         for _ in 0..<8 where !element.isHittable {
             app.swipeDown()
         }
@@ -186,7 +186,7 @@ class AuraUITestCase: XCTestCase {
 
     // MARK: - Tabs
     // The system "Save Password?" sheet swallows the next tap, so a tab is tapped until its screen opens
-    private func openTab(_ index: Int, showing title: String) {
+    private func openTab(_ index: Int, title: String) {
         let bar = app.navigationBars[title]
         var taps = 0
 
@@ -199,19 +199,19 @@ class AuraUITestCase: XCTestCase {
     }
 
     func openHome() {
-        openTab(0, showing: "Главная")
+        openTab(0, title: "Главная")
     }
 
     func openCompatibility() {
-        openTab(1, showing: "Узнать совместимость")
+        openTab(1, title: "Узнать совместимость")
     }
 
     func openHistory() {
-        openTab(2, showing: "История тестов")
+        openTab(2, title: "История тестов")
     }
 
     func openProfile() {
-        openTab(3, showing: "Профиль")
+        openTab(3, title: "Профиль")
     }
 
     // MARK: - Finding things
@@ -219,11 +219,11 @@ class AuraUITestCase: XCTestCase {
         app.staticTexts[value].firstMatch
     }
 
-    func text(containing part: String) -> XCUIElement {
+    func text(part: String) -> XCUIElement {
         app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", part)).firstMatch
     }
 
-    func button(containing part: String) -> XCUIElement {
+    func button(part: String) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "label CONTAINS %@", part)).firstMatch
     }
 

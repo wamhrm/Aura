@@ -63,7 +63,7 @@ struct AuthController: RouteCollection {
             throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
         }
 
-        return try await issueToken(for: user, on: req).encodeResponse(status: .created, for: req)
+        return try await issueToken(user, req).encodeResponse(status: .created, for: req)
     }
 
     private func signIn(_ req: Request) async throws -> AuthDTO {
@@ -76,20 +76,20 @@ struct AuthController: RouteCollection {
               let passwordHash = user.passwordHash
         else { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        try await takeSignInAttempt(of: user, on: req)
+        try await takeSignInAttempt(user, req)
 
         let isPasswordCorrect = try await req.password.async.verify(signInData.password, created: passwordHash)
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        try await clearSignInAttempts(of: user, on: req.db)
+        try await clearSignInAttempts(user, req.db)
 
-        return try await issueToken(for: user, on: req)
+        return try await issueToken(user, req)
     }
 
     // Guessing a password from many addresses is limited too. The attempt is taken in one statement,
     // so parallel requests can't check more passwords than the limit.
-    private func takeSignInAttempt(of user: User, on req: Request) async throws {
+    private func takeSignInAttempt(_ user: User, _ req: Request) async throws {
         let userID = try user.requireID()
         let takenAttempts = try await req.db.sql()
             .raw("""
@@ -109,7 +109,7 @@ struct AuthController: RouteCollection {
         }
     }
 
-    private func clearSignInAttempts(of user: User, on database: any Database) async throws {
+    private func clearSignInAttempts(_ user: User, _ database: any Database) async throws {
         let userID = try user.requireID()
         try await database.sql().raw("UPDATE users SET sign_in_attempts = 0 WHERE id = \(bind: userID)").run()
     }
@@ -123,7 +123,7 @@ struct AuthController: RouteCollection {
         }
 
         if let user = try await User.query(on: req.db).filter(\.$email == email).first(), user.passwordHash != nil {
-            try await passwordResetService.sendCode(to: user, req: req)
+            try await passwordResetService.sendCode(user, req)
         }
 
         return .noContent
@@ -139,8 +139,8 @@ struct AuthController: RouteCollection {
         else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
 
         try await passwordResetService.verifyCode(data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                  for: user,
-                                                  req: req)
+                                                  user,
+                                                  req)
 
         let userID = try user.requireID()
         user.passwordHash = try await req.password.async.hash(data.password)
@@ -150,16 +150,16 @@ struct AuthController: RouteCollection {
 
         try await req.db.transaction { database in
             try await user.save(on: database)
-            try await clearSignInAttempts(of: user, on: database)
+            try await clearSignInAttempts(user, database)
             try await Token.query(on: database).filter(\.$user.$id == userID).delete()
             try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
         }
 
-        return try await issueToken(for: user, on: req)
+        return try await issueToken(user, req)
     }
 
     private func sendEmailConfirmationCode(_ req: Request) async throws -> HTTPStatus {
-        try await emailConfirmationService.sendCode(to: try req.auth.require(User.self), req: req)
+        try await emailConfirmationService.sendCode(try req.auth.require(User.self), req)
         return .noContent
     }
 
@@ -168,33 +168,33 @@ struct AuthController: RouteCollection {
         let data = try req.content.decode(ConfirmEmailRequest.self)
 
         try await emailConfirmationService.confirm(data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                   for: user,
-                                                   req: req)
+                                                   user,
+                                                   req)
 
         return try user.toDTO()
     }
 
     private func signInWithApple(_ req: Request) async throws -> AuthDTO {
         let data = try req.content.decode(AppleSignInRequest.self)
-        let identityToken = try await appleAuthService.verifyIdentityToken(data.identityToken, nonce: data.nonce, req: req)
+        let identityToken = try await appleAuthService.verifyIdentityToken(data.identityToken, nonce: data.nonce, req)
         let appleUserID = identityToken.subject.value
 
         let user: User
         if let existingUser = try await User.query(on: req.db).filter(\.$appleUserID == appleUserID).first() {
             user = existingUser
         } else {
-            user = try await createAppleUser(appleUserID: appleUserID, name: data.name, on: req)
+            user = try await createAppleUser(appleUserID: appleUserID, name: data.name, req)
         }
 
         if user.appleRefreshToken == nil, let authorizationCode = data.authorizationCode {
-            user.appleRefreshToken = await appleAuthService.encryptedRefreshToken(for: authorizationCode, req: req)
+            user.appleRefreshToken = await appleAuthService.encryptedRefreshToken(authorizationCode: authorizationCode, req)
             try await user.save(on: req.db)
         }
 
-        return try await issueToken(for: user, on: req)
+        return try await issueToken(user, req)
     }
 
-    private func createAppleUser(appleUserID: String, name: String?, on req: Request) async throws -> User {
+    private func createAppleUser(appleUserID: String, name: String?, _ req: Request) async throws -> User {
         let trimmedName = String((name ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(InputLimits.maxNameLength))
         let user = User(name: trimmedName.count >= InputLimits.minNameLength ? trimmedName : "Пользователь",
                         appleUserID: appleUserID)
@@ -211,7 +211,7 @@ struct AuthController: RouteCollection {
         }
     }
 
-    private func issueToken(for user: User, on req: Request) async throws -> AuthDTO {
+    private func issueToken(_ user: User, _ req: Request) async throws -> AuthDTO {
         let userID = try user.requireID()
 
         try await Token.query(on: req.db)
@@ -238,7 +238,7 @@ struct AuthController: RouteCollection {
         let user = try req.auth.require(User.self)
 
         if let appleRefreshToken = user.appleRefreshToken {
-            await appleAuthService.revoke(encryptedRefreshToken: appleRefreshToken, req: req)
+            await appleAuthService.revoke(encryptedRefreshToken: appleRefreshToken, req)
         } else if user.appleUserID != nil {
             req.logger.warning("Apple token not revoked: no refresh token stored")
         }

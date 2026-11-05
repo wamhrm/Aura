@@ -12,7 +12,7 @@ final class HistoryViewModelTests: XCTestCase {
         // Given
         let cell = HistoryCellModel.personalityPlaceholder
         let storage = makeStorage()
-        storage.save([cell], for: StorageKeys.history, userId: UserModel.mock.id)
+        storage.save([cell], key: StorageKeys.history, userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
 
@@ -37,13 +37,13 @@ final class HistoryViewModelTests: XCTestCase {
         await waitUntil { viewModel.historyCells.count == 2 }
 
         // When
-        viewModel.requestDeletion(of: personality)
+        viewModel.requestDeletion(item: personality)
         viewModel.deleteRequestedCell()
         await waitUntil { viewModel.historyCells.count == 1 }
 
         // Then
         XCTAssertEqual(viewModel.historyCells, [compatibility])
-        XCTAssertEqual(storage.load(StorageKeys.history, for: UserModel.mock.id), [compatibility])
+        XCTAssertEqual(storage.load(StorageKeys.history, userId: UserModel.mock.id), [compatibility])
     }
 
     func test_deleteFailure_keepsTheRecord_andShowsAlert() async {
@@ -56,7 +56,7 @@ final class HistoryViewModelTests: XCTestCase {
         content.errorToThrow = serverError
 
         // When
-        viewModel.requestDeletion(of: cell)
+        viewModel.requestDeletion(item: cell)
         viewModel.deleteRequestedCell()
         await waitUntil { viewModel.showAlert }
 

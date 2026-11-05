@@ -17,8 +17,8 @@ struct PartnerInfoModel {
     func compatibilityTestRequest(selectedTests: [CompatibilityTestTypes]) -> CompatibilityTestRequest {
         CompatibilityTestRequest(
             partnerName: name.trimmingCharacters(in: .whitespacesAndNewlines),
-            partnerDateOfBirth: BirthDateFormatter.dateString(from: birthDate),
-            partnerBirthTime: knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : nil,
+            partnerDateOfBirth: BirthDateFormatter.dateString(date: birthDate),
+            partnerBirthTime: knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : nil,
             partnerGender: gender,
             selectedTests: selectedTests.map(\.rawValue))
     }

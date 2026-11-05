@@ -43,7 +43,7 @@ extension Application {
 
         while !didShutdown {
             do {
-                try await service.run(on: db)
+                try await service.run(db)
             } catch {
                 logger.error("Data cleanup failed: \(error)")
             }

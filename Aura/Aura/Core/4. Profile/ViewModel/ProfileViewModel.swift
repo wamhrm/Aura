@@ -74,7 +74,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self, let userId = currentUserId else { return }
-                Task { await loadPersonality(for: userId) }
+                Task { await loadPersonality(userId: userId) }
             }
             .store(in: &cancellables)
 
@@ -106,11 +106,11 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         guard currentUserId == user.id else {
             currentUserId = user.id
 
-            if let cached = storage.load(StorageKeys.personality, for: user.id) {
+            if let cached = storage.load(StorageKeys.personality, userId: user.id) {
                 applyPersonality(result: cached.result)
             }
 
-            let cachedTip = storage.load(StorageKeys.dailyTip, for: user.id)
+            let cachedTip = storage.load(StorageKeys.dailyTip, userId: user.id)
             dailyTip = cachedTip?.isFromToday == true ? cachedTip : nil
             updateProfileDisplay()
 
@@ -119,17 +119,17 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         }
 
         if previousUser?.allowsAIAnalysis == false && user.allowsAIAnalysis {
-            Task { await loadDailyTip(for: user.id) }
+            Task { await loadDailyTip(userId: user.id) }
         }
     }
 
     func refresh() async {
         guard let user, let userId = currentUserId else { return }
 
-        async let personality: Void = loadPersonality(for: userId)
+        async let personality: Void = loadPersonality(userId: userId)
 
         if user.allowsAIAnalysis {
-            await loadDailyTip(for: userId)
+            await loadDailyTip(userId: userId)
         }
 
         await personality
@@ -142,16 +142,16 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     func retryDailyTip() {
         guard let userId = currentUserId else { return }
-        Task { await loadDailyTip(for: userId) }
+        Task { await loadDailyTip(userId: userId) }
     }
 
-    private func loadDailyTip(for userId: UUID) async {
+    private func loadDailyTip(userId: UUID) async {
         if dailyTip == nil {
             tipState = .loading
         }
 
         do {
-            let tip = try await contentService.fetchDailyTip(for: userId)
+            let tip = try await contentService.fetchDailyTip(userId: userId)
             guard currentUserId == userId else { return }
 
             dailyTip = tip
@@ -169,7 +169,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         updateProfileDisplay()
     }
 
-    private func loadPersonality(for userId: UUID) async {
+    private func loadPersonality(userId: UUID) async {
         if !hasPersonalityTests {
             personalityState = .loading
         }
@@ -178,13 +178,13 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             let history = try await contentService.fetchHistory()
             guard currentUserId == userId else { return }
 
-            storage.save(history, for: StorageKeys.history, userId: userId)
+            storage.save(history, key: StorageKeys.history, userId: userId)
 
             guard let latest = history.first(where: { $0.kind == .personality }) else {
-                return clearPersonality(for: userId)
+                return clearPersonality(userId: userId)
             }
 
-            if let cached = storage.load(StorageKeys.personality, for: userId), cached.historyId == latest.id {
+            if let cached = storage.load(StorageKeys.personality, userId: userId), cached.historyId == latest.id {
                 return applyPersonality(result: cached.result)
             }
 
@@ -192,12 +192,12 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             guard currentUserId == userId else { return }
 
             guard let result = historyDetails.personalityResult else {
-                return clearPersonality(for: userId)
+                return clearPersonality(userId: userId)
             }
 
             applyPersonality(result: result)
             storage.save(StoredPersonality(historyId: latest.id, result: result),
-                         for: StorageKeys.personality,
+                         key: StorageKeys.personality,
                          userId: userId)
         } catch {
             guard currentUserId == userId, !error.isCancellation else { return }
@@ -264,11 +264,11 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         updateProfileDisplay()
     }
 
-    private func clearPersonality(for userId: UUID) {
+    private func clearPersonality(userId: UUID) {
         hasPersonalityTests = false
         personalityResult = nil
         personalityState = .loaded
-        storage.delete(StorageKeys.personality, for: userId)
+        storage.delete(StorageKeys.personality, userId: userId)
         updateProfileDisplay()
     }
 }

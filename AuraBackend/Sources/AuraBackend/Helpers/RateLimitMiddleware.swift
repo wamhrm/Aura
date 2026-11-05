@@ -16,7 +16,7 @@ struct RateLimitMiddleware: AsyncMiddleware {
     }
 
     func respond(to req: Request, chainingTo next: any AsyncResponder) async throws -> Response {
-        guard await limiter.allow(clientIP(of: req)) else {
+        guard await limiter.allow(clientIP(req)) else {
             throw Abort(.tooManyRequests, reason: "Слишком много попыток. Попробуйте позже")
         }
 
@@ -24,7 +24,7 @@ struct RateLimitMiddleware: AsyncMiddleware {
     }
 
     // Render routes public requests through Cloudflare. Other hosts must not trust this header by default.
-    private func clientIP(of req: Request) -> String {
+    private func clientIP(_ req: Request) -> String {
         let remoteIP = req.remoteAddress?.ipAddress ?? "unknown"
         let values = req.headers["CF-Connecting-IP"]
 

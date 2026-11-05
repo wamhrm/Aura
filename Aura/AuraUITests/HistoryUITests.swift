@@ -22,9 +22,9 @@ final class HistoryUITests: AuraUITestCase {
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
         try launchSignedIn()
         openHistory()
-        let entry = button(containing: "Тихий стратег")
+        let entry = button(part: "Тихий стратег")
         XCTAssertTrue(entry.waitForExistence(timeout: 10), "the entry is not in the history")
-        XCTAssertTrue(text(containing: "ноября 2026").exists, "the entry has no date")
+        XCTAssertTrue(text(part: "ноября 2026").exists, "the entry has no date")
 
         // When
         entry.tap()
@@ -38,7 +38,7 @@ final class HistoryUITests: AuraUITestCase {
         try setHistory(kind: "compatibility", resultKey: "compatibilityResult", result: SampleResponses.compatibilityResult)
         try launchSignedIn()
         openHistory()
-        let entry = button(containing: "Иван")
+        let entry = button(part: "Иван")
         XCTAssertTrue(entry.waitForExistence(timeout: 10), "the entry is not in the history")
 
         // When
@@ -53,7 +53,7 @@ final class HistoryUITests: AuraUITestCase {
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
         try launchSignedIn()
         openHistory()
-        let entry = button(containing: "Тихий стратег")
+        let entry = button(part: "Тихий стратег")
         XCTAssertTrue(entry.waitForExistence(timeout: 10), "the entry is not in the history")
 
         // When the deletion is cancelled
@@ -65,7 +65,7 @@ final class HistoryUITests: AuraUITestCase {
         XCTAssertTrue(entry.waitForExistence(timeout: 5), "the entry was removed without a confirmation")
 
         // When it is confirmed
-        server.respond(to: "GET /v1/history", body: Data("[]".utf8))
+        server.respond(route: "GET /v1/history", body: Data("[]".utf8))
         entry.press(forDuration: 1.5)
         tapButton("Удалить")
         confirmAlert("Удалить")
@@ -76,13 +76,13 @@ final class HistoryUITests: AuraUITestCase {
 
     func test_whenServerFails_showsTheError_andRetryRecovers() throws {
         // Given
-        server.respond(to: "GET /v1/history", status: 500, body: try failingBody(serverError))
+        server.respond(route: "GET /v1/history", status: 500, body: try failingBody(serverError))
         try launchSignedIn()
         openHistory()
         XCTAssertTrue(text(serverError).waitForExistence(timeout: 10), "no error in the history")
 
         // When
-        server.respond(to: "GET /v1/history", body: Data("[]".utf8))
+        server.respond(route: "GET /v1/history", body: Data("[]".utf8))
         tapButton("Повторить")
 
         // Then

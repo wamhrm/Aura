@@ -16,7 +16,7 @@ final class HomeUITests: AuraUITestCase {
 
         // Then
         XCTAssertTrue(app.navigationBars["Мой гороскоп"].waitForExistence(timeout: 5), "the horoscope did not open")
-        XCTAssertTrue(text(containing: "Краткий гороскоп на неделю").exists)
+        XCTAssertTrue(text(part: "Краткий гороскоп на неделю").exists)
         XCTAssertTrue(text("Любовь").exists)
     }
 
@@ -54,7 +54,7 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertTrue(text(thirdTest).waitForExistence(timeout: 15), "the tests are not on the main screen")
 
         // When the third test is selected in its row
-        button(containing: thirdTest).buttons.firstMatch.tap()
+        button(part: thirdTest).buttons.firstMatch.tap()
         text(thirdTest).tap()
 
         // Then its details screen knows about it
@@ -92,7 +92,7 @@ final class HomeUITests: AuraUITestCase {
 
     func test_personalityTest_whenAIFails_showsAlert_andRepeatWorks() throws {
         // Given
-        server.respond(to: "POST /v1/history/personality", status: 502, body: try failingBody(serverError))
+        server.respond(route: "POST /v1/history/personality", status: 502, body: try failingBody(serverError))
         try launchSignedIn()
 
         // When
@@ -103,7 +103,7 @@ final class HomeUITests: AuraUITestCase {
 
         // When
         closeAlert()
-        server.respond(to: "POST /v1/history/personality", body: SampleResponses.personalityResult)
+        server.respond(route: "POST /v1/history/personality", body: SampleResponses.personalityResult)
         tapButton("Проверить себя")
 
         // Then
@@ -112,8 +112,8 @@ final class HomeUITests: AuraUITestCase {
 
     func test_personalityTest_withoutConfirmedEmail_asksForTheCode_andThenWorks() throws {
         // Given
-        server.respond(to: "POST /v1/auth/email/sendCode", status: 204)
-        server.respond(to: "POST /v1/auth/email/confirm", status: 400, body: try failingBody("Неверный код"))
+        server.respond(route: "POST /v1/auth/email/sendCode", status: 204)
+        server.respond(route: "POST /v1/auth/email/confirm", status: 400, body: try failingBody("Неверный код"))
         try launchSignedIn(user: try sampleUser(["isEmailConfirmed": false]))
 
         // When
@@ -124,7 +124,7 @@ final class HomeUITests: AuraUITestCase {
 
         // When a wrong code is entered
         tapButton("Подтвердить")
-        fillField(app.textFields["Код из 6 цифр"].firstMatch, with: "000000")
+        fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "000000")
         tapButton("Проверить код")
 
         // Then
@@ -132,7 +132,7 @@ final class HomeUITests: AuraUITestCase {
         closeAlert()
 
         // When the right code is entered
-        server.respond(to: "POST /v1/auth/email/confirm", body: try json(try sampleUser()))
+        server.respond(route: "POST /v1/auth/email/confirm", body: try json(try sampleUser()))
         tapButton("Проверить код")
 
         // Then the sheet closes and the test works
@@ -144,15 +144,15 @@ final class HomeUITests: AuraUITestCase {
     func test_whenServerFails_showsRetry_andRetryRecovers() throws {
         // Given
         let body = try failingBody(serverError)
-        server.respond(to: "GET /v1/daily/insight", status: 500, body: body)
-        server.respond(to: "GET /v1/horoscope/current", status: 500, body: body)
+        server.respond(route: "GET /v1/daily/insight", status: 500, body: body)
+        server.respond(route: "GET /v1/horoscope/current", status: 500, body: body)
         try launchSignedIn()
         let retry = app.buttons.matching(NSPredicate(format: "label == %@", "Повторить")).firstMatch
         XCTAssertTrue(retry.waitForExistence(timeout: 15), "no retry on the main screen")
 
         // When
-        server.respond(to: "GET /v1/daily/insight", body: SampleResponses.daily)
-        server.respond(to: "GET /v1/horoscope/current", body: SampleResponses.horoscope)
+        server.respond(route: "GET /v1/daily/insight", body: SampleResponses.daily)
+        server.respond(route: "GET /v1/horoscope/current", body: SampleResponses.horoscope)
 
         for _ in 0..<3 where retry.exists {
             retry.tap()

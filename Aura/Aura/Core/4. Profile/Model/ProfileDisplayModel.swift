@@ -44,22 +44,22 @@ extension ProfileDisplayModel {
         ProfileDisplayModel(
             dailyTip: dailyTip?.text,
             overview: personalityResult?.overview.description,
-            socialFilter: sectionItem(.socialFilter, from: personalityResult),
-            emotionalDepth: sectionItem(.emotionalDepth, from: personalityResult),
-            temperament: barValue(.temperament, from: personalityResult),
-            thinking: barValue(.thinking, from: personalityResult),
-            organization: barValue(.organization, from: personalityResult),
-            relationships: barValue(.relationships, from: personalityResult),
+            socialFilter: sectionItem(.socialFilter, result: personalityResult),
+            emotionalDepth: sectionItem(.emotionalDepth, result: personalityResult),
+            temperament: barValue(.temperament, result: personalityResult),
+            thinking: barValue(.thinking, result: personalityResult),
+            organization: barValue(.organization, result: personalityResult),
+            relationships: barValue(.relationships, result: personalityResult),
             zodiacSignTitle: personalityResult?.zodiacSign.title)
     }
 
     private static func sectionItem(_ key: PersonalityCellTypes,
-                                    from result: PersonalityResultModel?) -> String? {
+                                    result: PersonalityResultModel?) -> String? {
         result?.sections.flatMap(\.items).first(where: { $0.key == key })?.description
     }
 
     private static func barValue(_ key: EmotionalProfileTypes,
-                                 from result: PersonalityResultModel?) -> Int? {
+                                 result: PersonalityResultModel?) -> Int? {
         result?.emotionalBar.first(where: { $0.key == key })?.value
     }
 }

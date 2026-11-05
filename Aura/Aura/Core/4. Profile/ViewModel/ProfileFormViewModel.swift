@@ -26,9 +26,9 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
         self.authService = authService
         profileInfo = user.profileInfo
         name = user.name
-        birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(from:)) ?? BirthDateFormatter.defaultDate
+        birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
         knowsBirthTime = user.birthTime != nil
-        birthTime = user.birthTime.flatMap(BirthDateFormatter.time(from:)) ?? BirthDateFormatter.defaultTime
+        birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
     }
 
     var saveButtonTitle: String {
@@ -44,8 +44,8 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
             do {
                 try validateProfileInfoForms()
                 profileInfo.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-                profileInfo.dateOfBirth = BirthDateFormatter.dateString(from: birthDate)
-                profileInfo.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : ""
+                profileInfo.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
+                profileInfo.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
                 _ = try await authService.updateProfileInfo(profileInfo)
                 onSuccess()
             } catch {

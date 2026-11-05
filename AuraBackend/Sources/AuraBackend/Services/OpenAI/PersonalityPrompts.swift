@@ -8,8 +8,8 @@
 import Foundation
 
 enum PersonalityPrompts {
-    static func schema(for selectedTests: [PersonalityTests]) -> JSONSchema {
-        let itemKeys = selectedTests.flatMap(PersonalityItems.allowed(for:)).map(\.rawValue)
+    static func schema(_ selectedTests: [PersonalityTests]) -> JSONSchema {
+        let itemKeys = selectedTests.flatMap(PersonalityItems.allowed).map(\.rawValue)
 
         return .object([("archetypeTitle", .string),
                         ("archetypeSubtitle", .string),
@@ -22,14 +22,14 @@ enum PersonalityPrompts {
                                                                                ("description", .string)])))])))])
     }
 
-    static func user(for user: User, selectedTests: [PersonalityTests]) -> String {
+    static func user(_ user: User, selectedTests: [PersonalityTests]) -> String {
         let selectedTestLines = selectedTests
             .map { "- " + $0.rawValue + " (" + $0.title + ")" }
             .joined(separator: "\n")
 
         let itemRules = selectedTests
             .map { test in
-                let keys = PersonalityItems.allowed(for: test)
+                let keys = PersonalityItems.allowed(test)
                     .map { "\"" + $0.rawValue + "\" (" + $0.title + ")" }
                     .joined(separator: ", ")
                 return "- " + test.rawValue + ": ровно 2 пункта, key только из [" + keys + "]"
@@ -37,16 +37,7 @@ enum PersonalityPrompts {
             .joined(separator: "\n")
 
         return """
-        Данные пользователя:
-        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
-        - время рождения: \(user.birthTime ?? "не указано")
-        - пол: \(user.gender ?? "не указано")
-        - социальный тип: \(user.socialType ?? "не указано")
-        - стиль конфликта: \(user.conflictStyle ?? "не указано")
-        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
-        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
-        - фокус в отношениях: \(user.coreFocus ?? "не указано")
-        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        \(ContentPrompts.userProfile(user))
 
         Выбранные тесты:
         \(selectedTestLines)

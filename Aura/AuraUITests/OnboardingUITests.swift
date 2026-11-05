@@ -17,11 +17,11 @@ final class OnboardingUITests: AuraUITestCase {
 
     private func openProfileQuestions() throws {
         try openNameStep()
-        fillField(app.textFields["Имя"].firstMatch, with: "Анна")
+        fillField(app.textFields["Имя"].firstMatch, text: "Анна")
         tapButton("Далее")
-        fillField(app.textFields["Электронная почта"].firstMatch, with: email)
+        fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Далее")
-        fillField(app.secureTextFields["Пароль"].firstMatch, with: password)
+        fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
         tapButton("Создать аккаунт")
         XCTAssertTrue(text("Расскажите о себе").waitForExistence(timeout: 15), "the profile questions did not open")
     }
@@ -51,9 +51,9 @@ final class OnboardingUITests: AuraUITestCase {
         closeAlert()
 
         // When the email has no @
-        fillField(app.textFields["Имя"].firstMatch, with: "Анна")
+        fillField(app.textFields["Имя"].firstMatch, text: "Анна")
         tapButton("Далее")
-        fillField(app.textFields["Электронная почта"].firstMatch, with: "no-at-sign")
+        fillField(app.textFields["Электронная почта"].firstMatch, text: "no-at-sign")
         tapButton("Далее")
 
         // Then
@@ -63,7 +63,7 @@ final class OnboardingUITests: AuraUITestCase {
         // When the password is too short
         app.textFields["Электронная почта"].firstMatch.typeText("@example.test")
         tapButton("Далее")
-        fillField(app.secureTextFields["Пароль"].firstMatch, with: "short")
+        fillField(app.secureTextFields["Пароль"].firstMatch, text: "short")
         tapButton("Создать аккаунт")
 
         // Then
@@ -96,9 +96,9 @@ final class OnboardingUITests: AuraUITestCase {
     func test_decliningAIConsent_locksTheScreen_andAllowingUnlocksIt() throws {
         // Given
         let user = try sampleUser(["hasAIConsent": false])
-        server.respond(to: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
+        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         try openProfileQuestions()
-        server.respond(to: "GET /v1/auth/me", body: try json(user))
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
         chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
 
@@ -106,7 +106,7 @@ final class OnboardingUITests: AuraUITestCase {
         tapButton("Не сейчас")
 
         // Then
-        XCTAssertTrue(text(containing: "Разрешите анализ").waitForExistence(timeout: 20), "no lock on the main screen")
+        XCTAssertTrue(text(part: "Разрешите анализ").waitForExistence(timeout: 20), "no lock on the main screen")
         XCTAssertFalse(text(dailyText).exists)
 
         // When
@@ -120,7 +120,7 @@ final class OnboardingUITests: AuraUITestCase {
     func test_termsLink_opensInSafari() throws {
         // Given
         try openNameStep()
-        fillField(app.textFields["Имя"].firstMatch, with: "Анна")
+        fillField(app.textFields["Имя"].firstMatch, text: "Анна")
         tapButton("Далее")
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
         let terms = app.links["Условия использования"].firstMatch
@@ -137,9 +137,9 @@ final class OnboardingUITests: AuraUITestCase {
     func test_incompleteProfile_afterRelaunch_backArrowOffersToSignOut() throws {
         // Given
         let user = try newUser()
-        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
+        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         try launchOnWelcome()
-        server.respond(to: "GET /v1/auth/me", body: try json(user))
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
         signIn()
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not open")
         app.terminate()

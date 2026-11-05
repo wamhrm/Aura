@@ -17,9 +17,9 @@ protocol ContentServiceProtocol {
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
-    func fetchDailyInsight(for userId: UUID) async throws -> DailyContentModel
-    func fetchDailyTip(for userId: UUID) async throws -> DailyContentModel
-    func fetchCurrentHoroscope(for userId: UUID) async throws -> HoroscopeModel
+    func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel
+    func fetchDailyTip(userId: UUID) async throws -> DailyContentModel
+    func fetchCurrentHoroscope(userId: UUID) async throws -> HoroscopeModel
 }
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
@@ -68,21 +68,21 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         pendingCompatibilityTest = nil
     }
 
-    func fetchDailyInsight(for userId: UUID) async throws -> DailyContentModel {
+    func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel {
         let insight = try await networkService.fetchDailyInsight()
-        saveToCache(insight, for: StorageKeys.dailyInsight, userId: userId)
+        saveToCache(insight, key: StorageKeys.dailyInsight, userId: userId)
         return insight
     }
 
-    func fetchDailyTip(for userId: UUID) async throws -> DailyContentModel {
+    func fetchDailyTip(userId: UUID) async throws -> DailyContentModel {
         let tip = try await networkService.fetchDailyTip()
-        saveToCache(tip, for: StorageKeys.dailyTip, userId: userId)
+        saveToCache(tip, key: StorageKeys.dailyTip, userId: userId)
         return tip
     }
 
-    func fetchCurrentHoroscope(for userId: UUID) async throws -> HoroscopeModel {
+    func fetchCurrentHoroscope(userId: UUID) async throws -> HoroscopeModel {
         let horoscope = try await networkService.fetchCurrentHoroscope()
-        saveToCache(horoscope, for: StorageKeys.horoscope, userId: userId)
+        saveToCache(horoscope, key: StorageKeys.horoscope, userId: userId)
         return horoscope
     }
 
@@ -146,9 +146,9 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     // A late answer must not bring back the files of a finished session
-    private func saveToCache<Value>(_ value: Value, for key: StorageKey<Value>, userId: UUID) {
+    private func saveToCache<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID) {
         guard currentUserId == userId else { return }
-        storage.save(value, for: key, userId: userId)
+        storage.save(value, key: key, userId: userId)
     }
 
     private func notifyHistoryChanged() {

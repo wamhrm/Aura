@@ -19,19 +19,19 @@ enum BirthDateFormatter {
         return earliest...latest
     }()
 
-    static func dateString(from date: Date) -> String {
+    static func dateString(date: Date) -> String {
         formatter("dd.MM.yyyy").string(from: date)
     }
 
-    static func timeString(from date: Date) -> String {
+    static func timeString(date: Date) -> String {
         formatter("HH:mm").string(from: date)
     }
 
-    static func date(from string: String) -> Date? {
+    static func date(string: String) -> Date? {
         formatter("dd.MM.yyyy").date(from: string)
     }
 
-    static func time(from string: String) -> Date? {
+    static func time(string: String) -> Date? {
         formatter("HH:mm").date(from: string)
     }
 

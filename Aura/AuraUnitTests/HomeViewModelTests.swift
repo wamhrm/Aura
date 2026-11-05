@@ -29,7 +29,7 @@ final class HomeViewModelTests: XCTestCase {
         // Given
         let storage = makeStorage()
         storage.save(DailyContentModel(id: UUID(), text: "Вчерашний инсайт", dateCreated: "2000-01-01"),
-                     for: StorageKeys.dailyInsight,
+                     key: StorageKeys.dailyInsight,
                      userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
@@ -47,7 +47,7 @@ final class HomeViewModelTests: XCTestCase {
         // Given
         let insight = DailyContentModel(id: UUID(), text: "Сегодняшний инсайт", dateCreated: todayText())
         let storage = makeStorage()
-        storage.save(insight, for: StorageKeys.dailyInsight, userId: UserModel.mock.id)
+        storage.save(insight, key: StorageKeys.dailyInsight, userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
 

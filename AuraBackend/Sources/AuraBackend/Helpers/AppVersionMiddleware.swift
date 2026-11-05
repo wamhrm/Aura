@@ -22,8 +22,8 @@ struct AppVersionMiddleware: AsyncMiddleware {
     private func isSupported(_ version: String?, minimum: String) -> Bool {
         guard let version else { return false }
 
-        let current = numbers(in: version)
-        let required = numbers(in: minimum)
+        let current = numbers(version)
+        let required = numbers(minimum)
 
         for index in 0..<max(current.count, required.count) {
             let currentNumber = index < current.count ? current[index] : 0
@@ -37,7 +37,7 @@ struct AppVersionMiddleware: AsyncMiddleware {
         return true
     }
 
-    private func numbers(in version: String) -> [Int] {
+    private func numbers(_ version: String) -> [Int] {
         version.split(separator: ".").map { Int($0) ?? 0 }
     }
 }

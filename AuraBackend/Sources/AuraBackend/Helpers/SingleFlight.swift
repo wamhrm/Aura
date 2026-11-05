@@ -6,14 +6,12 @@
 //
 
 // Joins parallel requests for the same key into one operation. Works within one server instance.
-actor SingleFlight {
-    static let shared = SingleFlight()
+actor SingleFlight<Value: Sendable> {
+    private var tasks: [String: Task<Value, any Error>] = [:]
 
-    private var tasks: [String: Task<any Sendable, any Error>] = [:]
-
-    func run<Value: Sendable>(key: String,
-                              operation: @escaping @Sendable () async throws -> Value) async throws -> Value {
-        let task: Task<any Sendable, any Error>
+    func run(key: String,
+             operation: @escaping @Sendable () async throws -> Value) async throws -> Value {
+        let task: Task<Value, any Error>
 
         if let running = tasks[key] {
             task = running
@@ -28,14 +26,6 @@ actor SingleFlight {
             }
         }
 
-        guard let value = try await task.value as? Value else {
-            throw SingleFlightError.valueTypeMismatch
-        }
-
-        return value
+        return try await task.value
     }
-}
-
-private enum SingleFlightError: Error {
-    case valueTypeMismatch
 }

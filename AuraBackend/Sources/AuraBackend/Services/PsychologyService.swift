@@ -11,10 +11,10 @@ import Vapor
 struct PsychologyService {
     private let openAIService = OpenAIService()
 
-    func makePersonalityTest(user: User,
+    func makePersonalityTest(_ user: User,
                              testKeys: [String],
-                             req: Request) async throws -> PersonalityResultDTO {
-        guard let selectedTests = PersonalityTests.from(keys: testKeys) else {
+                             _ req: Request) async throws -> PersonalityResultDTO {
+        guard let selectedTests = PersonalityTests.from(testKeys) else {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
@@ -28,14 +28,14 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
-        return try await openAIService.makePersonalityTest(for: user,
+        return try await openAIService.makePersonalityTest(user,
                                                 selectedTests: uniqueSelectedTests,
-                                                req: req)
+                                                req)
     }
 
-    func makeCompatibilityTest(user: User,
+    func makeCompatibilityTest(_ user: User,
                                request: CompatibilityTestRequest,
-                               req: Request) async throws -> CompatibilityResultDTO {
+                               _ req: Request) async throws -> CompatibilityResultDTO {
         let partnerName = request.partnerName.trimmingCharacters(in: .whitespacesAndNewlines)
         let partnerGender = request.partnerGender.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -51,7 +51,7 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Укажите пол партнёра")
         }
 
-        guard let dateOfBirth = UserDateFormatter.birthDate(from: request.partnerDateOfBirth) else {
+        guard let dateOfBirth = UserDateFormatter.birthDate(date: request.partnerDateOfBirth) else {
             throw Abort(.badRequest, reason: "Укажите дату рождения партнёра в формате ДД.ММ.ГГГГ")
         }
 
@@ -63,7 +63,7 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Укажите время рождения партнёра в формате ЧЧ:ММ")
         }
 
-        guard let selectedTests = CompatibilityTests.from(keys: request.selectedTests) else {
+        guard let selectedTests = CompatibilityTests.from(request.selectedTests) else {
             throw Abort(.badRequest, reason: "Неизвестный тест в списке выбранных")
         }
 
@@ -83,10 +83,10 @@ struct PsychologyService {
                                                       partnerGender: partnerGender,
                                                       selectedTests: request.selectedTests)
 
-        return try await openAIService.makeCompatibilityTest(for: user,
+        return try await openAIService.makeCompatibilityTest(user,
                                                              partner: partnerRequest,
                                                              selectedTests: uniqueSelectedTests,
-                                                             req: req)
+                                                             req)
     }
 
     private func unique<T: Hashable>(_ tests: [T]) -> [T] {

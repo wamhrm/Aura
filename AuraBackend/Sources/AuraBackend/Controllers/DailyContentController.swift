@@ -21,11 +21,11 @@ struct DailyContentController: RouteCollection {
 
     private func fetchDailyInsight(_ req: Request) async throws -> DailyContentDTO {
         let user = try req.auth.require(User.self)
-        return try await dailyContentService.fetchDailyInsight(for: user, req: req, on: req.db)
+        return try await dailyContentService.fetchDailyInsight(user, req, req.db)
     }
 
     private func fetchDailyTip(_ req: Request) async throws -> DailyContentDTO {
         let user = try req.auth.require(User.self)
-        return try await dailyContentService.fetchDailyTip(for: user, req: req, on: req.db)
+        return try await dailyContentService.fetchDailyTip(user, req, req.db)
     }
 }

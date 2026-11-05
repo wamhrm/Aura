@@ -11,7 +11,7 @@ struct EmailService {
     private let baseURL = Environment.get("RESEND_BASE_URL") ?? "https://api.resend.com"
     private let sender = Environment.get("RESEND_FROM") ?? "Aura <noreply@aurawamhrm.space>"
 
-    func send(to recipient: String, subject: String, html: String, text: String, req: Request) async throws {
+    func send(recipient: String, subject: String, html: String, text: String, _ req: Request) async throws {
         guard let apiKey = Environment.get("RESEND_API_KEY") else {
             req.logger.error("Email is not configured: RESEND_API_KEY is missing")
             throw Abort(.serviceUnavailable, reason: "Отправка писем временно недоступна. Попробуйте позже")

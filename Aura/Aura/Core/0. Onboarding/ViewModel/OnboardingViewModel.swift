@@ -199,7 +199,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         completedLoadingStages.contains(stage)
     }
 
-    func hidesSystemBackButton(on route: OnboardingRoutes) -> Bool {
+    func hidesSystemBackButton(route: OnboardingRoutes) -> Bool {
         route == .loading || isOnlyStepOfSignedInUser
     }
 
@@ -469,8 +469,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         loadingStages = allowsAIAnalysis ? OnboardingLoadingStage.allCases : [.profile, .horoscope]
 
         var request = profileInfo
-        request.dateOfBirth = BirthDateFormatter.dateString(from: birthDate)
-        request.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(from: birthTime) : ""
+        request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
+        request.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
 
         Task {
             do {
@@ -479,14 +479,14 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 await completeLoadingStage(.profile)
 
                 if response.horoscope == nil {
-                    _ = try? await contentService.fetchCurrentHoroscope(for: userId)
+                    _ = try? await contentService.fetchCurrentHoroscope(userId: userId)
                 }
                 await completeLoadingStage(.horoscope)
 
                 if allowsAIAnalysis {
                     try? await authService.giveAIConsent()
 
-                    _ = try? await contentService.fetchDailyInsight(for: userId)
+                    _ = try? await contentService.fetchDailyInsight(userId: userId)
                     await completeLoadingStage(.insight)
                 }
 

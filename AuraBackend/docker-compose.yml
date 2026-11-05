@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    command: ["serve", "--env", "development", "--hostname", "0.0.0.0"]
     ports:
       - "8080:8080"
     env_file: .env
@@ -13,7 +14,7 @@ services:
   migrate:
     build: .
     env_file: .env
-    command: ["migrate", "--yes"]
+    command: ["migrate", "--yes", "--env", "development"]
     profiles:
       - migrate
     depends_on:

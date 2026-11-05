@@ -81,13 +81,13 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
         let data = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, from: data)
+        return try decode(AuthTokenResponse.self, data: data)
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
         let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, from: data)
+        return try decode(AuthTokenResponse.self, data: data)
     }
 
     func signInWithApple(identityToken: String,
@@ -99,7 +99,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                                                 nonce: nonce,
                                                                 name: name))
         let data = try await request(endpoint: "/auth/apple", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, from: data)
+        return try decode(AuthTokenResponse.self, data: data)
     }
 
     func logout(token: String) async throws {
@@ -114,7 +114,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse {
         let bodyData = try JSONEncoder().encode(PasswordResetBody(email: email, code: code, password: password))
         let data = try await request(endpoint: "/auth/password/reset", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, from: data)
+        return try decode(AuthTokenResponse.self, data: data)
     }
 
     func deleteAccount() async throws {
@@ -123,12 +123,12 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func fetchCurrentUser() async throws -> UserModel {
         let data = try await request(endpoint: "/auth/me", method: .get)
-        return try decode(UserModel.self, from: data)
+        return try decode(UserModel.self, data: data)
     }
 
     func giveAIConsent() async throws -> UserModel {
         let data = try await request(endpoint: "/auth/aiConsent", method: .post)
-        return try decode(UserModel.self, from: data)
+        return try decode(UserModel.self, data: data)
     }
 
     func sendEmailConfirmationCode() async throws {
@@ -138,28 +138,28 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     func confirmEmail(code: String) async throws -> UserModel {
         let bodyData = try JSONEncoder().encode(EmailConfirmationBody(code: code))
         let data = try await request(endpoint: "/auth/email/confirm", method: .post, body: bodyData)
-        return try decode(UserModel.self, from: data)
+        return try decode(UserModel.self, data: data)
     }
 
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         let bodyData = try JSONEncoder().encode(profileInfo)
         let data = try await request(endpoint: "/auth/profileInfo", method: .patch, body: bodyData)
-        return try decode(UpdateProfileInfoResponse.self, from: data)
+        return try decode(UpdateProfileInfoResponse.self, data: data)
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         let data = try await request(endpoint: "/horoscope/current", method: .get, timeout: Self.aiTimeout)
-        return try decode(HoroscopeModel.self, from: data)
+        return try decode(HoroscopeModel.self, data: data)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
         let data = try await request(endpoint: "/daily/insight", method: .get, timeout: Self.aiTimeout)
-        return try decode(DailyContentModel.self, from: data)
+        return try decode(DailyContentModel.self, data: data)
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
         let data = try await request(endpoint: "/daily/tip", method: .get, timeout: Self.aiTimeout)
-        return try decode(DailyContentModel.self, from: data)
+        return try decode(DailyContentModel.self, data: data)
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
@@ -169,7 +169,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                      body: bodyData,
                                      idempotencyKey: requestID,
                                      timeout: Self.aiTimeout)
-        return try decode(PersonalityResultModel.self, from: data)
+        return try decode(PersonalityResultModel.self, data: data)
     }
 
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
@@ -179,17 +179,17 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                      body: bodyData,
                                      idempotencyKey: requestID,
                                      timeout: Self.aiTimeout)
-        return try decode(CompatibilityResultModel.self, from: data)
+        return try decode(CompatibilityResultModel.self, data: data)
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
         let data = try await request(endpoint: "/history", method: .get)
-        return try decode([HistoryCellModel].self, from: data)
+        return try decode([HistoryCellModel].self, data: data)
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
         let data = try await request(endpoint: "/history/\(id.uuidString)", method: .get)
-        return try decode(HistoryCellModel.self, from: data)
+        return try decode(HistoryCellModel.self, data: data)
     }
 
     func deleteHistory(id: UUID) async throws {
@@ -211,7 +211,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                             idempotencyKey: idempotencyKey,
                                             timeout: timeout)
         } catch let urlError as URLError where method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
-            try await Task.sleep(for: Self.retryDelay(for: attempt))
+            try await Task.sleep(for: Self.retryDelay(attempt: attempt))
             return try await request(endpoint: endpoint,
                                      method: method,
                                      body: body,
@@ -247,7 +247,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.setValue(idempotencyKey.uuidString, forHTTPHeaderField: "Idempotency-Key")
         }
 
-        let token = bearerToken(for: authorization)
+        let token = bearerToken(authorization: authorization)
         if let token {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -277,7 +277,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         }
     }
 
-    private func bearerToken(for authorization: RequestAuthorization) -> String? {
+    private func bearerToken(authorization: RequestAuthorization) -> String? {
         switch authorization {
             case .none:
                 return nil
@@ -288,7 +288,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         }
     }
 
-    private func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+    private func decode<T: Decodable>(_ type: T.Type, data: Data) throws -> T {
         do {
             return try JSONDecoder().decode(type, from: data)
         } catch {
@@ -313,7 +313,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         }
     }
 
-    private static func retryDelay(for attempt: Int) -> Duration {
+    private static func retryDelay(attempt: Int) -> Duration {
         .seconds(Double(attempt) + 0.5)
     }
 }

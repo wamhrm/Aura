@@ -31,7 +31,7 @@ struct HistoryView: View {
                                             .tint(.primaryText)
                                             .contextMenu {
                                                 Button("Удалить", role: .destructive) {
-                                                    vm.requestDeletion(of: item)
+                                                    vm.requestDeletion(item: item)
                                                 }
                                             }
                                     }

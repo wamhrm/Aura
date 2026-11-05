@@ -39,7 +39,7 @@ struct ProfileController: RouteCollection {
         let user = try req.auth.require(User.self)
         let profileInfo = try req.content.decode(UpdateProfileInfoRequest.self)
 
-        guard let dateOfBirth = UserDateFormatter.birthDate(from: profileInfo.dateOfBirth) else {
+        guard let dateOfBirth = UserDateFormatter.birthDate(date: profileInfo.dateOfBirth) else {
             throw Abort(.badRequest, reason: "Укажите корректную дату рождения в формате ДД.ММ.ГГГГ")
         }
 
@@ -85,7 +85,7 @@ struct ProfileController: RouteCollection {
         try await user.save(on: req.db)
 
         // Never waits for OpenAI: the app requests a missing horoscope on its own
-        let horoscope = try? await horoscopeService.findCurrentHoroscope(for: user, in: req.userTimeZone, on: req.db)
+        let horoscope = try? await horoscopeService.findCurrentHoroscope(user, timeZone: req.userTimeZone, req.db)
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }

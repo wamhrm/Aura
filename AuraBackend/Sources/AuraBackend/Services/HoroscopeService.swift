@@ -9,29 +9,30 @@ import Fluent
 import Vapor
 
 struct HoroscopeService {
+    private static let singleFlight = SingleFlight<HoroscopeDTO>()
     private let openAIService = OpenAIService()
 
-    func fetchCurrentHoroscope(for user: User, req: Request, on database: any Database) async throws -> HoroscopeDTO {
+    func fetchCurrentHoroscope(_ user: User, _ req: Request, _ database: any Database) async throws -> HoroscopeDTO {
         guard let dateOfBirth = user.dateOfBirth,
-              let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
+              let sign = HoroscopeSign.from(dateOfBirth) else {
             throw Abort(.notFound, reason: "Гороскоп не найден")
         }
 
-        let week = DailyDateHelper.currentWeek(in: req.userTimeZone)
+        let week = DailyDateHelper.currentWeek(timeZone: req.userTimeZone)
 
-        if let entry = try await findHoroscope(sign: sign, weekStart: week.key, on: database) {
+        if let entry = try await findHoroscope(sign: sign, weekStart: week.key, database) {
             return try HoroscopeDTOMapper.map(entry)
         }
 
-        return try await SingleFlight.shared.run(key: "horoscope:\(sign.rawValue):\(week.key)") {
+        return try await Self.singleFlight.run(key: "horoscope:\(sign.rawValue):\(week.key)") {
             // Another request may have finished generating while this one was on its way here
-            if let entry = try await findHoroscope(sign: sign, weekStart: week.key, on: database) {
+            if let entry = try await findHoroscope(sign: sign, weekStart: week.key, database) {
                 return try HoroscopeDTOMapper.map(entry)
             }
 
-            let generated = try await openAIService.makeHoroscope(for: sign,
+            let generated = try await openAIService.makeHoroscope(sign: sign,
                                                                   period: (week.start, week.end),
-                                                                  req: req)
+                                                                  req)
 
             let entry = Horoscope(sign: sign.rawValue,
                                   weekStart: week.key,
@@ -44,7 +45,7 @@ struct HoroscopeService {
                 try await entry.save(on: database)
             } catch {
                 guard (error as? any DatabaseError)?.isConstraintFailure == true,
-                      let existing = try await findHoroscope(sign: sign, weekStart: week.key, on: database) else {
+                      let existing = try await findHoroscope(sign: sign, weekStart: week.key, database) else {
                     throw error
                 }
                 return try HoroscopeDTOMapper.map(existing)
@@ -54,22 +55,22 @@ struct HoroscopeService {
         }
     }
 
-    func findCurrentHoroscope(for user: User,
-                              in timeZone: TimeZone,
-                              on database: any Database) async throws -> HoroscopeDTO? {
+    func findCurrentHoroscope(_ user: User,
+                              timeZone: TimeZone,
+                              _ database: any Database) async throws -> HoroscopeDTO? {
         guard let dateOfBirth = user.dateOfBirth,
-              let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
+              let sign = HoroscopeSign.from(dateOfBirth) else {
             return nil
         }
 
-        let week = DailyDateHelper.currentWeek(in: timeZone)
-        let entry = try await findHoroscope(sign: sign, weekStart: week.key, on: database)
+        let week = DailyDateHelper.currentWeek(timeZone: timeZone)
+        let entry = try await findHoroscope(sign: sign, weekStart: week.key, database)
         return try entry.map(HoroscopeDTOMapper.map)
     }
 
     private func findHoroscope(sign: HoroscopeSign,
                                weekStart: String,
-                               on database: any Database) async throws -> Horoscope? {
+                               _ database: any Database) async throws -> Horoscope? {
         try await Horoscope.query(on: database)
             .filter(\.$sign == sign.rawValue)
             .filter(\.$weekStart == weekStart)

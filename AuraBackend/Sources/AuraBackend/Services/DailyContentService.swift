@@ -9,56 +9,57 @@ import Fluent
 import Vapor
 
 struct DailyContentService {
+    private static let singleFlight = SingleFlight<DailyContentDTO>()
     private let openAIService = OpenAIService()
 
-    func fetchDailyInsight(for user: User, req: Request, on database: any Database) async throws -> DailyContentDTO {
-        try await getOrGenerate(kind: .insight, for: user, req: req, on: database)
+    func fetchDailyInsight(_ user: User, _ req: Request, _ database: any Database) async throws -> DailyContentDTO {
+        try await getOrGenerate(kind: .insight, user, req, database)
     }
 
-    func fetchDailyTip(for user: User, req: Request, on database: any Database) async throws -> DailyContentDTO {
-        try await getOrGenerate(kind: .tip, for: user, req: req, on: database)
+    func fetchDailyTip(_ user: User, _ req: Request, _ database: any Database) async throws -> DailyContentDTO {
+        try await getOrGenerate(kind: .tip, user, req, database)
     }
 
     private func getOrGenerate(kind: DailyContentKind,
-                               for user: User,
-                               req: Request,
-                               on database: any Database) async throws -> DailyContentDTO {
+                               _ user: User,
+                               _ req: Request,
+                               _ database: any Database) async throws -> DailyContentDTO {
         guard user.hasCompletedProfileInfo else {
             throw Abort(.badRequest, reason: "Заполните профиль перед получением контента дня")
         }
 
         let userID = try user.requireID()
-        let today = DailyDateHelper.todayString(in: req.userTimeZone)
+        let today = DailyDateHelper.todayString(timeZone: req.userTimeZone)
 
-        if let entry = try await findEntry(kind: kind, userID: userID, on: database),
+        if let entry = try await findEntry(kind: kind, userID: userID, database),
            entry.generatedDate == today {
             return try DailyContentDTOMapper.map(entry)
         }
 
-        return try await SingleFlight.shared.run(key: "daily:\(kind.rawValue):\(userID):\(today)") {
+        return try await Self.singleFlight.run(key: "daily:\(kind.rawValue):\(userID):\(today)") {
             // Another request may have finished generating while this one was on its way here
-            if let entry = try await findEntry(kind: kind, userID: userID, on: database),
+            if let entry = try await findEntry(kind: kind, userID: userID, database),
                entry.generatedDate == today {
                 return try DailyContentDTOMapper.map(entry)
             }
 
-            let generatedText = try await generateText(kind: kind, for: user, req: req)
+            let generatedText = try await generateText(kind: kind, user, req)
             let entry = try await upsertEntry(kind: kind,
                                               userID: userID,
                                               text: generatedText,
                                               generatedDate: today,
-                                              on: database)
+                                              database)
 
             return try DailyContentDTOMapper.map(entry)
         }
     }
 
-    private func generateText(kind: DailyContentKind, for user: User, req: Request) async throws -> String {
+    private func generateText(kind: DailyContentKind, _ user: User, _ req: Request) async throws -> String {
         switch kind {
             case .insight:
-                return try await openAIService.makeDailyInsight(for: user, req: req)
+                return try await openAIService.makeDailyInsight(user, req)
             case .tip:
-                return try await openAIService.makeDailyTip(for: user, req: req)
+                return try await openAIService.makeDailyTip(user, req)
         }
     }
 
@@ -66,9 +67,9 @@ struct DailyContentService {
                              userID: User.IDValue,
                              text: String,
                              generatedDate: String,
-                             on database: any Database) async throws -> DailyContent {
-        if let existing = try await findEntry(kind: kind, userID: userID, on: database) {
-            return try await update(existing, text: text, generatedDate: generatedDate, on: database)
+                             _ database: any Database) async throws -> DailyContent {
+        if let existing = try await findEntry(kind: kind, userID: userID, database) {
+            return try await update(existing, text: text, generatedDate: generatedDate, database)
         }
 
         let entry = DailyContent(userID: userID,
@@ -81,16 +82,16 @@ struct DailyContentService {
             return entry
         } catch {
             guard (error as? any DatabaseError)?.isConstraintFailure == true,
-                  let existing = try await findEntry(kind: kind, userID: userID, on: database) else {
+                  let existing = try await findEntry(kind: kind, userID: userID, database) else {
                 throw error
             }
-            return try await update(existing, text: text, generatedDate: generatedDate, on: database)
+            return try await update(existing, text: text, generatedDate: generatedDate, database)
         }
     }
 
     private func findEntry(kind: DailyContentKind,
                            userID: User.IDValue,
-                           on database: any Database) async throws -> DailyContent? {
+                           _ database: any Database) async throws -> DailyContent? {
         try await DailyContent.query(on: database)
             .filter(\.$user.$id == userID)
             .filter(\.$kind == kind.rawValue)
@@ -100,7 +101,7 @@ struct DailyContentService {
     private func update(_ entry: DailyContent,
                         text: String,
                         generatedDate: String,
-                        on database: any Database) async throws -> DailyContent {
+                        _ database: any Database) async throws -> DailyContent {
         entry.text = text
         entry.generatedDate = generatedDate
         try await entry.save(on: database)

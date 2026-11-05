@@ -8,8 +8,8 @@
 import Foundation
 
 enum CompatibilityPrompts {
-    static func schema(for selectedTests: [CompatibilityTests]) -> JSONSchema {
-        let itemKeys = selectedTests.flatMap(CompatibilityItems.allowed(for:)).map(\.rawValue)
+    static func schema(_ selectedTests: [CompatibilityTests]) -> JSONSchema {
+        let itemKeys = selectedTests.flatMap(CompatibilityItems.allowed).map(\.rawValue)
 
         return .object([("title", .string),
                         ("subtitle", .string),
@@ -26,7 +26,7 @@ enum CompatibilityPrompts {
                                               ("potentialDescription", .string)]))])
     }
 
-    static func user(for user: User,
+    static func user(_ user: User,
                      partner: CompatibilityTestRequest,
                      score: Int,
                      selectedTests: [CompatibilityTests]) -> String {
@@ -36,7 +36,7 @@ enum CompatibilityPrompts {
 
         let itemRules = selectedTests
             .map { test in
-                let keys = CompatibilityItems.allowed(for: test)
+                let keys = CompatibilityItems.allowed(test)
                     .map { "\"" + $0.rawValue + "\" (" + $0.title + ")" }
                     .joined(separator: ", ")
                 return "- " + test.rawValue + ": ровно 2 пункта, key только из [" + keys + "]"
@@ -44,22 +44,13 @@ enum CompatibilityPrompts {
             .joined(separator: "\n")
 
         return """
-        Данные пользователя:
-        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
-        - время рождения: \(user.birthTime ?? "не указано")
-        - пол: \(user.gender ?? "не указано")
-        - социальный тип: \(user.socialType ?? "не указано")
-        - стиль конфликта: \(user.conflictStyle ?? "не указано")
-        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
-        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
-        - фокус в отношениях: \(user.coreFocus ?? "не указано")
-        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        \(ContentPrompts.userProfile(user))
 
         Данные партнёра:
         - дата рождения: \(partner.partnerDateOfBirth)
         - время рождения: \(partner.partnerBirthTime ?? "не указано")
         - пол: \(partner.partnerGender)
-        - знак зодиака: \(UserDateFormatter.date(from: partner.partnerDateOfBirth).flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        - знак зодиака: \(UserDateFormatter.date(partner.partnerDateOfBirth).flatMap(HoroscopeSign.from)?.title ?? "не указан")
 
         Совместимость пары: \(score)%. Это число уже посчитано, не меняй его и объясни, почему получилось именно так.
 

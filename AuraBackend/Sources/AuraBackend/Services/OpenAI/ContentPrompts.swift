@@ -8,6 +8,21 @@
 import Foundation
 
 enum ContentPrompts {
+    static func userProfile(_ user: User) -> String {
+        """
+        Данные пользователя:
+        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string) ?? "не указана")
+        - время рождения: \(user.birthTime ?? "не указано")
+        - пол: \(user.gender ?? "не указано")
+        - социальный тип: \(user.socialType ?? "не указано")
+        - стиль конфликта: \(user.conflictStyle ?? "не указано")
+        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
+        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
+        - фокус в отношениях: \(user.coreFocus ?? "не указано")
+        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from)?.title ?? "не указан")
+        """
+    }
+
     static var horoscopeSchema: JSONSchema {
         .object([("description", .string),
                  ("items", .array(.object([("key", .stringEnum(HoroscopeDTOMapper.sphereKeys)),
@@ -18,7 +33,7 @@ enum ContentPrompts {
         .object([("text", .string)])
     }
 
-    static func horoscopeUser(for sign: HoroscopeSign, period: (start: String, end: String)) -> String {
+    static func horoscopeUser(sign: HoroscopeSign, period: (start: String, end: String)) -> String {
         """
         Знак зодиака: \(sign.title)
         Текущий период прогноза: \(period.start) — \(period.end)
@@ -51,18 +66,9 @@ enum ContentPrompts {
         """
     }
 
-    static func dailyInsightUser(for user: User, today: String) -> String {
+    static func dailyInsightUser(_ user: User, today: String) -> String {
         """
-        Данные пользователя:
-        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
-        - время рождения: \(user.birthTime ?? "не указано")
-        - пол: \(user.gender ?? "не указано")
-        - социальный тип: \(user.socialType ?? "не указано")
-        - стиль конфликта: \(user.conflictStyle ?? "не указано")
-        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
-        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
-        - фокус в отношениях: \(user.coreFocus ?? "не указано")
-        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        \(ContentPrompts.userProfile(user))
         - сегодня: \(today)
 
         Верни JSON строго такой формы:
@@ -84,18 +90,9 @@ enum ContentPrompts {
         """
     }
 
-    static func dailyTipUser(for user: User, today: String) -> String {
+    static func dailyTipUser(_ user: User, today: String) -> String {
         """
-        Данные пользователя:
-        - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string(from:)) ?? "не указана")
-        - время рождения: \(user.birthTime ?? "не указано")
-        - пол: \(user.gender ?? "не указано")
-        - социальный тип: \(user.socialType ?? "не указано")
-        - стиль конфликта: \(user.conflictStyle ?? "не указано")
-        - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
-        - стиль принятия решений: \(user.decisionStyle ?? "не указано")
-        - фокус в отношениях: \(user.coreFocus ?? "не указано")
-        - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from(dateOfBirth:))?.title ?? "не указан")
+        \(ContentPrompts.userProfile(user))
         - сегодня: \(today)
 
         Верни JSON строго такой формы:

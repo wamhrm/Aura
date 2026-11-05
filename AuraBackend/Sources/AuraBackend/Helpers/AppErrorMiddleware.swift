@@ -18,11 +18,11 @@ struct AppErrorMiddleware: AsyncMiddleware {
         do {
             return try await next.respond(to: req)
         } catch {
-            return try await makeResponse(for: error, on: req)
+            return try await makeResponse(error: error, req)
         }
     }
 
-    private func makeResponse(for error: any Error, on req: Request) async throws -> Response {
+    private func makeResponse(error: any Error, _ req: Request) async throws -> Response {
         let abort = error as? any AbortError
         let status = abort?.status ?? .internalServerError
 
@@ -30,7 +30,7 @@ struct AppErrorMiddleware: AsyncMiddleware {
             req.logger.error("Request failed with status \(status.code): \(String(reflecting: error))")
         }
 
-        let body = ErrorBody(error: true, reason: reason(for: abort, status: status))
+        let body = ErrorBody(error: true, reason: reason(abort: abort, status: status))
         let response = try await body.encodeResponse(status: status, for: req)
 
         if let headers = abort?.headers {
@@ -40,7 +40,7 @@ struct AppErrorMiddleware: AsyncMiddleware {
         return response
     }
 
-    private func reason(for abort: (any AbortError)?, status: HTTPResponseStatus) -> String {
+    private func reason(abort: (any AbortError)?, status: HTTPResponseStatus) -> String {
         // Details of a server failure stay in the log. Framework errors come in English.
         if status.code < 500, let reason = abort?.reason, containsRussianText(reason) {
             return reason

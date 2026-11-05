@@ -98,7 +98,7 @@ extension User {
         UserDTO(id: try requireID(),
                 name: name,
                 email: email,
-                dateOfBirth: dateOfBirth.map(UserDateFormatter.string(from:)),
+                dateOfBirth: dateOfBirth.map(UserDateFormatter.string),
                 birthTime: birthTime,
                 gender: gender,
                 socialType: socialType,

@@ -52,12 +52,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func createAccount(name: String, email: String, password: String) async throws {
         let response = try await networkService.createAccount(name: name, email: normalizeEmail(email), password: password)
-        startSession(with: response)
+        startSession(response: response)
     }
 
     func signIn(email: String, password: String) async throws {
         let response = try await networkService.signIn(email: normalizeEmail(email), password: password)
-        startSession(with: response)
+        startSession(response: response)
     }
 
     func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
@@ -65,7 +65,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
                                                                 authorizationCode: authorizationCode,
                                                                 nonce: nonce,
                                                                 name: name)
-        startSession(with: response)
+        startSession(response: response)
     }
 
     func requestPasswordReset(email: String) async throws {
@@ -76,7 +76,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let response = try await networkService.resetPassword(email: normalizeEmail(email),
                                                               code: code,
                                                               password: newPassword)
-        startSession(with: response)
+        startSession(response: response)
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
@@ -89,7 +89,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
         storage.saveUser(response.user)
         if let horoscope = response.horoscope {
-            storage.save(horoscope, for: StorageKeys.horoscope, userId: response.user.id)
+            storage.save(horoscope, key: StorageKeys.horoscope, userId: response.user.id)
         }
         authState.send(.signedIn(response.user))
         return response
@@ -131,7 +131,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private func endSession() {
         if let user = storage.loadUser() {
-            storage.deleteAll(for: user.id)
+            storage.deleteAll(userId: user.id)
         }
 
         keychain.deleteAuthToken()
@@ -195,7 +195,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         }
     }
 
-    private func startSession(with response: AuthTokenResponse) {
+    private func startSession(response: AuthTokenResponse) {
         keychain.saveAuthToken(response.token)
         storage.saveUser(response.user)
         authState.send(.signedIn(response.user))

@@ -8,7 +8,7 @@
 // The percent comes from the two zodiac signs, so the same pair always gets the same result. AI only explains it.
 enum CompatibilityScore {
     static func calculate(userSign: HoroscopeSign, partnerSign: HoroscopeSign) -> Int {
-        switch stepsOnZodiacCircle(from: userSign, to: partnerSign) {
+        switch stepsOnZodiacCircle(first: userSign, second: partnerSign) {
             case 0: 75
             case 1: 55
             case 2: 80
@@ -19,7 +19,7 @@ enum CompatibilityScore {
         }
     }
 
-    private static func stepsOnZodiacCircle(from first: HoroscopeSign, to second: HoroscopeSign) -> Int {
+    private static func stepsOnZodiacCircle(first: HoroscopeSign, second: HoroscopeSign) -> Int {
         let signs = HoroscopeSign.allCases
         let steps = abs((signs.firstIndex(of: first) ?? 0) - (signs.firstIndex(of: second) ?? 0))
         return min(steps, signs.count - steps)

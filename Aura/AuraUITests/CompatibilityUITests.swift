@@ -19,8 +19,8 @@ final class CompatibilityUITests: AuraUITestCase {
         closeAlert()
 
         // When the name is filled in
-        scrollUp(to: app.textFields["Введите имя"].firstMatch)
-        fillField(app.textFields["Введите имя"].firstMatch, with: "Анна-Мария")
+        scrollUp(element: app.textFields["Введите имя"].firstMatch)
+        fillField(app.textFields["Введите имя"].firstMatch, text: "Анна-Мария")
         tapButton("Узнать совместимость")
 
         // Then
@@ -31,10 +31,10 @@ final class CompatibilityUITests: AuraUITestCase {
     func test_serverRefusal_showsItsReason() throws {
         // Given
         let refusal = "Партнёру должно быть не меньше 16 лет"
-        server.respond(to: "POST /v1/history/compatibility", status: 400, body: try failingBody(refusal))
+        server.respond(route: "POST /v1/history/compatibility", status: 400, body: try failingBody(refusal))
         try launchSignedIn()
         openCompatibility()
-        fillField(app.textFields["Введите имя"].firstMatch, with: "Иван")
+        fillField(app.textFields["Введите имя"].firstMatch, text: "Иван")
 
         // When
         tapButton("Узнать совместимость")
@@ -47,7 +47,7 @@ final class CompatibilityUITests: AuraUITestCase {
         // Given
         try launchSignedIn()
         openCompatibility()
-        fillField(app.textFields["Введите имя"].firstMatch, with: "Иван")
+        fillField(app.textFields["Введите имя"].firstMatch, text: "Иван")
         tapButton("Узнать совместимость")
         XCTAssertTrue(app.navigationBars["Результат теста на совместимость"].waitForExistence(timeout: 15), "the result did not open")
 
@@ -55,7 +55,7 @@ final class CompatibilityUITests: AuraUITestCase {
         goBack()
 
         // Then
-        scrollUp(to: app.textFields["Введите имя"].firstMatch)
+        scrollUp(element: app.textFields["Введите имя"].firstMatch)
         XCTAssertEqual(app.textFields["Введите имя"].firstMatch.value as? String, "")
     }
 
@@ -76,7 +76,7 @@ final class CompatibilityUITests: AuraUITestCase {
         // Given
         try launchSignedIn()
         openCompatibility()
-        let firstTest = button(containing: "Астрология пары")
+        let firstTest = button(part: "Астрология пары")
 
         for _ in 0..<8 where !firstTest.isHittable {
             app.swipeUp()
@@ -123,9 +123,9 @@ final class CompatibilityUITests: AuraUITestCase {
     func test_withoutAIConsent_theFormIsLocked() throws {
         // Given
         let user = try sampleUser(["hasAIConsent": false])
-        server.respond(to: "POST /v1/auth/signIn", body: try authBody(user: user))
+        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         try launchOnWelcome()
-        server.respond(to: "GET /v1/auth/me", body: try json(user))
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
         signIn()
         tapButton("Не сейчас")
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 20), "the main screen did not open")
@@ -134,6 +134,6 @@ final class CompatibilityUITests: AuraUITestCase {
         openCompatibility()
 
         // Then
-        XCTAssertTrue(text(containing: "Разрешите анализ").waitForExistence(timeout: 5), "no lock on the form")
+        XCTAssertTrue(text(part: "Разрешите анализ").waitForExistence(timeout: 5), "no lock on the form")
     }
 }
