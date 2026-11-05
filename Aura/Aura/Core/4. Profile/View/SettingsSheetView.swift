@@ -10,8 +10,8 @@ import SwiftUI
 struct SettingsSheetView: View {
     @ObservedObject var vm: ProfileViewModel
     
-    @AppStorage(Constants.selectedThemeKey) private var selectedTheme = AppTheme.light
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+    @AppStorage(Constants.selectedThemeKey, store: Constants.userDefaults) private var selectedTheme = AppTheme.light
+    @AppStorage(Constants.accentColorKey, store: Constants.userDefaults) private var accentColor = AccentColorOption.blue.rawValue
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

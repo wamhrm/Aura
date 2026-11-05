@@ -12,8 +12,8 @@ struct AuraApp: App {
     @StateObject private var authService: AuthService
     @StateObject private var contentService: ContentService
 
-    @AppStorage(Constants.selectedThemeKey) private var selectedTheme = AppTheme.light
-    @AppStorage(Constants.accentColorKey) private var accentColor = AccentColorOption.blue.rawValue
+    @AppStorage(Constants.selectedThemeKey, store: Constants.userDefaults) private var selectedTheme = AppTheme.light
+    @AppStorage(Constants.accentColorKey, store: Constants.userDefaults) private var accentColor = AccentColorOption.blue.rawValue
 
     init() {
         let networkService = NetworkService()

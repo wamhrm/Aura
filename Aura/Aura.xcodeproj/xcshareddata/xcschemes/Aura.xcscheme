@@ -27,8 +27,21 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
+      shouldUseLaunchSchemeArgsEnv = "NO"
       shouldAutocreateTestPlan = "YES">
+      <!-- The unit-test host is isolated; UI tests override these values for each test. -->
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "AURA_BASE_URL"
+            value = "http://127.0.0.1:1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "AURA_UI_TEST_ID"
+            value = "00000000-0000-4000-8000-000000000001"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
       <Testables>
          <TestableReference
             skipped = "NO"
