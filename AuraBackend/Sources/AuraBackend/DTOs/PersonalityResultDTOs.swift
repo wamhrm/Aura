@@ -71,7 +71,7 @@ enum PersonalityTests: String, CaseIterable {
         }
     }
 
-    static func from(_ keys: [String]) -> [PersonalityTests]? {
+    static func from(keys: [String]) -> [PersonalityTests]? {
         let mapped = keys.compactMap(PersonalityTests.init(rawValue:))
         return mapped.count == keys.count ? mapped : nil
     }
@@ -109,7 +109,7 @@ enum PersonalityItems: String, CaseIterable {
         }
     }
 
-    static func allowed(_ test: PersonalityTests) -> [PersonalityItems] {
+    static func allowed(test: PersonalityTests) -> [PersonalityItems] {
         switch test {
             case .astrology:
                 return [.natalChart, .planetaryAspects]

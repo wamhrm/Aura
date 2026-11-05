@@ -18,11 +18,11 @@ struct AppErrorMiddleware: AsyncMiddleware {
         do {
             return try await next.respond(to: req)
         } catch {
-            return try await makeResponse(error: error, req)
+            return try await makeResponse(error: error, req: req)
         }
     }
 
-    private func makeResponse(error: any Error, _ req: Request) async throws -> Response {
+    private func makeResponse(error: any Error, req: Request) async throws -> Response {
         let abort = error as? any AbortError
         let status = abort?.status ?? .internalServerError
 
@@ -42,7 +42,7 @@ struct AppErrorMiddleware: AsyncMiddleware {
 
     private func reason(abort: (any AbortError)?, status: HTTPResponseStatus) -> String {
         // Details of a server failure stay in the log. Framework errors come in English.
-        if status.code < 500, let reason = abort?.reason, containsRussianText(reason) {
+        if status.code < 500, let reason = abort?.reason, containsRussianText(text: reason) {
             return reason
         }
 
@@ -64,7 +64,7 @@ struct AppErrorMiddleware: AsyncMiddleware {
         }
     }
 
-    private func containsRussianText(_ text: String) -> Bool {
+    private func containsRussianText(text: String) -> Bool {
         text.unicodeScalars.contains { (0x0400...0x04FF).contains($0.value) }
     }
 }

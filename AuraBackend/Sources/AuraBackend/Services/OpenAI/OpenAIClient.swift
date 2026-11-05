@@ -25,7 +25,7 @@ struct OpenAIClient {
     // the 130 seconds the app waits for a generated result.
     func generate<Result>(messages: [OpenAIMessage],
                           responseFormat: OpenAIResponseFormat,
-                          _ req: Request,
+                          req: Request,
                           parse: (Data) throws -> Result) async throws -> Result {
         let apiKey = try apiKey()
         let request = OpenAIChatDTO(model: model,
@@ -34,7 +34,7 @@ struct OpenAIClient {
                                     maxCompletionTokens: maxCompletionTokens)
 
         do {
-            return try await attempt(request, apiKey: apiKey, req, parse: parse)
+            return try await attempt(request: request, apiKey: apiKey, req: req, parse: parse)
         } catch let failure as RetryableFailure {
             req.logger.warning("OpenAI \(responseFormat.jsonSchema.name): \(failure.reason), retrying once")
         }
@@ -42,18 +42,18 @@ struct OpenAIClient {
         try await Task.sleep(for: retryDelay)
 
         do {
-            return try await attempt(request, apiKey: apiKey, req, parse: parse)
+            return try await attempt(request: request, apiKey: apiKey, req: req, parse: parse)
         } catch let failure as RetryableFailure {
             req.logger.error("OpenAI \(responseFormat.jsonSchema.name): \(failure.reason)")
             throw failure.error
         }
     }
 
-    private func attempt<Result>(_ request: OpenAIChatDTO,
+    private func attempt<Result>(request: OpenAIChatDTO,
                                  apiKey: String,
-                                 _ req: Request,
+                                 req: Request,
                                  parse: (Data) throws -> Result) async throws -> Result {
-        let response = try await send(request, apiKey: apiKey, req)
+        let response = try await send(request: request, apiKey: apiKey, req: req)
 
         guard response.status == .ok else {
             let error = try? response.content.decode(OpenAIErrorResponse.self)
@@ -93,7 +93,7 @@ struct OpenAIClient {
         }
     }
 
-    private func send(_ request: OpenAIChatDTO, apiKey: String, _ req: Request) async throws -> ClientResponse {
+    private func send(request: OpenAIChatDTO, apiKey: String, req: Request) async throws -> ClientResponse {
         do {
             return try await req.client.post(URI(string: baseURL() + "/v1/chat/completions")) { clientRequest in
                 clientRequest.timeout = requestTimeout

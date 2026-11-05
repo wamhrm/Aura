@@ -8,47 +8,24 @@
 import Vapor
 
 extension Application {
-    private struct MigrationsFinishedKey: StorageKey {
-        typealias Value = Bool
-    }
-
-    var hasFinishedMigrations: Bool {
-        get { storage[MigrationsFinishedKey.self] ?? false }
-        set { storage[MigrationsFinishedKey.self] = newValue }
-    }
-
-    // The port opens right away, so a database that is slow to start can't fail the launch
-    func startBackgroundWork() {
+    func startDataCleanup() -> Task<Void, Never> {
         Task {
-            await runMigrations()
-            await runDataCleanup()
-        }
-    }
+            let service = DataCleanupService()
 
-    private func runMigrations() async {
-        while !didShutdown {
-            do {
-                try await autoMigrate()
-                hasFinishedMigrations = true
-                return
-            } catch {
-                logger.error("Migrations failed, trying again in 5 seconds: \(error)")
-                try? await Task.sleep(for: .seconds(5))
+            while !Task.isCancelled {
+                do {
+                    try await service.run(database: db)
+                } catch {
+                    if Task.isCancelled { return }
+                    logger.error("Data cleanup failed: \(error)")
+                }
+
+                do {
+                    try await Task.sleep(for: .seconds(60 * 60))
+                } catch {
+                    return
+                }
             }
-        }
-    }
-
-    private func runDataCleanup() async {
-        let service = DataCleanupService()
-
-        while !didShutdown {
-            do {
-                try await service.run(db)
-            } catch {
-                logger.error("Data cleanup failed: \(error)")
-            }
-
-            try? await Task.sleep(for: .seconds(60 * 60))
         }
     }
 }

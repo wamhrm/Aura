@@ -8,7 +8,7 @@
 import Foundation
 
 enum PersonalityPrompts {
-    static func schema(_ selectedTests: [PersonalityTests]) -> JSONSchema {
+    static func schema(selectedTests: [PersonalityTests]) -> JSONSchema {
         let itemKeys = selectedTests.flatMap(PersonalityItems.allowed).map(\.rawValue)
 
         return .object([("archetypeTitle", .string),
@@ -22,14 +22,14 @@ enum PersonalityPrompts {
                                                                                ("description", .string)])))])))])
     }
 
-    static func user(_ user: User, selectedTests: [PersonalityTests]) -> String {
+    static func user(user: User, selectedTests: [PersonalityTests]) -> String {
         let selectedTestLines = selectedTests
             .map { "- " + $0.rawValue + " (" + $0.title + ")" }
             .joined(separator: "\n")
 
         let itemRules = selectedTests
             .map { test in
-                let keys = PersonalityItems.allowed(test)
+                let keys = PersonalityItems.allowed(test: test)
                     .map { "\"" + $0.rawValue + "\" (" + $0.title + ")" }
                     .joined(separator: ", ")
                 return "- " + test.rawValue + ": ровно 2 пункта, key только из [" + keys + "]"
@@ -37,7 +37,7 @@ enum PersonalityPrompts {
             .joined(separator: "\n")
 
         return """
-        \(ContentPrompts.userProfile(user))
+        \(ContentPrompts.userProfile(user: user))
 
         Выбранные тесты:
         \(selectedTestLines)

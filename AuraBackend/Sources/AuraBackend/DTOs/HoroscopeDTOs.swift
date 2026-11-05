@@ -47,7 +47,7 @@ enum HoroscopeSign: String, CaseIterable {
         }
     }
 
-    static func from(_ dateOfBirth: Date) -> HoroscopeSign? {
+    static func from(dateOfBirth: Date) -> HoroscopeSign? {
         // Birth dates are stored as midnight UTC, the server's own time zone must not move them to another day
         let calendar = UserDateFormatter.calendar
         let day = calendar.component(.day, from: dateOfBirth)
@@ -87,7 +87,7 @@ enum HoroscopeSign: String, CaseIterable {
 enum HoroscopeDTOMapper {
     static let sphereKeys = ["love", "health", "work"]
 
-    static func map(_ horoscope: Horoscope) throws -> HoroscopeDTO {
+    static func map(horoscope: Horoscope) throws -> HoroscopeDTO {
         guard let id = horoscope.id else {
             throw Abort(.internalServerError, reason: "Гороскоп без идентификатора")
         }
@@ -97,20 +97,20 @@ enum HoroscopeDTOMapper {
                             dateStart: horoscope.dateStart,
                             dateEnd: horoscope.dateEnd,
                             description: horoscope.description,
-                            items: try decodeItems(horoscope.items))
+                            items: try decodeItems(json: horoscope.items))
     }
 
-    static func encodeItems(_ items: [HoroscopeItems]) throws -> String {
-        let data = try JSONEncoder().encode(try normalizeItems(items))
+    static func encodeItems(items: [HoroscopeItems]) throws -> String {
+        let data = try JSONEncoder().encode(try normalizeItems(items: items))
         return String(decoding: data, as: UTF8.self)
     }
 
-    private static func decodeItems(_ json: String) throws -> [HoroscopeItems] {
+    private static func decodeItems(json: String) throws -> [HoroscopeItems] {
         let data = Data(json.utf8)
-        return try normalizeItems(try JSONDecoder().decode([HoroscopeItems].self, from: data))
+        return try normalizeItems(items: try JSONDecoder().decode([HoroscopeItems].self, from: data))
     }
 
-    private static func normalizeItems(_ items: [HoroscopeItems]) throws -> [HoroscopeItems] {
+    private static func normalizeItems(items: [HoroscopeItems]) throws -> [HoroscopeItems] {
         var descriptions: [String: String] = [:]
 
         for item in items {

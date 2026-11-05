@@ -19,7 +19,7 @@ struct PasswordResetService {
     private let maxAttempts = 5
     private let emailService = EmailService()
 
-    func sendCode(_ user: User, _ req: Request) async throws {
+    func sendCode(user: User, req: Request) async throws {
         guard let email = user.email else { return }
         let userID = try user.requireID()
 
@@ -43,23 +43,23 @@ struct PasswordResetService {
 
         let code = (0..<codeLength).map { _ in String(Int.random(in: 0...9)) }.joined()
         let reset = PasswordReset(userID: userID,
-                                  codeHash: hash(code, userID: userID),
+                                  codeHash: hash(code: code, userID: userID),
                                   expiresAt: Date().addingTimeInterval(codeLifetime))
         try await reset.save(on: req.db)
 
         do {
             try await emailService.send(recipient: email,
                                         subject: "Код для сброса пароля Aura",
-                                        html: emailHTML(code),
-                                        text: emailText(code),
-                                        req)
+                                        html: emailHTML(code: code),
+                                        text: emailText(code: code),
+                                        req: req)
         } catch {
             try? await reset.delete(on: req.db)
             throw error
         }
     }
 
-    func verifyCode(_ code: String, _ user: User, _ req: Request) async throws {
+    func verifyCode(code: String, user: User, req: Request) async throws {
         let userID = try user.requireID()
 
         guard let reset = try await PasswordReset.query(on: req.db)
@@ -79,16 +79,16 @@ struct PasswordResetService {
             throw Abort(.tooManyRequests, reason: "Слишком много попыток. Запросите новый код")
         }
 
-        guard reset.codeHash == hash(code, userID: userID) else {
+        guard reset.codeHash == hash(code: code, userID: userID) else {
             throw Abort(.badRequest, reason: "Неверный код")
         }
     }
 
-    private func hash(_ code: String, userID: UUID) -> String {
+    private func hash(code: String, userID: UUID) -> String {
         SHA256.hash(data: Data("\(userID.uuidString):\(code)".utf8)).hex
     }
 
-    private func emailText(_ code: String) -> String {
+    private func emailText(code: String) -> String {
         """
         Ваш код для сброса пароля в Aura: \(code)
 
@@ -96,7 +96,7 @@ struct PasswordResetService {
         """
     }
 
-    private func emailHTML(_ code: String) -> String {
+    private func emailHTML(code: String) -> String {
         """
         <div style="font-family: -apple-system, 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1c1c1e;">
           <h2 style="margin: 0 0 16px;">Сброс пароля в Aura</h2>

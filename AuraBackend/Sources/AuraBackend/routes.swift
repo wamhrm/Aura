@@ -1,15 +1,13 @@
 import Vapor
 
-func routes(_ app: Application) throws {
-    // For the host: the server is up and the database schema is ready, a short database failure does not restart it
-    app.get("health") { req -> HTTPStatus in
-        req.application.hasFinishedMigrations ? .ok : .serviceUnavailable
+func routes(app: Application) throws {
+    // Migrations finish before HTTP starts; a short database failure does not restart the server
+    app.get("health") { _ -> HTTPStatus in
+        .ok
     }
 
     // For an uptime monitor: the database answers right now
     app.get("ready") { req -> HTTPStatus in
-        guard req.application.hasFinishedMigrations else { return .serviceUnavailable }
-
         do {
             try await req.db.sql().raw("SELECT 1").run()
             return .ok

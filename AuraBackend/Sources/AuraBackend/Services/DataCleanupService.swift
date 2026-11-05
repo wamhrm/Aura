@@ -12,7 +12,7 @@ import Vapor
 struct DataCleanupService {
     private let recordLifetime: TimeInterval = 24 * 60 * 60
 
-    func run(_ database: any Database) async throws {
+    func run(database: any Database) async throws {
         let oldestAllowed = Date().addingTimeInterval(-recordLifetime)
 
         try await Token.query(on: database).filter(\.$expiresAt < Date()).delete()

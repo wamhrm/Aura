@@ -20,11 +20,11 @@ struct ProfileController: RouteCollection {
         auth.post("aiConsent", use: giveAIConsent)
     }
 
-    private func fetchCurrentUser(_ req: Request) async throws -> UserDTO {
+    private func fetchCurrentUser(req: Request) async throws -> UserDTO {
         try req.auth.require(User.self).toDTO()
     }
 
-    private func giveAIConsent(_ req: Request) async throws -> UserDTO {
+    private func giveAIConsent(req: Request) async throws -> UserDTO {
         let user = try req.auth.require(User.self)
 
         if user.aiConsentAt == nil {
@@ -35,7 +35,7 @@ struct ProfileController: RouteCollection {
         return try user.toDTO()
     }
 
-    private func updateProfileInfo(_ req: Request) async throws -> UpdateProfileInfoResponse {
+    private func updateProfileInfo(req: Request) async throws -> UpdateProfileInfoResponse {
         let user = try req.auth.require(User.self)
         let profileInfo = try req.content.decode(UpdateProfileInfoRequest.self)
 
@@ -43,13 +43,13 @@ struct ProfileController: RouteCollection {
             throw Abort(.badRequest, reason: "Укажите корректную дату рождения в формате ДД.ММ.ГГГГ")
         }
 
-        guard UserDateFormatter.isOldEnough(dateOfBirth) else {
+        guard UserDateFormatter.isOldEnough(birthDate: dateOfBirth) else {
             throw Abort(.badRequest, reason: "Aura доступна с 16 лет")
         }
 
-        let birthTime = emptyStringToNil(profileInfo.birthTime)
+        let birthTime = emptyStringToNil(string: profileInfo.birthTime)
 
-        if let birthTime, !UserDateFormatter.isValidTime(birthTime) {
+        if let birthTime, !UserDateFormatter.isValidTime(string: birthTime) {
             throw Abort(.badRequest, reason: "Укажите время рождения в формате ЧЧ:ММ")
         }
 
@@ -85,12 +85,12 @@ struct ProfileController: RouteCollection {
         try await user.save(on: req.db)
 
         // Never waits for OpenAI: the app requests a missing horoscope on its own
-        let horoscope = try? await horoscopeService.findCurrentHoroscope(user, timeZone: req.userTimeZone, req.db)
+        let horoscope = try? await horoscopeService.findCurrentHoroscope(user: user, timeZone: req.userTimeZone, database: req.db)
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
     }
 
-    private func emptyStringToNil(_ string: String?) -> String? {
+    private func emptyStringToNil(string: String?) -> String? {
         guard let string else { return nil }
         let trimmedString = string.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmedString.isEmpty ? nil : trimmedString

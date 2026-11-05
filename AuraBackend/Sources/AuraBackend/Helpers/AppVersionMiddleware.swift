@@ -11,7 +11,7 @@ import Vapor
 struct AppVersionMiddleware: AsyncMiddleware {
     func respond(to req: Request, chainingTo next: any AsyncResponder) async throws -> Response {
         if let minimum = Environment.get("MIN_APP_VERSION"), !minimum.isEmpty,
-           !isSupported(req.headers.first(name: "X-App-Version"), minimum: minimum) {
+           !isSupported(version: req.headers.first(name: "X-App-Version"), minimum: minimum) {
             throw Abort(.upgradeRequired, reason: "Обновите приложение, чтобы продолжить")
         }
 
@@ -19,11 +19,11 @@ struct AppVersionMiddleware: AsyncMiddleware {
     }
 
     // Compared by numbers: 1.10 is newer than 1.9, and 1.0 equals 1.0.0
-    private func isSupported(_ version: String?, minimum: String) -> Bool {
+    private func isSupported(version: String?, minimum: String) -> Bool {
         guard let version else { return false }
 
-        let current = numbers(version)
-        let required = numbers(minimum)
+        let current = numbers(version: version)
+        let required = numbers(version: minimum)
 
         for index in 0..<max(current.count, required.count) {
             let currentNumber = index < current.count ? current[index] : 0
@@ -37,7 +37,7 @@ struct AppVersionMiddleware: AsyncMiddleware {
         return true
     }
 
-    private func numbers(_ version: String) -> [Int] {
+    private func numbers(version: String) -> [Int] {
         version.split(separator: ".").map { Int($0) ?? 0 }
     }
 }

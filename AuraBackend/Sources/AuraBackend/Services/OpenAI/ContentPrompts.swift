@@ -8,7 +8,7 @@
 import Foundation
 
 enum ContentPrompts {
-    static func userProfile(_ user: User) -> String {
+    static func userProfile(user: User) -> String {
         """
         Данные пользователя:
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string) ?? "не указана")
@@ -66,9 +66,9 @@ enum ContentPrompts {
         """
     }
 
-    static func dailyInsightUser(_ user: User, today: String) -> String {
+    static func dailyInsightUser(user: User, today: String) -> String {
         """
-        \(ContentPrompts.userProfile(user))
+        \(ContentPrompts.userProfile(user: user))
         - сегодня: \(today)
 
         Верни JSON строго такой формы:
@@ -90,9 +90,9 @@ enum ContentPrompts {
         """
     }
 
-    static func dailyTipUser(_ user: User, today: String) -> String {
+    static func dailyTipUser(user: User, today: String) -> String {
         """
-        \(ContentPrompts.userProfile(user))
+        \(ContentPrompts.userProfile(user: user))
         - сегодня: \(today)
 
         Верни JSON строго такой формы:

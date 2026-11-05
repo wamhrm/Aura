@@ -89,7 +89,7 @@ enum CompatibilityTests: String, CaseIterable {
         }
     }
 
-    static func from(_ keys: [String]) -> [CompatibilityTests]? {
+    static func from(keys: [String]) -> [CompatibilityTests]? {
         let mapped = keys.compactMap(CompatibilityTests.init(rawValue:))
         return mapped.count == keys.count ? mapped : nil
     }
@@ -123,7 +123,7 @@ enum CompatibilityItems: String, CaseIterable {
         }
     }
 
-    static func allowed(_ test: CompatibilityTests) -> [CompatibilityItems] {
+    static func allowed(test: CompatibilityTests) -> [CompatibilityItems] {
         switch test {
             case .astrology:
                 return [.synastry, .karmicLesson]

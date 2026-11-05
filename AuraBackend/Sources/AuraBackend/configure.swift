@@ -1,7 +1,7 @@
 import Fluent
 import Vapor
 
-func configure(_ app: Application) async throws {
+func configure(app: Application) async throws {
     try app.validateEnvironment()
 
     app.http.server.configuration.hostname = "0.0.0.0"
@@ -15,5 +15,5 @@ func configure(_ app: Application) async throws {
     try app.configureDatabase()
     app.configureMigrations()
 
-    try routes(app)
+    try routes(app: app)
 }

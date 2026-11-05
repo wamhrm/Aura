@@ -15,7 +15,7 @@ struct UserAuthMiddleware: AsyncMiddleware {
         }
 
         guard let tokenModel = try await Token.query(on: req.db)
-            .filter(\.$value == Token.hash(tokenString))
+            .filter(\.$value == Token.hash(value: tokenString))
             .with(\.$user)
             .first()
         else { throw Abort(.unauthorized, reason: "Неверный токен") }

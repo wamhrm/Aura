@@ -32,10 +32,10 @@ struct AuthController: RouteCollection {
         authenticated.post("email", "confirm", use: confirmEmail)
     }
 
-    private func createAccount(_ req: Request) async throws -> Response {
+    private func createAccount(req: Request) async throws -> Response {
         let data = try req.content.decode(CreateAccountRequest.self)
         let name = data.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let email = normalizedEmail(data.email)
+        let email = normalizedEmail(email: data.email)
 
         guard name.count >= InputLimits.minNameLength else {
             throw Abort(.badRequest, reason: "Имя должно содержать минимум 2 символа")
@@ -43,10 +43,10 @@ struct AuthController: RouteCollection {
         guard name.count <= InputLimits.maxNameLength else {
             throw Abort(.badRequest, reason: "Имя должно быть не длиннее 50 символов")
         }
-        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email) else {
+        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
             throw Abort(.badRequest, reason: "Укажите корректный e-mail")
         }
-        try validatePassword(data.password)
+        try validatePassword(password: data.password)
 
         let existingUser = try await User.query(on: req.db)
             .filter(\.$email == email)
@@ -63,12 +63,12 @@ struct AuthController: RouteCollection {
             throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
         }
 
-        return try await issueToken(user, req).encodeResponse(status: .created, for: req)
+        return try await issueToken(user: user, req: req).encodeResponse(status: .created, for: req)
     }
 
-    private func signIn(_ req: Request) async throws -> AuthDTO {
+    private func signIn(req: Request) async throws -> AuthDTO {
         let signInData = try req.content.decode(SignInRequest.self)
-        let email = normalizedEmail(signInData.email)
+        let email = normalizedEmail(email: signInData.email)
 
         guard let user = try await User.query(on: req.db)
             .filter(\User.$email == email)
@@ -76,20 +76,20 @@ struct AuthController: RouteCollection {
               let passwordHash = user.passwordHash
         else { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        try await takeSignInAttempt(user, req)
+        try await takeSignInAttempt(user: user, req: req)
 
         let isPasswordCorrect = try await req.password.async.verify(signInData.password, created: passwordHash)
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        try await clearSignInAttempts(user, req.db)
+        try await clearSignInAttempts(user: user, database: req.db)
 
-        return try await issueToken(user, req)
+        return try await issueToken(user: user, req: req)
     }
 
     // Guessing a password from many addresses is limited too. The attempt is taken in one statement,
     // so parallel requests can't check more passwords than the limit.
-    private func takeSignInAttempt(_ user: User, _ req: Request) async throws {
+    private func takeSignInAttempt(user: User, req: Request) async throws {
         let userID = try user.requireID()
         let takenAttempts = try await req.db.sql()
             .raw("""
@@ -109,38 +109,38 @@ struct AuthController: RouteCollection {
         }
     }
 
-    private func clearSignInAttempts(_ user: User, _ database: any Database) async throws {
+    private func clearSignInAttempts(user: User, database: any Database) async throws {
         let userID = try user.requireID()
         try await database.sql().raw("UPDATE users SET sign_in_attempts = 0 WHERE id = \(bind: userID)").run()
     }
 
-    private func requestPasswordReset(_ req: Request) async throws -> HTTPStatus {
+    private func requestPasswordReset(req: Request) async throws -> HTTPStatus {
         let data = try req.content.decode(ForgotPasswordRequest.self)
-        let email = normalizedEmail(data.email)
+        let email = normalizedEmail(email: data.email)
 
-        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email) else {
+        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
             throw Abort(.badRequest, reason: "Укажите корректный e-mail")
         }
 
         if let user = try await User.query(on: req.db).filter(\.$email == email).first(), user.passwordHash != nil {
-            try await passwordResetService.sendCode(user, req)
+            try await passwordResetService.sendCode(user: user, req: req)
         }
 
         return .noContent
     }
 
-    private func resetPassword(_ req: Request) async throws -> AuthDTO {
+    private func resetPassword(req: Request) async throws -> AuthDTO {
         let data = try req.content.decode(ResetPasswordRequest.self)
-        let email = normalizedEmail(data.email)
-        try validatePassword(data.password)
+        let email = normalizedEmail(email: data.email)
+        try validatePassword(password: data.password)
 
         guard let user = try await User.query(on: req.db).filter(\.$email == email).first(),
               user.passwordHash != nil
         else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
 
-        try await passwordResetService.verifyCode(data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                  user,
-                                                  req)
+        try await passwordResetService.verifyCode(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                  user: user,
+                                                  req: req)
 
         let userID = try user.requireID()
         user.passwordHash = try await req.password.async.hash(data.password)
@@ -150,51 +150,51 @@ struct AuthController: RouteCollection {
 
         try await req.db.transaction { database in
             try await user.save(on: database)
-            try await clearSignInAttempts(user, database)
+            try await clearSignInAttempts(user: user, database: database)
             try await Token.query(on: database).filter(\.$user.$id == userID).delete()
             try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
         }
 
-        return try await issueToken(user, req)
+        return try await issueToken(user: user, req: req)
     }
 
-    private func sendEmailConfirmationCode(_ req: Request) async throws -> HTTPStatus {
-        try await emailConfirmationService.sendCode(try req.auth.require(User.self), req)
+    private func sendEmailConfirmationCode(req: Request) async throws -> HTTPStatus {
+        try await emailConfirmationService.sendCode(user: try req.auth.require(User.self), req: req)
         return .noContent
     }
 
-    private func confirmEmail(_ req: Request) async throws -> UserDTO {
+    private func confirmEmail(req: Request) async throws -> UserDTO {
         let user = try req.auth.require(User.self)
         let data = try req.content.decode(ConfirmEmailRequest.self)
 
-        try await emailConfirmationService.confirm(data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                   user,
-                                                   req)
+        try await emailConfirmationService.confirm(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                   user: user,
+                                                   req: req)
 
         return try user.toDTO()
     }
 
-    private func signInWithApple(_ req: Request) async throws -> AuthDTO {
+    private func signInWithApple(req: Request) async throws -> AuthDTO {
         let data = try req.content.decode(AppleSignInRequest.self)
-        let identityToken = try await appleAuthService.verifyIdentityToken(data.identityToken, nonce: data.nonce, req)
+        let identityToken = try await appleAuthService.verifyIdentityToken(identityToken: data.identityToken, nonce: data.nonce, req: req)
         let appleUserID = identityToken.subject.value
 
         let user: User
         if let existingUser = try await User.query(on: req.db).filter(\.$appleUserID == appleUserID).first() {
             user = existingUser
         } else {
-            user = try await createAppleUser(appleUserID: appleUserID, name: data.name, req)
+            user = try await createAppleUser(appleUserID: appleUserID, name: data.name, req: req)
         }
 
         if user.appleRefreshToken == nil, let authorizationCode = data.authorizationCode {
-            user.appleRefreshToken = await appleAuthService.encryptedRefreshToken(authorizationCode: authorizationCode, req)
+            user.appleRefreshToken = await appleAuthService.encryptedRefreshToken(authorizationCode: authorizationCode, req: req)
             try await user.save(on: req.db)
         }
 
-        return try await issueToken(user, req)
+        return try await issueToken(user: user, req: req)
     }
 
-    private func createAppleUser(appleUserID: String, name: String?, _ req: Request) async throws -> User {
+    private func createAppleUser(appleUserID: String, name: String?, req: Request) async throws -> User {
         let trimmedName = String((name ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(InputLimits.maxNameLength))
         let user = User(name: trimmedName.count >= InputLimits.minNameLength ? trimmedName : "Пользователь",
                         appleUserID: appleUserID)
@@ -211,7 +211,7 @@ struct AuthController: RouteCollection {
         }
     }
 
-    private func issueToken(_ user: User, _ req: Request) async throws -> AuthDTO {
+    private func issueToken(user: User, req: Request) async throws -> AuthDTO {
         let userID = try user.requireID()
 
         try await Token.query(on: req.db)
@@ -220,7 +220,7 @@ struct AuthController: RouteCollection {
             .delete()
 
         let tokenValue = [UInt8].random(count: 32).base64
-        let token = Token(value: Token.hash(tokenValue),
+        let token = Token(value: Token.hash(value: tokenValue),
                           userID: userID,
                           expiresAt: Date().addingTimeInterval(Token.lifetime))
         try await token.save(on: req.db)
@@ -228,17 +228,17 @@ struct AuthController: RouteCollection {
         return AuthDTO(token: tokenValue, user: try user.toDTO())
     }
 
-    private func logout(_ req: Request) async throws -> HTTPStatus {
+    private func logout(req: Request) async throws -> HTTPStatus {
         let token = try req.auth.require(Token.self)
         try await token.delete(on: req.db)
         return .noContent
     }
 
-    private func deleteAccount(_ req: Request) async throws -> HTTPStatus {
+    private func deleteAccount(req: Request) async throws -> HTTPStatus {
         let user = try req.auth.require(User.self)
 
         if let appleRefreshToken = user.appleRefreshToken {
-            await appleAuthService.revoke(encryptedRefreshToken: appleRefreshToken, req)
+            await appleAuthService.revoke(encryptedRefreshToken: appleRefreshToken, req: req)
         } else if user.appleUserID != nil {
             req.logger.warning("Apple token not revoked: no refresh token stored")
         }
@@ -247,7 +247,7 @@ struct AuthController: RouteCollection {
         return .noContent
     }
 
-    private func validatePassword(_ password: String) throws {
+    private func validatePassword(password: String) throws {
         guard password.count >= InputLimits.minPasswordLength else {
             throw Abort(.badRequest, reason: "Пароль должен быть не короче \(InputLimits.minPasswordLength) символов")
         }
@@ -256,11 +256,11 @@ struct AuthController: RouteCollection {
         }
     }
 
-    private func normalizedEmail(_ email: String) -> String {
+    private func normalizedEmail(email: String) -> String {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
-    private func isValidEmail(_ email: String) -> Bool {
+    private func isValidEmail(email: String) -> Bool {
         let parts = email.split(separator: "@", omittingEmptySubsequences: false)
         guard parts.count == 2 else { return false }
         let local = parts[0]

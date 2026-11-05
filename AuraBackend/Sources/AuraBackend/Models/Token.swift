@@ -37,7 +37,7 @@ final class Token: Model, Authenticatable, @unchecked Sendable {
 }
 
 extension Token {
-    static func hash(_ value: String) -> String {
+    static func hash(value: String) -> String {
         SHA256.hash(data: Data(value.utf8)).hex
     }
 }

@@ -26,14 +26,14 @@ enum UserDateFormatter {
         return formatter
     }()
 
-    static func date(_ string: String) -> Date? {
+    static func date(string: String) -> Date? {
         // DateFormatter rolls impossible dates over: 31.02.2000 would become 02.03.2000
         guard let date = formatter.date(from: string), formatter.string(from: date) == string else { return nil }
         return date
     }
 
     static func birthDate(date: String) -> Date? {
-        guard let parsedDate = Self.date(date) else { return nil }
+        guard let parsedDate = Self.date(string: date) else { return nil }
 
         let now = Date()
 
@@ -46,7 +46,7 @@ enum UserDateFormatter {
         return parsedDate
     }
 
-    static func isOldEnough(_ birthDate: Date) -> Bool {
+    static func isOldEnough(birthDate: Date) -> Bool {
         guard let latestDate = calendar.date(byAdding: .year, value: -minAgeInYears, to: Date()) else {
             return false
         }
@@ -54,7 +54,7 @@ enum UserDateFormatter {
         return birthDate <= latestDate
     }
 
-    static func isValidTime(_ string: String) -> Bool {
+    static func isValidTime(string: String) -> Bool {
         let parts = string.split(separator: ":", omittingEmptySubsequences: false)
 
         guard parts.count == 2,
@@ -67,7 +67,7 @@ enum UserDateFormatter {
         return (0...23).contains(hours) && (0...59).contains(minutes)
     }
 
-    static func string(_ date: Date) -> String {
+    static func string(date: Date) -> String {
         formatter.string(from: date)
     }
 }

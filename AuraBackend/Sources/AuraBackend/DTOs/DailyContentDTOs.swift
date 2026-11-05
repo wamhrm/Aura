@@ -18,7 +18,7 @@ struct DailyContentResult: Codable {
 }
 
 enum DailyContentDTOMapper {
-    static func map(_ entry: DailyContent) throws -> DailyContentDTO {
+    static func map(entry: DailyContent) throws -> DailyContentDTO {
         guard let id = entry.id else {
             throw Abort(.internalServerError, reason: "Контент дня без идентификатора")
         }

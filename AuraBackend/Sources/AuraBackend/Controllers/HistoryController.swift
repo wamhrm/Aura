@@ -18,7 +18,7 @@ struct HistoryController: RouteCollection {
         history.delete(":historyID", use: deleteHistory)
     }
 
-    private func fetchHistory(_ req: Request) async throws -> [HistoryItemDTO] {
+    private func fetchHistory(req: Request) async throws -> [HistoryItemDTO] {
         let userID = try req.auth.require(User.self).requireID()
 
         // Everything except the full result, which may be large
@@ -40,7 +40,7 @@ struct HistoryController: RouteCollection {
         return try entries.map(HistoryDTOMapper.getHistoryItem)
     }
 
-    private func fetchHistoryDetails(_ req: Request) async throws -> HistoryItemDTO {
+    private func fetchHistoryDetails(req: Request) async throws -> HistoryItemDTO {
         let userID = try req.auth.require(User.self).requireID()
 
         guard let historyID = req.parameters.get("historyID", as: UUID.self) else {
@@ -56,14 +56,14 @@ struct HistoryController: RouteCollection {
         }
 
         do {
-            return try HistoryDTOMapper.getHistoryItemDetails(entry)
+            return try HistoryDTOMapper.getHistoryItemDetails(history: entry)
         } catch {
             req.logger.error("Failed to decode history entry \(historyID): \(error)")
             throw Abort(.internalServerError, reason: "Не удалось открыть запись истории")
         }
     }
 
-    private func deleteHistory(_ req: Request) async throws -> HTTPStatus {
+    private func deleteHistory(req: Request) async throws -> HTTPStatus {
         let userID = try req.auth.require(User.self).requireID()
 
         guard let historyID = req.parameters.get("historyID", as: UUID.self) else {

@@ -8,7 +8,7 @@
 import Foundation
 
 enum CompatibilityPrompts {
-    static func schema(_ selectedTests: [CompatibilityTests]) -> JSONSchema {
+    static func schema(selectedTests: [CompatibilityTests]) -> JSONSchema {
         let itemKeys = selectedTests.flatMap(CompatibilityItems.allowed).map(\.rawValue)
 
         return .object([("title", .string),
@@ -26,7 +26,7 @@ enum CompatibilityPrompts {
                                               ("potentialDescription", .string)]))])
     }
 
-    static func user(_ user: User,
+    static func user(user: User,
                      partner: CompatibilityTestRequest,
                      score: Int,
                      selectedTests: [CompatibilityTests]) -> String {
@@ -36,7 +36,7 @@ enum CompatibilityPrompts {
 
         let itemRules = selectedTests
             .map { test in
-                let keys = CompatibilityItems.allowed(test)
+                let keys = CompatibilityItems.allowed(test: test)
                     .map { "\"" + $0.rawValue + "\" (" + $0.title + ")" }
                     .joined(separator: ", ")
                 return "- " + test.rawValue + ": ровно 2 пункта, key только из [" + keys + "]"
@@ -44,13 +44,13 @@ enum CompatibilityPrompts {
             .joined(separator: "\n")
 
         return """
-        \(ContentPrompts.userProfile(user))
+        \(ContentPrompts.userProfile(user: user))
 
         Данные партнёра:
         - дата рождения: \(partner.partnerDateOfBirth)
         - время рождения: \(partner.partnerBirthTime ?? "не указано")
         - пол: \(partner.partnerGender)
-        - знак зодиака: \(UserDateFormatter.date(partner.partnerDateOfBirth).flatMap(HoroscopeSign.from)?.title ?? "не указан")
+        - знак зодиака: \(UserDateFormatter.date(string: partner.partnerDateOfBirth).flatMap(HoroscopeSign.from)?.title ?? "не указан")
 
         Совместимость пары: \(score)%. Это число уже посчитано, не меняй его и объясни, почему получилось именно так.
 

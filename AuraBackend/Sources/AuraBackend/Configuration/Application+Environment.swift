@@ -22,18 +22,18 @@ extension Application {
 
         var required = ["POSTGRESQL_HOST", "POSTGRESQL_USER", "POSTGRESQL_PASSWORD", "POSTGRESQL_DBNAME", "OPENAI_KEY", "RESEND_API_KEY"]
 
-        if isSet("APPLE_PRIVATE_KEY") {
+        if isSet(name: "APPLE_PRIVATE_KEY") {
             required.append("APPLE_TOKEN_ENCRYPTION_KEY")
         } else {
             logger.warning("Sign in with Apple is not fully configured: APPLE_PRIVATE_KEY is missing")
         }
 
-        let missing = required.filter { !isSet($0) }
+        let missing = required.filter { !isSet(name: $0) }
 
         guard missing.isEmpty else { throw MissingEnvironment(names: missing) }
     }
 
-    private func isSet(_ name: String) -> Bool {
+    private func isSet(name: String) -> Bool {
         !(Environment.get(name) ?? "").isEmpty
     }
 }

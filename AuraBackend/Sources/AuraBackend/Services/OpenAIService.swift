@@ -13,21 +13,21 @@ struct OpenAIService {
     private let validator = OpenAIResultValidator()
 
     // MARK: - Personality
-    func makePersonalityTest(_ user: User,
+    func makePersonalityTest(user: User,
                              selectedTests: [PersonalityTests],
-                             _ req: Request) async throws -> PersonalityResultDTO {
-        let userSign = try zodiacSign(user)
+                             req: Request) async throws -> PersonalityResultDTO {
+        let userSign = try zodiacSign(user: user)
 
         return try await client.generate(
             messages: [OpenAIMessage(role: "system", content: PersonalityPrompts.system),
-                       OpenAIMessage(role: "user", content: PersonalityPrompts.user(user,
+                       OpenAIMessage(role: "user", content: PersonalityPrompts.user(user: user,
                                                                                     selectedTests: selectedTests))],
             responseFormat: OpenAIResponseFormat(name: "personality_result",
-                                                 schema: PersonalityPrompts.schema(selectedTests)),
-            req) { data in
+                                                 schema: PersonalityPrompts.schema(selectedTests: selectedTests)),
+            req: req) { data in
                 let analysis = try JSONDecoder().decode(PersonalityTestContent.self, from: data)
 
-                try validator.requireText(analysis.archetypeTitle,
+                try validator.requireText(texts: analysis.archetypeTitle,
                                           analysis.archetypeSubtitle,
                                           analysis.overview.title,
                                           analysis.overview.description)
@@ -38,33 +38,33 @@ struct OpenAIService {
                                             archetypeTitle: analysis.archetypeTitle,
                                             archetypeSubtitle: analysis.archetypeSubtitle,
                                             overview: analysis.overview,
-                                            emotionalBar: try validator.personalityBars(analysis.emotionalBar),
-                                            sections: try validator.personalitySections(analysis.sections,
+                                            emotionalBar: try validator.personalityBars(bars: analysis.emotionalBar),
+                                            sections: try validator.personalitySections(sections: analysis.sections,
                                                                                         selectedTests: selectedTests))
             }
     }
 
     // MARK: - Compatibility
-    func makeCompatibilityTest(_ user: User,
+    func makeCompatibilityTest(user: User,
                                partner: CompatibilityTestRequest,
                                selectedTests: [CompatibilityTests],
-                               _ req: Request) async throws -> CompatibilityResultDTO {
-        let userSign = try zodiacSign(user)
-        let partnerSign = try zodiacSign(partner)
+                               req: Request) async throws -> CompatibilityResultDTO {
+        let userSign = try zodiacSign(user: user)
+        let partnerSign = try zodiacSign(partner: partner)
         let score = CompatibilityScore.calculate(userSign: userSign, partnerSign: partnerSign)
 
         return try await client.generate(
             messages: [OpenAIMessage(role: "system", content: CompatibilityPrompts.system),
-                       OpenAIMessage(role: "user", content: CompatibilityPrompts.user(user,
+                       OpenAIMessage(role: "user", content: CompatibilityPrompts.user(user: user,
                                                                                       partner: partner,
                                                                                       score: score,
                                                                                       selectedTests: selectedTests))],
             responseFormat: OpenAIResponseFormat(name: "compatibility_result",
-                                                 schema: CompatibilityPrompts.schema(selectedTests)),
-            req) { data in
+                                                 schema: CompatibilityPrompts.schema(selectedTests: selectedTests)),
+            req: req) { data in
                 let analysis = try JSONDecoder().decode(CompatibilityTestContent.self, from: data)
 
-                try validator.requireText(analysis.title,
+                try validator.requireText(texts: analysis.title,
                                           analysis.subtitle,
                                           analysis.overview.title,
                                           analysis.overview.description,
@@ -82,8 +82,8 @@ struct OpenAIService {
                                               title: analysis.title,
                                               subtitle: analysis.subtitle,
                                               overview: analysis.overview,
-                                              emotionalBar: try validator.compatibilityBars(analysis.emotionalBar),
-                                              sections: try validator.compatibilitySections(analysis.sections,
+                                              emotionalBar: try validator.compatibilityBars(bars: analysis.emotionalBar),
+                                              sections: try validator.compatibilitySections(sections: analysis.sections,
                                                                                             selectedTests: selectedTests),
                                               forecast: analysis.forecast)
             }
@@ -92,44 +92,44 @@ struct OpenAIService {
     // MARK: - Horoscope
     func makeHoroscope(sign: HoroscopeSign,
                        period: (start: String, end: String),
-                       _ req: Request) async throws -> HoroscopeContentResult {
+                       req: Request) async throws -> HoroscopeContentResult {
         try await client.generate(
             messages: [OpenAIMessage(role: "system", content: ContentPrompts.horoscopeSystem),
                        OpenAIMessage(role: "user", content: ContentPrompts.horoscopeUser(sign: sign, period: period))],
             responseFormat: OpenAIResponseFormat(name: "horoscope", schema: ContentPrompts.horoscopeSchema),
-            req) { data in
+            req: req) { data in
                 let horoscope = try JSONDecoder().decode(HoroscopeContentResult.self, from: data)
 
-                try validator.requireHoroscope(horoscope)
+                try validator.requireHoroscope(horoscope: horoscope)
 
                 return horoscope
             }
     }
 
     // MARK: - Daily Content
-    func makeDailyInsight(_ user: User, _ req: Request) async throws -> String {
+    func makeDailyInsight(user: User, req: Request) async throws -> String {
         try await makeDailyContent(systemPrompt: ContentPrompts.dailyInsightSystem,
-                                   userPrompt: ContentPrompts.dailyInsightUser(user, today: DailyDateHelper.todayString(timeZone: req.userTimeZone)),
+                                   userPrompt: ContentPrompts.dailyInsightUser(user: user, today: DailyDateHelper.todayString(timeZone: req.userTimeZone)),
                                    wordRange: 8...10,
-                                   req)
+                                   req: req)
     }
 
-    func makeDailyTip(_ user: User, _ req: Request) async throws -> String {
+    func makeDailyTip(user: User, req: Request) async throws -> String {
         try await makeDailyContent(systemPrompt: ContentPrompts.dailyTipSystem,
-                                   userPrompt: ContentPrompts.dailyTipUser(user, today: DailyDateHelper.todayString(timeZone: req.userTimeZone)),
+                                   userPrompt: ContentPrompts.dailyTipUser(user: user, today: DailyDateHelper.todayString(timeZone: req.userTimeZone)),
                                    wordRange: 15...20,
-                                   req)
+                                   req: req)
     }
 
     private func makeDailyContent(systemPrompt: String,
                                   userPrompt: String,
                                   wordRange: ClosedRange<Int>,
-                                  _ req: Request) async throws -> String {
+                                  req: Request) async throws -> String {
         try await client.generate(
             messages: [OpenAIMessage(role: "system", content: systemPrompt),
                        OpenAIMessage(role: "user", content: userPrompt)],
             responseFormat: OpenAIResponseFormat(name: "daily_content", schema: ContentPrompts.dailySchema),
-            req) { data in
+            req: req) { data in
                 let result = try JSONDecoder().decode(DailyContentResult.self, from: data)
                 let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -152,18 +152,18 @@ struct OpenAIService {
     }
 
     // MARK: - Helpers
-    private func zodiacSign(_ user: User) throws -> HoroscopeSign {
+    private func zodiacSign(user: User) throws -> HoroscopeSign {
         guard let dateOfBirth = user.dateOfBirth,
-              let sign = HoroscopeSign.from(dateOfBirth) else {
+              let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
             throw Abort(.internalServerError, reason: "Не удалось определить знак зодиака")
         }
 
         return sign
     }
 
-    private func zodiacSign(_ partner: CompatibilityTestRequest) throws -> HoroscopeSign {
-        guard let dateOfBirth = UserDateFormatter.date(partner.partnerDateOfBirth),
-              let sign = HoroscopeSign.from(dateOfBirth) else {
+    private func zodiacSign(partner: CompatibilityTestRequest) throws -> HoroscopeSign {
+        guard let dateOfBirth = UserDateFormatter.date(string: partner.partnerDateOfBirth),
+              let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
             throw Abort(.badRequest, reason: "Не удалось определить знак зодиака партнёра")
         }
 
