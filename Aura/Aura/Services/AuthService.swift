@@ -99,9 +99,6 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         if currentUser.hasAIConsent == true { user.hasAIConsent = true }
         if currentUser.isEmailConfirmed == true { user.isEmailConfirmed = true }
         storage.saveUser(user)
-        if let horoscope = response.horoscope {
-            storage.save(horoscope, key: StorageKeys.horoscope, userId: user.id)
-        }
         authState.send(.signedIn(user))
         return UpdateProfileInfoResponse(user: user, horoscope: response.horoscope)
     }

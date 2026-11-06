@@ -129,19 +129,18 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     }
 
     func deleteRequestedCell() {
-        guard let item = cellToDelete else { return }
+        guard let item = cellToDelete, let userId = currentUserId else { return }
 
         cellToDelete = nil
 
         Task {
             do {
                 try await contentService.deleteHistory(id: item.id)
+                guard currentUserId == userId else { return }
                 historyCells.removeAll { $0.id == item.id }
-
-                if let userId = currentUserId {
-                    storage.save(historyCells, key: StorageKeys.history, userId: userId)
-                }
+                storage.save(historyCells, key: StorageKeys.history, userId: userId)
             } catch {
+                guard currentUserId == userId, !error.isCancellation else { return }
                 presentAlert("Не удалось удалить запись")
             }
         }
@@ -171,7 +170,9 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                         }
                 }
             } catch {
-                presentAlert("Не удалось открыть результат")
+                if !error.isCancellation {
+                    presentAlert("Не удалось открыть результат")
+                }
             }
 
             isLoading = false

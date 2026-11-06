@@ -8,6 +8,45 @@ import XCTest
 
 @MainActor
 final class HistoryViewModelTests: XCTestCase {
+    func test_lateHistoryResponse_doesNotRestoreDeletedRecord_orItsCache() async throws {
+        let cell = HistoryCellModel.personalityPlaceholder
+        let network = MockNetworkService()
+        network.history = [cell]
+        let auth = MockAuthService(user: .mock)
+        let storage = makeStorage()
+        let content = ContentService(networkService: network, authService: auth, storage: storage)
+        let viewModel = HistoryViewModel(authService: auth, contentService: content, storage: storage)
+        await waitUntil { viewModel.historyCells == [cell] }
+
+        network.beforeHistoryResponse = {
+            network.beforeHistoryResponse = nil
+            try await content.deleteHistory(id: cell.id)
+            await viewModel.fetchHistory()
+        }
+        await viewModel.fetchHistory()
+
+        XCTAssertTrue(viewModel.historyCells.isEmpty)
+        XCTAssertEqual(storage.load(StorageKeys.history, userId: UserModel.mock.id), [])
+        XCTAssertFalse(viewModel.showAlert)
+    }
+
+    func test_lateDetailsResponse_afterDeletion_isDiscarded() async throws {
+        let cell = HistoryCellModel.personalityPlaceholder
+        let network = MockNetworkService()
+        let content = ContentService(networkService: network, authService: MockAuthService(user: .mock), storage: makeStorage())
+        network.beforeHistoryResponse = {
+            network.beforeHistoryResponse = nil
+            try await content.deleteHistory(id: cell.id)
+        }
+
+        do {
+            _ = try await content.fetchHistoryDetails(id: cell.id)
+            XCTFail("Deleted history details must be discarded")
+        } catch {
+            XCTAssertTrue(error.isCancellation)
+        }
+    }
+
     func test_serverFailure_keepsTheSavedList_withoutAnError() async {
         // Given
         let cell = HistoryCellModel.personalityPlaceholder

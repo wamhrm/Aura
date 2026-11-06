@@ -19,7 +19,7 @@ protocol ContentServiceProtocol {
     func deleteHistory(id: UUID) async throws
     func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel
     func fetchDailyTip(userId: UUID) async throws -> DailyContentModel
-    func fetchCurrentHoroscope(userId: UUID) async throws -> HoroscopeModel
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel
 }
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
@@ -29,6 +29,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private let networkService: any NetworkServiceProtocol
     private let storage: any LocalStorageProtocol
     private var historyTask: Task<[HistoryCellModel], any Error>?
+    private var historyRevision = 0
     private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
     private var pendingCompatibilityTest: (request: CompatibilityTestRequest, requestID: UUID)?
     private var currentUser: UserModel?
@@ -66,6 +67,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     private func resetSessionState() {
+        historyRevision += 1
         historyTask?.cancel()
         historyTask = nil
         pendingPersonalityTest = nil
@@ -84,10 +86,8 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         return tip
     }
 
-    func fetchCurrentHoroscope(userId: UUID) async throws -> HoroscopeModel {
-        let horoscope = try await networkService.fetchCurrentHoroscope()
-        saveToCache(horoscope, key: StorageKeys.horoscope, userId: userId)
-        return horoscope
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel {
+        try await networkService.fetchCurrentHoroscope()
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
@@ -127,13 +127,16 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        if let historyTask {
-            return try await historyTask.value
-        }
+        let revision = historyRevision
+        let task: Task<[HistoryCellModel], any Error>
 
-        let networkService = networkService
-        let task = Task { try await networkService.fetchHistory() }
-        historyTask = task
+        if let historyTask {
+            task = historyTask
+        } else {
+            let networkService = networkService
+            task = Task { try await networkService.fetchHistory() }
+            historyTask = task
+        }
 
         defer {
             if historyTask == task {
@@ -141,11 +144,16 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
             }
         }
 
-        return try await task.value
+        let history = try await task.value
+        guard revision == historyRevision else { throw CancellationError() }
+        return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
-        try await networkService.fetchHistoryDetails(id: id)
+        let revision = historyRevision
+        let details = try await networkService.fetchHistoryDetails(id: id)
+        guard revision == historyRevision else { throw CancellationError() }
+        return details
     }
 
     func deleteHistory(id: UUID) async throws {
@@ -160,6 +168,9 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     private func notifyHistoryChanged() {
+        // Readers that started before this change must not publish their old response.
+        historyRevision += 1
+        historyTask?.cancel()
         historyTask = nil
         historyDidChange.send(())
     }

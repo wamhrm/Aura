@@ -204,7 +204,7 @@ final class MockContentService: ContentServiceProtocol {
         return DailyContentModel(id: UUID(), text: "Совет", dateCreated: todayText())
     }
 
-    func fetchCurrentHoroscope(userId: UUID) async throws -> HoroscopeModel {
+    func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         horoscopeCount += 1
         if let errorToThrow { throw errorToThrow }
         return .mock

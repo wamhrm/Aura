@@ -173,10 +173,12 @@ private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unc
 }
 
 @MainActor
-private final class MockNetworkService: NetworkServiceProtocol {
+final class MockNetworkService: NetworkServiceProtocol {
     nonisolated let sessionExpiredEvents = AsyncStream<String> { $0.finish() }
     var user = makeUser()
     var fetchCount = 0
+    var history: [HistoryCellModel] = []
+    var beforeHistoryResponse: (() async throws -> Void)?
 
     func fetchCurrentUser() async throws -> UserModel {
         fetchCount += 1
@@ -199,7 +201,7 @@ private final class MockNetworkService: NetworkServiceProtocol {
         user
     }
 
-    // Unused requirements of the existing network protocol.
+    // Other requirements of the existing network protocol.
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws -> AuthTokenResponse { throw serverError }
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse { throw serverError }
@@ -212,7 +214,18 @@ private final class MockNetworkService: NetworkServiceProtocol {
     func fetchDailyTip() async throws -> DailyContentModel { throw serverError }
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel { throw serverError }
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel { throw serverError }
-    func fetchHistory() async throws -> [HistoryCellModel] { throw serverError }
-    func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel { throw serverError }
-    func deleteHistory(id: UUID) async throws { throw serverError }
+    func fetchHistory() async throws -> [HistoryCellModel] {
+        let response = history
+        try await beforeHistoryResponse?()
+        return response
+    }
+
+    func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
+        try await beforeHistoryResponse?()
+        return .personalityPlaceholder
+    }
+
+    func deleteHistory(id: UUID) async throws {
+        history.removeAll { $0.id == id }
+    }
 }

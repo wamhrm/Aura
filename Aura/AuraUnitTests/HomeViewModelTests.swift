@@ -9,6 +9,31 @@ import XCTest
 
 @MainActor
 final class HomeViewModelTests: XCTestCase {
+    func test_birthDateChange_hidesPreviousHoroscope_whenReloadFails() async {
+        let auth = MockAuthService(user: makeUser())
+        let content = MockContentService()
+        let viewModel = HomeViewModel(authService: auth, contentService: content, storage: makeStorage())
+        await waitUntil { viewModel.horoscopeState == .loaded }
+        content.errorToThrow = serverError
+
+        auth.authState.send(.signedIn(makeUser(dateOfBirth: "20.01.1990")))
+        await waitUntil { viewModel.horoscopeState == .failed("Ошибка сервера") }
+
+        XCTAssertNil(viewModel.horoscope)
+    }
+
+    func test_refreshFailure_showsError_insteadOfPreviousHoroscope() async {
+        let content = MockContentService()
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: makeStorage())
+        await waitUntil { viewModel.horoscopeState == .loaded }
+        content.errorToThrow = serverError
+
+        await viewModel.refresh()
+
+        XCTAssertNil(viewModel.horoscope)
+        XCTAssertEqual(viewModel.horoscopeState, .failed("Ошибка сервера"))
+    }
+
     // MARK: - Daily insight
     func test_withoutConsent_theInsightIsNotRequested() async {
         // Given
