@@ -17,8 +17,8 @@ protocol ContentServiceProtocol {
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
-    func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel
-    func fetchDailyTip(userId: UUID) async throws -> DailyContentModel
+    func fetchDailyInsight() async throws -> DailyContentModel
+    func fetchDailyTip() async throws -> DailyContentModel
     func fetchCurrentHoroscope() async throws -> HoroscopeModel
 }
 
@@ -27,7 +27,6 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     let refreshRequested = PassthroughSubject<Void, Never>()
 
     private let networkService: any NetworkServiceProtocol
-    private let storage: any LocalStorageProtocol
     private var historyTask: Task<[HistoryCellModel], any Error>?
     private var historyRevision = 0
     private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
@@ -36,10 +35,8 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private var cancellables = Set<AnyCancellable>()
 
     init(networkService: any NetworkServiceProtocol,
-         authService: any AuthServiceProtocol,
-         storage: any LocalStorageProtocol = LocalStorage()) {
+         authService: any AuthServiceProtocol) {
         self.networkService = networkService
-        self.storage = storage
 
         authService.authState
             .sink { [weak self] in
@@ -74,16 +71,12 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         pendingCompatibilityTest = nil
     }
 
-    func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel {
-        let insight = try await networkService.fetchDailyInsight()
-        saveToCache(insight, key: StorageKeys.dailyInsight, userId: userId)
-        return insight
+    func fetchDailyInsight() async throws -> DailyContentModel {
+        try await networkService.fetchDailyInsight()
     }
 
-    func fetchDailyTip(userId: UUID) async throws -> DailyContentModel {
-        let tip = try await networkService.fetchDailyTip()
-        saveToCache(tip, key: StorageKeys.dailyTip, userId: userId)
-        return tip
+    func fetchDailyTip() async throws -> DailyContentModel {
+        try await networkService.fetchDailyTip()
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
@@ -159,12 +152,6 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     func deleteHistory(id: UUID) async throws {
         try await networkService.deleteHistory(id: id)
         notifyHistoryChanged()
-    }
-
-    // A late answer must not bring back the files of a finished session
-    private func saveToCache<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID) {
-        guard currentUser?.id == userId else { return }
-        storage.save(value, key: key, userId: userId)
     }
 
     private func notifyHistoryChanged() {

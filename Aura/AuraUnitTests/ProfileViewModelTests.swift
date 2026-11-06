@@ -12,7 +12,7 @@ final class ProfileViewModelTests: XCTestCase {
     func test_refresh_hidesOutdatedTip_beforeLoadingHistory() async {
         let result = HistoryCellModel.personalityPlaceholder
         let storage = makeStorage()
-        storage.save(StoredPersonality(historyId: result.id, result: .mock), key: StorageKeys.personality, userId: UserModel.mock.id)
+        storage.savePersonality(result: StoredPersonality(historyId: result.id, result: .mock), userId: UserModel.mock.id)
         let content = MockContentService()
         content.history = [result]
         content.dailyContentDate = "2000-01-01"
@@ -38,7 +38,7 @@ final class ProfileViewModelTests: XCTestCase {
         XCTAssertEqual(content.tipCount, 0)
 
         let result = HistoryCellModel.personalityPlaceholder
-        storage.save(StoredPersonality(historyId: result.id, result: .mock), key: StorageKeys.personality, userId: UserModel.mock.id)
+        storage.savePersonality(result: StoredPersonality(historyId: result.id, result: .mock), userId: UserModel.mock.id)
         content.history = [result]
         content.historyDidChange.send()
         await waitUntil { viewModel.tipState == .loaded }
@@ -65,14 +65,14 @@ final class ProfileViewModelTests: XCTestCase {
     func test_lastResultDeleted_returnsToTheLockedScreen_andForgetsTheSavedResult() async {
         // Given
         let storage = makeStorage()
-        storage.save(StoredPersonality(historyId: UUID(), result: .mock), key: StorageKeys.personality, userId: UserModel.mock.id)
+        storage.savePersonality(result: StoredPersonality(historyId: UUID(), result: .mock), userId: UserModel.mock.id)
 
         // When
         let viewModel = ProfileViewModel(authService: MockAuthService(user: .mock), contentService: MockContentService(), storage: storage)
-        await waitUntil { viewModel.user != nil && storage.load(StorageKeys.personality, userId: UserModel.mock.id) == nil }
+        await waitUntil { viewModel.user != nil && storage.loadPersonality(userId: UserModel.mock.id) == nil }
 
         // Then
-        XCTAssertNil(storage.load(StorageKeys.personality, userId: UserModel.mock.id))
+        XCTAssertNil(storage.loadPersonality(userId: UserModel.mock.id))
         XCTAssertFalse(viewModel.hasPersonalityTests)
         XCTAssertEqual(viewModel.profileDisplayHandler, .placeholder)
     }

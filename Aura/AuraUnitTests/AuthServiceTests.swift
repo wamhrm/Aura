@@ -106,7 +106,7 @@ final class AuthServiceTests: XCTestCase {
         try keychain.saveAuthToken("saved-token")
         keychain.readFails = true
         let storage = makeStorage()
-        storage.saveUser(makeUser())
+        storage.saveUser(user: makeUser())
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, storage: storage)
 

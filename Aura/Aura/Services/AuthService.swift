@@ -37,7 +37,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
-    private let storage: any LocalStorageProtocol
+    private let storage: LocalStorage
     private var refreshTask: Task<Void, Never>?
 
     private var currentUser: UserModel? {
@@ -47,7 +47,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
-         storage: any LocalStorageProtocol = LocalStorage()) {
+         storage: LocalStorage = LocalStorage()) {
         self.networkService = networkService
         self.keychain = keychain
         self.storage = storage
@@ -98,7 +98,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         // Consent and confirmation may have completed while the profile was being saved.
         if currentUser.hasAIConsent == true { user.hasAIConsent = true }
         if currentUser.isEmailConfirmed == true { user.isEmailConfirmed = true }
-        storage.saveUser(user)
+        storage.saveUser(user: user)
         authState.send(.signedIn(user))
         return UpdateProfileInfoResponse(user: user, horoscope: response.horoscope)
     }
@@ -113,7 +113,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         cancelRefresh()
         // This endpoint changes consent, not the rest of the current profile.
         user.hasAIConsent = response.hasAIConsent
-        storage.saveUser(user)
+        storage.saveUser(user: user)
         authState.send(.signedIn(user))
     }
 
@@ -130,7 +130,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
         cancelRefresh()
         user.isEmailConfirmed = response.isEmailConfirmed
-        storage.saveUser(user)
+        storage.saveUser(user: user)
         authState.send(.signedIn(user))
     }
 
@@ -202,7 +202,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
             guard let user, currentUser == previousUser, user != currentUser,
                   (try? keychain.loadAuthToken()) == token else { return }
 
-            storage.saveUser(user)
+            storage.saveUser(user: user)
             authState.send(.signedIn(user))
         }
     }
@@ -215,7 +215,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private func startSession(response: AuthTokenResponse) throws {
         try keychain.saveAuthToken(response.token)
         cancelRefresh()
-        storage.saveUser(response.user)
+        storage.saveUser(user: response.user)
         authState.send(.signedIn(response.user))
     }
 

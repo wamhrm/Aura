@@ -14,7 +14,7 @@ final class HistoryViewModelTests: XCTestCase {
         network.history = [cell]
         let auth = MockAuthService(user: .mock)
         let storage = makeStorage()
-        let content = ContentService(networkService: network, authService: auth, storage: storage)
+        let content = ContentService(networkService: network, authService: auth)
         let viewModel = HistoryViewModel(authService: auth, contentService: content, storage: storage)
         await waitUntil { viewModel.historyCells == [cell] }
 
@@ -26,14 +26,14 @@ final class HistoryViewModelTests: XCTestCase {
         await viewModel.fetchHistory()
 
         XCTAssertTrue(viewModel.historyCells.isEmpty)
-        XCTAssertEqual(storage.load(StorageKeys.history, userId: UserModel.mock.id), [])
+        XCTAssertEqual(storage.loadHistory(userId: UserModel.mock.id), [])
         XCTAssertFalse(viewModel.showAlert)
     }
 
     func test_lateDetailsResponse_afterDeletion_isDiscarded() async throws {
         let cell = HistoryCellModel.personalityPlaceholder
         let network = MockNetworkService()
-        let content = ContentService(networkService: network, authService: MockAuthService(user: .mock), storage: makeStorage())
+        let content = ContentService(networkService: network, authService: MockAuthService(user: .mock))
         network.beforeHistoryResponse = {
             network.beforeHistoryResponse = nil
             try await content.deleteHistory(id: cell.id)
@@ -51,7 +51,7 @@ final class HistoryViewModelTests: XCTestCase {
         // Given
         let cell = HistoryCellModel.personalityPlaceholder
         let storage = makeStorage()
-        storage.save([cell], key: StorageKeys.history, userId: UserModel.mock.id)
+        storage.saveHistory(history: [cell], userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
 
@@ -82,7 +82,7 @@ final class HistoryViewModelTests: XCTestCase {
 
         // Then
         XCTAssertEqual(viewModel.historyCells, [compatibility])
-        XCTAssertEqual(storage.load(StorageKeys.history, userId: UserModel.mock.id), [compatibility])
+        XCTAssertEqual(storage.loadHistory(userId: UserModel.mock.id), [compatibility])
     }
 
     func test_deleteFailure_keepsTheRecord_andShowsAlert() async {

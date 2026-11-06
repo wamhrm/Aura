@@ -195,14 +195,14 @@ final class MockContentService: ContentServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
-    func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel {
+    func fetchDailyInsight() async throws -> DailyContentModel {
         insightCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
         return DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: dailyContentDate)
     }
 
-    func fetchDailyTip(userId: UUID) async throws -> DailyContentModel {
+    func fetchDailyTip() async throws -> DailyContentModel {
         tipCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }

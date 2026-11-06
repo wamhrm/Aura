@@ -7,100 +7,113 @@
 
 import Foundation
 
-struct StorageKey<Value: Codable> {
-    let name: String
-}
-
 struct StoredPersonality: Codable {
     let historyId: UUID
     let result: PersonalityResultModel
 }
 
-enum StorageKeys {
-    static let personality = StorageKey<StoredPersonality>(name: "personality")
-    static let history = StorageKey<[HistoryCellModel]>(name: "history")
-    static let dailyInsight = StorageKey<DailyContentModel>(name: "dailyInsight")
-    static let dailyTip = StorageKey<DailyContentModel>(name: "dailyTip")
-}
-
-protocol LocalStorageProtocol {
-    func loadUser() -> UserModel?
-    func saveUser(_ user: UserModel)
-    func deleteUser()
-
-    func load<Value>(_ key: StorageKey<Value>, userId: UUID) -> Value?
-    func save<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID)
-    func delete<Value>(_ key: StorageKey<Value>, userId: UUID)
-    func deleteAll(userId: UUID)
-}
-
-final class LocalStorage: LocalStorageProtocol {
+final class LocalStorage {
     private let baseURL: URL
-    private let fileManager: FileManager
+    private let fileManager = FileManager.default
 
-    init(baseURL: URL = Constants.localStorageDirectory,
-         fileManager: FileManager = .default) {
+    init(baseURL: URL = Constants.localStorageDirectory) {
         self.baseURL = baseURL
-        self.fileManager = fileManager
     }
 
     func loadUser() -> UserModel? {
-        read(UserModel.self, url: userURL)
+        read(type: UserModel.self, name: "user")
     }
 
-    func saveUser(_ user: UserModel) {
-        write(user, url: userURL)
+    func saveUser(user: UserModel) {
+        write(value: user, name: "user")
     }
 
     func deleteUser() {
-        try? fileManager.removeItem(at: userURL)
+        try? fileManager.removeItem(at: fileURL(name: "user"))
     }
 
-    func load<Value>(_ key: StorageKey<Value>, userId: UUID) -> Value? {
-        read(Value.self, url: fileURL(key: key, userId: userId))
+    func loadHistory(userId: UUID) -> [HistoryCellModel]? {
+        read(type: [HistoryCellModel].self, name: "history", userId: userId)
     }
 
-    func save<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID) {
-        write(value, url: fileURL(key: key, userId: userId))
+    func saveHistory(history: [HistoryCellModel], userId: UUID) {
+        write(value: history, name: "history", userId: userId)
     }
 
-    func delete<Value>(_ key: StorageKey<Value>, userId: UUID) {
-        try? fileManager.removeItem(at: fileURL(key: key, userId: userId))
+    func loadPersonality(userId: UUID) -> StoredPersonality? {
+        read(type: StoredPersonality.self, name: "personality", userId: userId)
+    }
+
+    func savePersonality(result: StoredPersonality, userId: UUID) {
+        write(value: result, name: "personality", userId: userId)
+    }
+
+    func deletePersonality(userId: UUID) {
+        try? fileManager.removeItem(at: fileURL(name: "personality", userId: userId))
+    }
+
+    func loadDailyInsight(userId: UUID) -> DailyContentModel? {
+        let insight = read(type: DailyContentModel.self, name: "dailyInsight", userId: userId)
+        return insight?.isFromToday == true ? insight : nil
+    }
+
+    func saveDailyInsight(insight: DailyContentModel, userId: UUID) {
+        write(value: insight, name: "dailyInsight", userId: userId)
+    }
+
+    func loadDailyTip(userId: UUID) -> DailyContentModel? {
+        let tip = read(type: DailyContentModel.self, name: "dailyTip", userId: userId)
+        return tip?.isFromToday == true ? tip : nil
+    }
+
+    func saveDailyTip(tip: DailyContentModel, userId: UUID) {
+        write(value: tip, name: "dailyTip", userId: userId)
+    }
+
+    func loadHoroscope(userId: UUID) -> HoroscopeModel? {
+        let url = fileURL(name: "horoscope", userId: userId)
+        guard let savedAt = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate else { return nil }
+
+        // Match the server's weeks, which start on Monday.
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.firstWeekday = 2
+        guard calendar.isDate(savedAt, equalTo: Date(), toGranularity: .weekOfYear) else { return nil }
+        return read(type: HoroscopeModel.self, name: "horoscope", userId: userId)
+    }
+
+    func saveHoroscope(horoscope: HoroscopeModel, userId: UUID) {
+        write(value: horoscope, name: "horoscope", userId: userId)
     }
 
     func deleteAll(userId: UUID) {
-        try? fileManager.removeItem(at: directory(userId: userId))
+        try? fileManager.removeItem(at: baseURL.appending(path: userId.uuidString, directoryHint: .isDirectory))
     }
 
-    private var userURL: URL {
-        baseURL.appending(path: "user.json")
+    private func fileURL(name: String, userId: UUID? = nil) -> URL {
+        var directory = baseURL
+        if let userId {
+            directory = directory.appending(path: userId.uuidString, directoryHint: .isDirectory)
+        }
+        return directory.appending(path: name + ".json")
     }
 
-    private func directory(userId: UUID) -> URL {
-        baseURL.appending(path: userId.uuidString, directoryHint: .isDirectory)
-    }
-
-    private func fileURL<Value>(key: StorageKey<Value>, userId: UUID) -> URL {
-        directory(userId: userId).appending(path: key.name + ".json")
-    }
-
-    private func read<T: Decodable>(_ type: T.Type, url: URL) -> T? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
+    private func read<Value: Decodable>(type: Value.Type, name: String, userId: UUID? = nil) -> Value? {
+        guard let data = try? Data(contentsOf: fileURL(name: name, userId: userId)) else { return nil }
         return try? JSONDecoder().decode(type, from: data)
     }
 
-    private func write<T: Encodable>(_ value: T, url: URL) {
+    private func write<Value: Encodable>(value: Value, name: String, userId: UUID? = nil) {
         guard let data = try? JSONEncoder().encode(value) else { return }
+        let url = fileURL(name: name, userId: userId)
         try? fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         excludeFromBackup()
         try? data.write(to: url, options: .atomic)
     }
 
-    // The birth date, the answers and the results must not stay in backups out of the app's control
+    // Profile data and test results must not enter the device backup.
     private func excludeFromBackup() {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
-
         var directory = baseURL
         try? directory.setResourceValues(values)
     }

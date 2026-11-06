@@ -24,28 +24,30 @@ final class HomeViewModelTests: XCTestCase {
     }
 
     func test_birthDateChange_hidesPreviousHoroscope_whenReloadFails() async {
-        let auth = MockAuthService(user: makeUser())
+        let auth = MockAuthService(user: makeUser(dateOfBirth: "20.01.1990"))
         let content = MockContentService()
         let viewModel = HomeViewModel(authService: auth, contentService: content, storage: makeStorage())
         await waitUntil { viewModel.horoscopeState == .loaded }
         content.errorToThrow = serverError
 
-        auth.authState.send(.signedIn(makeUser(dateOfBirth: "20.01.1990")))
+        auth.authState.send(.signedIn(makeUser()))
         await waitUntil { viewModel.horoscopeState == .failed("Ошибка сервера") }
 
         XCTAssertNil(viewModel.horoscope)
     }
 
-    func test_refreshFailure_showsError_insteadOfPreviousHoroscope() async {
+    func test_refreshFailure_keepsTheSavedHoroscopeFromThisWeek() async {
         let content = MockContentService()
-        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: makeStorage())
+        let storage = makeStorage()
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: "20.01.1990")), contentService: content, storage: storage)
         await waitUntil { viewModel.horoscopeState == .loaded }
         content.errorToThrow = serverError
 
         await viewModel.refresh()
 
-        XCTAssertNil(viewModel.horoscope)
-        XCTAssertEqual(viewModel.horoscopeState, .failed("Ошибка сервера"))
+        XCTAssertEqual(viewModel.horoscope, .mock)
+        XCTAssertEqual(viewModel.horoscopeState, .loaded)
+        XCTAssertEqual(storage.loadHoroscope(userId: UserModel.mock.id), .mock)
     }
 
     // MARK: - Daily insight
@@ -67,9 +69,7 @@ final class HomeViewModelTests: XCTestCase {
     func test_savedInsightFromAnotherDay_isNotShown_whenTheServerFails() async {
         // Given
         let storage = makeStorage()
-        storage.save(DailyContentModel(id: UUID(), text: "Вчерашний инсайт", dateCreated: "2000-01-01"),
-                     key: StorageKeys.dailyInsight,
-                     userId: UserModel.mock.id)
+        storage.saveDailyInsight(insight: DailyContentModel(id: UUID(), text: "Вчерашний инсайт", dateCreated: "2000-01-01"), userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
 
@@ -86,7 +86,7 @@ final class HomeViewModelTests: XCTestCase {
         // Given
         let insight = DailyContentModel(id: UUID(), text: "Сегодняшний инсайт", dateCreated: todayText())
         let storage = makeStorage()
-        storage.save(insight, key: StorageKeys.dailyInsight, userId: UserModel.mock.id)
+        storage.saveDailyInsight(insight: insight, userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
 

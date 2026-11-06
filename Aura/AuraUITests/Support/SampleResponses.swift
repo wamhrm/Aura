@@ -163,13 +163,19 @@ enum SampleResponses {
         ]
         """#.utf8)
 
-    static let daily = Data(#"""
+    static var daily: Data {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let date = formatter.string(from: Date())
+        return Data("""
         {
           "id": "9B2C7D10-5E3F-4A61-8C47-2F1D6E0A9B35",
           "text": "Сегодня вы спокойнее, чем кажется",
-          "dateCreated": "2026-11-03"
+          "dateCreated": "\(date)"
         }
-        """#.utf8)
+        """.utf8)
+    }
 
     static func object(_ data: Data) throws -> [String: Any] {
         try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])

@@ -47,8 +47,9 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertTrue(text("Здравствуйте, Анна").waitForExistence(timeout: 15))
     }
 
-    func test_signIn_keepsTheSessionAfterRelaunch() throws {
+    func test_signIn_restoresSavedContent_whenServerIsUnavailable() throws {
         // Given
+        try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
         try launchOnWelcome()
 
         // When
@@ -56,13 +57,30 @@ final class SignInUITests: AuraUITestCase {
 
         // Then
         assertOnMainScreen()
+        XCTAssertTrue(app.buttons["Читать"].firstMatch.waitForExistence(timeout: 10))
+        openHistory()
+        XCTAssertTrue(button(part: "Тихий стратег").waitForExistence(timeout: 10))
+        openProfile()
+        XCTAssertTrue(text("Общий персональный вывод").waitForExistence(timeout: 10))
+        XCTAssertTrue(text(dailyText).waitForExistence(timeout: 10))
 
         // When
         app.terminate()
+        let failure = try failingBody(serverError)
+        for route in ["GET /v1/auth/me", "GET /v1/horoscope/current", "GET /v1/daily/insight",
+                      "GET /v1/daily/tip", "GET /v1/history", "GET /v1/history/:historyID"] {
+            server.respond(route: route, status: 503, body: failure)
+        }
         app.launch()
 
         // Then
         assertOnMainScreen()
+        XCTAssertTrue(app.buttons["Читать"].firstMatch.waitForExistence(timeout: 10))
+        openHistory()
+        XCTAssertTrue(button(part: "Тихий стратег").waitForExistence(timeout: 10))
+        openProfile()
+        XCTAssertTrue(text("Общий персональный вывод").waitForExistence(timeout: 10))
+        XCTAssertTrue(text(dailyText).waitForExistence(timeout: 10))
     }
 
     // The password is shorter than the current minimum: old accounts have such passwords and must reach the server

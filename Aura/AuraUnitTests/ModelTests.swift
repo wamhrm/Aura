@@ -112,7 +112,7 @@ final class ModelTests: XCTestCase {
         let storage = LocalStorage(baseURL: folder)
 
         // When
-        storage.saveUser(.mock)
+        storage.saveUser(user: .mock)
 
         // Then
         XCTAssertEqual(storage.loadUser(), .mock)
@@ -125,15 +125,56 @@ final class ModelTests: XCTestCase {
         let anna = UUID()
         let ivan = UUID()
         let insight = DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: todayText())
-        storage.save(insight, key: StorageKeys.dailyInsight, userId: anna)
-        storage.save(insight, key: StorageKeys.dailyInsight, userId: ivan)
+        storage.saveDailyInsight(insight: insight, userId: anna)
+        storage.saveDailyInsight(insight: insight, userId: ivan)
 
         // When
         storage.deleteAll(userId: anna)
 
         // Then
-        XCTAssertNil(storage.load(StorageKeys.dailyInsight, userId: anna))
-        XCTAssertEqual(storage.load(StorageKeys.dailyInsight, userId: ivan), insight)
+        XCTAssertNil(storage.loadDailyInsight(userId: anna))
+        XCTAssertEqual(storage.loadDailyInsight(userId: ivan), insight)
+    }
+
+    func test_localStorage_restoresHistoryAndProfileContent() {
+        let storage = makeStorage()
+        let userId = UserModel.mock.id
+        let history = [HistoryCellModel.personalityPlaceholder]
+        let daily = DailyContentModel(id: UUID(), text: "Сегодня", dateCreated: todayText())
+        storage.saveHistory(history: history, userId: userId)
+        storage.savePersonality(result: StoredPersonality(historyId: history[0].id, result: .mock), userId: userId)
+        storage.saveDailyInsight(insight: daily, userId: userId)
+        storage.saveDailyTip(tip: daily, userId: userId)
+        storage.saveHoroscope(horoscope: .mock, userId: userId)
+
+        XCTAssertEqual(storage.loadHistory(userId: userId), history)
+        XCTAssertEqual(storage.loadPersonality(userId: userId)?.historyId, history[0].id)
+        XCTAssertEqual(storage.loadPersonality(userId: userId)?.result, .mock)
+        XCTAssertEqual(storage.loadDailyInsight(userId: userId), daily)
+        XCTAssertEqual(storage.loadDailyTip(userId: userId), daily)
+        XCTAssertEqual(storage.loadHoroscope(userId: userId), .mock)
+    }
+
+    func test_localStorage_doesNotReturnDailyContentFromAnotherDay() {
+        let storage = makeStorage()
+        let userId = UserModel.mock.id
+        let old = DailyContentModel(id: UUID(), text: "Вчера", dateCreated: "2000-01-01")
+        storage.saveDailyInsight(insight: old, userId: userId)
+        storage.saveDailyTip(tip: old, userId: userId)
+
+        XCTAssertNil(storage.loadDailyInsight(userId: userId))
+        XCTAssertNil(storage.loadDailyTip(userId: userId))
+    }
+
+    func test_localStorage_doesNotReturnHoroscopeFromAnotherWeek() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let storage = LocalStorage(baseURL: folder)
+        let userId = UserModel.mock.id
+        storage.saveHoroscope(horoscope: .mock, userId: userId)
+        let file = folder.appending(path: userId.uuidString).appending(path: "horoscope.json")
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(-8 * 24 * 60 * 60)], ofItemAtPath: file.path)
+
+        XCTAssertNil(storage.loadHoroscope(userId: userId))
     }
 
     // MARK: - Birth date

@@ -37,13 +37,13 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private let storage: any LocalStorageProtocol
+    private let storage: LocalStorage
 
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol,
-         storage: any LocalStorageProtocol = LocalStorage()) {
+         storage: LocalStorage = LocalStorage()) {
         self.authService = authService
         self.contentService = contentService
         self.storage = storage
@@ -106,12 +106,12 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         guard currentUserId == user.id else {
             currentUserId = user.id
 
-            if let cached = storage.load(StorageKeys.personality, userId: user.id) {
+            if let cached = storage.loadPersonality(userId: user.id) {
                 applyPersonality(result: cached.result)
             }
 
-            let cachedTip = storage.load(StorageKeys.dailyTip, userId: user.id)
-            dailyTip = cachedTip?.isFromToday == true ? cachedTip : nil
+            dailyTip = storage.loadDailyTip(userId: user.id)
+            tipState = dailyTip == nil ? .loading : .loaded
             updateProfileDisplay()
 
             Task { await refresh() }
@@ -151,11 +151,12 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         }
 
         do {
-            let tip = try await contentService.fetchDailyTip(userId: userId)
+            let tip = try await contentService.fetchDailyTip()
             guard currentUserId == userId else { return }
 
             dailyTip = tip
             tipState = .loaded
+            storage.saveDailyTip(tip: tip, userId: userId)
         } catch {
             guard currentUserId == userId, !error.isCancellation else { return }
 
@@ -178,13 +179,13 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             let history = try await contentService.fetchHistory()
             guard currentUserId == userId else { return }
 
-            storage.save(history, key: StorageKeys.history, userId: userId)
+            storage.saveHistory(history: history, userId: userId)
 
             guard let latest = history.first(where: { $0.kind == .personality }) else {
                 return clearPersonality(userId: userId)
             }
 
-            if let cached = storage.load(StorageKeys.personality, userId: userId), cached.historyId == latest.id {
+            if let cached = storage.loadPersonality(userId: userId), cached.historyId == latest.id {
                 return applyPersonality(result: cached.result)
             }
 
@@ -196,9 +197,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             }
 
             applyPersonality(result: result)
-            storage.save(StoredPersonality(historyId: latest.id, result: result),
-                         key: StorageKeys.personality,
-                         userId: userId)
+            storage.savePersonality(result: StoredPersonality(historyId: latest.id, result: result), userId: userId)
         } catch {
             guard currentUserId == userId, !error.isCancellation else { return }
 
@@ -272,7 +271,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         hasPersonalityTests = false
         personalityResult = nil
         personalityState = .loaded
-        storage.delete(StorageKeys.personality, userId: userId)
+        storage.deletePersonality(userId: userId)
         updateProfileDisplay()
     }
 }

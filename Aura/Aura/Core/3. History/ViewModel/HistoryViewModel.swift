@@ -28,7 +28,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private let storage: any LocalStorageProtocol
+    private let storage: LocalStorage
 
     private var currentUserId: UUID?
     private var cellToDelete: HistoryCellModel?
@@ -36,7 +36,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol,
-         storage: any LocalStorageProtocol = LocalStorage()) {
+         storage: LocalStorage = LocalStorage()) {
         self.authService = authService
         self.contentService = contentService
         self.storage = storage
@@ -85,7 +85,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
         guard currentUserId != user.id else { return }
 
         currentUserId = user.id
-        historyCells = storage.load(StorageKeys.history, userId: user.id) ?? []
+        historyCells = storage.loadHistory(userId: user.id) ?? []
         loadState = historyCells.isEmpty ? .loading : .loaded
 
         Task { await loadHistory(userId: user.id) }
@@ -111,7 +111,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
             historyCells = history
             loadState = .loaded
-            storage.save(history, key: StorageKeys.history, userId: userId)
+            storage.saveHistory(history: history, userId: userId)
         } catch {
             guard currentUserId == userId, !error.isCancellation else { return }
 
@@ -138,7 +138,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                 try await contentService.deleteHistory(id: item.id)
                 guard currentUserId == userId else { return }
                 historyCells.removeAll { $0.id == item.id }
-                storage.save(historyCells, key: StorageKeys.history, userId: userId)
+                storage.saveHistory(history: historyCells, userId: userId)
             } catch {
                 guard currentUserId == userId, !error.isCancellation else { return }
                 presentAlert("Не удалось удалить запись")
