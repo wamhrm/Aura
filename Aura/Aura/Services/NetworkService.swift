@@ -239,7 +239,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         urlRequest.httpMethod = method.rawValue
         urlRequest.timeoutInterval = timeout
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue(Constants.appVersion, forHTTPHeaderField: "X-App-Version")
         urlRequest.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Time-Zone")
         urlRequest.httpBody = body
 

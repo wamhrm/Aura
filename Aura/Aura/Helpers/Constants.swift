@@ -36,16 +36,11 @@ nonisolated enum Constants {
     }
 
     static var baseURL: String {
-        #if DEBUG
-        if let override = ProcessInfo.processInfo.environment["AURA_BASE_URL"], !override.isEmpty {
+        if uiTestID != nil,
+           let override = ProcessInfo.processInfo.environment["AURA_BASE_URL"], !override.isEmpty {
             return override
         }
-        #endif
         return productionBaseURL
-    }
-
-    static var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
     }
 
     static var privacyPolicyURL: URL? {
