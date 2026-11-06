@@ -6,6 +6,39 @@
 import XCTest
 
 final class CompatibilityUITests: AuraUITestCase {
+    func test_compatibilityRetry_keepsItsKey_untilTheUserProfileChanges() throws {
+        // Given
+        server.respond(route: "POST /v1/history/compatibility", status: 502, body: try failingBody(serverError))
+        try launchSignedIn()
+        openCompatibility()
+        fillField(app.textFields["Введите имя"].firstMatch, text: "Иван")
+        tapButton("Узнать совместимость")
+        XCTAssertEqual(alertText(), serverError)
+        let firstKey = try XCTUnwrap(server.idempotencyKeys.first)
+        closeAlert()
+
+        // When the same input is retried
+        tapButton("Узнать совместимость")
+        XCTAssertEqual(alertText(), serverError)
+        XCTAssertEqual(server.idempotencyKeys, [firstKey, firstKey])
+        closeAlert()
+
+        // When the user's name changes
+        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: sampleUser(["name": "Анна-Мария"])))
+        openSettings()
+        tapButton("Обновить информацию о себе")
+        fillField(app.textFields["Введите имя"].firstMatch, text: "-Мария")
+        tapButton("Готово")
+        XCTAssertTrue(app.navigationBars["Профиль"].waitForExistence(timeout: 10))
+        openCompatibility()
+        tapButton("Узнать совместимость")
+
+        // Then
+        XCTAssertEqual(alertText(), serverError)
+        XCTAssertEqual(server.idempotencyKeys.count, 3)
+        XCTAssertNotEqual(server.idempotencyKeys.last, firstKey)
+    }
+
     func test_form_checksTheFields_andShowsTheResult() throws {
         // Given
         try launchSignedIn()

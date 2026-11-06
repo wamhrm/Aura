@@ -17,7 +17,7 @@ func routes(app: Application) throws {
         }
     }
 
-    let v1 = app.grouped("v1").grouped(AppVersionMiddleware())
+    let v1 = app.grouped("v1")
 
     try v1.register(collection: AuthController())
     try v1.register(collection: ProfileController())

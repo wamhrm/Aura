@@ -31,7 +31,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private var historyTask: Task<[HistoryCellModel], any Error>?
     private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
     private var pendingCompatibilityTest: (request: CompatibilityTestRequest, requestID: UUID)?
-    private var currentUserId: UUID?
+    private var currentUser: UserModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(networkService: any NetworkServiceProtocol,
@@ -51,13 +51,17 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private func handleAuthState(_ authState: AuthState) {
         switch authState {
             case .signedIn(let user):
-                if currentUserId != user.id {
+                if currentUser?.id != user.id {
                     resetSessionState()
+                } else if currentUser?.name != user.name || currentUser?.profileInfo != user.profileInfo {
+                    // Both tests use the user's profile; edited input starts a new generation.
+                    pendingPersonalityTest = nil
+                    pendingCompatibilityTest = nil
                 }
-                currentUserId = user.id
+                currentUser = user
             case .signedOut:
                 resetSessionState()
-                currentUserId = nil
+                currentUser = nil
         }
     }
 
@@ -97,7 +101,9 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         pendingPersonalityTest = (selectedTests, requestID)
 
         let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
-        pendingPersonalityTest = nil
+        if pendingPersonalityTest?.requestID == requestID {
+            pendingPersonalityTest = nil
+        }
         notifyHistoryChanged()
         return result
     }
@@ -113,7 +119,9 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         pendingCompatibilityTest = (request, requestID)
 
         let result = try await networkService.makeCompatibilityTest(request, requestID: requestID)
-        pendingCompatibilityTest = nil
+        if pendingCompatibilityTest?.requestID == requestID {
+            pendingCompatibilityTest = nil
+        }
         notifyHistoryChanged()
         return result
     }
@@ -147,7 +155,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
 
     // A late answer must not bring back the files of a finished session
     private func saveToCache<Value>(_ value: Value, key: StorageKey<Value>, userId: UUID) {
-        guard currentUserId == userId else { return }
+        guard currentUser?.id == userId else { return }
         storage.save(value, key: key, userId: userId)
     }
 

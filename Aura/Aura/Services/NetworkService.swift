@@ -247,7 +247,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.setValue(idempotencyKey.uuidString, forHTTPHeaderField: "Idempotency-Key")
         }
 
-        let token = bearerToken(authorization: authorization)
+        let token = try bearerToken(authorization: authorization)
         if let token {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -277,14 +277,14 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         }
     }
 
-    private func bearerToken(authorization: RequestAuthorization) -> String? {
+    private func bearerToken(authorization: RequestAuthorization) throws -> String? {
         switch authorization {
             case .none:
                 return nil
             case .token(let token):
                 return token
             case .storedToken:
-                return keychain.loadAuthToken()
+                return try keychain.loadAuthToken()
         }
     }
 

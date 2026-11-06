@@ -228,9 +228,13 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     func signOut() {
-        showSettings = false
-        showAlert = false
-        authService.signOut()
+        do {
+            try authService.signOut()
+            showSettings = false
+            showAlert = false
+        } catch {
+            presentAlert(error.userMessage)
+        }
     }
 
     func deleteAccount() {

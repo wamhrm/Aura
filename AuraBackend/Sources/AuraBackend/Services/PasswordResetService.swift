@@ -23,29 +23,34 @@ struct PasswordResetService {
         guard let email = user.email else { return }
         let userID = try user.requireID()
 
-        try await PasswordReset.query(on: req.db)
-            .filter(\.$user.$id == userID)
-            .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
-            .delete()
-
-        let recentResets = try await PasswordReset.query(on: req.db)
-            .filter(\.$user.$id == userID)
-            .sort(\.$createdAt, .descending)
-            .all()
-
-        if let lastSentAt = recentResets.first?.createdAt, Date().timeIntervalSince(lastSentAt) < resendInterval {
-            throw Abort(.tooManyRequests, reason: "Код уже отправлен. Запросить новый можно через минуту")
-        }
-
-        guard recentResets.count < dailyLimit else {
-            throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
-        }
-
         let code = (0..<codeLength).map { _ in String(Int.random(in: 0...9)) }.joined()
-        let reset = PasswordReset(userID: userID,
-                                  codeHash: hash(code: code, userID: userID),
-                                  expiresAt: Date().addingTimeInterval(codeLifetime))
-        try await reset.save(on: req.db)
+        let reset = try await req.db.transaction { database in
+            try await database.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
+
+            try await PasswordReset.query(on: database)
+                .filter(\.$user.$id == userID)
+                .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
+                .delete()
+
+            let recentResets = try await PasswordReset.query(on: database)
+                .filter(\.$user.$id == userID)
+                .sort(\.$createdAt, .descending)
+                .all()
+
+            if let lastSentAt = recentResets.first?.createdAt, Date().timeIntervalSince(lastSentAt) < resendInterval {
+                throw Abort(.tooManyRequests, reason: "Код уже отправлен. Запросить новый можно через минуту")
+            }
+
+            guard recentResets.count < dailyLimit else {
+                throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
+            }
+
+            let reset = PasswordReset(userID: userID,
+                                      codeHash: hash(code: code, userID: userID),
+                                      expiresAt: Date().addingTimeInterval(codeLifetime))
+            try await reset.save(on: database)
+            return reset
+        }
 
         do {
             try await emailService.send(recipient: email,
@@ -59,7 +64,7 @@ struct PasswordResetService {
         }
     }
 
-    func verifyCode(code: String, user: User, req: Request) async throws {
+    func verifyCode(code: String, user: User, req: Request) async throws -> UUID {
         let userID = try user.requireID()
 
         guard let reset = try await PasswordReset.query(on: req.db)
@@ -82,6 +87,8 @@ struct PasswordResetService {
         guard reset.codeHash == hash(code: code, userID: userID) else {
             throw Abort(.badRequest, reason: "Неверный код")
         }
+
+        return resetID
     }
 
     private func hash(code: String, userID: UUID) -> String {

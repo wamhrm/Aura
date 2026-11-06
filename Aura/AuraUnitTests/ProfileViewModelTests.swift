@@ -3,11 +3,26 @@
 //  AuraUnitTests
 //
 
+import Combine
 import XCTest
 @testable import Aura
 
 @MainActor
 final class ProfileViewModelTests: XCTestCase {
+    func test_failedSignOut_showsError_andKeepsSettingsOpen() {
+        let auth = MockAuthService(user: makeUser())
+        auth.errorToThrow = serverError
+        let viewModel = ProfileViewModel(authService: auth, contentService: MockContentService(), storage: makeStorage())
+        viewModel.showSettings = true
+
+        viewModel.signOut()
+
+        XCTAssertTrue(viewModel.showSettings)
+        XCTAssertTrue(viewModel.showAlert)
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        guard case .signedIn = auth.authState.value else { return XCTFail("Session was ended") }
+    }
+
     func test_lastResultDeleted_returnsToTheLockedScreen_andForgetsTheSavedResult() async {
         // Given
         let storage = makeStorage()

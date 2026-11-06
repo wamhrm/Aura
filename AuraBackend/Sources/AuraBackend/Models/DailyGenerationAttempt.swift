@@ -19,9 +19,6 @@ final class DailyGenerationAttempt: Model, @unchecked Sendable {
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
 
-    @OptionalField(key: "finished_at")
-    var finishedAt: Date?
-
     init() {}
 
     init(userID: User.IDValue, kind: DailyContentKind, generatedDate: String) {

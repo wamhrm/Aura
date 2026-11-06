@@ -50,19 +50,20 @@ final class RootViewModel: ObservableObject {
     func handleScenePhase(_ phase: ScenePhase) {
         guard phase == .active else { return }
 
-        restoreSession()
+        Task {
+            await restoreSession()
 
-        guard Date().timeIntervalSince(lastRefreshDate) >= refreshInterval else { return }
-
-        lastRefreshDate = Date()
-        authService.refreshUser()
-        contentService.refreshRequested.send()
+            guard case .signedIn = authService.authState.value,
+                  Date().timeIntervalSince(lastRefreshDate) >= refreshInterval else { return }
+            lastRefreshDate = Date()
+            authService.refreshUser()
+            contentService.refreshRequested.send()
+        }
     }
 
-    private func restoreSession() {
+    private func restoreSession() async {
         guard case .signedOut = authService.authState.value else { return }
-
-        authService.restoreSessionIfNeeded()
+        await authService.restoreSessionIfNeeded()
 
         if screen == .onboarding, case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             screen = .main

@@ -6,15 +6,12 @@
 //
 
 import Fluent
-import FluentPostgresDriver
 import Vapor
 
 struct PsychologyController: RouteCollection {
     private static let personalitySingleFlight = SingleFlight<PersonalityResultDTO>()
     private static let compatibilitySingleFlight = SingleFlight<CompatibilityResultDTO>()
     private let psychologyService = PsychologyService()
-    private let dailyTestLimit = 10
-    private let dailyTestLimitWindow: TimeInterval = 24 * 60 * 60
 
     func boot(routes: any RoutesBuilder) throws {
         let history = routes.grouped("history")
@@ -37,26 +34,19 @@ struct PsychologyController: RouteCollection {
                 return try HistoryDTOMapper.decodePersonalityResult(resultJSON: entry.result)
             }
 
-            let usage = try await reserveTest(user: user, database: req.db)
+            let response = try await psychologyService.makePersonalityTest(user: user, testKeys: testKeys, req: req)
+            let entry = History(userID: userID,
+                                requestID: requestID,
+                                kind: .personality,
+                                selectedTests: response.selectedTests,
+                                title: response.archetypeTitle,
+                                subtitle: response.archetypeSubtitle,
+                                zodiacSign: response.zodiacSign,
+                                result: try encodedResult(result: response))
 
-            do {
-                let response = try await psychologyService.makePersonalityTest(user: user, testKeys: testKeys, req: req)
-                let entry = History(userID: userID,
-                                    requestID: requestID,
-                                    kind: .personality,
-                                    selectedTests: response.selectedTests,
-                                    title: response.archetypeTitle,
-                                    subtitle: response.archetypeSubtitle,
-                                    zodiacSign: response.zodiacSign,
-                                    result: try encodedResult(result: response))
+            try await entry.save(on: req.db)
 
-                try await entry.save(on: req.db)
-
-                return response
-            } catch {
-                try? await usage.delete(on: req.db)
-                throw error
-            }
+            return response
         }
     }
 
@@ -71,29 +61,22 @@ struct PsychologyController: RouteCollection {
                 return try HistoryDTOMapper.decodeCompatibilityResult(resultJSON: entry.result)
             }
 
-            let usage = try await reserveTest(user: user, database: req.db)
+            let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
+            let entry = History(userID: userID,
+                                requestID: requestID,
+                                kind: .compatibility,
+                                selectedTests: response.selectedTests,
+                                title: response.title,
+                                subtitle: response.subtitle,
+                                zodiacSign: response.userZodiacSign,
+                                compatibilityScore: response.compatibilityScore,
+                                partnerName: response.partnerName,
+                                partnerZodiacSign: response.partnerZodiacSign,
+                                result: try encodedResult(result: response))
 
-            do {
-                let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
-                let entry = History(userID: userID,
-                                    requestID: requestID,
-                                    kind: .compatibility,
-                                    selectedTests: response.selectedTests,
-                                    title: response.title,
-                                    subtitle: response.subtitle,
-                                    zodiacSign: response.userZodiacSign,
-                                    compatibilityScore: response.compatibilityScore,
-                                    partnerName: response.partnerName,
-                                    partnerZodiacSign: response.partnerZodiacSign,
-                                    result: try encodedResult(result: response))
+            try await entry.save(on: req.db)
 
-                try await entry.save(on: req.db)
-
-                return response
-            } catch {
-                try? await usage.delete(on: req.db)
-                throw error
-            }
+            return response
         }
     }
 
@@ -110,37 +93,16 @@ struct PsychologyController: RouteCollection {
                            requestID: UUID,
                            userID: UUID,
                            database: any Database) async throws -> History? {
-        try await History.query(on: database)
+        guard let entry = try await History.query(on: database)
             .filter(\.$user.$id == userID)
             .filter(\.$requestID == requestID)
-            .filter(\.$kind == kind)
-            .first()
-    }
+            .first() else { return nil }
 
-    // Takes an attempt before OpenAI is called, so parallel requests can't pass the limit together
-    private func reserveTest(user: User, database: any Database) async throws -> TestUsage {
-        let userID = try user.requireID()
-
-        return try await database.transaction { transaction in
-            try await transaction.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
-
-            try await TestUsage.query(on: transaction)
-                .filter(\.$user.$id == userID)
-                .filter(\.$createdAt < Date().addingTimeInterval(-dailyTestLimitWindow))
-                .delete()
-
-            let testsInLastDay = try await TestUsage.query(on: transaction)
-                .filter(\.$user.$id == userID)
-                .count()
-
-            guard testsInLastDay < dailyTestLimit else {
-                throw Abort(.tooManyRequests, reason: "Достигнут лимит тестов за сутки. Попробуйте позже")
-            }
-
-            let usage = TestUsage(userID: userID)
-            try await usage.save(on: transaction)
-            return usage
+        guard entry.kind == kind else {
+            throw Abort(.conflict, reason: "Этот идентификатор запроса уже использован для другого вида теста")
         }
+
+        return entry
     }
 
     private func encodedResult<T: Encodable>(result: T) throws -> String {

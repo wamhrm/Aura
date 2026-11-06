@@ -3,12 +3,27 @@
 //  AuraUnitTests
 //
 
+import Combine
 import SwiftUI
 import XCTest
 @testable import Aura
 
 @MainActor
 final class OnboardingViewModelTests: XCTestCase {
+    func test_failedSignOut_showsError_andKeepsCurrentStep() {
+        let auth = MockAuthService(user: makeUser(hasAIConsent: false))
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.onboardingRoutes = [.aiConsent]
+        auth.errorToThrow = serverError
+
+        viewModel.signOut()
+
+        XCTAssertEqual(viewModel.onboardingRoutes, [.aiConsent])
+        XCTAssertTrue(viewModel.showAlert)
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        guard case .signedIn = auth.authState.value else { return XCTFail("Session was ended") }
+    }
+
     private func makeViewModel(auth: MockAuthService, onFinish: @escaping () -> Void = {}) -> OnboardingViewModel {
         OnboardingViewModel(authService: auth, contentService: MockContentService(), onFinish: onFinish)
     }
@@ -172,7 +187,7 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(signedOut.screen, .onboarding)
     }
 
-    func test_root_refreshesTheUser_onlyAfterTheInterval() {
+    func test_root_refreshesTheUser_onlyAfterTheInterval() async {
         // Given
         let auth = MockAuthService(user: makeUser())
         let content = MockContentService()
@@ -183,6 +198,7 @@ final class OnboardingViewModelTests: XCTestCase {
         justOpened.handleScenePhase(.active)
         let refreshesBeforeTheInterval = auth.refreshUserCount
         openedLongAgo.handleScenePhase(.active)
+        await waitUntil { auth.refreshUserCount == 1 }
 
         // Then
         XCTAssertEqual(refreshesBeforeTheInterval, 0)

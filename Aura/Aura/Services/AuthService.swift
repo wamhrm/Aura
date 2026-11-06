@@ -25,10 +25,10 @@ protocol AuthServiceProtocol {
     func giveAIConsent() async throws
     func sendEmailConfirmationCode() async throws
     func confirmEmail(code: String) async throws
-    func signOut()
+    func signOut() throws
     func deleteAccount() async throws
     func refreshUser()
-    func restoreSessionIfNeeded()
+    func restoreSessionIfNeeded() async
 }
 
 @MainActor
@@ -38,6 +38,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
     private let storage: any LocalStorageProtocol
+    private var refreshTask: Task<Void, Never>?
+
+    private var currentUser: UserModel? {
+        if case .signedIn(let user) = authState.value { return user }
+        return nil
+    }
 
     init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
@@ -52,12 +58,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     func createAccount(name: String, email: String, password: String) async throws {
         let response = try await networkService.createAccount(name: name, email: normalizeEmail(email), password: password)
-        startSession(response: response)
+        try startSession(response: response)
     }
 
     func signIn(email: String, password: String) async throws {
         let response = try await networkService.signIn(email: normalizeEmail(email), password: password)
-        startSession(response: response)
+        try startSession(response: response)
     }
 
     func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
@@ -65,7 +71,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
                                                                 authorizationCode: authorizationCode,
                                                                 nonce: nonce,
                                                                 name: name)
-        startSession(response: response)
+        try startSession(response: response)
     }
 
     func requestPasswordReset(email: String) async throws {
@@ -76,29 +82,40 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let response = try await networkService.resetPassword(email: normalizeEmail(email),
                                                               code: code,
                                                               password: newPassword)
-        startSession(response: response)
+        try startSession(response: response)
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+        cancelRefresh()
+        let token = try keychain.loadAuthToken()
         let response = try await networkService.updateProfileInfo(request)
 
-        // The answer may arrive after sign-out and must not bring the session back
-        guard case .signedIn(let currentUser) = authState.value, currentUser.id == response.user.id else {
-            return response
-        }
+        guard let currentUser, currentUser.id == response.user.id,
+              try keychain.loadAuthToken() == token else { return response }
 
-        storage.saveUser(response.user)
+        cancelRefresh()
+        var user = response.user
+        // Consent and confirmation may have completed while the profile was being saved.
+        if currentUser.hasAIConsent == true { user.hasAIConsent = true }
+        if currentUser.isEmailConfirmed == true { user.isEmailConfirmed = true }
+        storage.saveUser(user)
         if let horoscope = response.horoscope {
-            storage.save(horoscope, key: StorageKeys.horoscope, userId: response.user.id)
+            storage.save(horoscope, key: StorageKeys.horoscope, userId: user.id)
         }
-        authState.send(.signedIn(response.user))
-        return response
+        authState.send(.signedIn(user))
+        return UpdateProfileInfoResponse(user: user, horoscope: response.horoscope)
     }
 
     func giveAIConsent() async throws {
-        let user = try await networkService.giveAIConsent()
-        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else { return }
+        cancelRefresh()
+        let token = try keychain.loadAuthToken()
+        let response = try await networkService.giveAIConsent()
+        guard var user = currentUser, user.id == response.id,
+              try keychain.loadAuthToken() == token else { return }
 
+        cancelRefresh()
+        // This endpoint changes consent, not the rest of the current profile.
+        user.hasAIConsent = response.hasAIConsent
         storage.saveUser(user)
         authState.send(.signedIn(user))
     }
@@ -108,33 +125,40 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func confirmEmail(code: String) async throws {
-        let user = try await networkService.confirmEmail(code: code)
-        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else { return }
+        cancelRefresh()
+        let token = try keychain.loadAuthToken()
+        let response = try await networkService.confirmEmail(code: code)
+        guard var user = currentUser, user.id == response.id,
+              try keychain.loadAuthToken() == token else { return }
 
+        cancelRefresh()
+        user.isEmailConfirmed = response.isEmailConfirmed
         storage.saveUser(user)
         authState.send(.signedIn(user))
     }
 
-    func signOut() {
-        if let token = keychain.loadAuthToken() {
+    func signOut() throws {
+        let token = try? keychain.loadAuthToken()
+        try endSession()
+
+        if let token {
             let networkService = networkService
             Task { try? await networkService.logout(token: token) }
         }
-
-        endSession()
     }
 
     func deleteAccount() async throws {
         try await networkService.deleteAccount()
-        endSession()
+        try endSession()
     }
 
-    private func endSession() {
+    private func endSession() throws {
+        try keychain.deleteAuthToken()
+        cancelRefresh()
         if let user = storage.loadUser() {
             storage.deleteAll(userId: user.id)
         }
 
-        keychain.deleteAuthToken()
         storage.deleteUser()
         authState.send(.signedOut)
     }
@@ -145,58 +169,55 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         Task { [weak self] in
             for await expiredToken in events {
                 // A late answer to a request of the previous session must not end the current one
-                guard let self, case .signedIn = authState.value, expiredToken == keychain.loadAuthToken() else { continue }
-                endSession()
+                guard let self, expiredToken == (try? keychain.loadAuthToken()) else { continue }
+                try? endSession()
             }
         }
     }
 
     private func autoSignIn() {
-        let hasToken = keychain.loadAuthToken() != nil
-
-        if hasToken, let user = storage.loadUser() {
-            authState.send(.signedIn(user))
-            refreshUser()
-            return
-        }
-
-        if hasToken {
-            keychain.deleteAuthToken()
-        }
-
-        authState.send(.signedOut)
-    }
-
-    // The Keychain is unreadable until the first unlock after a restart, so such a launch looks signed out
-    func restoreSessionIfNeeded() {
-        guard case .signedOut = authState.value,
-              keychain.loadAuthToken() != nil,
-              let user = storage.loadUser() else { return }
-
+        guard (try? keychain.loadAuthToken()) != nil, let user = storage.loadUser() else { return }
         authState.send(.signedIn(user))
         refreshUser()
     }
 
-    // The saved profile may be out of date: it could have changed on another device
-    func refreshUser() {
-        guard case .signedIn = authState.value else { return }
+    func restoreSessionIfNeeded() async {
+        guard currentUser == nil, (try? keychain.loadAuthToken()) != nil else { return }
+        if let user = storage.loadUser() {
+            authState.send(.signedIn(user))
+            refreshUser()
+            return
+        }
+        refreshUser()
+        await refreshTask?.value
+    }
 
+    func refreshUser() {
+        guard refreshTask == nil, let token = try? keychain.loadAuthToken() else { return }
+        let previousUser = currentUser
         let networkService = networkService
 
-        Task { [weak self] in
-            guard let user = try? await networkService.fetchCurrentUser(),
-                  let self,
-                  case .signedIn(let currentUser) = authState.value,
-                  currentUser.id == user.id,
-                  currentUser != user else { return }
+        refreshTask = Task { [weak self] in
+            let user = try? await networkService.fetchCurrentUser()
+            guard let self, !Task.isCancelled else { return }
+            defer { refreshTask = nil }
+
+            guard let user, currentUser == previousUser, user != currentUser,
+                  (try? keychain.loadAuthToken()) == token else { return }
 
             storage.saveUser(user)
             authState.send(.signedIn(user))
         }
     }
 
-    private func startSession(response: AuthTokenResponse) {
-        keychain.saveAuthToken(response.token)
+    private func cancelRefresh() {
+        refreshTask?.cancel()
+        refreshTask = nil
+    }
+
+    private func startSession(response: AuthTokenResponse) throws {
+        try keychain.saveAuthToken(response.token)
+        cancelRefresh()
         storage.saveUser(response.user)
         authState.send(.signedIn(response.user))
     }

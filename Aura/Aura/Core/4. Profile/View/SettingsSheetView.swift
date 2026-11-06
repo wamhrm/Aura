@@ -81,6 +81,9 @@ struct SettingsSheetView: View {
             }
         }
         .interactiveDismissDisabled(vm.isDeletingAccount)
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("ОК", role: .cancel) {}
+        }
         .alert("Не удалось удалить аккаунт", isPresented: $vm.showDeleteAccountError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -107,7 +110,6 @@ extension SettingsSheetView {
         Button("Отмена", role: .cancel) {}
         Button("Выйти", role: .destructive) {
             vm.signOut()
-            dismiss()
         }
     }
 

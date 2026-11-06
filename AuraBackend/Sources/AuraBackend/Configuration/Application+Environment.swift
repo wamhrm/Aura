@@ -7,14 +7,6 @@
 
 import Vapor
 
-private struct MissingEnvironment: Error, CustomStringConvertible {
-    let names: [String]
-
-    var description: String {
-        "Set these environment variables: \(names.joined(separator: ", "))"
-    }
-}
-
 extension Application {
     // A production server without these can't do its work, so it stops at launch with a clear message
     func validateEnvironment() throws {
@@ -30,7 +22,9 @@ extension Application {
 
         let missing = required.filter { !isSet(name: $0) }
 
-        guard missing.isEmpty else { throw MissingEnvironment(names: missing) }
+        guard missing.isEmpty else {
+            throw Abort(.internalServerError, reason: "Set these environment variables: \(missing.joined(separator: ", "))")
+        }
     }
 
     private func isSet(name: String) -> Bool {

@@ -8,7 +8,7 @@ func configure(app: Application) async throws {
     app.http.server.configuration.port = Int(Environment.get("PORT") ?? "8080") ?? 8080
 
     app.middleware = Middlewares()
-    app.middleware.use(RequestLoggingMiddleware())
+    app.middleware.use(RouteLoggingMiddleware(logLevel: .info))
     app.middleware.use(AppErrorMiddleware())
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 

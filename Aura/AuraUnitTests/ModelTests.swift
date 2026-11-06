@@ -70,6 +70,20 @@ final class ModelTests: XCTestCase {
         XCTAssertTrue(text.contains("мая 2026"), text)
     }
 
+    func test_keychain_readsSavedToken_andReportsMissingItem() throws {
+        let keychain = KeychainHelper()
+        let path = "aura-tests-" + UUID().uuidString
+        defer { try? keychain.deleteToken(path: path, key: "token") }
+
+        XCTAssertNil(try keychain.getToken(path: path, key: "token"))
+        try keychain.saveToken(Data("first".utf8), path: path, key: "token")
+        try keychain.saveToken(Data("second".utf8), path: path, key: "token")
+        XCTAssertEqual(try keychain.getToken(path: path, key: "token"), Data("second".utf8))
+        try keychain.deleteToken(path: path, key: "token")
+        XCTAssertNil(try keychain.getToken(path: path, key: "token"))
+        XCTAssertNoThrow(try keychain.deleteToken(path: path, key: "token"))
+    }
+
     func test_localStorage_readsBackTheSavedUser_andStaysOutOfBackups() throws {
         // Given
         let folder = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)

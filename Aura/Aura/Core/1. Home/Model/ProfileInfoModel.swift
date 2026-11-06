@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ProfileInfoModel: Codable {
+struct ProfileInfoModel: Codable, Equatable {
     var name: String?
     var dateOfBirth = ""
     var birthTime = ""

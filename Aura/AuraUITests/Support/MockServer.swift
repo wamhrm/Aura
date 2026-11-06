@@ -14,6 +14,7 @@ final class MockServer: @unchecked Sendable {
     private let lock = NSLock()
     private var responses: [String: (status: Int, body: Data)] = [:]
     private var receivedRequests: [String] = []
+    private var receivedIdempotencyKeys: [String] = []
 
     init() throws {
         listener = try NWListener(using: .tcp, on: .any)
@@ -49,6 +50,10 @@ final class MockServer: @unchecked Sendable {
         lock.withLock { receivedRequests }
     }
 
+    var idempotencyKeys: [String] {
+        lock.withLock { receivedIdempotencyKeys }
+    }
+
     func respond(route: String, status: Int = 200, body: Data = Data()) {
         lock.withLock { responses[route] = (status, body) }
     }
@@ -79,14 +84,22 @@ final class MockServer: @unchecked Sendable {
                 return
             }
 
-            answer(connection, requestLine: lines.first.map(String.init) ?? "")
+            let idempotencyKey = lines
+                .first { $0.lowercased().hasPrefix("idempotency-key:") }
+                .flatMap { $0.split(separator: ":", maxSplits: 1).last }
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+
+            answer(connection, requestLine: lines.first.map(String.init) ?? "", idempotencyKey: idempotencyKey)
         }
     }
 
-    private func answer(_ connection: NWConnection, requestLine: String) {
+    private func answer(_ connection: NWConnection, requestLine: String, idempotencyKey: String?) {
         let route = route(requestLine: requestLine)
         let (status, body) = lock.withLock { () -> (Int, Data) in
             self.receivedRequests.append(route)
+            if let idempotencyKey {
+                self.receivedIdempotencyKeys.append(idempotencyKey)
+            }
             return self.responses[route] ?? (404, Data(#"{"error":true,"reason":"Не найдено"}"#.utf8))
         }
 

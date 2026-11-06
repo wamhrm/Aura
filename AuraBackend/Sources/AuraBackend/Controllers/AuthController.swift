@@ -63,7 +63,7 @@ struct AuthController: RouteCollection {
             throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
         }
 
-        return try await issueToken(user: user, req: req).encodeResponse(status: .created, for: req)
+        return try await issueToken(user: user, database: req.db).encodeResponse(status: .created, for: req)
     }
 
     private func signIn(req: Request) async throws -> AuthDTO {
@@ -82,9 +82,18 @@ struct AuthController: RouteCollection {
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        try await clearSignInAttempts(user: user, database: req.db)
+        let userID = try user.requireID()
+        return try await req.db.transaction { database in
+            try await database.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
 
-        return try await issueToken(user: user, req: req)
+            // A reset may have changed the password while this request was verifying the old hash.
+            guard let currentUser = try await User.find(userID, on: database), currentUser.passwordHash == passwordHash else {
+                throw Abort(.unauthorized, reason: "Неверная почта или пароль")
+            }
+
+            try await clearSignInAttempts(user: currentUser, database: database)
+            return try await issueToken(user: currentUser, database: database)
+        }
     }
 
     // Guessing a password from many addresses is limited too. The attempt is taken in one statement,
@@ -138,24 +147,33 @@ struct AuthController: RouteCollection {
               user.passwordHash != nil
         else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
 
-        try await passwordResetService.verifyCode(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                  user: user,
-                                                  req: req)
+        let resetID = try await passwordResetService.verifyCode(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                                user: user,
+                                                                req: req)
 
         let userID = try user.requireID()
-        user.passwordHash = try await req.password.async.hash(data.password)
+        let passwordHash = try await req.password.async.hash(data.password)
 
-        // The code came to this address, so the address is confirmed too
-        user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
+        return try await req.db.transaction { database in
+            try await database.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
 
-        try await req.db.transaction { database in
+            // Hashing takes time: the checked code must still be current and unused.
+            guard let reset = try await PasswordReset.query(on: database)
+                .filter(\.$user.$id == userID)
+                .sort(\.$createdAt, .descending)
+                .first(), reset.id == resetID, reset.expiresAt > Date() else {
+                throw Abort(.badRequest, reason: "Код недействителен. Запросите новый")
+            }
+
+            user.passwordHash = passwordHash
+            // The code came to this address, so the address is confirmed too.
+            user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
             try await user.save(on: database)
             try await clearSignInAttempts(user: user, database: database)
             try await Token.query(on: database).filter(\.$user.$id == userID).delete()
             try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
+            return try await issueToken(user: user, database: database)
         }
-
-        return try await issueToken(user: user, req: req)
     }
 
     private func sendEmailConfirmationCode(req: Request) async throws -> HTTPStatus {
@@ -191,7 +209,7 @@ struct AuthController: RouteCollection {
             try await user.save(on: req.db)
         }
 
-        return try await issueToken(user: user, req: req)
+        return try await issueToken(user: user, database: req.db)
     }
 
     private func createAppleUser(appleUserID: String, name: String?, req: Request) async throws -> User {
@@ -211,10 +229,10 @@ struct AuthController: RouteCollection {
         }
     }
 
-    private func issueToken(user: User, req: Request) async throws -> AuthDTO {
+    private func issueToken(user: User, database: any Database) async throws -> AuthDTO {
         let userID = try user.requireID()
 
-        try await Token.query(on: req.db)
+        try await Token.query(on: database)
             .filter(\.$user.$id == userID)
             .filter(\.$expiresAt < Date())
             .delete()
@@ -223,7 +241,7 @@ struct AuthController: RouteCollection {
         let token = Token(value: Token.hash(value: tokenValue),
                           userID: userID,
                           expiresAt: Date().addingTimeInterval(Token.lifetime))
-        try await token.save(on: req.db)
+        try await token.save(on: database)
 
         return AuthDTO(token: tokenValue, user: try user.toDTO())
     }

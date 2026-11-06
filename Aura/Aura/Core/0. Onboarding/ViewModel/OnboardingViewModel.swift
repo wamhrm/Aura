@@ -212,9 +212,13 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     func signOut() {
-        hasSession = false
-        onboardingRoutes = []
-        authService.signOut()
+        do {
+            try authService.signOut()
+            hasSession = false
+            onboardingRoutes = []
+        } catch {
+            presentAlert(error.userMessage)
+        }
     }
 
     func showNextIntroPage() {

@@ -121,7 +121,8 @@ final class MockAuthService: AuthServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
-    func signOut() {
+    func signOut() throws {
+        if let errorToThrow { throw errorToThrow }
         authState.send(.signedOut)
     }
 
@@ -134,7 +135,7 @@ final class MockAuthService: AuthServiceProtocol {
         refreshUserCount += 1
     }
 
-    func restoreSessionIfNeeded() { }
+    func restoreSessionIfNeeded() async { }
 
     private func startSession() throws {
         if let errorToThrow { throw errorToThrow }

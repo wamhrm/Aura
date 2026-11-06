@@ -22,29 +22,34 @@ struct EmailConfirmationService {
         guard !user.isEmailConfirmed, let email = user.email else { return }
         let userID = try user.requireID()
 
-        try await EmailConfirmation.query(on: req.db)
-            .filter(\.$user.$id == userID)
-            .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
-            .delete()
-
-        let recentCodes = try await EmailConfirmation.query(on: req.db)
-            .filter(\.$user.$id == userID)
-            .sort(\.$createdAt, .descending)
-            .all()
-
-        if let lastSentAt = recentCodes.first?.createdAt, Date().timeIntervalSince(lastSentAt) < resendInterval {
-            throw Abort(.tooManyRequests, reason: "Код уже отправлен. Запросить новый можно через минуту")
-        }
-
-        guard recentCodes.count < dailyLimit else {
-            throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
-        }
-
         let code = (0..<codeLength).map { _ in String(Int.random(in: 0...9)) }.joined()
-        let confirmation = EmailConfirmation(userID: userID,
-                                             codeHash: hash(code: code, userID: userID),
-                                             expiresAt: Date().addingTimeInterval(codeLifetime))
-        try await confirmation.save(on: req.db)
+        let confirmation = try await req.db.transaction { database in
+            try await database.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
+
+            try await EmailConfirmation.query(on: database)
+                .filter(\.$user.$id == userID)
+                .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
+                .delete()
+
+            let recentCodes = try await EmailConfirmation.query(on: database)
+                .filter(\.$user.$id == userID)
+                .sort(\.$createdAt, .descending)
+                .all()
+
+            if let lastSentAt = recentCodes.first?.createdAt, Date().timeIntervalSince(lastSentAt) < resendInterval {
+                throw Abort(.tooManyRequests, reason: "Код уже отправлен. Запросить новый можно через минуту")
+            }
+
+            guard recentCodes.count < dailyLimit else {
+                throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
+            }
+
+            let confirmation = EmailConfirmation(userID: userID,
+                                                 codeHash: hash(code: code, userID: userID),
+                                                 expiresAt: Date().addingTimeInterval(codeLifetime))
+            try await confirmation.save(on: database)
+            return confirmation
+        }
 
         do {
             try await emailService.send(recipient: email,
