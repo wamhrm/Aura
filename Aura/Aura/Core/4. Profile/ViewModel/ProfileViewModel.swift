@@ -73,8 +73,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         contentService.historyDidChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
-                guard let self, let userId = currentUserId else { return }
-                Task { await loadPersonality(userId: userId) }
+                guard let self else { return }
+                Task { await refresh() }
             }
             .store(in: &cancellables)
 
@@ -124,18 +124,11 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     func refresh() async {
-        guard let user, let userId = currentUserId else { return }
-
-        async let personality: Void = loadPersonality(userId: userId)
-
-        if user.allowsAIAnalysis {
-            await loadDailyTip(userId: userId)
-        }
-
-        await personality
+        guard let userId = currentUserId else { return }
+        await loadPersonality(userId: userId)
+        await loadDailyTip(userId: userId)
     }
 
-    // The only retry button on the locked screen, so it brings back the tip hidden behind the blur as well
     func retryPersonality() {
         Task { await refresh() }
     }
@@ -146,6 +139,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     private func loadDailyTip(userId: UUID) async {
+        guard currentUserId == userId, hasPersonalityTests, user?.allowsAIAnalysis == true else { return }
+
         if dailyTip == nil {
             tipState = .loading
         }

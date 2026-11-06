@@ -22,12 +22,6 @@ struct LoadingStepView: View {
                 .bold()
                 .multilineTextAlignment(.center)
 
-            VStack(alignment: .leading, spacing: 15) {
-                ForEach(vm.loadingStages, id: \.self) { stage in
-                    stageView(stage)
-                }
-            }
-
             if vm.hasLoadingFailed {
                 VStack(spacing: 15) {
                     Text(vm.alertMessage)
@@ -68,26 +62,8 @@ extension LoadingStepView {
         }
         .frame(width: 130, height: 130)
     }
-
-    private func stageView(_ stage: OnboardingLoadingStage) -> some View {
-        HStack(spacing: 12) {
-            if vm.isCompleted(stage) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-            } else {
-                ProgressView()
-                    .frame(width: 22, height: 22)
-            }
-
-            Text(stage.title)
-                .font(Adaptive.size(.callout, .body))
-                .fontWeight(.medium)
-        }
-    }
 }
 
 #Preview {
-    LoadingStepView(vm: OnboardingViewModel(authService: AuthService.preview,
-                                            contentService: ContentService.preview) {})
+    LoadingStepView(vm: OnboardingViewModel(authService: AuthService.preview) {})
 }

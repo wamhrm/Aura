@@ -9,6 +9,24 @@ import XCTest
 
 @MainActor
 final class ProfileViewModelTests: XCTestCase {
+    func test_lockedProfile_doesNotLoadTip_andFirstResultUnlocksLoading() async {
+        let storage = makeStorage()
+        let content = MockContentService()
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: storage)
+        await waitUntil { viewModel.personalityState == .loaded }
+        XCTAssertEqual(content.tipCount, 0)
+
+        let result = HistoryCellModel.personalityPlaceholder
+        storage.save(StoredPersonality(historyId: result.id, result: .mock), key: StorageKeys.personality, userId: UserModel.mock.id)
+        content.history = [result]
+        content.historyDidChange.send()
+        await waitUntil { viewModel.tipState == .loaded }
+
+        XCTAssertTrue(viewModel.hasPersonalityTests)
+        XCTAssertEqual(content.tipCount, 1)
+        XCTAssertNotNil(viewModel.dailyTip)
+    }
+
     func test_failedSignOut_showsError_andKeepsSettingsOpen() {
         let auth = MockAuthService(user: makeUser())
         auth.errorToThrow = serverError

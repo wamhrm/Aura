@@ -31,6 +31,5 @@ struct PasswordStepView: View {
 }
 
 #Preview {
-    PasswordStepView(vm: OnboardingViewModel(authService: AuthService.preview,
-                                             contentService: ContentService.preview) {})
+    PasswordStepView(vm: OnboardingViewModel(authService: AuthService.preview) {})
 }

@@ -26,9 +26,12 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(text("Расскажите о себе").waitForExistence(timeout: 15), "the profile questions did not open")
     }
 
-    func test_registration_reachesMainScreen() throws {
+    func test_registration_withUnavailableAI_stillReachesMainScreen() throws {
         // Given
         try openProfileQuestions()
+        let failure = try failingBody(serverError)
+        server.respond(route: "GET /v1/horoscope/current", status: 500, body: failure)
+        server.respond(route: "GET /v1/daily/insight", status: 500, body: failure)
 
         // When
         chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
@@ -36,6 +39,25 @@ final class OnboardingUITests: AuraUITestCase {
         tapButton("Разрешить")
 
         // Then
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "AI failure blocked onboarding")
+        XCTAssertTrue(text(part: serverError).firstMatch.waitForExistence(timeout: 15), "no content error on the main screen")
+        XCTAssertFalse(server.requests.contains("GET /v1/daily/tip"), "a locked profile requested a hidden tip")
+    }
+
+    func test_consentFailure_staysOnLoadingScreen_andRetryFinishes() throws {
+        let user = try sampleUser(["hasAIConsent": false])
+        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
+        server.respond(route: "POST /v1/auth/aiConsent", status: 500, body: try failingBody(serverError))
+        try openProfileQuestions()
+        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
+        tapButton("Далее")
+        tapButton("Разрешить")
+
+        XCTAssertTrue(text(part: serverError).waitForExistence(timeout: 15), "consent error was hidden")
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+
+        server.respond(route: "POST /v1/auth/aiConsent", body: try json(sampleUser()))
+        tapButton("Повторить")
         assertOnMainScreen()
     }
 

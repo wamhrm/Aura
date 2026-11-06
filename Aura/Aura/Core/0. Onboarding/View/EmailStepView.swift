@@ -35,6 +35,5 @@ struct EmailStepView: View {
 }
 
 #Preview {
-    EmailStepView(vm: OnboardingViewModel(authService: AuthService.preview,
-                                          contentService: ContentService.preview) {})
+    EmailStepView(vm: OnboardingViewModel(authService: AuthService.preview) {})
 }

@@ -11,10 +11,8 @@ struct OnboardingView: View {
     @StateObject private var vm: OnboardingViewModel
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol,
          onFinish: @escaping () -> Void) {
         _vm = StateObject(wrappedValue: OnboardingViewModel(authService: authService,
-                                                            contentService: contentService,
                                                             onFinish: onFinish))
     }
 
@@ -90,6 +88,5 @@ extension OnboardingView {
 }
 
 #Preview {
-    OnboardingView(authService: AuthService.preview,
-                   contentService: ContentService.preview) {}
+    OnboardingView(authService: AuthService.preview) {}
 }

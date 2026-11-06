@@ -25,7 +25,7 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     private func makeViewModel(auth: MockAuthService, onFinish: @escaping () -> Void = {}) -> OnboardingViewModel {
-        OnboardingViewModel(authService: auth, contentService: MockContentService(), onFinish: onFinish)
+        OnboardingViewModel(authService: auth, onFinish: onFinish)
     }
 
     private func signIn(_ viewModel: OnboardingViewModel) async {
@@ -131,6 +131,26 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     // MARK: - AI consent
+    func test_profilePreparation_whenConsentFails_showsError_andAllowsRetry() async {
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        auth.serverUser = makeUser(hasAIConsent: false)
+        auth.aiConsentError = serverError
+        var didFinish = false
+        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+
+        viewModel.chooseAIConsent(true)
+        await waitUntil { viewModel.hasLoadingFailed || didFinish }
+
+        XCTAssertTrue(viewModel.hasLoadingFailed)
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        XCTAssertFalse(didFinish)
+
+        auth.aiConsentError = nil
+        viewModel.retryLoading()
+        await waitUntil { didFinish }
+        XCTAssertFalse(viewModel.hasLoadingFailed)
+    }
+
     func test_returningUser_decliningConsent_finishesWithoutARequest() {
         // Given
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
@@ -159,16 +179,39 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(auth.aiConsentCount, 1)
     }
 
-    func test_newUser_decliningConsent_skipsTheInsightStage() {
+    func test_newUser_decliningConsent_savesProfile_andFinishesWithoutConsentRequest() async {
         // Given
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
-        let viewModel = makeViewModel(auth: auth)
+        auth.serverUser = makeUser(hasAIConsent: false)
+        var didFinish = false
+        let viewModel = makeViewModel(auth: auth) { didFinish = true }
 
         // When
         viewModel.chooseAIConsent(false)
+        await waitUntil { didFinish }
 
         // Then
-        XCTAssertEqual(viewModel.loadingStages, [.profile, .horoscope])
+        XCTAssertNotNil(auth.savedProfile)
+        XCTAssertEqual(auth.aiConsentCount, 0)
+        XCTAssertFalse(viewModel.hasLoadingFailed)
+    }
+
+    func test_sessionExpiration_duringProfileSave_cancelsPreparation_andDoesNotFinish() async {
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        auth.profileSaveDelay = .seconds(30)
+        var didFinish = false
+        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        viewModel.chooseAIConsent(true)
+        await waitUntil { auth.savedProfile != nil }
+
+        auth.authState.send(.signedOut)
+        await waitUntil { auth.profileSaveFinished }
+
+        XCTAssertFalse(didFinish)
+        XCTAssertFalse(viewModel.hasLoadingFailed)
+        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
+        XCTAssertEqual(auth.aiConsentCount, 0)
+        XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")
     }
 
     // MARK: - Which screen the app opens

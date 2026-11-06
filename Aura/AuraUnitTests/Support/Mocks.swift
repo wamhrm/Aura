@@ -63,6 +63,9 @@ final class MockAuthService: AuthServiceProtocol {
     // Who the server signs in
     var serverUser = UserModel.mock
     var errorToThrow: (any Error)?
+    var aiConsentError: (any Error)?
+    var profileSaveDelay = Duration.zero
+    private(set) var profileSaveFinished = false
 
     private(set) var createAccountCount = 0
     private(set) var resetPasswordCount = 0
@@ -103,13 +106,19 @@ final class MockAuthService: AuthServiceProtocol {
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
         savedProfile = request
+        defer { profileSaveFinished = true }
+        try await Task.sleep(for: profileSaveDelay)
         if let errorToThrow { throw errorToThrow }
+        authState.send(.signedIn(serverUser))
         return UpdateProfileInfoResponse(user: serverUser, horoscope: .mock)
     }
 
     func giveAIConsent() async throws {
         aiConsentCount += 1
+        if let aiConsentError { throw aiConsentError }
         if let errorToThrow { throw errorToThrow }
+        serverUser.hasAIConsent = true
+        authState.send(.signedIn(serverUser))
     }
 
     func sendEmailConfirmationCode() async throws {
@@ -155,6 +164,7 @@ final class MockContentService: ContentServiceProtocol {
     private(set) var fetchHistoryCount = 0
     private(set) var horoscopeCount = 0
     private(set) var insightCount = 0
+    private(set) var tipCount = 0
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
         if let errorToThrow { throw errorToThrow }
@@ -189,6 +199,7 @@ final class MockContentService: ContentServiceProtocol {
     }
 
     func fetchDailyTip(userId: UUID) async throws -> DailyContentModel {
+        tipCount += 1
         if let errorToThrow { throw errorToThrow }
         return DailyContentModel(id: UUID(), text: "Совет", dateCreated: todayText())
     }

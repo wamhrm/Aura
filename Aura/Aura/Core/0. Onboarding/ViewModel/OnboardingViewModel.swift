@@ -21,18 +21,6 @@ enum OnboardingRoutes: Hashable {
     }
 }
 
-enum OnboardingLoadingStage: CaseIterable {
-    case profile, horoscope, insight
-
-    var title: String {
-        switch self {
-            case .profile: "Сохраняем ваш профиль"
-            case .horoscope: "Составляем гороскоп на неделю"
-            case .insight: "Готовим инсайт дня"
-        }
-    }
-}
-
 enum IntroPages: Int, CaseIterable {
     case welcome, horoscope, daily, tests
 
@@ -81,8 +69,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var newPassword = ""
     @Published private(set) var isResetCodeSent = false
 
-    @Published private(set) var loadingStages: [OnboardingLoadingStage] = []
-    @Published private(set) var completedLoadingStages: [OnboardingLoadingStage] = []
     @Published private(set) var hasLoadingFailed = false
 
     @Published var showAlert = false
@@ -94,20 +80,19 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private var allowsAIAnalysis = false
     private var appleSignInNonce: String?
     private var hasSession = false
+    private var preparationTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
 
     private let authService: any AuthServiceProtocol
-    private let contentService: any ContentServiceProtocol
     private let onFinish: () -> Void
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol,
          onFinish: @escaping () -> Void) {
         self.authService = authService
-        self.contentService = contentService
         self.onFinish = onFinish
 
         if case .signedIn(let user) = authService.authState.value {
+            hasSession = true
             name = user.name
             onboardingRoutes = [.nameAndBirth]
         }
@@ -153,7 +138,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     var loadingTitle: String {
-        hasLoadingFailed ? "Не удалось подготовить профиль" : "Составляем ваш профиль"
+        hasLoadingFailed ? "Не удалось сохранить настройки" : "Сохраняем профиль и настройки"
     }
 
     var loadingIcon: String {
@@ -189,14 +174,11 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private func handleSessionEnd() {
         guard hasSession else { return }
 
+        preparationTask?.cancel()
         hasSession = false
         hasLoadingFailed = false
         onboardingRoutes = []
         presentAlert("Сессия истекла. Войдите снова")
-    }
-
-    func isCompleted(_ stage: OnboardingLoadingStage) -> Bool {
-        completedLoadingStages.contains(stage)
     }
 
     func hidesSystemBackButton(route: OnboardingRoutes) -> Bool {
@@ -214,6 +196,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     func signOut() {
         do {
             try authService.signOut()
+            preparationTask?.cancel()
             hasSession = false
             onboardingRoutes = []
         } catch {
@@ -414,7 +397,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         // A returning user with a filled profile only lacked the consent
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
-            allows ? giveAIConsent() : onFinish()
+            allows ? giveAIConsent() : finishOnboarding()
         } else {
             // The notifications step stays hidden until the reminders are real
             continueFromNotifications()
@@ -458,7 +441,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         Task {
             do {
                 try await authService.giveAIConsent()
-                onFinish()
+                finishOnboarding()
             } catch {
                 presentAlert(error.userMessage)
             }
@@ -468,44 +451,37 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func prepareProfile() {
+        guard preparationTask == nil, isSignedIn else { return }
         hasLoadingFailed = false
-        completedLoadingStages = []
-        loadingStages = allowsAIAnalysis ? OnboardingLoadingStage.allCases : [.profile, .horoscope]
 
         var request = profileInfo
         request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
         request.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
 
-        Task {
-            do {
-                let response = try await authService.updateProfileInfo(request)
-                let userId = response.user.id
-                await completeLoadingStage(.profile)
+        preparationTask = Task {
+            defer { preparationTask = nil }
 
-                if response.horoscope == nil {
-                    _ = try? await contentService.fetchCurrentHoroscope(userId: userId)
-                }
-                await completeLoadingStage(.horoscope)
+            do {
+                _ = try await authService.updateProfileInfo(request)
+                try Task.checkCancellation()
 
                 if allowsAIAnalysis {
-                    try? await authService.giveAIConsent()
-
-                    _ = try? await contentService.fetchDailyInsight(userId: userId)
-                    await completeLoadingStage(.insight)
+                    try await authService.giveAIConsent()
+                    try Task.checkCancellation()
                 }
 
-                onFinish()
+                finishOnboarding()
             } catch {
+                guard !error.isCancellation else { return }
                 alertMessage = error.userMessage
                 hasLoadingFailed = true
             }
         }
     }
 
-    // Keeps each checkmark on screen for a moment, otherwise the stages flash by
-    private func completeLoadingStage(_ stage: OnboardingLoadingStage) async {
-        withAnimation { completedLoadingStages.append(stage) }
-        try? await Task.sleep(for: .seconds(0.8))
+    private func finishOnboarding() {
+        guard case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo else { return }
+        onFinish()
     }
 
     private func continueAfterSignIn() {
@@ -516,7 +492,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         // Auth screens are dropped from the stack, so back can't return to them
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
-            onFinish()
+            finishOnboarding()
         } else if user.hasCompletedProfileInfo {
             onboardingRoutes = [.aiConsent]
         } else if hasEnteredBirthDate {
