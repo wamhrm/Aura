@@ -47,15 +47,16 @@ final class RootViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func handleScenePhase(_ phase: ScenePhase) {
+    func handleScenePhase(_ phase: ScenePhase, now: Date = Date()) {
         guard phase == .active else { return }
 
         Task {
             await restoreSession()
 
+            let dayChanged = !Calendar.current.isDate(now, inSameDayAs: lastRefreshDate)
             guard case .signedIn = authService.authState.value,
-                  Date().timeIntervalSince(lastRefreshDate) >= refreshInterval else { return }
-            lastRefreshDate = Date()
+                  dayChanged || now.timeIntervalSince(lastRefreshDate) >= refreshInterval else { return }
+            lastRefreshDate = now
             authService.refreshUser()
             contentService.refreshRequested.send()
         }

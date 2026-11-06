@@ -17,16 +17,17 @@ final class ProfileUITests: AuraUITestCase {
         XCTAssertTrue(text(part: "Пройдите тесты").waitForExistence(timeout: 10), "no prompt to take tests")
     }
 
-    func test_withResults_profileShowsOnlyThem() throws {
+    func test_withResults_profileShowsCurrentSign_andSavedResult() throws {
         // Given
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
-        try launchSignedIn()
+        try launchSignedIn(user: try sampleUser(["dateOfBirth": "20.01.1990"]))
 
         // When
         openProfile()
 
         // Then
         XCTAssertTrue(text("Общий персональный вывод").waitForExistence(timeout: 10), "the result is not in the profile")
+        XCTAssertTrue(text("Водолей").exists, "the header uses the old test's sign instead of the current birth date")
         XCTAssertTrue(text("Социальный фильтр").exists)
         XCTAssertFalse(text("Глубина связи").exists)
     }

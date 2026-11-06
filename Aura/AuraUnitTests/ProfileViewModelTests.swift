@@ -9,6 +9,27 @@ import XCTest
 
 @MainActor
 final class ProfileViewModelTests: XCTestCase {
+    func test_refresh_hidesOutdatedTip_beforeLoadingHistory() async {
+        let result = HistoryCellModel.personalityPlaceholder
+        let storage = makeStorage()
+        storage.save(StoredPersonality(historyId: result.id, result: .mock), key: StorageKeys.personality, userId: UserModel.mock.id)
+        let content = MockContentService()
+        content.history = [result]
+        content.dailyContentDate = "2000-01-01"
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: storage)
+        await waitUntil { viewModel.tipState == .loaded }
+        content.dailyContentDate = todayText()
+        content.beforeContentResponse = {
+            XCTAssertNil(viewModel.dailyTip)
+            XCTAssertNil(viewModel.profileDisplayHandler.dailyTip)
+        }
+
+        await viewModel.refresh()
+        content.beforeContentResponse = nil
+
+        XCTAssertEqual(viewModel.dailyTip?.isFromToday, true)
+    }
+
     func test_lockedProfile_doesNotLoadTip_andFirstResultUnlocksLoading() async {
         let storage = makeStorage()
         let content = MockContentService()

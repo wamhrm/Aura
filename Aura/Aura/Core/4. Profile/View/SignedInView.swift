@@ -37,12 +37,12 @@ struct SignedInView: View {
                         HStack(alignment: .center, spacing: 5) {
                             Text(user.dateOfBirthHandler)
 
-                            if let zodiacSign = vm.profileDisplayHandler.zodiacSignTitle {
+                            if let zodiacSign = user.zodiacSign {
                                 Text("·")
                                     .font(.title3)
                                     .bold()
 
-                                Text(zodiacSign)
+                                Text(zodiacSign.title)
                             }
                         }
                         .font(Adaptive.size(.footnote, .system(size: 15)))

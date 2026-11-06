@@ -9,6 +9,20 @@ import XCTest
 
 @MainActor
 final class HomeViewModelTests: XCTestCase {
+    func test_refresh_hidesOutdatedInsight_beforeRequestingNewContent() async {
+        let content = MockContentService()
+        content.dailyContentDate = "2000-01-01"
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: makeStorage())
+        await waitUntil { viewModel.insightState == .loaded }
+        content.dailyContentDate = todayText()
+        content.beforeContentResponse = { XCTAssertNil(viewModel.dailyInsight) }
+
+        await viewModel.refresh()
+        content.beforeContentResponse = nil
+
+        XCTAssertEqual(viewModel.dailyInsight?.isFromToday, true)
+    }
+
     func test_birthDateChange_hidesPreviousHoroscope_whenReloadFails() async {
         let auth = MockAuthService(user: makeUser())
         let content = MockContentService()

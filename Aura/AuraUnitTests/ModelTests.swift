@@ -8,6 +8,28 @@ import XCTest
 
 @MainActor
 final class ModelTests: XCTestCase {
+    func test_userZodiacSign_followsBirthDate_atEverySignBoundary() {
+        let cases: [(String, HoroscopeTypes)] = [
+            ("19.01.2000", .capricorn), ("20.01.2000", .aquarius),
+            ("18.02.2000", .aquarius), ("19.02.2000", .pisces),
+            ("20.03.2000", .pisces), ("21.03.2000", .aries),
+            ("19.04.2000", .aries), ("20.04.2000", .taurus),
+            ("20.05.2000", .taurus), ("21.05.2000", .gemini),
+            ("20.06.2000", .gemini), ("21.06.2000", .cancer),
+            ("22.07.2000", .cancer), ("23.07.2000", .leo),
+            ("22.08.2000", .leo), ("23.08.2000", .virgo),
+            ("22.09.2000", .virgo), ("23.09.2000", .libra),
+            ("22.10.2000", .libra), ("23.10.2000", .scorpio),
+            ("21.11.2000", .scorpio), ("22.11.2000", .sagittarius),
+            ("21.12.2000", .sagittarius), ("22.12.2000", .capricorn)
+        ]
+
+        for (date, sign) in cases {
+            XCTAssertEqual(makeUser(dateOfBirth: date).zodiacSign, sign, date)
+        }
+        XCTAssertNil(makeUser(dateOfBirth: nil).zodiacSign)
+    }
+
     func test_testHost_usesAnIsolatedEnvironment() throws {
         // Given
         let serverURL = try XCTUnwrap(URL(string: Constants.baseURL))

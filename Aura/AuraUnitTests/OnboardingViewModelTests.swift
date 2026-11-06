@@ -215,6 +215,22 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     // MARK: - Which screen the app opens
+    func test_root_newDay_refreshesContent_beforeTheIntervalExpires() async throws {
+        let auth = MockAuthService(user: makeUser())
+        let content = MockContentService()
+        let viewModel = RootViewModel(authService: auth, contentService: content, refreshInterval: 48 * 60 * 60)
+        let tomorrow = try XCTUnwrap(Calendar.current.date(byAdding: .day, value: 1, to: Date()))
+        var contentRefreshes = 0
+        let subscription = content.refreshRequested.sink { contentRefreshes += 1 }
+        defer { subscription.cancel() }
+
+        viewModel.handleScenePhase(.active, now: tomorrow)
+        await waitUntil { contentRefreshes == 1 }
+
+        XCTAssertEqual(auth.refreshUserCount, 1)
+        XCTAssertEqual(contentRefreshes, 1)
+    }
+
     func test_root_opensTheMainScreen_onlyWithACompleteProfile() {
         // Given
         let content = MockContentService()

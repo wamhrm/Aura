@@ -205,7 +205,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     private func loadDailyInsight(userId: UUID) async {
-        if dailyInsight == nil {
+        if dailyInsight?.isFromToday != true {
+            dailyInsight = nil
             insightState = .loading
         }
 

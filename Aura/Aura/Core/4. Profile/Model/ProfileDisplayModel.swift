@@ -16,7 +16,6 @@ struct ProfileDisplayModel: Equatable {
     let thinking: Int?
     let organization: Int?
     let relationships: Int?
-    let zodiacSignTitle: String?
 
     var hasTopics: Bool {
         socialFilter != nil || emotionalDepth != nil
@@ -36,8 +35,7 @@ extension ProfileDisplayModel {
                                                  temperament: ProfileDisplayPlaceholder.temperament,
                                                  thinking: ProfileDisplayPlaceholder.thinking,
                                                  organization: ProfileDisplayPlaceholder.organization,
-                                                 relationships: ProfileDisplayPlaceholder.relationships,
-                                                 zodiacSignTitle: nil)
+                                                 relationships: ProfileDisplayPlaceholder.relationships)
 
     static func make(personalityResult: PersonalityResultModel?,
                      dailyTip: DailyContentModel?) -> ProfileDisplayModel {
@@ -49,8 +47,7 @@ extension ProfileDisplayModel {
             temperament: barValue(.temperament, result: personalityResult),
             thinking: barValue(.thinking, result: personalityResult),
             organization: barValue(.organization, result: personalityResult),
-            relationships: barValue(.relationships, result: personalityResult),
-            zodiacSignTitle: personalityResult?.zodiacSign.title)
+            relationships: barValue(.relationships, result: personalityResult))
     }
 
     private static func sectionItem(_ key: PersonalityCellTypes,

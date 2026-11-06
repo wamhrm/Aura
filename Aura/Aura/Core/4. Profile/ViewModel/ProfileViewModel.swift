@@ -125,6 +125,11 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     func refresh() async {
         guard let userId = currentUserId else { return }
+        if dailyTip?.isFromToday != true {
+            dailyTip = nil
+            tipState = .loading
+            updateProfileDisplay()
+        }
         await loadPersonality(userId: userId)
         await loadDailyTip(userId: userId)
     }

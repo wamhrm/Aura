@@ -159,6 +159,8 @@ final class MockContentService: ContentServiceProtocol {
 
     var history: [HistoryCellModel] = []
     var errorToThrow: (any Error)?
+    var dailyContentDate = todayText()
+    var beforeContentResponse: (() -> Void)?
 
     private(set) var compatibilityRequests: [CompatibilityTestRequest] = []
     private(set) var fetchHistoryCount = 0
@@ -179,6 +181,7 @@ final class MockContentService: ContentServiceProtocol {
 
     func fetchHistory() async throws -> [HistoryCellModel] {
         fetchHistoryCount += 1
+        beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
         return history
     }
@@ -194,14 +197,16 @@ final class MockContentService: ContentServiceProtocol {
 
     func fetchDailyInsight(userId: UUID) async throws -> DailyContentModel {
         insightCount += 1
+        beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
-        return DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: todayText())
+        return DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: dailyContentDate)
     }
 
     func fetchDailyTip(userId: UUID) async throws -> DailyContentModel {
         tipCount += 1
+        beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
-        return DailyContentModel(id: UUID(), text: "Совет", dateCreated: todayText())
+        return DailyContentModel(id: UUID(), text: "Совет", dateCreated: dailyContentDate)
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
