@@ -15,13 +15,8 @@ struct ProfileController: RouteCollection {
         let auth = routes.grouped("auth")
             .grouped(UserAuthMiddleware())
 
-        auth.get("me", use: fetchCurrentUser)
         auth.patch("profileInfo", use: updateProfileInfo)
         auth.post("aiConsent", use: giveAIConsent)
-    }
-
-    private func fetchCurrentUser(req: Request) async throws -> UserDTO {
-        try req.auth.require(User.self).toDTO()
     }
 
     private func giveAIConsent(req: Request) async throws -> UserDTO {
