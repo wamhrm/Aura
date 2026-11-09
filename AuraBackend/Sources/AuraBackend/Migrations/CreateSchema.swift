@@ -17,8 +17,6 @@ struct CreateSchema: AsyncMigration {
                 .field("name", .string, .required)
                 .field("email", .string)
                 .field("password_hash", .string)
-                .field("apple_user_id", .string)
-                .field("apple_refresh_token", .string)
                 .field("date_of_birth", .datetime)
                 .field("birth_time", .string)
                 .field("gender", .string)
@@ -30,7 +28,6 @@ struct CreateSchema: AsyncMigration {
                 .field("ai_consent_at", .datetime)
                 .field("created_at", .datetime)
                 .unique(on: "email")
-                .unique(on: "apple_user_id")
                 .create()
 
             try await transaction.schema(Token.schema)
@@ -77,7 +74,7 @@ struct CreateSchema: AsyncMigration {
                 .field("text", .string, .required)
                 .field("generated_date", .string, .required)
                 .field("created_at", .datetime)
-                .unique(on: "user_id", "kind")
+                .unique(on: "user_id", "kind", "generated_date")
                 .create()
 
             try await transaction.schema(TestUsage.schema)

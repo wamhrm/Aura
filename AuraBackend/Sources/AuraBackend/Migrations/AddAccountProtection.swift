@@ -14,8 +14,6 @@ struct AddAccountProtection: AsyncMigration {
         try await database.transaction { transaction in
             try await transaction.schema(User.schema)
                 .field("email_confirmed_at", .datetime)
-                .field("sign_in_attempts", .int, .required, .sql(.default(0)))
-                .field("sign_in_window_start", .datetime)
                 .update()
 
             try await transaction.schema(EmailConfirmation.schema)
@@ -39,8 +37,6 @@ struct AddAccountProtection: AsyncMigration {
 
             try await transaction.schema(User.schema)
                 .deleteField("email_confirmed_at")
-                .deleteField("sign_in_attempts")
-                .deleteField("sign_in_window_start")
                 .update()
         }
     }
