@@ -13,7 +13,6 @@ struct AuthController: RouteCollection {
     private let appleAuthService = AppleAuthService()
     private let passwordResetService = PasswordResetService()
     private let emailConfirmationService = EmailConfirmationService()
-    private let maxSignInAttempts = 10
 
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
@@ -76,51 +75,11 @@ struct AuthController: RouteCollection {
               let passwordHash = user.passwordHash
         else { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        try await takeSignInAttempt(user: user, req: req)
-
         let isPasswordCorrect = try await req.password.async.verify(signInData.password, created: passwordHash)
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        let userID = try user.requireID()
-        return try await req.db.transaction { database in
-            try await database.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
-
-            // A reset may have changed the password while this request was verifying the old hash.
-            guard let currentUser = try await User.find(userID, on: database), currentUser.passwordHash == passwordHash else {
-                throw Abort(.unauthorized, reason: "Неверная почта или пароль")
-            }
-
-            try await clearSignInAttempts(user: currentUser, database: database)
-            return try await issueToken(user: currentUser, database: database)
-        }
-    }
-
-    // Guessing a password from many addresses is limited too. The attempt is taken in one statement,
-    // so parallel requests can't check more passwords than the limit.
-    private func takeSignInAttempt(user: User, req: Request) async throws {
-        let userID = try user.requireID()
-        let takenAttempts = try await req.db.sql()
-            .raw("""
-                UPDATE users
-                SET sign_in_attempts = CASE WHEN sign_in_window_start > now() - interval '15 minutes' THEN sign_in_attempts + 1 ELSE 1 END,
-                    sign_in_window_start = CASE WHEN sign_in_window_start > now() - interval '15 minutes' THEN sign_in_window_start ELSE now() END
-                WHERE id = \(bind: userID)
-                  AND (sign_in_window_start IS NULL
-                       OR sign_in_window_start <= now() - interval '15 minutes'
-                       OR sign_in_attempts < \(bind: maxSignInAttempts))
-                RETURNING id
-                """)
-            .all()
-
-        guard !takenAttempts.isEmpty else {
-            throw Abort(.tooManyRequests, reason: "Слишком много попыток входа. Попробуйте через 15 минут или сбросьте пароль")
-        }
-    }
-
-    private func clearSignInAttempts(user: User, database: any Database) async throws {
-        let userID = try user.requireID()
-        try await database.sql().raw("UPDATE users SET sign_in_attempts = 0 WHERE id = \(bind: userID)").run()
+        return try await issueToken(user: user, database: req.db)
     }
 
     private func requestPasswordReset(req: Request) async throws -> HTTPStatus {
@@ -169,7 +128,6 @@ struct AuthController: RouteCollection {
             // The code came to this address, so the address is confirmed too.
             user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
             try await user.save(on: database)
-            try await clearSignInAttempts(user: user, database: database)
             try await Token.query(on: database).filter(\.$user.$id == userID).delete()
             try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
             return try await issueToken(user: user, database: database)

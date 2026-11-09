@@ -20,16 +20,9 @@ struct UserAuthMiddleware: AsyncMiddleware {
             .first()
         else { throw Abort(.unauthorized, reason: "Неверный токен") }
 
-        let now = Date()
-
-        guard tokenModel.expiresAt > now else {
+        guard tokenModel.expiresAt > Date() else {
             try await tokenModel.delete(on: req.db)
             throw Abort(.unauthorized, reason: "Срок действия токена истёк")
-        }
-
-        if tokenModel.expiresAt < now.addingTimeInterval(Token.lifetime - Token.renewalInterval) {
-            tokenModel.expiresAt = now.addingTimeInterval(Token.lifetime)
-            try await tokenModel.save(on: req.db)
         }
 
         req.auth.login(tokenModel.user)

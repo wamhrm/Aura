@@ -11,7 +11,6 @@ import Vapor
 final class Token: Model, Authenticatable, @unchecked Sendable {
     static let schema = "tokens"
     static let lifetime: TimeInterval = 90 * 24 * 60 * 60
-    static let renewalInterval: TimeInterval = 24 * 60 * 60
 
     @ID(key: .id)
     var id: UUID?
