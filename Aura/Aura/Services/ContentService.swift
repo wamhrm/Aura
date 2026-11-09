@@ -31,8 +31,6 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
 
     private let networkService: any NetworkServiceProtocol
-    private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
-    private var pendingCompatibilityTest: (request: CompatibilityTestRequest, requestID: UUID)?
     private var currentUser: UserModel?
     private var cancellables = Set<AnyCancellable>()
 
@@ -53,10 +51,6 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
             case .signedIn(let user):
                 if currentUser?.id != user.id {
                     clearContent()
-                } else if currentUser?.name != user.name || currentUser?.profileInfo != user.profileInfo {
-                    // Both tests use the user's profile; edited input starts a new generation.
-                    pendingPersonalityTest = nil
-                    pendingCompatibilityTest = nil
                 }
                 currentUser = user
             case .signedOut:
@@ -66,8 +60,6 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     private func clearContent() {
-        pendingPersonalityTest = nil
-        pendingCompatibilityTest = nil
         historyCells.send([])
         horoscope.send(nil)
         dailyInsight.send(nil)
@@ -93,37 +85,13 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
-        var requestID = UUID()
-
-        // A repeat keeps its key: if the first answer was lost, the server returns the saved result
-        if let pending = pendingPersonalityTest, pending.tests == selectedTests {
-            requestID = pending.requestID
-        }
-
-        pendingPersonalityTest = (selectedTests, requestID)
-
-        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
-        if pendingPersonalityTest?.requestID == requestID {
-            pendingPersonalityTest = nil
-        }
+        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: UUID())
         await reloadHistory()
         return result
     }
 
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel {
-        var requestID = UUID()
-
-        // A repeat keeps its key: if the first answer was lost, the server returns the saved result
-        if let pending = pendingCompatibilityTest, pending.request == request {
-            requestID = pending.requestID
-        }
-
-        pendingCompatibilityTest = (request, requestID)
-
-        let result = try await networkService.makeCompatibilityTest(request, requestID: requestID)
-        if pendingCompatibilityTest?.requestID == requestID {
-            pendingCompatibilityTest = nil
-        }
+        let result = try await networkService.makeCompatibilityTest(request, requestID: UUID())
         await reloadHistory()
         return result
     }
