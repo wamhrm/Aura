@@ -19,32 +19,34 @@ struct HoroscopeService {
 
         let week = DailyDateHelper.currentWeek(timeZone: req.userTimeZone)
 
-        if let entry = try await findHoroscope(sign: sign, weekStart: week.key, db: database) {
+        return try await database.generationLock("horoscope:\(sign.rawValue):\(week.key)") { database in
+            if let entry = try await findHoroscope(sign: sign, weekStart: week.key, db: database) {
+                return try HoroscopeDTOMapper.map(horoscope: entry)
+            }
+
+            let generated = try await openAIService.makeHoroscope(sign: sign,
+                                                                  period: (week.start, week.end),
+                                                                  req: req)
+
+            let entry = Horoscope(sign: sign.rawValue,
+                                  weekStart: week.key,
+                                  dateStart: week.start,
+                                  dateEnd: week.end,
+                                  description: generated.description,
+                                  itemsJSON: try HoroscopeDTOMapper.encodeItems(items: generated.items))
+
+            do {
+                try await entry.save(on: database)
+            } catch {
+                guard (error as? any DatabaseError)?.isConstraintFailure == true,
+                      let existing = try await findHoroscope(sign: sign, weekStart: week.key, db: database) else {
+                    throw error
+                }
+                return try HoroscopeDTOMapper.map(horoscope: existing)
+            }
+
             return try HoroscopeDTOMapper.map(horoscope: entry)
         }
-
-        let generated = try await openAIService.makeHoroscope(sign: sign,
-                                                              period: (week.start, week.end),
-                                                              req: req)
-
-        let entry = Horoscope(sign: sign.rawValue,
-                              weekStart: week.key,
-                              dateStart: week.start,
-                              dateEnd: week.end,
-                              description: generated.description,
-                              itemsJSON: try HoroscopeDTOMapper.encodeItems(items: generated.items))
-
-        do {
-            try await entry.save(on: database)
-        } catch {
-            guard (error as? any DatabaseError)?.isConstraintFailure == true,
-                  let existing = try await findHoroscope(sign: sign, weekStart: week.key, db: database) else {
-                throw error
-            }
-            return try HoroscopeDTOMapper.map(horoscope: existing)
-        }
-
-        return try HoroscopeDTOMapper.map(horoscope: entry)
     }
 
     func findCurrentHoroscope(user: User,

@@ -14,5 +14,6 @@ extension Application {
         self.migrations.add(AddAccountProtection())
         self.migrations.add(AddDailyGenerationProtection())
         self.migrations.add(SimplifyDailyGenerationAttempts())
+        self.migrations.add(RemoveUnusedStorage())
     }
 }

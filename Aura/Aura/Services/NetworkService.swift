@@ -105,15 +105,15 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        try await fetch(endpoint: "/horoscope/current", method: .get, timeout: Self.aiTimeout)
+        try await fetch(endpoint: "/horoscope/current", method: .get, timeout: Self.aiTimeout, retries: false)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
-        try await fetch(endpoint: "/daily/insight", method: .get, timeout: Self.aiTimeout)
+        try await fetch(endpoint: "/daily/insight", method: .get, timeout: Self.aiTimeout, retries: false)
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
-        try await fetch(endpoint: "/daily/tip", method: .get, timeout: Self.aiTimeout)
+        try await fetch(endpoint: "/daily/tip", method: .get, timeout: Self.aiTimeout, retries: false)
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
@@ -150,12 +150,14 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                      method: HTTPMethod,
                                      body: Data? = nil,
                                      idempotencyKey: UUID? = nil,
-                                     timeout: TimeInterval = NetworkService.defaultTimeout) async throws -> T {
+                                     timeout: TimeInterval = NetworkService.defaultTimeout,
+                                     retries: Bool = true) async throws -> T {
         let data = try await send(endpoint: endpoint,
                                   method: method,
                                   body: body,
                                   idempotencyKey: idempotencyKey,
-                                  timeout: timeout)
+                                  timeout: timeout,
+                                  retries: retries)
         return try decode(T.self, data: data)
     }
 
@@ -164,6 +166,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                       body: Data? = nil,
                       idempotencyKey: UUID? = nil,
                       timeout: TimeInterval = NetworkService.defaultTimeout,
+                      retries: Bool = true,
                       attempt: Int = 0) async throws -> Data {
         do {
             return try await performRequest(endpoint: endpoint,
@@ -171,13 +174,14 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                             body: body,
                                             idempotencyKey: idempotencyKey,
                                             timeout: timeout)
-        } catch let urlError as URLError where method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
+        } catch let urlError as URLError where retries && method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(attempt: attempt))
             return try await send(endpoint: endpoint,
                                   method: method,
                                   body: body,
                                   idempotencyKey: idempotencyKey,
                                   timeout: timeout,
+                                  retries: retries,
                                   attempt: attempt + 1)
         } catch let urlError as URLError {
             throw NetworkError(urlError: urlError)

@@ -38,24 +38,26 @@ struct DailyContentService {
             .filter(\.$generatedDate <= oldestDailyDate)
             .delete()
 
-        if let entry = try await findEntry(kind: kind, userID: userID, date: today, database: database) {
+        return try await database.generationLock("daily:\(userID.uuidString):\(kind.rawValue):\(today)") { database in
+            if let entry = try await findEntry(kind: kind, userID: userID, date: today, database: database) {
+                return try DailyContentDTOMapper.map(entry: entry)
+            }
+
+            let text = try await generateText(kind: kind, user: user, req: req)
+            let entry = DailyContent(userID: userID, kind: kind, text: text, generatedDate: today)
+
+            do {
+                try await entry.save(on: database)
+            } catch {
+                guard (error as? any DatabaseError)?.isConstraintFailure == true,
+                      let existing = try await findEntry(kind: kind, userID: userID, date: today, database: database) else {
+                    throw error
+                }
+                return try DailyContentDTOMapper.map(entry: existing)
+            }
+
             return try DailyContentDTOMapper.map(entry: entry)
         }
-
-        let text = try await generateText(kind: kind, user: user, req: req)
-        let entry = DailyContent(userID: userID, kind: kind, text: text, generatedDate: today)
-
-        do {
-            try await entry.save(on: database)
-        } catch {
-            guard (error as? any DatabaseError)?.isConstraintFailure == true,
-                  let existing = try await findEntry(kind: kind, userID: userID, date: today, database: database) else {
-                throw error
-            }
-            return try DailyContentDTOMapper.map(entry: existing)
-        }
-
-        return try DailyContentDTOMapper.map(entry: entry)
     }
 
     private func generateText(kind: DailyContentKind, user: User, req: Request) async throws -> String {

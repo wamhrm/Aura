@@ -9,6 +9,7 @@ import Fluent
 import FluentPostgresDriver
 import Foundation
 import NIOSSL
+import SQLKit
 import Vapor
 
 extension Application {
@@ -61,5 +62,13 @@ extension Database {
             throw Abort(.internalServerError, reason: "SQL database required")
         }
         return sql
+    }
+
+    func generationLock<T: Sendable>(_ name: String,
+                                     perform operation: @escaping @Sendable (any Database) async throws -> T) async throws -> T {
+        try await transaction { database in
+            try await database.sql().raw("SELECT pg_advisory_xact_lock(hashtext(\(bind: name)), 0)").run()
+            return try await operation(database)
+        }
     }
 }
