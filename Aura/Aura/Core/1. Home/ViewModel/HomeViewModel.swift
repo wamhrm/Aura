@@ -36,17 +36,14 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private let storage: LocalStorage
 
     private var currentUser: UserModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol,
-         storage: LocalStorage = LocalStorage()) {
+         contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
-        self.storage = storage
 
         setupSubscriptions()
     }
@@ -72,11 +69,21 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             }
             .store(in: &cancellables)
 
-        contentService.refreshRequested
+        contentService.horoscope
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
+            .sink { [weak self] horoscope in
                 guard let self else { return }
-                Task { await refresh() }
+                self.horoscope = horoscope
+                if horoscope != nil { horoscopeState = .loaded }
+            }
+            .store(in: &cancellables)
+
+        contentService.dailyInsight
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] insight in
+                guard let self else { return }
+                dailyInsight = insight
+                if insight != nil { insightState = .loaded }
             }
             .store(in: &cancellables)
     }
@@ -102,8 +109,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         isLoadingScreen = false
 
         guard let previousUser, previousUser.id == user.id else {
-            dailyInsight = storage.loadDailyInsight(userId: user.id)
-            insightState = dailyInsight == nil ? .loading : .loaded
             Task { await refresh() }
             return
         }
@@ -111,11 +116,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         if previousUser.dateOfBirth != user.dateOfBirth {
             horoscope = nil
             horoscopeState = .loading
-            Task { await loadHoroscope(userId: user.id) }
+            Task { await loadHoroscope() }
         }
 
         if !previousUser.allowsAIAnalysis && user.allowsAIAnalysis {
-            Task { await loadDailyInsight(userId: user.id) }
+            Task { await loadDailyInsight() }
         }
     }
 
@@ -168,64 +173,51 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     func refresh() async {
         guard let user = currentUser else { return }
 
-        async let horoscopeLoad: Void = loadHoroscope(userId: user.id)
+        async let horoscopeLoad: Void = loadHoroscope()
 
         if user.allowsAIAnalysis {
-            await loadDailyInsight(userId: user.id)
+            await loadDailyInsight()
         }
 
         await horoscopeLoad
     }
 
     func retryHoroscope() {
-        guard let user = currentUser else { return }
-        Task { await loadHoroscope(userId: user.id) }
+        Task { await loadHoroscope() }
     }
 
     func retryDailyInsight() {
-        guard let user = currentUser else { return }
-        Task { await loadDailyInsight(userId: user.id) }
+        Task { await loadDailyInsight() }
     }
 
-    private func loadHoroscope(userId: UUID) async {
-        guard let user = currentUser, user.id == userId else { return }
-        let dateOfBirth = user.dateOfBirth
-        let saved = storage.loadHoroscope(userId: userId)
-        horoscope = saved?.type == user.zodiacSign ? saved : nil
-        horoscopeState = horoscope == nil ? .loading : .loaded
+    private func loadHoroscope() async {
+        guard currentUser != nil else { return }
+        if horoscope == nil { horoscopeState = .loading }
 
         do {
-            let fetched = try await contentService.fetchCurrentHoroscope()
-            guard currentUser?.id == userId, currentUser?.dateOfBirth == dateOfBirth else { return }
-
-            horoscope = fetched
+            horoscope = try await contentService.fetchCurrentHoroscope()
             horoscopeState = .loaded
-            storage.saveHoroscope(horoscope: fetched, userId: userId)
         } catch {
-            guard currentUser?.id == userId, currentUser?.dateOfBirth == dateOfBirth, !error.isCancellation else { return }
+            guard !error.isCancellation else { return }
             if horoscope == nil {
                 horoscopeState = .failed(error.userMessage)
             }
         }
     }
 
-    private func loadDailyInsight(userId: UUID) async {
+    private func loadDailyInsight() async {
+        guard currentUser?.allowsAIAnalysis == true else { return }
+
         if dailyInsight?.isFromToday != true {
             dailyInsight = nil
             insightState = .loading
         }
 
         do {
-            let fetched = try await contentService.fetchDailyInsight()
-            guard currentUser?.id == userId else { return }
-
-            dailyInsight = fetched
+            dailyInsight = try await contentService.fetchDailyInsight()
             insightState = .loaded
-            storage.saveDailyInsight(insight: fetched, userId: userId)
         } catch {
-            guard currentUser?.id == userId, !error.isCancellation else { return }
-
-            // Yesterday's insight must not stay on screen as today's
+            guard !error.isCancellation else { return }
             if dailyInsight?.isFromToday != true {
                 dailyInsight = nil
                 insightState = .failed(error.userMessage)

@@ -33,20 +33,18 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var isDeletingAccount = false
 
     private var personalityResult: PersonalityResultModel?
+    private var loadedPersonalityId: UUID?
     private var currentUserId: UUID?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private let storage: LocalStorage
 
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol,
-         storage: LocalStorage = LocalStorage()) {
+         contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
-        self.storage = storage
 
         setupSubscriptions()
     }
@@ -70,19 +68,21 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             }
             .store(in: &cancellables)
 
-        contentService.historyDidChange
+        contentService.historyCells
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
+            .sink { [weak self] cells in
                 guard let self else { return }
-                Task { await refresh() }
+                Task { await loadPersonality(from: cells) }
             }
             .store(in: &cancellables)
 
-        contentService.refreshRequested
+        contentService.dailyTip
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
+            .sink { [weak self] tip in
                 guard let self else { return }
-                Task { await refresh() }
+                dailyTip = tip
+                if tip != nil { tipState = .loaded }
+                updateProfileDisplay()
             }
             .store(in: &cancellables)
     }
@@ -105,33 +105,35 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
         guard currentUserId == user.id else {
             currentUserId = user.id
-
-            if let cached = storage.loadPersonality(userId: user.id) {
-                applyPersonality(result: cached.result)
-            }
-
-            dailyTip = storage.loadDailyTip(userId: user.id)
-            tipState = dailyTip == nil ? .loading : .loaded
-            updateProfileDisplay()
-
             Task { await refresh() }
             return
         }
 
         if previousUser?.allowsAIAnalysis == false && user.allowsAIAnalysis {
-            Task { await loadDailyTip(userId: user.id) }
+            Task { await loadDailyTip() }
         }
     }
 
     func refresh() async {
-        guard let userId = currentUserId else { return }
+        guard currentUserId != nil else { return }
+
         if dailyTip?.isFromToday != true {
             dailyTip = nil
             tipState = .loading
             updateProfileDisplay()
         }
-        await loadPersonality(userId: userId)
-        await loadDailyTip(userId: userId)
+
+        do {
+            let history = try await contentService.fetchHistory()
+            await loadPersonality(from: history)
+        } catch {
+            guard !error.isCancellation else { return }
+            if !hasPersonalityTests {
+                personalityState = .failed(error.userMessage)
+            }
+        }
+
+        await loadDailyTip()
     }
 
     func retryPersonality() {
@@ -139,68 +141,58 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     func retryDailyTip() {
-        guard let userId = currentUserId else { return }
-        Task { await loadDailyTip(userId: userId) }
+        Task { await loadDailyTip() }
     }
 
-    private func loadDailyTip(userId: UUID) async {
-        guard currentUserId == userId, hasPersonalityTests, user?.allowsAIAnalysis == true else { return }
+    private func loadDailyTip() async {
+        let hasResult = hasPersonalityTests || contentService.historyCells.value.contains { $0.kind == .personality }
+        guard hasResult, user?.allowsAIAnalysis == true else { return }
 
         if dailyTip == nil {
             tipState = .loading
         }
 
         do {
-            let tip = try await contentService.fetchDailyTip()
-            guard currentUserId == userId else { return }
-
-            dailyTip = tip
+            dailyTip = try await contentService.fetchDailyTip()
             tipState = .loaded
-            storage.saveDailyTip(tip: tip, userId: userId)
+            updateProfileDisplay()
         } catch {
-            guard currentUserId == userId, !error.isCancellation else { return }
-
-            // Yesterday's tip must not stay on screen as today's
+            guard !error.isCancellation else { return }
             if dailyTip?.isFromToday != true {
                 dailyTip = nil
                 tipState = .failed(error.userMessage)
+                updateProfileDisplay()
             }
         }
-
-        updateProfileDisplay()
     }
 
-    private func loadPersonality(userId: UUID) async {
+    private func loadPersonality(from history: [HistoryCellModel]) async {
+        guard currentUserId != nil else { return }
+
+        guard let latest = history.first(where: { $0.kind == .personality }) else {
+            clearPersonality()
+            return
+        }
+
+        if loadedPersonalityId == latest.id, personalityResult != nil {
+            return
+        }
+
         if !hasPersonalityTests {
             personalityState = .loading
         }
 
         do {
-            let history = try await contentService.fetchHistory()
-            guard currentUserId == userId else { return }
-
-            storage.saveHistory(history: history, userId: userId)
-
-            guard let latest = history.first(where: { $0.kind == .personality }) else {
-                return clearPersonality(userId: userId)
-            }
-
-            if let cached = storage.loadPersonality(userId: userId), cached.historyId == latest.id {
-                return applyPersonality(result: cached.result)
-            }
-
             let historyDetails = try await contentService.fetchHistoryDetails(id: latest.id)
-            guard currentUserId == userId else { return }
-
             guard let result = historyDetails.personalityResult else {
-                return clearPersonality(userId: userId)
+                clearPersonality()
+                return
             }
 
+            loadedPersonalityId = latest.id
             applyPersonality(result: result)
-            storage.savePersonality(result: StoredPersonality(historyId: latest.id, result: result), userId: userId)
         } catch {
-            guard currentUserId == userId, !error.isCancellation else { return }
-
+            guard !error.isCancellation else { return }
             if !hasPersonalityTests {
                 personalityState = .failed(error.userMessage)
             }
@@ -267,11 +259,11 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         updateProfileDisplay()
     }
 
-    private func clearPersonality(userId: UUID) {
+    private func clearPersonality() {
+        loadedPersonalityId = nil
         hasPersonalityTests = false
         personalityResult = nil
         personalityState = .loaded
-        storage.deletePersonality(userId: userId)
         updateProfileDisplay()
     }
 }

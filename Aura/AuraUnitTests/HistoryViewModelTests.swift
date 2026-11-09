@@ -8,71 +8,59 @@ import XCTest
 
 @MainActor
 final class HistoryViewModelTests: XCTestCase {
-    func test_lateHistoryResponse_doesNotRestoreDeletedRecord_orItsCache() async throws {
-        let cell = HistoryCellModel.personalityPlaceholder
-        let network = MockNetworkService()
-        network.history = [cell]
-        let auth = MockAuthService(user: .mock)
-        let storage = makeStorage()
-        let content = ContentService(networkService: network, authService: auth)
-        let viewModel = HistoryViewModel(authService: auth, contentService: content, storage: storage)
-        await waitUntil { viewModel.historyCells == [cell] }
-
-        network.beforeHistoryResponse = {
-            network.beforeHistoryResponse = nil
-            try await content.deleteHistory(id: cell.id)
-            await viewModel.fetchHistory()
-        }
-        await viewModel.fetchHistory()
-
-        XCTAssertTrue(viewModel.historyCells.isEmpty)
-        XCTAssertEqual(storage.loadHistory(userId: UserModel.mock.id), [])
-        XCTAssertFalse(viewModel.showAlert)
-    }
-
-    func test_lateDetailsResponse_afterDeletion_isDiscarded() async throws {
-        let cell = HistoryCellModel.personalityPlaceholder
-        let network = MockNetworkService()
-        let content = ContentService(networkService: network, authService: MockAuthService(user: .mock))
-        network.beforeHistoryResponse = {
-            network.beforeHistoryResponse = nil
-            try await content.deleteHistory(id: cell.id)
-        }
-
-        do {
-            _ = try await content.fetchHistoryDetails(id: cell.id)
-            XCTFail("Deleted history details must be discarded")
-        } catch {
-            XCTAssertTrue(error.isCancellation)
-        }
-    }
-
-    func test_serverFailure_keepsTheSavedList_withoutAnError() async {
+    func test_fetch_showsTheServerList() async {
         // Given
-        let cell = HistoryCellModel.personalityPlaceholder
-        let storage = makeStorage()
-        storage.saveHistory(history: [cell], userId: UserModel.mock.id)
+        let content = MockContentService()
+        content.history = [HistoryCellModel.personalityPlaceholder]
+
+        // When
+        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content)
+        await waitUntil { viewModel.historyCells.count == 1 }
+
+        // Then
+        XCTAssertEqual(viewModel.historyCells, content.history)
+        XCTAssertEqual(viewModel.loadState, .loaded)
+    }
+
+    func test_serverFailure_withAnEmptyList_showsTheError() async {
+        // Given
         let content = MockContentService()
         content.errorToThrow = serverError
 
         // When
-        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content, storage: storage)
-        await waitUntil { content.fetchHistoryCount == 1 }
+        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content)
+        await waitUntil { viewModel.loadState == .failed("Ошибка сервера") }
+
+        // Then
+        XCTAssertTrue(viewModel.historyCells.isEmpty)
+        XCTAssertFalse(viewModel.showAlert)
+    }
+
+    func test_refreshFailure_keepsTheList_andShowsAlert() async {
+        // Given
+        let cell = HistoryCellModel.personalityPlaceholder
+        let content = MockContentService()
+        content.history = [cell]
+        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content)
+        await waitUntil { viewModel.historyCells.count == 1 }
+        content.errorToThrow = serverError
+
+        // When
+        await viewModel.fetchHistory()
 
         // Then
         XCTAssertEqual(viewModel.historyCells, [cell])
         XCTAssertEqual(viewModel.loadState, .loaded)
-        XCTAssertFalse(viewModel.showAlert)
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
     }
 
-    func test_delete_removesOnlyThatRecord_andUpdatesTheSavedList() async {
+    func test_delete_removesOnlyThatRecord() async {
         // Given
         let personality = HistoryCellModel.personalityPlaceholder
         let compatibility = HistoryCellModel.compatibilityPlaceholder
-        let storage = makeStorage()
         let content = MockContentService()
         content.history = [personality, compatibility]
-        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content, storage: storage)
+        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content)
         await waitUntil { viewModel.historyCells.count == 2 }
 
         // When
@@ -82,7 +70,6 @@ final class HistoryViewModelTests: XCTestCase {
 
         // Then
         XCTAssertEqual(viewModel.historyCells, [compatibility])
-        XCTAssertEqual(storage.loadHistory(userId: UserModel.mock.id), [compatibility])
     }
 
     func test_deleteFailure_keepsTheRecord_andShowsAlert() async {
@@ -90,7 +77,7 @@ final class HistoryViewModelTests: XCTestCase {
         let cell = HistoryCellModel.personalityPlaceholder
         let content = MockContentService()
         content.history = [cell]
-        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content, storage: makeStorage())
+        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content)
         await waitUntil { viewModel.historyCells.count == 1 }
         content.errorToThrow = serverError
 

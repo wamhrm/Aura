@@ -162,8 +162,10 @@ final class MockAuthService: AuthServiceProtocol {
 
 @MainActor
 final class MockContentService: ContentServiceProtocol {
-    let historyDidChange = PassthroughSubject<Void, Never>()
-    let refreshRequested = PassthroughSubject<Void, Never>()
+    let historyCells = CurrentValueSubject<[HistoryCellModel], Never>([])
+    let horoscope = CurrentValueSubject<HoroscopeModel?, Never>(nil)
+    let dailyInsight = CurrentValueSubject<DailyContentModel?, Never>(nil)
+    let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
 
     var history: [HistoryCellModel] = []
     var errorToThrow: (any Error)?
@@ -191,35 +193,59 @@ final class MockContentService: ContentServiceProtocol {
         fetchHistoryCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
+        historyCells.send(history)
         return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
         if let errorToThrow { throw errorToThrow }
-        return .personalityPlaceholder
+        return historyDetails(id: id)
     }
 
     func deleteHistory(id: UUID) async throws {
         if let errorToThrow { throw errorToThrow }
+        history.removeAll { $0.id == id }
+        historyCells.send(history)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
         insightCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
-        return DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: dailyContentDate)
+        let insight = DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: dailyContentDate)
+        dailyInsight.send(insight)
+        return insight
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
         tipCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
-        return DailyContentModel(id: UUID(), text: "Совет", dateCreated: dailyContentDate)
+        let tip = DailyContentModel(id: UUID(), text: "Совет", dateCreated: dailyContentDate)
+        dailyTip.send(tip)
+        return tip
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         horoscopeCount += 1
         if let errorToThrow { throw errorToThrow }
+        horoscope.send(.mock)
         return .mock
+    }
+
+    private func historyDetails(id: UUID) -> HistoryCellModel {
+        let cell = history.first { $0.id == id } ?? .personalityPlaceholder
+        return HistoryCellModel(id: cell.id,
+                                kind: cell.kind,
+                                createdAt: cell.createdAt,
+                                selectedTests: cell.selectedTests,
+                                archetypeTitle: cell.archetypeTitle,
+                                archetypeSubtitle: cell.archetypeSubtitle,
+                                zodiacSign: cell.zodiacSign,
+                                compatibilityScore: cell.compatibilityScore,
+                                partnerName: cell.partnerName,
+                                partnerZodiacSign: cell.partnerZodiacSign,
+                                personalityResult: cell.kind == .personality ? .mock : nil,
+                                compatibilityResult: cell.compatibilityResult)
     }
 }

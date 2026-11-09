@@ -11,12 +11,10 @@ import XCTest
 final class ProfileViewModelTests: XCTestCase {
     func test_refresh_hidesOutdatedTip_beforeLoadingHistory() async {
         let result = HistoryCellModel.personalityPlaceholder
-        let storage = makeStorage()
-        storage.savePersonality(result: StoredPersonality(historyId: result.id, result: .mock), userId: UserModel.mock.id)
         let content = MockContentService()
         content.history = [result]
         content.dailyContentDate = "2000-01-01"
-        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: storage)
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
         await waitUntil { viewModel.tipState == .loaded }
         content.dailyContentDate = todayText()
         content.beforeContentResponse = {
@@ -31,16 +29,13 @@ final class ProfileViewModelTests: XCTestCase {
     }
 
     func test_lockedProfile_doesNotLoadTip_andFirstResultUnlocksLoading() async {
-        let storage = makeStorage()
         let content = MockContentService()
-        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: storage)
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
         await waitUntil { viewModel.personalityState == .loaded }
         XCTAssertEqual(content.tipCount, 0)
 
-        let result = HistoryCellModel.personalityPlaceholder
-        storage.savePersonality(result: StoredPersonality(historyId: result.id, result: .mock), userId: UserModel.mock.id)
-        content.history = [result]
-        content.historyDidChange.send()
+        content.history = [HistoryCellModel.personalityPlaceholder]
+        await viewModel.refresh()
         await waitUntil { viewModel.tipState == .loaded }
 
         XCTAssertTrue(viewModel.hasPersonalityTests)
@@ -51,7 +46,7 @@ final class ProfileViewModelTests: XCTestCase {
     func test_failedSignOut_showsError_andKeepsSettingsOpen() {
         let auth = MockAuthService(user: makeUser())
         auth.errorToThrow = serverError
-        let viewModel = ProfileViewModel(authService: auth, contentService: MockContentService(), storage: makeStorage())
+        let viewModel = ProfileViewModel(authService: auth, contentService: MockContentService())
         viewModel.showSettings = true
 
         viewModel.signOut()
@@ -62,17 +57,12 @@ final class ProfileViewModelTests: XCTestCase {
         guard case .signedIn = auth.authState.value else { return XCTFail("Session was ended") }
     }
 
-    func test_lastResultDeleted_returnsToTheLockedScreen_andForgetsTheSavedResult() async {
-        // Given
-        let storage = makeStorage()
-        storage.savePersonality(result: StoredPersonality(historyId: UUID(), result: .mock), userId: UserModel.mock.id)
-
+    func test_emptyHistory_showsTheLockedProfile() async {
         // When
-        let viewModel = ProfileViewModel(authService: MockAuthService(user: .mock), contentService: MockContentService(), storage: storage)
-        await waitUntil { viewModel.user != nil && storage.loadPersonality(userId: UserModel.mock.id) == nil }
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: .mock), contentService: MockContentService())
+        await waitUntil { viewModel.personalityState == .loaded }
 
         // Then
-        XCTAssertNil(storage.loadPersonality(userId: UserModel.mock.id))
         XCTAssertFalse(viewModel.hasPersonalityTests)
         XCTAssertEqual(viewModel.profileDisplayHandler, .placeholder)
     }

@@ -28,18 +28,16 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private let storage: LocalStorage
 
     private var currentUserId: UUID?
     private var cellToDelete: HistoryCellModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
-         contentService: any ContentServiceProtocol,
-         storage: LocalStorage = LocalStorage()) {
+         contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
-        self.storage = storage
+        self.historyCells = contentService.historyCells.value
 
         setupSubscriptions()
     }
@@ -53,19 +51,12 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             }
             .store(in: &cancellables)
 
-        contentService.historyDidChange
+        contentService.historyCells
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                guard let self, let userId = currentUserId else { return }
-                Task { await loadHistory(userId: userId) }
-            }
-            .store(in: &cancellables)
-
-        contentService.refreshRequested
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                guard let self, let userId = currentUserId else { return }
-                Task { await loadHistory(userId: userId) }
+            .sink { [weak self] cells in
+                guard let self else { return }
+                historyCells = cells
+                if !cells.isEmpty { loadState = .loaded }
             }
             .store(in: &cancellables)
     }
@@ -85,42 +76,29 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
         guard currentUserId != user.id else { return }
 
         currentUserId = user.id
-        historyCells = storage.loadHistory(userId: user.id) ?? []
-        loadState = historyCells.isEmpty ? .loading : .loaded
-
-        Task { await loadHistory(userId: user.id) }
+        Task { await fetchHistory() }
     }
 
     func fetchHistory() async {
-        guard let userId = currentUserId else { return }
-        await loadHistory(userId: userId, showErrorOnFailure: true)
-    }
+        guard currentUserId != nil else { return }
+        if historyCells.isEmpty { loadState = .loading }
 
-    func retry() {
-        guard let userId = currentUserId else { return }
-
-        loadState = .loading
-
-        Task { await loadHistory(userId: userId) }
-    }
-
-    private func loadHistory(userId: UUID, showErrorOnFailure: Bool = false) async {
         do {
-            let history = try await contentService.fetchHistory()
-            guard currentUserId == userId else { return }
-
-            historyCells = history
+            historyCells = try await contentService.fetchHistory()
             loadState = .loaded
-            storage.saveHistory(history: history, userId: userId)
         } catch {
-            guard currentUserId == userId, !error.isCancellation else { return }
+            guard !error.isCancellation else { return }
 
             if historyCells.isEmpty {
                 loadState = .failed(error.userMessage)
-            } else if showErrorOnFailure {
+            } else {
                 presentAlert(error.userMessage)
             }
         }
+    }
+
+    func retry() {
+        Task { await fetchHistory() }
     }
 
     func requestDeletion(item: HistoryCellModel) {
@@ -129,18 +107,15 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     }
 
     func deleteRequestedCell() {
-        guard let item = cellToDelete, let userId = currentUserId else { return }
+        guard let item = cellToDelete else { return }
 
         cellToDelete = nil
 
         Task {
             do {
                 try await contentService.deleteHistory(id: item.id)
-                guard currentUserId == userId else { return }
-                historyCells.removeAll { $0.id == item.id }
-                storage.saveHistory(history: historyCells, userId: userId)
             } catch {
-                guard currentUserId == userId, !error.isCancellation else { return }
+                guard !error.isCancellation else { return }
                 presentAlert("Не удалось удалить запись")
             }
         }

@@ -9,8 +9,10 @@ import Combine
 import Foundation
 
 protocol ContentServiceProtocol {
-    var historyDidChange: PassthroughSubject<Void, Never> { get }
-    var refreshRequested: PassthroughSubject<Void, Never> { get }
+    var historyCells: CurrentValueSubject<[HistoryCellModel], Never> { get }
+    var horoscope: CurrentValueSubject<HoroscopeModel?, Never> { get }
+    var dailyInsight: CurrentValueSubject<DailyContentModel?, Never> { get }
+    var dailyTip: CurrentValueSubject<DailyContentModel?, Never> { get }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
     func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel
@@ -23,12 +25,12 @@ protocol ContentServiceProtocol {
 }
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
-    let historyDidChange = PassthroughSubject<Void, Never>()
-    let refreshRequested = PassthroughSubject<Void, Never>()
+    let historyCells = CurrentValueSubject<[HistoryCellModel], Never>([])
+    let horoscope = CurrentValueSubject<HoroscopeModel?, Never>(nil)
+    let dailyInsight = CurrentValueSubject<DailyContentModel?, Never>(nil)
+    let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
 
     private let networkService: any NetworkServiceProtocol
-    private var historyTask: Task<[HistoryCellModel], any Error>?
-    private var historyRevision = 0
     private var pendingPersonalityTest: (tests: [PersonalityTestTypes], requestID: UUID)?
     private var pendingCompatibilityTest: (request: CompatibilityTestRequest, requestID: UUID)?
     private var currentUser: UserModel?
@@ -50,7 +52,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         switch authState {
             case .signedIn(let user):
                 if currentUser?.id != user.id {
-                    resetSessionState()
+                    clearContent()
                 } else if currentUser?.name != user.name || currentUser?.profileInfo != user.profileInfo {
                     // Both tests use the user's profile; edited input starts a new generation.
                     pendingPersonalityTest = nil
@@ -58,29 +60,36 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
                 }
                 currentUser = user
             case .signedOut:
-                resetSessionState()
+                clearContent()
                 currentUser = nil
         }
     }
 
-    private func resetSessionState() {
-        historyRevision += 1
-        historyTask?.cancel()
-        historyTask = nil
+    private func clearContent() {
         pendingPersonalityTest = nil
         pendingCompatibilityTest = nil
+        historyCells.send([])
+        horoscope.send(nil)
+        dailyInsight.send(nil)
+        dailyTip.send(nil)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
-        try await networkService.fetchDailyInsight()
+        let insight = try await networkService.fetchDailyInsight()
+        dailyInsight.send(insight)
+        return insight
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
-        try await networkService.fetchDailyTip()
+        let tip = try await networkService.fetchDailyTip()
+        dailyTip.send(tip)
+        return tip
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        try await networkService.fetchCurrentHoroscope()
+        let horoscope = try await networkService.fetchCurrentHoroscope()
+        self.horoscope.send(horoscope)
+        return horoscope
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
@@ -97,7 +106,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         if pendingPersonalityTest?.requestID == requestID {
             pendingPersonalityTest = nil
         }
-        notifyHistoryChanged()
+        await reloadHistory()
         return result
     }
 
@@ -115,51 +124,28 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         if pendingCompatibilityTest?.requestID == requestID {
             pendingCompatibilityTest = nil
         }
-        notifyHistoryChanged()
+        await reloadHistory()
         return result
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        let revision = historyRevision
-        let task: Task<[HistoryCellModel], any Error>
-
-        if let historyTask {
-            task = historyTask
-        } else {
-            let networkService = networkService
-            task = Task { try await networkService.fetchHistory() }
-            historyTask = task
-        }
-
-        defer {
-            if historyTask == task {
-                historyTask = nil
-            }
-        }
-
-        let history = try await task.value
-        guard revision == historyRevision else { throw CancellationError() }
+        let history = try await networkService.fetchHistory()
+        historyCells.send(history)
         return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
-        let revision = historyRevision
-        let details = try await networkService.fetchHistoryDetails(id: id)
-        guard revision == historyRevision else { throw CancellationError() }
-        return details
+        try await networkService.fetchHistoryDetails(id: id)
     }
 
     func deleteHistory(id: UUID) async throws {
         try await networkService.deleteHistory(id: id)
-        notifyHistoryChanged()
+        historyCells.send(historyCells.value.filter { $0.id != id })
     }
 
-    private func notifyHistoryChanged() {
-        // Readers that started before this change must not publish their old response.
-        historyRevision += 1
-        historyTask?.cancel()
-        historyTask = nil
-        historyDidChange.send(())
+    private func reloadHistory() async {
+        guard let history = try? await networkService.fetchHistory() else { return }
+        historyCells.send(history)
     }
 }
 

@@ -12,7 +12,7 @@ final class HomeViewModelTests: XCTestCase {
     func test_refresh_hidesOutdatedInsight_beforeRequestingNewContent() async {
         let content = MockContentService()
         content.dailyContentDate = "2000-01-01"
-        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content, storage: makeStorage())
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
         await waitUntil { viewModel.insightState == .loaded }
         content.dailyContentDate = todayText()
         content.beforeContentResponse = { XCTAssertNil(viewModel.dailyInsight) }
@@ -26,7 +26,7 @@ final class HomeViewModelTests: XCTestCase {
     func test_birthDateChange_hidesPreviousHoroscope_whenReloadFails() async {
         let auth = MockAuthService(user: makeUser(dateOfBirth: "20.01.1990"))
         let content = MockContentService()
-        let viewModel = HomeViewModel(authService: auth, contentService: content, storage: makeStorage())
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
         await waitUntil { viewModel.horoscopeState == .loaded }
         content.errorToThrow = serverError
 
@@ -36,10 +36,9 @@ final class HomeViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.horoscope)
     }
 
-    func test_refreshFailure_keepsTheSavedHoroscopeFromThisWeek() async {
+    func test_refreshFailure_keepsTheHoroscopeOnScreen() async {
         let content = MockContentService()
-        let storage = makeStorage()
-        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: "20.01.1990")), contentService: content, storage: storage)
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: "20.01.1990")), contentService: content)
         await waitUntil { viewModel.horoscopeState == .loaded }
         content.errorToThrow = serverError
 
@@ -47,7 +46,6 @@ final class HomeViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.horoscope, .mock)
         XCTAssertEqual(viewModel.horoscopeState, .loaded)
-        XCTAssertEqual(storage.loadHoroscope(userId: UserModel.mock.id), .mock)
     }
 
     // MARK: - Daily insight
@@ -57,8 +55,7 @@ final class HomeViewModelTests: XCTestCase {
 
         // When
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
-                                      contentService: content,
-                                      storage: makeStorage())
+                                      contentService: content)
         await waitUntil { viewModel.horoscopeState == .loaded }
 
         // Then
@@ -66,15 +63,13 @@ final class HomeViewModelTests: XCTestCase {
         XCTAssertEqual(content.insightCount, 0)
     }
 
-    func test_savedInsightFromAnotherDay_isNotShown_whenTheServerFails() async {
+    func test_insightFailure_showsTheError_andNoText() async {
         // Given
-        let storage = makeStorage()
-        storage.saveDailyInsight(insight: DailyContentModel(id: UUID(), text: "Вчерашний инсайт", dateCreated: "2000-01-01"), userId: UserModel.mock.id)
         let content = MockContentService()
         content.errorToThrow = serverError
 
         // When
-        let viewModel = HomeViewModel(authService: MockAuthService(user: .mock), contentService: content, storage: storage)
+        let viewModel = HomeViewModel(authService: MockAuthService(user: .mock), contentService: content)
         await waitUntil { viewModel.insightState == .failed("Ошибка сервера") }
 
         // Then
@@ -82,20 +77,20 @@ final class HomeViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.dailyInsight)
     }
 
-    func test_savedInsightFromToday_stays_whenTheServerFails() async {
+    func test_refreshFailure_keepsTheInsightOnScreen() async {
         // Given
-        let insight = DailyContentModel(id: UUID(), text: "Сегодняшний инсайт", dateCreated: todayText())
-        let storage = makeStorage()
-        storage.saveDailyInsight(insight: insight, userId: UserModel.mock.id)
         let content = MockContentService()
+        let viewModel = HomeViewModel(authService: MockAuthService(user: .mock), contentService: content)
+        await waitUntil { viewModel.insightState == .loaded }
+        let insight = viewModel.dailyInsight
         content.errorToThrow = serverError
 
         // When
-        let viewModel = HomeViewModel(authService: MockAuthService(user: .mock), contentService: content, storage: storage)
-        await waitUntil { content.insightCount == 1 }
+        await viewModel.refresh()
 
         // Then
         XCTAssertEqual(viewModel.dailyInsight, insight)
+        XCTAssertEqual(viewModel.insightState, .loaded)
     }
 
     // MARK: - Updates of the same user
@@ -103,7 +98,7 @@ final class HomeViewModelTests: XCTestCase {
         // Given
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         let content = MockContentService()
-        let viewModel = HomeViewModel(authService: auth, contentService: content, storage: makeStorage())
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
         await waitUntil { viewModel.horoscopeState == .loaded }
 
         // When
@@ -119,7 +114,7 @@ final class HomeViewModelTests: XCTestCase {
         // Given
         let auth = MockAuthService(user: makeUser())
         let content = MockContentService()
-        let viewModel = HomeViewModel(authService: auth, contentService: content, storage: makeStorage())
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
         await waitUntil { viewModel.horoscopeState == .loaded && viewModel.insightState == .loaded }
 
         // When
