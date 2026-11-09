@@ -10,7 +10,6 @@ import FluentPostgresDriver
 import Vapor
 
 struct AuthController: RouteCollection {
-    private let appleAuthService = AppleAuthService()
     private let passwordResetService = PasswordResetService()
     private let emailConfirmationService = EmailConfirmationService()
 
@@ -20,7 +19,6 @@ struct AuthController: RouteCollection {
         let limited = auth.grouped(RateLimitMiddleware(limit: 10, window: 60))
         limited.post("createAccount", use: createAccount)
         limited.post("signIn", use: signIn)
-        limited.post("apple", use: signInWithApple)
         limited.post("password", "forgot", use: requestPasswordReset)
         limited.post("password", "reset", use: resetPassword)
 
@@ -150,43 +148,6 @@ struct AuthController: RouteCollection {
         return try user.toDTO()
     }
 
-    private func signInWithApple(req: Request) async throws -> AuthDTO {
-        let data = try req.content.decode(AppleSignInRequest.self)
-        let identityToken = try await appleAuthService.verifyIdentityToken(identityToken: data.identityToken, nonce: data.nonce, req: req)
-        let appleUserID = identityToken.subject.value
-
-        let user: User
-        if let existingUser = try await User.query(on: req.db).filter(\.$appleUserID == appleUserID).first() {
-            user = existingUser
-        } else {
-            user = try await createAppleUser(appleUserID: appleUserID, name: data.name, req: req)
-        }
-
-        if user.appleRefreshToken == nil, let authorizationCode = data.authorizationCode {
-            user.appleRefreshToken = await appleAuthService.encryptedRefreshToken(authorizationCode: authorizationCode, req: req)
-            try await user.save(on: req.db)
-        }
-
-        return try await issueToken(user: user, database: req.db)
-    }
-
-    private func createAppleUser(appleUserID: String, name: String?, req: Request) async throws -> User {
-        let trimmedName = String((name ?? "").trimmingCharacters(in: .whitespacesAndNewlines).prefix(InputLimits.maxNameLength))
-        let user = User(name: trimmedName.count >= InputLimits.minNameLength ? trimmedName : "Пользователь",
-                        appleUserID: appleUserID)
-
-        do {
-            try await user.save(on: req.db)
-            return user
-        } catch {
-            guard (error as? any DatabaseError)?.isConstraintFailure == true,
-                  let existingUser = try await User.query(on: req.db).filter(\.$appleUserID == appleUserID).first()
-            else { throw error }
-
-            return existingUser
-        }
-    }
-
     private func issueToken(user: User, database: any Database) async throws -> AuthDTO {
         let userID = try user.requireID()
 
@@ -212,13 +173,6 @@ struct AuthController: RouteCollection {
 
     private func deleteAccount(req: Request) async throws -> HTTPStatus {
         let user = try req.auth.require(User.self)
-
-        if let appleRefreshToken = user.appleRefreshToken {
-            await appleAuthService.revoke(encryptedRefreshToken: appleRefreshToken, req: req)
-        } else if user.appleUserID != nil {
-            req.logger.warning("Apple token not revoked: no refresh token stored")
-        }
-
         try await user.delete(on: req.db)
         return .noContent
     }

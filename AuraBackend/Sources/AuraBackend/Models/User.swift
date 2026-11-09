@@ -53,12 +53,6 @@ final class User: Model, Authenticatable, @unchecked Sendable {
     @OptionalField(key: "password_hash")
     var passwordHash: String?
 
-    @OptionalField(key: "apple_user_id")
-    var appleUserID: String?
-
-    @OptionalField(key: "apple_refresh_token")
-    var appleRefreshToken: String?
-
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
 
@@ -71,17 +65,11 @@ final class User: Model, Authenticatable, @unchecked Sendable {
         self.email = email
         self.passwordHash = passwordHash
     }
-
-    init(name: String, appleUserID: String) {
-        self.name = name
-        self.appleUserID = appleUserID
-    }
 }
 
 extension User {
-    // Apple has already checked its accounts, and we don't store their email
     var isEmailConfirmed: Bool {
-        emailConfirmedAt != nil || appleUserID != nil
+        emailConfirmedAt != nil
     }
 
     var hasCompletedProfileInfo: Bool {

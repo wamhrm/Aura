@@ -32,13 +32,6 @@ struct ConfirmEmailRequest: Content {
     let code: String
 }
 
-struct AppleSignInRequest: Content {
-    let identityToken: String
-    let authorizationCode: String?
-    let nonce: String
-    let name: String?
-}
-
 struct UserDTO: Content {
     let id: UUID
     let name: String

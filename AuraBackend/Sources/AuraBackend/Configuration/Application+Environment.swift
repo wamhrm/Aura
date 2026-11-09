@@ -12,14 +12,7 @@ extension Application {
     func validateEnvironment() throws {
         guard environment == .production else { return }
 
-        var required = ["POSTGRESQL_HOST", "POSTGRESQL_USER", "POSTGRESQL_PASSWORD", "POSTGRESQL_DBNAME", "OPENAI_KEY", "RESEND_API_KEY"]
-
-        if isSet(name: "APPLE_PRIVATE_KEY") {
-            required.append("APPLE_TOKEN_ENCRYPTION_KEY")
-        } else {
-            logger.warning("Sign in with Apple is not fully configured: APPLE_PRIVATE_KEY is missing")
-        }
-
+        let required = ["POSTGRESQL_HOST", "POSTGRESQL_USER", "POSTGRESQL_PASSWORD", "POSTGRESQL_DBNAME", "OPENAI_KEY", "RESEND_API_KEY"]
         let missing = required.filter { !isSet(name: $0) }
 
         guard missing.isEmpty else {
