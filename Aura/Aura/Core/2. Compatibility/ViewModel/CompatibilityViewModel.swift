@@ -45,6 +45,9 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     private let contentService: any ContentServiceProtocol
     
     private var currentUser: UserModel?
+    private var compatibilityRequestID: UUID?
+    private var compatibilityRequestUser: UserModel?
+    private var compatibilityRequest: CompatibilityTestRequest?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -108,13 +111,21 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             return
         }
 
+        do {
+            try validatePartnerInfoForms()
+        } catch {
+            presentAlert(error.userMessage)
+            return
+        }
+
+        let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
+        let requestID = currentCompatibilityRequestID(for: request)
         isLoading = true
 
         Task {
             do {
-                try validatePartnerInfoForms()
-                let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
-                compatibilityResult = try await contentService.makeCompatibilityTest(request: request)
+                compatibilityResult = try await contentService.makeCompatibilityTest(request: request,
+                                                                                     requestID: requestID)
                 compatibilityRoutes.append(.compatibilityResults)
                 clearFields()
             } catch {
@@ -123,6 +134,28 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             
             isLoading = false
         }
+    }
+
+    // The same partner and profile retry one server request. Any change starts another.
+    private func currentCompatibilityRequestID(for request: CompatibilityTestRequest) -> UUID {
+        let user = signedInUser
+
+        if let compatibilityRequestID,
+           compatibilityRequestUser == user,
+           compatibilityRequest == request {
+            return compatibilityRequestID
+        }
+
+        let requestID = UUID()
+        compatibilityRequestID = requestID
+        compatibilityRequestUser = user
+        compatibilityRequest = request
+        return requestID
+    }
+
+    private var signedInUser: UserModel? {
+        if case .signedIn(let user) = authService.authState.value { return user }
+        return nil
     }
 
     private func validatePartnerInfoForms() throws {

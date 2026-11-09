@@ -3,6 +3,7 @@
 //  AuraUnitTests
 //
 
+import Combine
 import XCTest
 @testable import Aura
 
@@ -68,5 +69,41 @@ final class CompatibilityViewModelTests: XCTestCase {
         // Then
         XCTAssertNotNil(viewModel.emailConfirmation)
         XCTAssertFalse(viewModel.isLoading)
+    }
+
+    func test_retry_reusesTheRequestID_untilTheUserOrPartnerChanges() async throws {
+        // Given
+        let content = MockContentService()
+        content.errorToThrow = serverError
+        let auth = MockAuthService(user: makeUser())
+        let viewModel = CompatibilityViewModel(authService: auth, contentService: content)
+        viewModel.partnerInfo.name = "Анна"
+
+        // When the same form is retried
+        viewModel.makeCompatibilityTest()
+        await waitUntil { content.compatibilityRequestIDs.count == 1 }
+        viewModel.makeCompatibilityTest()
+        await waitUntil { content.compatibilityRequestIDs.count == 2 }
+
+        // Then
+        let firstID = try XCTUnwrap(content.compatibilityRequestIDs.first)
+        XCTAssertEqual(content.compatibilityRequestIDs, [firstID, firstID])
+
+        // When the signed-in user changes
+        auth.authState.send(.signedIn(makeUser(name: "Мария")))
+        viewModel.makeCompatibilityTest()
+        await waitUntil { content.compatibilityRequestIDs.count == 3 }
+
+        // Then
+        XCTAssertNotEqual(content.compatibilityRequestIDs.last, firstID)
+
+        // When the partner changes
+        let changedUserID = try XCTUnwrap(content.compatibilityRequestIDs.last)
+        viewModel.partnerInfo.name = "Иван"
+        viewModel.makeCompatibilityTest()
+        await waitUntil { content.compatibilityRequestIDs.count == 4 }
+
+        // Then
+        XCTAssertNotEqual(content.compatibilityRequestIDs.last, changedUserID)
     }
 }

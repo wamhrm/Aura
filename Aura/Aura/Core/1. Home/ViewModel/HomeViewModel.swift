@@ -38,6 +38,9 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private let contentService: any ContentServiceProtocol
 
     private var currentUser: UserModel?
+    private var personalityRequestID: UUID?
+    private var personalityRequestUser: UserModel?
+    private var personalityRequestTests: [PersonalityTestTypes]?
     private var cancellables = Set<AnyCancellable>()
 
     init(authService: any AuthServiceProtocol,
@@ -156,11 +159,14 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             return
         }
 
+        let tests = selectedTests
+        let requestID = currentPersonalityRequestID()
         isLoading = true
 
         Task {
             do {
-                personalityResult = try await contentService.makePersonalityTest(selectedTests: selectedTests)
+                personalityResult = try await contentService.makePersonalityTest(selectedTests: tests,
+                                                                                 requestID: requestID)
                 homeRoutes.append(.testResults)
             } catch {
                 presentAlert(error.userMessage)
@@ -168,6 +174,28 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
             isLoading = false
         }
+    }
+
+    // The same answers retry one server request. A new selection or profile starts another.
+    private func currentPersonalityRequestID() -> UUID {
+        let user = signedInUser
+
+        if let personalityRequestID,
+           personalityRequestUser == user,
+           personalityRequestTests == selectedTests {
+            return personalityRequestID
+        }
+
+        let requestID = UUID()
+        personalityRequestID = requestID
+        personalityRequestUser = user
+        personalityRequestTests = selectedTests
+        return requestID
+    }
+
+    private var signedInUser: UserModel? {
+        if case .signedIn(let user) = authService.authState.value { return user }
+        return nil
     }
 
     func refresh() async {

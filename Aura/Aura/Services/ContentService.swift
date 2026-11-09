@@ -14,8 +14,8 @@ protocol ContentServiceProtocol {
     var dailyInsight: CurrentValueSubject<DailyContentModel?, Never> { get }
     var dailyTip: CurrentValueSubject<DailyContentModel?, Never> { get }
 
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel
-    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel
+    func makeCompatibilityTest(request: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel
     func fetchHistory() async throws -> [HistoryCellModel]
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel
     func deleteHistory(id: UUID) async throws
@@ -84,14 +84,14 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         return horoscope
     }
 
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
-        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: UUID())
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
+        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
         await reloadHistory()
         return result
     }
 
-    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel {
-        let result = try await networkService.makeCompatibilityTest(request, requestID: UUID())
+    func makeCompatibilityTest(request: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
+        let result = try await networkService.makeCompatibilityTest(request, requestID: requestID)
         await reloadHistory()
         return result
     }

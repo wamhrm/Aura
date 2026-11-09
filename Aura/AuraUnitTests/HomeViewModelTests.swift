@@ -170,4 +170,48 @@ final class HomeViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
         XCTAssertFalse(viewModel.isCodeSent)
     }
+
+    func test_personalityRetry_reusesTheRequestID_untilTheAnswersChange() async throws {
+        // Given
+        let content = MockContentService()
+        content.errorToThrow = serverError
+        let auth = MockAuthService(user: makeUser())
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
+
+        // When the same selection is retried
+        viewModel.makePersonalityTest()
+        await waitUntil { content.personalityRequestIDs.count == 1 }
+        viewModel.makePersonalityTest()
+        await waitUntil { content.personalityRequestIDs.count == 2 }
+
+        // Then
+        let firstID = try XCTUnwrap(content.personalityRequestIDs.first)
+        XCTAssertEqual(content.personalityRequestIDs, [firstID, firstID])
+
+        // When the profile answer changes
+        auth.authState.send(.signedIn(makeUser(socialType: "extrovert")))
+        viewModel.makePersonalityTest()
+        await waitUntil { content.personalityRequestIDs.count == 3 }
+
+        // Then
+        XCTAssertNotEqual(content.personalityRequestIDs.last, firstID)
+    }
+
+    func test_personalityRetry_usesANewRequestID_whenTheSelectedTestsChange() async throws {
+        // Given
+        let content = MockContentService()
+        content.errorToThrow = serverError
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
+        viewModel.makePersonalityTest()
+        await waitUntil { content.personalityRequestIDs.count == 1 }
+        let firstID = try XCTUnwrap(content.personalityRequestIDs.first)
+
+        // When
+        viewModel.toggleTestSelection(.decisionMaking)
+        viewModel.makePersonalityTest()
+        await waitUntil { content.personalityRequestIDs.count == 2 }
+
+        // Then
+        XCTAssertNotEqual(content.personalityRequestIDs.last, firstID)
+    }
 }

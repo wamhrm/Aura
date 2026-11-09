@@ -24,17 +24,19 @@ func waitUntil(file: StaticString = #filePath, line: UInt = #line, _ condition: 
 
 // A filled profile by default, a test changes only what it checks
 @MainActor
-func makeUser(dateOfBirth: String? = "13.05.2000",
+func makeUser(name: String = "Дмитрий",
+              dateOfBirth: String? = "13.05.2000",
               gender: String? = "man",
+              socialType: String? = "introvert",
               hasAIConsent: Bool? = true,
               isEmailConfirmed: Bool? = true) -> UserModel {
     UserModel(id: UserModel.mock.id,
-              name: "Дмитрий",
+              name: name,
               email: "test@test.com",
               dateOfBirth: dateOfBirth,
               birthTime: nil,
               gender: gender,
-              socialType: "introvert",
+              socialType: socialType,
               conflictStyle: "mediator",
               emotionalCore: "logic",
               decisionStyle: "planner",
@@ -168,19 +170,23 @@ final class MockContentService: ContentServiceProtocol {
     var dailyContentDate = todayText()
     var beforeContentResponse: (() -> Void)?
 
+    private(set) var personalityRequestIDs: [UUID] = []
     private(set) var compatibilityRequests: [CompatibilityTestRequest] = []
+    private(set) var compatibilityRequestIDs: [UUID] = []
     private(set) var fetchHistoryCount = 0
     private(set) var horoscopeCount = 0
     private(set) var insightCount = 0
     private(set) var tipCount = 0
 
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes]) async throws -> PersonalityResultModel {
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
+        personalityRequestIDs.append(requestID)
         if let errorToThrow { throw errorToThrow }
         return .mock
     }
 
-    func makeCompatibilityTest(request: CompatibilityTestRequest) async throws -> CompatibilityResultModel {
+    func makeCompatibilityTest(request: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
         compatibilityRequests.append(request)
+        compatibilityRequestIDs.append(requestID)
         if let errorToThrow { throw errorToThrow }
         return .mock
     }
