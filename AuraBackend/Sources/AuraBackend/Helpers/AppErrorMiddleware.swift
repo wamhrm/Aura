@@ -7,7 +7,7 @@
 
 import Vapor
 
-// Every error leaves as {"error": true, "reason": "..."} with a Russian text the app can show as is
+// Every error leaves as {"error": true, "reason": "..."}
 struct AppErrorMiddleware: AsyncMiddleware {
     private struct ErrorBody: Content {
         let error: Bool
@@ -41,8 +41,7 @@ struct AppErrorMiddleware: AsyncMiddleware {
     }
 
     private func reason(abort: (any AbortError)?, status: HTTPResponseStatus) -> String {
-        // Details of a server failure stay in the log. Framework errors come in English.
-        if status.code < 500, let reason = abort?.reason, containsRussianText(text: reason) {
+        if status.code < 500, let reason = abort?.reason, reason != status.reasonPhrase {
             return reason
         }
 
@@ -62,9 +61,5 @@ struct AppErrorMiddleware: AsyncMiddleware {
             default:
                 return "Не удалось выполнить запрос"
         }
-    }
-
-    private func containsRussianText(text: String) -> Bool {
-        text.unicodeScalars.contains { (0x0400...0x04FF).contains($0.value) }
     }
 }

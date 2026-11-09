@@ -13,12 +13,10 @@ struct AuthController: RouteCollection {
 
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
-
-        let limited = auth.grouped(RateLimitMiddleware(limit: 10, window: 60))
-        limited.post("createAccount", use: createAccount)
-        limited.post("signIn", use: signIn)
-        limited.post("password", "forgot", use: requestPasswordReset)
-        limited.post("password", "reset", use: resetPassword)
+        auth.post("createAccount", use: createAccount)
+        auth.post("signIn", use: signIn)
+        auth.post("password", "forgot", use: requestPasswordReset)
+        auth.post("password", "reset", use: resetPassword)
 
         let authenticated = auth.grouped(UserAuthMiddleware())
         authenticated.post("logout", use: logout)
