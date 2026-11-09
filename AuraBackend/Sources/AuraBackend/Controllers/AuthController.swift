@@ -6,12 +6,10 @@
 //
 
 import Fluent
-import FluentPostgresDriver
 import Vapor
 
 struct AuthController: RouteCollection {
-    private let passwordResetService = PasswordResetService()
-    private let emailConfirmationService = EmailConfirmationService()
+    private let emailCodeService = EmailCodeService()
 
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
@@ -89,7 +87,7 @@ struct AuthController: RouteCollection {
         }
 
         if let user = try await User.query(on: req.db).filter(\.$email == email).first(), user.passwordHash != nil {
-            try await passwordResetService.sendCode(user: user, req: req)
+            try await emailCodeService.sendReset(user: user, req: req)
         }
 
         return .noContent
@@ -104,36 +102,21 @@ struct AuthController: RouteCollection {
               user.passwordHash != nil
         else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
 
-        let resetID = try await passwordResetService.verifyCode(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                                user: user,
-                                                                req: req)
+        try await emailCodeService.verifyReset(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                               user: user,
+                                               req: req)
 
         let userID = try user.requireID()
-        let passwordHash = try await req.password.async.hash(data.password)
-
-        return try await req.db.transaction { database in
-            try await database.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
-
-            // Hashing takes time: the checked code must still be current and unused.
-            guard let reset = try await PasswordReset.query(on: database)
-                .filter(\.$user.$id == userID)
-                .sort(\.$createdAt, .descending)
-                .first(), reset.id == resetID, reset.expiresAt > Date() else {
-                throw Abort(.badRequest, reason: "Код недействителен. Запросите новый")
-            }
-
-            user.passwordHash = passwordHash
-            // The code came to this address, so the address is confirmed too.
-            user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
-            try await user.save(on: database)
-            try await Token.query(on: database).filter(\.$user.$id == userID).delete()
-            try await PasswordReset.query(on: database).filter(\.$user.$id == userID).delete()
-            return try await issueToken(user: user, database: database)
-        }
+        user.passwordHash = try await req.password.async.hash(data.password)
+        user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
+        try await user.save(on: req.db)
+        try await Token.query(on: req.db).filter(\.$user.$id == userID).delete()
+        try await PasswordReset.query(on: req.db).filter(\.$user.$id == userID).delete()
+        return try await issueToken(user: user, database: req.db)
     }
 
     private func sendEmailConfirmationCode(req: Request) async throws -> HTTPStatus {
-        try await emailConfirmationService.sendCode(user: try req.auth.require(User.self), req: req)
+        try await emailCodeService.sendConfirmation(user: try req.auth.require(User.self), req: req)
         return .noContent
     }
 
@@ -141,9 +124,9 @@ struct AuthController: RouteCollection {
         let user = try req.auth.require(User.self)
         let data = try req.content.decode(ConfirmEmailRequest.self)
 
-        try await emailConfirmationService.confirm(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                   user: user,
-                                                   req: req)
+        try await emailCodeService.confirm(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                           user: user,
+                                           req: req)
 
         return try user.toDTO()
     }
