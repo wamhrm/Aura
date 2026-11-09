@@ -52,6 +52,7 @@ nonisolated enum Constants {
     }
     
     static let tokenKey = "tokenKey"
+    static let userKey = "userKey"
 
     static let selectedThemeKey = "selectedTheme"
     static let accentColorKey = "accentColor"

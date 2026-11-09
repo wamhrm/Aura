@@ -38,14 +38,17 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
-    private let storage: LocalStorage
+    private let userDefaults: UserDefaults
+    private let legacyUserDirectory: URL
 
     init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
-         storage: LocalStorage = LocalStorage()) {
+         userDefaults: UserDefaults = Constants.userDefaults,
+         legacyUserDirectory: URL = Constants.localStorageDirectory) {
         self.networkService = networkService
         self.keychain = keychain
-        self.storage = storage
+        self.userDefaults = userDefaults
+        self.legacyUserDirectory = legacyUserDirectory
 
         autoSignIn()
     }
@@ -114,18 +117,15 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private func endSession() throws {
         try keychain.deleteAuthToken()
-        if let user = storage.loadUser() {
-            storage.deleteAll(userId: user.id)
-        }
-
-        storage.deleteUser()
+        userDefaults.removeObject(forKey: Constants.userKey)
+        try? FileManager.default.removeItem(at: legacyUserFile)
         showsMainScreen = false
         didAskAIConsent = false
         authState.send(.signedOut)
     }
 
     private func autoSignIn() {
-        guard (try? keychain.loadAuthToken()) != nil, let user = storage.loadUser() else { return }
+        guard (try? keychain.loadAuthToken()) != nil, let user = loadUser() else { return }
         authState.send(.signedIn(user))
         openMainIfProfileIsComplete()
     }
@@ -136,8 +136,33 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     private func saveUser(_ user: UserModel) {
-        storage.saveUser(user: user)
+        if let data = try? JSONEncoder().encode(user) {
+            userDefaults.set(data, forKey: Constants.userKey)
+        }
         authState.send(.signedIn(user))
+    }
+
+    // Older builds kept the signed-in user in user.json.
+    private func loadUser() -> UserModel? {
+        if let data = userDefaults.data(forKey: Constants.userKey),
+           let user = decodeUser(data) {
+            return user
+        }
+
+        guard let data = try? Data(contentsOf: legacyUserFile),
+              let user = decodeUser(data) else { return nil }
+
+        userDefaults.set(data, forKey: Constants.userKey)
+        try? FileManager.default.removeItem(at: legacyUserFile)
+        return user
+    }
+
+    private var legacyUserFile: URL {
+        legacyUserDirectory.appending(path: "user.json")
+    }
+
+    private func decodeUser(_ data: Data) -> UserModel? {
+        try? JSONDecoder().decode(UserModel.self, from: data)
     }
 
     private func openMainIfProfileIsComplete() {

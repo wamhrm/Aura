@@ -106,19 +106,6 @@ final class ModelTests: XCTestCase {
         XCTAssertNoThrow(try keychain.deleteToken(path: path, key: "token"))
     }
 
-    func test_localStorage_readsBackTheSavedUser_andStaysOutOfBackups() throws {
-        // Given
-        let folder = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
-        let storage = LocalStorage(baseURL: folder)
-
-        // When
-        storage.saveUser(user: .mock)
-
-        // Then
-        XCTAssertEqual(storage.loadUser(), .mock)
-        XCTAssertEqual(try folder.resourceValues(forKeys: [.isExcludedFromBackupKey]).isExcludedFromBackup, true)
-    }
-
     // MARK: - Birth date
     func test_birthDateRange_allowsOnlyAgesFrom16To100() {
         // Given

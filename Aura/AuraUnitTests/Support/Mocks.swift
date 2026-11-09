@@ -45,10 +45,39 @@ func makeUser(name: String = "Дмитрий",
               isEmailConfirmed: isEmailConfirmed)
 }
 
-// Keeps a test's files away from the app's own storage
-@MainActor
-func makeStorage() -> LocalStorage {
-    LocalStorage(baseURL: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory))
+// Keeps a test's saved user away from the app's own defaults and old user.json.
+final class TestDefaults {
+    let defaults: UserDefaults
+    let legacyDirectory: URL
+    private let suite: String
+
+    init() {
+        suite = "aura-tests." + UUID().uuidString
+        defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        legacyDirectory = FileManager.default.temporaryDirectory.appending(path: suite, directoryHint: .isDirectory)
+    }
+
+    deinit {
+        defaults.removePersistentDomain(forName: suite)
+        try? FileManager.default.removeItem(at: legacyDirectory)
+    }
+
+    @MainActor
+    func loadUser() -> UserModel? {
+        guard let data = defaults.data(forKey: Constants.userKey) else { return nil }
+        return try? JSONDecoder().decode(UserModel.self, from: data)
+    }
+
+    @MainActor
+    func saveUser(user: UserModel) {
+        guard let data = try? JSONEncoder().encode(user) else { return }
+        defaults.set(data, forKey: Constants.userKey)
+    }
+}
+
+func makeStorage() -> TestDefaults {
+    TestDefaults()
 }
 
 func todayText() -> String {
