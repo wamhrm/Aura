@@ -140,7 +140,7 @@ final class MockAuthService: AuthServiceProtocol {
         if let errorToThrow { throw errorToThrow }
     }
 
-    func signOut() throws {
+    func signOut() async throws {
         if let errorToThrow { throw errorToThrow }
         showsMainScreen = false
         didAskAIConsent = false

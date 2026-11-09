@@ -43,13 +43,14 @@ final class ProfileViewModelTests: XCTestCase {
         XCTAssertNotNil(viewModel.dailyTip)
     }
 
-    func test_failedSignOut_showsError_andKeepsSettingsOpen() {
+    func test_failedSignOut_showsError_andKeepsSettingsOpen() async {
         let auth = MockAuthService(user: makeUser())
         auth.errorToThrow = serverError
         let viewModel = ProfileViewModel(authService: auth, contentService: MockContentService())
         viewModel.showSettings = true
 
         viewModel.signOut()
+        await waitUntil { viewModel.showAlert }
 
         XCTAssertTrue(viewModel.showSettings)
         XCTAssertTrue(viewModel.showAlert)

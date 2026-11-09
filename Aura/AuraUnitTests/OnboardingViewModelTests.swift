@@ -9,13 +9,14 @@ import XCTest
 
 @MainActor
 final class OnboardingViewModelTests: XCTestCase {
-    func test_failedSignOut_showsError_andKeepsCurrentStep() {
+    func test_failedSignOut_showsError_andKeepsCurrentStep() async {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         let viewModel = makeViewModel(auth: auth)
         viewModel.onboardingRoutes = [.aiConsent]
         auth.errorToThrow = serverError
 
         viewModel.signOut()
+        await waitUntil { viewModel.showAlert }
 
         XCTAssertEqual(viewModel.onboardingRoutes, [.aiConsent])
         XCTAssertTrue(viewModel.showAlert)

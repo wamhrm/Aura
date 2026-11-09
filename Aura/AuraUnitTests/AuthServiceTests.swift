@@ -59,7 +59,10 @@ final class AuthServiceTests: XCTestCase {
         try await auth.signIn(email: "test@test.com", password: "password")
         keychain.deleteFails = true
 
-        XCTAssertThrowsError(try auth.signOut()) { error in
+        do {
+            try await auth.signOut()
+            XCTFail("Sign-out must fail")
+        } catch {
             XCTAssertEqual((error as? KeychainError)?.status, errSecInteractionNotAllowed)
         }
 
@@ -74,7 +77,7 @@ final class AuthServiceTests: XCTestCase {
         let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, storage: storage)
         try await auth.signIn(email: "test@test.com", password: "password")
 
-        try auth.signOut()
+        try await auth.signOut()
 
         XCTAssertNil(try keychain.loadAuthToken())
         XCTAssertNil(storage.loadUser())
@@ -142,7 +145,7 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertTrue(auth.showsMainScreen)
         auth.noteAIConsentAsked()
         XCTAssertTrue(auth.didAskAIConsent)
-        try auth.signOut()
+        try await auth.signOut()
         XCTAssertFalse(auth.showsMainScreen)
         XCTAssertFalse(auth.didAskAIConsent)
     }
@@ -239,7 +242,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws -> AuthTokenResponse { throw serverError }
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse { throw serverError }
-    func logout(token: String) async throws { throw serverError }
+    func logout() async throws { throw serverError }
     func deleteAccount() async throws { throw serverError }
     func requestPasswordReset(email: String) async throws { throw serverError }
     func sendEmailConfirmationCode() async throws { throw serverError }

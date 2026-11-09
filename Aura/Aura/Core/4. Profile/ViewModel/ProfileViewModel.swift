@@ -219,12 +219,14 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     func signOut() {
-        do {
-            try authService.signOut()
-            showSettings = false
-            showAlert = false
-        } catch {
-            presentAlert(error.userMessage)
+        Task {
+            do {
+                try await authService.signOut()
+                showSettings = false
+                showAlert = false
+            } catch {
+                presentAlert(error.userMessage)
+            }
         }
     }
 

@@ -6,18 +6,12 @@
 //
 
 import Foundation
-import os
 
 fileprivate enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
     case patch = "PATCH"
     case delete = "DELETE"
-}
-
-fileprivate enum RequestAuthorization {
-    case none, storedToken
-    case token(String)
 }
 
 protocol NetworkServiceProtocol: Sendable {
@@ -27,7 +21,7 @@ protocol NetworkServiceProtocol: Sendable {
                          authorizationCode: String?,
                          nonce: String,
                          name: String?) async throws -> AuthTokenResponse
-    func logout(token: String) async throws
+    func logout() async throws
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse
     func deleteAccount() async throws
@@ -46,7 +40,6 @@ protocol NetworkServiceProtocol: Sendable {
 }
 
 nonisolated final class NetworkService: NetworkServiceProtocol {
-    private static let logger = Logger(subsystem: "ddorsat.Aura", category: "Network")
     private static let defaultTimeout: TimeInterval = 20
     // The server may wait for OpenAI up to 121 seconds
     private static let aiTimeout: TimeInterval = 130
@@ -71,141 +64,137 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     }
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
-        let bodyData = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
-        let data = try await request(endpoint: "/auth/createAccount", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, data: data)
+        let body = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
+        return try await fetch(endpoint: "/auth/createAccount", method: .post, body: body)
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
-        let bodyData = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
-        let data = try await request(endpoint: "/auth/signIn", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, data: data)
+        let body = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
+        return try await fetch(endpoint: "/auth/signIn", method: .post, body: body)
     }
 
     func signInWithApple(identityToken: String,
                          authorizationCode: String?,
                          nonce: String,
                          name: String?) async throws -> AuthTokenResponse {
-        let bodyData = try JSONEncoder().encode(AppleSignInBody(identityToken: identityToken,
-                                                                authorizationCode: authorizationCode,
-                                                                nonce: nonce,
-                                                                name: name))
-        let data = try await request(endpoint: "/auth/apple", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, data: data)
+        let body = try JSONEncoder().encode(AppleSignInBody(identityToken: identityToken,
+                                                            authorizationCode: authorizationCode,
+                                                            nonce: nonce,
+                                                            name: name))
+        return try await fetch(endpoint: "/auth/apple", method: .post, body: body)
     }
 
-    func logout(token: String) async throws {
-        _ = try await request(endpoint: "/auth/logout", method: .post, authorization: .token(token))
+    func logout() async throws {
+        _ = try await send(endpoint: "/auth/logout", method: .post)
     }
 
     func requestPasswordReset(email: String) async throws {
-        let bodyData = try JSONEncoder().encode(PasswordResetRequestBody(email: email))
-        _ = try await request(endpoint: "/auth/password/forgot", method: .post, body: bodyData, authorization: .none)
+        let body = try JSONEncoder().encode(PasswordResetRequestBody(email: email))
+        _ = try await send(endpoint: "/auth/password/forgot", method: .post, body: body)
     }
 
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse {
-        let bodyData = try JSONEncoder().encode(PasswordResetBody(email: email, code: code, password: password))
-        let data = try await request(endpoint: "/auth/password/reset", method: .post, body: bodyData, authorization: .none)
-        return try decode(AuthTokenResponse.self, data: data)
+        let body = try JSONEncoder().encode(PasswordResetBody(email: email, code: code, password: password))
+        return try await fetch(endpoint: "/auth/password/reset", method: .post, body: body)
     }
 
     func deleteAccount() async throws {
-        _ = try await request(endpoint: "/auth/account", method: .delete)
+        _ = try await send(endpoint: "/auth/account", method: .delete)
     }
 
     func giveAIConsent() async throws -> UserModel {
-        let data = try await request(endpoint: "/auth/aiConsent", method: .post)
-        return try decode(UserModel.self, data: data)
+        try await fetch(endpoint: "/auth/aiConsent", method: .post)
     }
 
     func sendEmailConfirmationCode() async throws {
-        _ = try await request(endpoint: "/auth/email/sendCode", method: .post)
+        _ = try await send(endpoint: "/auth/email/sendCode", method: .post)
     }
 
     func confirmEmail(code: String) async throws -> UserModel {
-        let bodyData = try JSONEncoder().encode(EmailConfirmationBody(code: code))
-        let data = try await request(endpoint: "/auth/email/confirm", method: .post, body: bodyData)
-        return try decode(UserModel.self, data: data)
+        let body = try JSONEncoder().encode(EmailConfirmationBody(code: code))
+        return try await fetch(endpoint: "/auth/email/confirm", method: .post, body: body)
     }
 
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
-        let bodyData = try JSONEncoder().encode(profileInfo)
-        let data = try await request(endpoint: "/auth/profileInfo", method: .patch, body: bodyData)
-        return try decode(UpdateProfileInfoResponse.self, data: data)
+        let body = try JSONEncoder().encode(profileInfo)
+        return try await fetch(endpoint: "/auth/profileInfo", method: .patch, body: body)
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        let data = try await request(endpoint: "/horoscope/current", method: .get, timeout: Self.aiTimeout)
-        return try decode(HoroscopeModel.self, data: data)
+        try await fetch(endpoint: "/horoscope/current", method: .get, timeout: Self.aiTimeout)
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
-        let data = try await request(endpoint: "/daily/insight", method: .get, timeout: Self.aiTimeout)
-        return try decode(DailyContentModel.self, data: data)
+        try await fetch(endpoint: "/daily/insight", method: .get, timeout: Self.aiTimeout)
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
-        let data = try await request(endpoint: "/daily/tip", method: .get, timeout: Self.aiTimeout)
-        return try decode(DailyContentModel.self, data: data)
+        try await fetch(endpoint: "/daily/tip", method: .get, timeout: Self.aiTimeout)
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
-        let bodyData = try JSONEncoder().encode(selectedTests)
-        let data = try await request(endpoint: "/history/personality",
-                                     method: .post,
-                                     body: bodyData,
-                                     idempotencyKey: requestID,
-                                     timeout: Self.aiTimeout)
-        return try decode(PersonalityResultModel.self, data: data)
+        let body = try JSONEncoder().encode(selectedTests)
+        return try await fetch(endpoint: "/history/personality",
+                               method: .post,
+                               body: body,
+                               idempotencyKey: requestID,
+                               timeout: Self.aiTimeout)
     }
 
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
-        let bodyData = try JSONEncoder().encode(testRequest)
-        let data = try await request(endpoint: "/history/compatibility",
-                                     method: .post,
-                                     body: bodyData,
-                                     idempotencyKey: requestID,
-                                     timeout: Self.aiTimeout)
-        return try decode(CompatibilityResultModel.self, data: data)
+        let body = try JSONEncoder().encode(testRequest)
+        return try await fetch(endpoint: "/history/compatibility",
+                               method: .post,
+                               body: body,
+                               idempotencyKey: requestID,
+                               timeout: Self.aiTimeout)
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        let data = try await request(endpoint: "/history", method: .get)
-        return try decode([HistoryCellModel].self, data: data)
+        try await fetch(endpoint: "/history", method: .get)
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
-        let data = try await request(endpoint: "/history/\(id.uuidString)", method: .get)
-        return try decode(HistoryCellModel.self, data: data)
+        try await fetch(endpoint: "/history/\(id.uuidString)", method: .get)
     }
 
     func deleteHistory(id: UUID) async throws {
-        _ = try await request(endpoint: "/history/\(id.uuidString)", method: .delete)
+        _ = try await send(endpoint: "/history/\(id.uuidString)", method: .delete)
     }
 
-    private func request(endpoint: String,
-                         method: HTTPMethod,
-                         body: Data? = nil,
-                         authorization: RequestAuthorization = .storedToken,
-                         idempotencyKey: UUID? = nil,
-                         timeout: TimeInterval = NetworkService.defaultTimeout,
-                         attempt: Int = 0) async throws -> Data {
+    private func fetch<T: Decodable>(endpoint: String,
+                                     method: HTTPMethod,
+                                     body: Data? = nil,
+                                     idempotencyKey: UUID? = nil,
+                                     timeout: TimeInterval = NetworkService.defaultTimeout) async throws -> T {
+        let data = try await send(endpoint: endpoint,
+                                  method: method,
+                                  body: body,
+                                  idempotencyKey: idempotencyKey,
+                                  timeout: timeout)
+        return try decode(T.self, data: data)
+    }
+
+    private func send(endpoint: String,
+                      method: HTTPMethod,
+                      body: Data? = nil,
+                      idempotencyKey: UUID? = nil,
+                      timeout: TimeInterval = NetworkService.defaultTimeout,
+                      attempt: Int = 0) async throws -> Data {
         do {
             return try await performRequest(endpoint: endpoint,
                                             method: method,
                                             body: body,
-                                            authorization: authorization,
                                             idempotencyKey: idempotencyKey,
                                             timeout: timeout)
         } catch let urlError as URLError where method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(attempt: attempt))
-            return try await request(endpoint: endpoint,
-                                     method: method,
-                                     body: body,
-                                     authorization: authorization,
-                                     idempotencyKey: idempotencyKey,
-                                     timeout: timeout,
-                                     attempt: attempt + 1)
+            return try await send(endpoint: endpoint,
+                                  method: method,
+                                  body: body,
+                                  idempotencyKey: idempotencyKey,
+                                  timeout: timeout,
+                                  attempt: attempt + 1)
         } catch let urlError as URLError {
             throw NetworkError(urlError: urlError)
         }
@@ -214,7 +203,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private func performRequest(endpoint: String,
                                 method: HTTPMethod,
                                 body: Data?,
-                                authorization: RequestAuthorization,
                                 idempotencyKey: UUID?,
                                 timeout: TimeInterval) async throws -> Data {
         guard let baseURL = URL(string: baseURL),
@@ -233,7 +221,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.setValue(idempotencyKey.uuidString, forHTTPHeaderField: "Idempotency-Key")
         }
 
-        let token = try bearerToken(authorization: authorization)
+        let token = try? keychain.loadAuthToken()
         if let token {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -254,22 +242,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
                 throw NetworkError(statusCode: httpResponse.statusCode, data: data)
             default:
-                if httpResponse.statusCode >= 500 {
-                    Self.logger.error("\(method.rawValue, privacy: .public) \(endpoint, privacy: .public) failed with status \(httpResponse.statusCode)")
-                }
-
                 throw NetworkError(statusCode: httpResponse.statusCode, data: data)
-        }
-    }
-
-    private func bearerToken(authorization: RequestAuthorization) throws -> String? {
-        switch authorization {
-            case .none:
-                return nil
-            case .token(let token):
-                return token
-            case .storedToken:
-                return try keychain.loadAuthToken()
         }
     }
 
@@ -277,7 +250,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         do {
             return try JSONDecoder().decode(type, from: data)
         } catch {
-            Self.logger.error("Failed to decode \(String(describing: type), privacy: .public): \(String(describing: error), privacy: .public)")
             throw NetworkError.decodingError
         }
     }

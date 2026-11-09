@@ -27,7 +27,7 @@ protocol AuthServiceProtocol {
     func giveAIConsent() async throws
     func sendEmailConfirmationCode() async throws
     func confirmEmail(code: String) async throws
-    func signOut() throws
+    func signOut() async throws
     func deleteAccount() async throws
 }
 
@@ -111,14 +111,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         saveUser(user)
     }
 
-    func signOut() throws {
-        let token = try? keychain.loadAuthToken()
+    func signOut() async throws {
+        try? await networkService.logout()
         try endSession()
-
-        if let token {
-            let networkService = networkService
-            Task { try? await networkService.logout(token: token) }
-        }
     }
 
     func deleteAccount() async throws {

@@ -191,13 +191,15 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     func signOut() {
-        do {
-            try authService.signOut()
-            preparationTask?.cancel()
-            hasSession = false
-            onboardingRoutes = []
-        } catch {
-            presentAlert(error.userMessage)
+        Task {
+            do {
+                try await authService.signOut()
+                preparationTask?.cancel()
+                hasSession = false
+                onboardingRoutes = []
+            } catch {
+                presentAlert(error.userMessage)
+            }
         }
     }
 
