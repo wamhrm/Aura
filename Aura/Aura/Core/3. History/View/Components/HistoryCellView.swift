@@ -20,13 +20,14 @@ struct HistoryCellView: View {
                     .font(Adaptive.size(.callout, .default))
                     .bold()
                     .lineLimit(1)
-                    .padding(.trailing, cell.kind == .compatibility ? 50 : 0)
+                    .padding(.trailing, cell.kind == .compatibility ? 64 : 0)
 
                 Text(cell.archetypeSubtitle)
                     .font(.system(size: Adaptive.size(14, 15)))
                     .foregroundStyle(.deepGray)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .padding(.trailing, cell.kind == .compatibility ? 64 : 0)
 
                 Text(cell.dateText)
                     .font(Adaptive.size(.caption, .footnote))
@@ -35,14 +36,19 @@ struct HistoryCellView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
-                    Text(cell.compatibilityScoreText)
-                        .font(Adaptive.size(.footnote, .system(size: 14)))
-                        .foregroundStyle(.white)
-                        .bold()
-                        .padding(.vertical, 3)
-                        .padding(.horizontal, 6)
-                        .background(.tint.opacity(0.75))
-                        .clipShape(.rect(cornerRadius: 7))
+                    VStack(spacing: 0) {
+                        Text(cell.compatibilityScoreText)
+                            .font(Adaptive.size(.footnote, .system(size: 14)))
+
+                        Text("знаки")
+                            .font(Adaptive.size(.caption2, .caption2))
+                    }
+                    .foregroundStyle(.white)
+                    .bold()
+                    .padding(.vertical, 3)
+                    .padding(.horizontal, 6)
+                    .background(.tint.opacity(0.75))
+                    .clipShape(.rect(cornerRadius: 7))
                 }
             }
         }

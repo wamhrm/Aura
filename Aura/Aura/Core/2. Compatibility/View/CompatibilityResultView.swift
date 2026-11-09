@@ -139,10 +139,11 @@ extension CompatibilityResultView {
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
 
-                Text("СОВМЕСТИМОСТЬ")
+                Text("СОВМЕСТИМОСТЬ\nЗНАКОВ")
                     .font(Adaptive.size(.caption2, .caption))
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.deepGray)
+                    .multilineTextAlignment(.center)
             }
         }
         .frame(width: 150, height: 150)
