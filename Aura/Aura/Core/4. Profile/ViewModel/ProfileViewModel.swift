@@ -127,7 +127,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             let history = try await contentService.fetchHistory()
             await loadPersonality(from: history)
         } catch {
-            guard !error.isCancellation else { return }
             if !hasPersonalityTests {
                 personalityState = .failed(error.userMessage)
             }
@@ -157,7 +156,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             tipState = .loaded
             updateProfileDisplay()
         } catch {
-            guard !error.isCancellation else { return }
             if dailyTip?.isFromToday != true {
                 dailyTip = nil
                 tipState = .failed(error.userMessage)
@@ -192,7 +190,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             loadedPersonalityId = latest.id
             applyPersonality(result: result)
         } catch {
-            guard !error.isCancellation else { return }
             if !hasPersonalityTests {
                 personalityState = .failed(error.userMessage)
             }

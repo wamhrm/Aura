@@ -79,7 +79,6 @@ struct ProfileController: RouteCollection {
 
         try await user.save(on: req.db)
 
-        // Never waits for OpenAI: the app requests a missing horoscope on its own
         let horoscope = try? await horoscopeService.findCurrentHoroscope(user: user, timeZone: req.userTimeZone, database: req.db)
 
         return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)

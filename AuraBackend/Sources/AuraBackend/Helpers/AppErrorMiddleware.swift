@@ -7,7 +7,6 @@
 
 import Vapor
 
-// Every error leaves as {"error": true, "reason": "..."}
 struct AppErrorMiddleware: AsyncMiddleware {
     private struct ErrorBody: Content {
         let error: Bool

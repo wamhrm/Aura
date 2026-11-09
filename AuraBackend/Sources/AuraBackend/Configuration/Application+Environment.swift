@@ -8,11 +8,15 @@
 import Vapor
 
 extension Application {
-    // A production server without these can't do its work, so it stops at launch with a clear message
     func validateEnvironment() throws {
         guard environment == .production else { return }
 
-        let required = ["POSTGRESQL_HOST", "POSTGRESQL_USER", "POSTGRESQL_PASSWORD", "POSTGRESQL_DBNAME", "OPENAI_KEY", "RESEND_API_KEY"]
+        let required = ["POSTGRESQL_HOST",
+                        "POSTGRESQL_USER",
+                        "POSTGRESQL_PASSWORD",
+                        "POSTGRESQL_DBNAME",
+                        "OPENAI_KEY",
+                        "RESEND_API_KEY"]
         let missing = required.filter { !isSet(name: $0) }
 
         guard missing.isEmpty else {

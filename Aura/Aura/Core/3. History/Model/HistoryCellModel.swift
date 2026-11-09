@@ -39,8 +39,7 @@ extension HistoryCellModel {
         partnerName: nil,
         partnerZodiacSign: nil,
         personalityResult: nil,
-        compatibilityResult: nil
-    )
+        compatibilityResult: nil)
 
     static let compatibilityPlaceholder = HistoryCellModel(
         id: UUID(),
@@ -54,8 +53,7 @@ extension HistoryCellModel {
         partnerName: CompatibilityResultModel.mock.partnerName,
         partnerZodiacSign: CompatibilityResultModel.mock.partnerZodiacSign,
         personalityResult: nil,
-        compatibilityResult: CompatibilityResultModel.mock
-    )
+        compatibilityResult: CompatibilityResultModel.mock)
 }
 
 extension HistoryCellModel {

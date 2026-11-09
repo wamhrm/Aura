@@ -12,7 +12,6 @@ struct DailyContentModel: Identifiable, Hashable, Codable {
     let text: String
     let dateCreated: String
 
-    // The server dates the content by the time zone the app sends
     var isFromToday: Bool {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")

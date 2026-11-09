@@ -7,7 +7,6 @@
 
 import Vapor
 
-// A result with a missing part is refused, so the user never pays an attempt for half of a test
 struct OpenAIResultValidator {
     static var unexpectedFormatError: Abort {
         Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
@@ -17,7 +16,6 @@ struct OpenAIResultValidator {
         guard texts.allSatisfy(isFilled) else { throw Self.unexpectedFormatError }
     }
 
-    // A horoscope is shared by a sign for a week, a broken one must never get saved
     func requireHoroscope(horoscope: HoroscopeContentResult) throws {
         let filledKeys = horoscope.items.filter { isFilled(text: $0.description) }.map(\.key)
 

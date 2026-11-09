@@ -27,7 +27,6 @@ enum UserDateFormatter {
     }()
 
     static func date(string: String) -> Date? {
-        // DateFormatter rolls impossible dates over: 31.02.2000 would become 02.03.2000
         guard let date = formatter.date(from: string), formatter.string(from: date) == string else { return nil }
         return date
     }

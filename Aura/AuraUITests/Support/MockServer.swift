@@ -2,12 +2,12 @@
 //  MockServer.swift
 //  AuraUITests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import Foundation
 import Network
 
-// A small HTTP server inside the test process. The app talks to it instead of the real server,
-// so the answers are always the same. It is plumbing: to write a test you only need respond(route:status:body:).
 final class MockServer: @unchecked Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "aura.mock-server")
@@ -111,7 +111,6 @@ final class MockServer: @unchecked Sendable {
         })
     }
 
-    // The id in a path becomes :historyID, so a route can be answered without knowing the id
     private func route(requestLine: String) -> String {
         let parts = requestLine.split(separator: " ")
         guard parts.count >= 2 else { return requestLine }

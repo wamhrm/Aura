@@ -41,17 +41,14 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
     private let userDefaults: UserDefaults
-    private let legacyUserDirectory: URL
     private var expiredSessionMessage: String?
 
     init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
-         userDefaults: UserDefaults = Constants.userDefaults,
-         legacyUserDirectory: URL = Constants.localStorageDirectory) {
+         userDefaults: UserDefaults = Constants.userDefaults) {
         self.networkService = networkService
         self.keychain = keychain
         self.userDefaults = userDefaults
-        self.legacyUserDirectory = legacyUserDirectory
 
         autoSignIn()
     }
@@ -163,7 +160,6 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private func endSession() throws {
         try keychain.deleteAuthToken()
         userDefaults.removeObject(forKey: Constants.userKey)
-        try? FileManager.default.removeItem(at: legacyUserFile)
         showsMainScreen = false
         didAskAIConsent = false
         authState.send(.signedOut)
@@ -187,27 +183,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         authState.send(.signedIn(user))
     }
 
-    // Older builds kept the signed-in user in user.json.
     private func loadUser() -> UserModel? {
-        if let data = userDefaults.data(forKey: Constants.userKey),
-           let user = decodeUser(data) {
-            return user
-        }
-
-        guard let data = try? Data(contentsOf: legacyUserFile),
-              let user = decodeUser(data) else { return nil }
-
-        userDefaults.set(data, forKey: Constants.userKey)
-        try? FileManager.default.removeItem(at: legacyUserFile)
-        return user
-    }
-
-    private var legacyUserFile: URL {
-        legacyUserDirectory.appending(path: "user.json")
-    }
-
-    private func decodeUser(_ data: Data) -> UserModel? {
-        try? JSONDecoder().decode(UserModel.self, from: data)
+        guard let data = userDefaults.data(forKey: Constants.userKey) else { return nil }
+        return try? JSONDecoder().decode(UserModel.self, from: data)
     }
 
     private func openMainIfProfileIsComplete() {

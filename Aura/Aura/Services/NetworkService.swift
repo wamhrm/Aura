@@ -37,7 +37,6 @@ protocol NetworkServiceProtocol: Sendable {
 
 nonisolated final class NetworkService: NetworkServiceProtocol {
     private static let defaultTimeout: TimeInterval = 20
-    // The server may wait for OpenAI up to 121 seconds
     private static let aiTimeout: TimeInterval = 130
 
     private let baseURL: String
@@ -242,7 +241,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private static func isRetryable(_ error: URLError, timeout: TimeInterval) -> Bool {
         switch error.code {
             case .timedOut:
-                // Repeating a long AI wait would keep the screen busy for minutes
                 return timeout == defaultTimeout
             case .networkConnectionLost,
                  .cannotConnectToHost,

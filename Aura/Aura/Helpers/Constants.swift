@@ -8,8 +8,15 @@
 import Foundation
 
 nonisolated enum Constants {
+    static let userKey = "userKey"
+    static let tokenKey = "tokenKey"
+
+    static let selectedThemeKey = "selectedTheme"
+    static let accentColorKey = "accentColor"
+    
     static let productionBaseURL = "https://aurawamhrm.space"
     static let apiPath = "/v1"
+    
     static var uiTestID: String? {
         guard let value = ProcessInfo.processInfo.environment["AURA_UI_TEST_ID"],
               let id = UUID(uuidString: value) else { return nil }
@@ -19,15 +26,6 @@ nonisolated enum Constants {
     static var tokenPath: String {
         guard let uiTestID else { return "com.aura.auth.token" }
         return "com.aura.auth.token.ui-tests.\(uiTestID)"
-    }
-
-    static var localStorageDirectory: URL {
-        let directory = URL.applicationSupportDirectory
-            .appending(path: "LocalStorage", directoryHint: .isDirectory)
-
-        guard let uiTestID else { return directory }
-        return directory.appending(path: "UITests", directoryHint: .isDirectory)
-            .appending(path: uiTestID, directoryHint: .isDirectory)
     }
 
     static var userDefaults: UserDefaults {
@@ -50,12 +48,6 @@ nonisolated enum Constants {
     static var termsOfUseURL: URL? {
         URL(string: baseURL + "/terms.html")
     }
-    
-    static let tokenKey = "tokenKey"
-    static let userKey = "userKey"
-
-    static let selectedThemeKey = "selectedTheme"
-    static let accentColorKey = "accentColor"
 }
 
 nonisolated enum InputLimits {

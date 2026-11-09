@@ -1,12 +1,10 @@
 import Vapor
 
 func routes(app: Application) throws {
-    // Migrations finish before HTTP starts; a short database failure does not restart the server
     app.get("health") { _ -> HTTPStatus in
         .ok
     }
 
-    // For an uptime monitor: the database answers right now
     app.get("ready") { req -> HTTPStatus in
         do {
             try await req.db.sql().raw("SELECT 1").run()

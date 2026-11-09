@@ -87,8 +87,6 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             historyCells = try await contentService.fetchHistory()
             loadState = .loaded
         } catch {
-            guard !error.isCancellation else { return }
-
             if historyCells.isEmpty {
                 loadState = .failed(error.userMessage)
             } else {
@@ -115,7 +113,6 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             do {
                 try await contentService.deleteHistory(id: item.id)
             } catch {
-                guard !error.isCancellation else { return }
                 presentAlert("Не удалось удалить запись")
             }
         }
@@ -145,9 +142,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                         }
                 }
             } catch {
-                if !error.isCancellation {
-                    presentAlert("Не удалось открыть результат")
-                }
+                presentAlert("Не удалось открыть результат")
             }
 
             isLoading = false

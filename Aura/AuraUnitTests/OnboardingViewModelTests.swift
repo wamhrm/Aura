@@ -2,6 +2,8 @@
 //  OnboardingViewModelTests.swift
 //  AuraUnitTests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import Combine
 import XCTest

@@ -136,7 +136,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    // The same partner and profile retry one server request. Any change starts another.
     private func currentCompatibilityRequestID(for request: CompatibilityTestRequest) -> UUID {
         let user = signedInUser
 

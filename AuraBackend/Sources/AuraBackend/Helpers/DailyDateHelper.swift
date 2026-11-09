@@ -51,7 +51,6 @@ enum DailyDateHelper {
 }
 
 extension Request {
-    // The day and the week follow the user's clock. A missing or unknown zone means UTC.
     var userTimeZone: TimeZone {
         headers.first(name: "X-Time-Zone").flatMap(TimeZone.init(identifier:)) ?? .gmt
     }

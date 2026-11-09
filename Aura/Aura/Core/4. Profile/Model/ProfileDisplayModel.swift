@@ -27,7 +27,6 @@ struct ProfileDisplayModel: Equatable {
 }
 
 extension ProfileDisplayModel {
-    // Sample text for the locked screen, it only ever appears behind the blur
     static let placeholder = ProfileDisplayModel(dailyTip: ProfileDisplayPlaceholder.dailyTip,
                                                  overview: ProfileDisplayPlaceholder.overview,
                                                  socialFilter: ProfileDisplayPlaceholder.socialFilter,

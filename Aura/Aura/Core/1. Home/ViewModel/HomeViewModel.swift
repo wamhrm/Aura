@@ -176,7 +176,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    // The same answers retry one server request. A new selection or profile starts another.
     private func currentPersonalityRequestID() -> UUID {
         let user = signedInUser
 
@@ -226,7 +225,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             horoscope = try await contentService.fetchCurrentHoroscope()
             horoscopeState = .loaded
         } catch {
-            guard !error.isCancellation else { return }
             if horoscope == nil {
                 horoscopeState = .failed(error.userMessage)
             }
@@ -245,7 +243,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             dailyInsight = try await contentService.fetchDailyInsight()
             insightState = .loaded
         } catch {
-            guard !error.isCancellation else { return }
             if dailyInsight?.isFromToday != true {
                 dailyInsight = nil
                 insightState = .failed(error.userMessage)

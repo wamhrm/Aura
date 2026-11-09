@@ -18,7 +18,7 @@ final class AuthServiceTests: XCTestCase {
         let keychain = MockKeychainHelper()
         keychain.saveFails = true
         let storage = makeStorage()
-        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
 
         // When
         do {
@@ -39,7 +39,7 @@ final class AuthServiceTests: XCTestCase {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
         // When
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -55,7 +55,7 @@ final class AuthServiceTests: XCTestCase {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
         keychain.deleteFails = true
 
@@ -74,7 +74,7 @@ final class AuthServiceTests: XCTestCase {
     func test_successfulSignOut_removesTokenAndSavedUser() async throws {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
-        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
 
         try await auth.signOut()
@@ -89,36 +89,13 @@ final class AuthServiceTests: XCTestCase {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         let storage = makeStorage()
-        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
 
         // Then
         XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
         XCTAssertNil(storage.loadUser())
         guard case .signedOut = auth.authState.value else { return XCTFail("Token alone opened a session") }
         XCTAssertFalse(auth.showsMainScreen)
-    }
-
-    func test_launch_movesALegacyUserFileIntoDefaults() throws {
-        // Given
-        let storage = makeStorage()
-        let user = makeUser()
-        let file = storage.legacyDirectory.appending(path: "user.json")
-        try FileManager.default.createDirectory(at: storage.legacyDirectory, withIntermediateDirectories: true)
-        try JSONEncoder().encode(user).write(to: file)
-        let keychain = MockKeychainHelper()
-        try keychain.saveAuthToken("saved-token")
-
-        // When
-        let auth = AuthService(networkService: MockNetworkService(),
-                               keychain: keychain,
-                               userDefaults: storage.defaults,
-                               legacyUserDirectory: storage.legacyDirectory)
-
-        // Then
-        XCTAssertEqual(storage.loadUser(), user)
-        guard case .signedIn(let signedIn) = auth.authState.value else { return XCTFail("Legacy user did not sign in") }
-        XCTAssertEqual(signedIn, user)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
     }
 
     func test_unavailableKeychain_keepsSavedUser_andStaysSignedOut() throws {
@@ -131,7 +108,7 @@ final class AuthServiceTests: XCTestCase {
         storage.saveUser(user: user)
 
         // When
-        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
 
         // Then
         XCTAssertEqual(storage.loadUser(), user)
@@ -184,7 +161,7 @@ final class AuthServiceTests: XCTestCase {
             network.user = user
         }
 
-        return AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        return AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
     }
 
     func test_profileConsentAndConfirmation_saveTheUserFromTheServer() async throws {
@@ -192,7 +169,7 @@ final class AuthServiceTests: XCTestCase {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults, legacyUserDirectory: storage.legacyDirectory)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
 
         // When the profile is saved
@@ -290,7 +267,6 @@ final class AuthServiceTests: XCTestCase {
     }
 }
 
-// These tests access the in-memory Keychain only on MainActor.
 private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unchecked Sendable {
     var data: Data?
     var saveFails = false
@@ -338,7 +314,6 @@ final class MockNetworkService: NetworkServiceProtocol {
         user
     }
 
-    // Other requirements of the existing network protocol.
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func logout() async throws {

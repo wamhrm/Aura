@@ -2,11 +2,12 @@
 //  SampleResponses.swift
 //  AuraUITests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import Foundation
 import XCTest
 
-// What the server answers in flow tests
 enum SampleResponses {
     static let auth = Data(#"""
         {

@@ -21,7 +21,6 @@ struct HistoryController: RouteCollection {
     private func fetchHistory(req: Request) async throws -> [HistoryItemDTO] {
         let userID = try req.auth.require(User.self).requireID()
 
-        // Everything except the full result, which may be large
         let entries = try await History.query(on: req.db)
             .filter(\.$user.$id == userID)
             .sort(\.$createdAt, .descending)

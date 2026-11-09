@@ -11,7 +11,6 @@ enum BirthDateFormatter {
     static let defaultDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
     static let defaultTime = Calendar.current.date(from: DateComponents(hour: 12, minute: 0)) ?? Date()
 
-    // Server rule for the user and the partner. The extra day covers the time zone difference with the server.
     static let dateRange: ClosedRange<Date> = {
         let now = Date()
         let earliest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.maxUserAge, day: 1), to: now) ?? now

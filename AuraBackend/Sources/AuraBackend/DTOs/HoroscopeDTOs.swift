@@ -48,7 +48,6 @@ enum HoroscopeSign: String, CaseIterable {
     }
 
     static func from(dateOfBirth: Date) -> HoroscopeSign? {
-        // Birth dates are stored as midnight UTC, the server's own time zone must not move them to another day
         let calendar = UserDateFormatter.calendar
         let day = calendar.component(.day, from: dateOfBirth)
         let month = calendar.component(.month, from: dateOfBirth)

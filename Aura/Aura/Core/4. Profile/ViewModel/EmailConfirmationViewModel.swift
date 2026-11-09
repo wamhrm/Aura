@@ -26,9 +26,8 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     }
 
     var subtitle: String {
-        isCodeSent
-            ? "Мы отправили код на \(email). Введите его, чтобы проходить тесты"
-            : "Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код"
+        isCodeSent ? "Мы отправили код на \(email). Введите его, чтобы проходить тесты"
+                   : "Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код"
     }
 
     var sendCodeButtonTitle: String {
@@ -49,7 +48,6 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
                 try await authService.sendEmailConfirmationCode()
                 isCodeSent = true
             } catch {
-                // The sheet was reopened and the code sent a moment ago still works, so its field must be reachable
                 if case NetworkError.limited = error { isCodeSent = true }
                 presentAlert(error.userMessage)
             }
@@ -58,7 +56,6 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         }
     }
 
-    // After success the screen below sees the confirmed user and closes this sheet
     func confirm() {
         guard !isLoading else { return }
 

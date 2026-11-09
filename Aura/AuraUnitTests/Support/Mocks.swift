@@ -2,6 +2,8 @@
 //  Mocks.swift
 //  AuraUnitTests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import Combine
 import Foundation
@@ -10,8 +12,6 @@ import XCTest
 
 let serverError = NetworkError.server("Ошибка сервера")
 
-// View models work in a Task, so a test waits until the result appears.
-// A missing state change must fail at the waiting call, even if later assertions happen to pass.
 @MainActor
 func waitUntil(file: StaticString = #filePath, line: UInt = #line, _ condition: () -> Bool) async {
     for _ in 0..<300 {
@@ -22,7 +22,6 @@ func waitUntil(file: StaticString = #filePath, line: UInt = #line, _ condition: 
     XCTFail("The expected state did not appear within 3 seconds", file: file, line: line)
 }
 
-// A filled profile by default, a test changes only what it checks
 @MainActor
 func makeUser(name: String = "Дмитрий",
               dateOfBirth: String? = "13.05.2000",
@@ -45,22 +44,18 @@ func makeUser(name: String = "Дмитрий",
               isEmailConfirmed: isEmailConfirmed)
 }
 
-// Keeps a test's saved user away from the app's own defaults and old user.json.
 final class TestDefaults {
     let defaults: UserDefaults
-    let legacyDirectory: URL
     private let suite: String
 
     init() {
         suite = "aura-tests." + UUID().uuidString
         defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
-        legacyDirectory = FileManager.default.temporaryDirectory.appending(path: suite, directoryHint: .isDirectory)
     }
 
     deinit {
         defaults.removePersistentDomain(forName: suite)
-        try? FileManager.default.removeItem(at: legacyDirectory)
     }
 
     @MainActor
@@ -91,7 +86,6 @@ func todayText() -> String {
 final class MockAuthService: AuthServiceProtocol {
     let authState: CurrentValueSubject<AuthState, Never>
 
-    // Who the server signs in
     var serverUser = UserModel.mock
     var errorToThrow: (any Error)?
     var aiConsentError: (any Error)?

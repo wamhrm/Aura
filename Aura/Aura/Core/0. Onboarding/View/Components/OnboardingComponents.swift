@@ -21,7 +21,6 @@ struct OnboardingTopBar: View {
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
-            // The arrow keeps its small place in the layout, only the area for the finger is bigger
             .padding(.horizontal, -14)
             .padding(.vertical, -11)
 
@@ -121,7 +120,6 @@ struct OnboardingLegalText: View {
     private var legalText: LocalizedStringKey {
         let terms = Constants.termsOfUseURL?.absoluteString ?? ""
         let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""
-        // Built in advance: interpolation into a LocalizedStringKey leaves a placeholder in place of the address
         let text = "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))"
         return LocalizedStringKey(text)
     }

@@ -5,7 +5,6 @@
 //  Created by wamhrm on 03.11.2026.
 //
 
-// The percent comes from the two zodiac signs, so the same pair always gets the same result. AI only explains it.
 enum CompatibilityScore {
     static func calculate(userSign: HoroscopeSign, partnerSign: HoroscopeSign) -> Int {
         switch stepsOnZodiacCircle(first: userSign, second: partnerSign) {

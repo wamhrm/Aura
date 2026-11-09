@@ -1,3 +1,10 @@
+//
+//  DailyGenerationAttempt.swift
+//  AuraBackend
+//
+//  Created by wamhrm on 06.11.2026.
+//
+
 import Fluent
 import Foundation
 

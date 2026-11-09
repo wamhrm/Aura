@@ -2,6 +2,8 @@
 //  ModelTests.swift
 //  AuraUnitTests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import XCTest
 @testable import Aura
@@ -39,7 +41,7 @@ final class ModelTests: XCTestCase {
 
         // Then
         XCTAssertEqual(serverURL.host, "127.0.0.1")
-        XCTAssertEqual(Constants.localStorageDirectory.lastPathComponent, testID)
+        XCTAssertFalse(Constants.userDefaults === UserDefaults.standard)
         XCTAssertTrue(Constants.tokenPath.hasSuffix(testID))
     }
 
@@ -249,17 +251,5 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(messages, ["Нет подключения к интернету",
                                   "Сервер не ответил вовремя. Попробуйте ещё раз",
                                   "Не удалось связаться с сервером. Попробуйте позже"])
-    }
-
-    func test_cancelledRequest_isNotTreatedAsAFailure() {
-        // Given
-        let cancelled = NetworkError(urlError: URLError(.cancelled))
-        let noConnection = NetworkError(urlError: URLError(.notConnectedToInternet))
-
-        // When
-        let results = [cancelled, noConnection].map(\.isCancellation)
-
-        // Then
-        XCTAssertEqual(results, [true, false])
     }
 }

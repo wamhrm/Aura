@@ -7,7 +7,6 @@
 
 import Vapor
 
-// AI tests are limited per account, so an account must not cost nothing to create
 struct EmailConfirmedMiddleware: AsyncMiddleware {
     func respond(to req: Request, chainingTo next: any AsyncResponder) async throws -> Response {
         let user = try req.auth.require(User.self)

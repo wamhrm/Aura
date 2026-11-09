@@ -147,7 +147,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         introPage == IntroPages.allCases.count - 1
     }
 
-    // There is nothing to go back to, only out of the account
     private var isOnlyStepOfSignedInUser: Bool {
         isSignedIn && onboardingRoutes.count == 1
     }
@@ -168,7 +167,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             .store(in: &cancellables)
     }
 
-    // The steps ahead can't work without a session, so an expired one sends the user back to the start
     private func handleSessionEnd() {
         guard hasSession else { return }
 
@@ -367,7 +365,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         allowsAIAnalysis = allows
         authService.noteAIConsentAsked()
 
-        // A returning user with a filled profile only lacked the consent
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : finishOnboarding()
         } else {
@@ -418,8 +415,11 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 }
 
                 finishOnboarding()
+            } catch is CancellationError {
+                return
+            } catch NetworkError.cancelled {
+                return
             } catch {
-                guard !error.isCancellation else { return }
                 alertMessage = error.userMessage
                 hasLoadingFailed = true
             }
@@ -436,7 +436,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         name = user.name
         password = ""
 
-        // Auth screens are dropped from the stack, so back can't return to them
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
             finishOnboarding()
         } else if user.hasCompletedProfileInfo {
