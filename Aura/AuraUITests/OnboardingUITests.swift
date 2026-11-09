@@ -2,6 +2,8 @@
 //  OnboardingUITests.swift
 //  AuraUITests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import XCTest
 
@@ -9,10 +11,13 @@ final class OnboardingUITests: AuraUITestCase {
     private func openNameStep() throws {
         try launchOnWelcome()
 
-        for title in ["Далее", "Далее", "Далее", "Начать"] {
-            tapButton(title)
-            sleep(1)
+        for page in ["Гороскоп на неделю", "Инсайт и совет дня", "Тесты о вас и совместимость"] {
+            tapButton("Далее")
+            XCTAssertTrue(text(page).waitForExistence(timeout: 5), "intro did not move to \(page)")
         }
+
+        tapButton("Начать")
+        XCTAssertTrue(app.textFields["Имя"].firstMatch.waitForExistence(timeout: 10), "the name step did not open")
     }
 
     private func openProfileQuestions() throws {
@@ -120,7 +125,6 @@ final class OnboardingUITests: AuraUITestCase {
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         try openProfileQuestions()
-        server.respond(route: "GET /v1/auth/me", body: try json(user))
         chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
 
@@ -161,7 +165,6 @@ final class OnboardingUITests: AuraUITestCase {
         let user = try newUser()
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         try launchOnWelcome()
-        server.respond(route: "GET /v1/auth/me", body: try json(user))
         signIn()
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not open")
         app.terminate()

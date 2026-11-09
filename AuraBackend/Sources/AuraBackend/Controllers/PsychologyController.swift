@@ -41,7 +41,7 @@ struct PsychologyController: RouteCollection {
                             zodiacSign: response.zodiacSign,
                             result: try encodedResult(result: response))
 
-        try await entry.save(on: req.db)
+        try await saveResult(entry: entry, user: user, on: req.db)
         return response
     }
 
@@ -68,8 +68,15 @@ struct PsychologyController: RouteCollection {
                             partnerZodiacSign: response.partnerZodiacSign,
                             result: try encodedResult(result: response))
 
-        try await entry.save(on: req.db)
+        try await saveResult(entry: entry, user: user, on: req.db)
         return response
+    }
+
+    private func saveResult(entry: History, user: User, on database: any Database) async throws {
+        try await database.transaction { transaction in
+            try await psychologyService.takeTestSlot(user: user, database: transaction)
+            try await entry.save(on: transaction)
+        }
     }
 
     private func idempotencyKey(req: Request) throws -> UUID {

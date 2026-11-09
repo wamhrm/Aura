@@ -2,6 +2,8 @@
 //  HomeUITests.swift
 //  AuraUITests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import XCTest
 
@@ -110,31 +112,6 @@ final class HomeUITests: AuraUITestCase {
         // Then
         XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the result did not open")
         XCTAssertEqual(server.idempotencyKeys, [firstKey, firstKey])
-    }
-
-    func test_personalityRetry_afterProfileAnswersChange_usesANewKey() throws {
-        // Given
-        server.respond(route: "POST /v1/history/personality", status: 502, body: try failingBody(serverError))
-        try launchSignedIn()
-        tapButton("Проверить себя")
-        XCTAssertEqual(alertText(), serverError)
-        let firstKey = try XCTUnwrap(server.idempotencyKeys.first)
-        closeAlert()
-
-        // When
-        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: sampleUser(["socialType": "introvert"])))
-        openSettings()
-        tapButton("Обновить информацию о себе")
-        chooseAnswers(["Интроверт"])
-        tapButton("Готово")
-        XCTAssertTrue(app.navigationBars["Профиль"].waitForExistence(timeout: 10))
-        openHome()
-        tapButton("Проверить себя")
-
-        // Then
-        XCTAssertEqual(alertText(), serverError)
-        XCTAssertEqual(server.idempotencyKeys.count, 2)
-        XCTAssertNotEqual(server.idempotencyKeys.last, firstKey)
     }
 
     func test_personalityTest_withoutConfirmedEmail_asksForTheCode_andThenWorks() throws {

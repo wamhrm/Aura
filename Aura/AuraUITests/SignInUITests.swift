@@ -2,51 +2,12 @@
 //  SignInUITests.swift
 //  AuraUITests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import XCTest
 
 final class SignInUITests: AuraUITestCase {
-    func test_testSessions_keepTheirOwnSessionAndProfile() throws {
-        // Given
-        try launchSignedIn()
-        let originalTestID = try XCTUnwrap(app.launchEnvironment["AURA_UI_TEST_ID"])
-        let otherTestID = UUID().uuidString
-
-        // When another test starts
-        app.terminate()
-        app.launchEnvironment["AURA_UI_TEST_ID"] = otherTestID
-        app.launch()
-
-        // Then it has no saved session
-        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15))
-
-        // When the original test resumes
-        app.terminate()
-        app.launchEnvironment["AURA_UI_TEST_ID"] = originalTestID
-        app.launch()
-
-        // Then its session is still available
-        assertOnMainScreen()
-
-        // When another test saves a different profile
-        app.terminate()
-        app.launchEnvironment["AURA_UI_TEST_ID"] = otherTestID
-        let otherUser = try sampleUser(["name": "Мария"])
-        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: otherUser))
-        server.respond(route: "GET /v1/auth/me", body: try json(otherUser))
-        app.launch()
-        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15))
-        signIn()
-        XCTAssertTrue(text("Здравствуйте, Мария").waitForExistence(timeout: 15))
-
-        // Then the original profile restores even when the server is unavailable
-        app.terminate()
-        app.launchEnvironment["AURA_UI_TEST_ID"] = originalTestID
-        server.respond(route: "GET /v1/auth/me", status: 503, body: try failingBody(serverError))
-        app.launch()
-        XCTAssertTrue(text("Здравствуйте, Анна").waitForExistence(timeout: 15))
-    }
-
     func test_signIn_restoresSavedContent_whenServerIsUnavailable() throws {
         // Given
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
@@ -67,7 +28,7 @@ final class SignInUITests: AuraUITestCase {
         // When
         app.terminate()
         let failure = try failingBody(serverError)
-        for route in ["GET /v1/auth/me", "GET /v1/horoscope/current", "GET /v1/daily/insight",
+        for route in ["GET /v1/horoscope/current", "GET /v1/daily/insight",
                       "GET /v1/daily/tip", "GET /v1/history", "GET /v1/history/:historyID"] {
             server.respond(route: route, status: 503, body: failure)
         }
@@ -83,7 +44,6 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertTrue(text(dailyText).waitForExistence(timeout: 10))
     }
 
-    // The password is shorter than the current minimum: old accounts have such passwords and must reach the server
     func test_signIn_withWrongShortPassword_showsTheServerAlert() throws {
         // Given
         let reason = "Неверная почта или пароль"

@@ -28,7 +28,7 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
-        try await reserveTest(user: user, database: req.db)
+        try await requireFreeTestSlot(user: user, database: req.db)
 
         return try await openAIService.makePersonalityTest(user: user,
                                                 selectedTests: uniqueSelectedTests,
@@ -85,7 +85,7 @@ struct PsychologyService {
                                                       partnerGender: partnerGender,
                                                       selectedTests: request.selectedTests)
 
-        try await reserveTest(user: user, database: req.db)
+        try await requireFreeTestSlot(user: user, database: req.db)
 
         return try await openAIService.makeCompatibilityTest(user: user,
                                                              partner: partnerRequest,
@@ -93,7 +93,13 @@ struct PsychologyService {
                                                              req: req)
     }
 
-    private func reserveTest(user: User, database: any Database) async throws {
+    func takeTestSlot(user: User, database: any Database) async throws {
+        try await requireFreeTestSlot(user: user, database: database)
+        let usage = TestUsage(userID: try user.requireID())
+        try await usage.save(on: database)
+    }
+
+    private func requireFreeTestSlot(user: User, database: any Database) async throws {
         let userID = try user.requireID()
 
         try await TestUsage.query(on: database)
@@ -108,9 +114,6 @@ struct PsychologyService {
         guard testsInLastDay < dailyTestLimit else {
             throw Abort(.tooManyRequests, reason: "Достигнут лимит тестов за сутки. Попробуйте позже")
         }
-
-        let usage = TestUsage(userID: userID)
-        try await usage.save(on: database)
     }
 
     private func unique<T: Hashable>(tests: [T]) -> [T] {

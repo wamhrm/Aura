@@ -2,11 +2,11 @@
 //  AuraUITestCase.swift
 //  AuraUITests
 //
+//  Created by wamhrm on 03.11.2026.
+//
 
 import XCTest
 
-// Every UI test runs the real app against MockServer, so it never reaches production.
-// If a text on a screen changes, fix it in the test that looks for it.
 @MainActor
 class AuraUITestCase: XCTestCase {
     private(set) var server: MockServer!
@@ -41,7 +41,6 @@ class AuraUITestCase: XCTestCase {
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         server.respond(route: "POST /v1/auth/password/forgot", status: 204)
         server.respond(route: "POST /v1/auth/password/reset", body: try authBody(user: user))
-        server.respond(route: "GET /v1/auth/me", body: try json(user))
         server.respond(route: "POST /v1/auth/logout", status: 204)
         server.respond(route: "DELETE /v1/auth/account", status: 204)
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
@@ -62,13 +61,11 @@ class AuraUITestCase: XCTestCase {
         try json(["error": true, "reason": reason])
     }
 
-    // A user who answered everything. Pass changes to get another one, for example without the AI consent.
     func sampleUser(_ changes: [String: Any] = [:]) throws -> [String: Any] {
         let user = try XCTUnwrap(try SampleResponses.object(SampleResponses.auth)["user"] as? [String: Any])
         return user.merging(changes) { _, new in new }
     }
 
-    // A user who has just registered: no answers yet
     func newUser() throws -> [String: Any] {
         let user = try sampleUser()
         return ["id": try XCTUnwrap(user["id"]), "name": "Анна", "email": email, "hasAIConsent": false, "isEmailConfirmed": false]
@@ -82,7 +79,6 @@ class AuraUITestCase: XCTestCase {
         try json(["user": user, "horoscope": try SampleResponses.object(SampleResponses.horoscope)])
     }
 
-    // One entry of the given kind in the history, and its details when it is opened
     func setHistory(kind: String, resultKey: String, result: Data) throws {
         let list = try XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
         var entry = try XCTUnwrap(list.first { $0["kind"] as? String == kind })
@@ -100,7 +96,6 @@ class AuraUITestCase: XCTestCase {
         app.buttons["У меня уже есть аккаунт"].firstMatch
     }
 
-    // A test keeps its storage across relaunches and starts separately from every other test.
     func launchOnWelcome() throws {
         app.launch()
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 20), "the welcome screen did not open")
@@ -109,7 +104,6 @@ class AuraUITestCase: XCTestCase {
     func launchSignedIn(user: [String: Any]? = nil) throws {
         let user = try user ?? sampleUser()
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
-        server.respond(route: "GET /v1/auth/me", body: try json(user))
         try launchOnWelcome()
         signIn()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
@@ -185,7 +179,6 @@ class AuraUITestCase: XCTestCase {
     }
 
     // MARK: - Tabs
-    // The system "Save Password?" sheet swallows the next tap, so a tab is tapped until its screen opens
     private func openTab(_ index: Int, title: String) {
         let bar = app.navigationBars[title]
         var taps = 0
