@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import FluentPostgresDriver
 import Vapor
 
 struct PsychologyService {
@@ -94,29 +93,24 @@ struct PsychologyService {
                                                              req: req)
     }
 
-    // Reserve after validation; failed generations still count toward the limit.
     private func reserveTest(user: User, database: any Database) async throws {
         let userID = try user.requireID()
 
-        try await database.transaction { transaction in
-            try await transaction.sql().raw("SELECT id FROM users WHERE id = \(bind: userID) FOR UPDATE").run()
+        try await TestUsage.query(on: database)
+            .filter(\.$user.$id == userID)
+            .filter(\.$createdAt < Date().addingTimeInterval(-dailyTestLimitWindow))
+            .delete()
 
-            try await TestUsage.query(on: transaction)
-                .filter(\.$user.$id == userID)
-                .filter(\.$createdAt < Date().addingTimeInterval(-dailyTestLimitWindow))
-                .delete()
+        let testsInLastDay = try await TestUsage.query(on: database)
+            .filter(\.$user.$id == userID)
+            .count()
 
-            let testsInLastDay = try await TestUsage.query(on: transaction)
-                .filter(\.$user.$id == userID)
-                .count()
-
-            guard testsInLastDay < dailyTestLimit else {
-                throw Abort(.tooManyRequests, reason: "Достигнут лимит тестов за сутки. Попробуйте позже")
-            }
-
-            let usage = TestUsage(userID: userID)
-            try await usage.save(on: transaction)
+        guard testsInLastDay < dailyTestLimit else {
+            throw Abort(.tooManyRequests, reason: "Достигнут лимит тестов за сутки. Попробуйте позже")
         }
+
+        let usage = TestUsage(userID: userID)
+        try await usage.save(on: database)
     }
 
     private func unique<T: Hashable>(tests: [T]) -> [T] {

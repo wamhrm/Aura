@@ -40,6 +40,11 @@ struct EmailCodeService {
         guard !user.isEmailConfirmed else { return }
         let userID = try user.requireID()
 
+        try await EmailConfirmation.query(on: req.db)
+            .filter(\.$user.$id == userID)
+            .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
+            .delete()
+
         guard let confirmation = try await EmailConfirmation.query(on: req.db)
             .filter(\.$user.$id == userID)
             .sort(\.$createdAt, .descending)
@@ -81,6 +86,11 @@ struct EmailCodeService {
 
     func verifyReset(code: String, user: User, req: Request) async throws {
         let userID = try user.requireID()
+
+        try await PasswordReset.query(on: req.db)
+            .filter(\.$user.$id == userID)
+            .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
+            .delete()
 
         guard let reset = try await PasswordReset.query(on: req.db)
             .filter(\.$user.$id == userID)

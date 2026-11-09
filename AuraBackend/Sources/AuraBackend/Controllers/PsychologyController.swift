@@ -9,8 +9,6 @@ import Fluent
 import Vapor
 
 struct PsychologyController: RouteCollection {
-    private static let personalitySingleFlight = SingleFlight<PersonalityResultDTO>()
-    private static let compatibilitySingleFlight = SingleFlight<CompatibilityResultDTO>()
     private let psychologyService = PsychologyService()
 
     func boot(routes: any RoutesBuilder) throws {
@@ -29,25 +27,22 @@ struct PsychologyController: RouteCollection {
         let testKeys = try req.content.decode([String].self)
         let requestID = try idempotencyKey(req: req)
 
-        return try await Self.personalitySingleFlight.run(key: "test:personality:\(userID):\(requestID)") {
-            if let entry = try await findEntry(kind: .personality, requestID: requestID, userID: userID, database: req.db) {
-                return try HistoryDTOMapper.decodePersonalityResult(resultJSON: entry.result)
-            }
-
-            let response = try await psychologyService.makePersonalityTest(user: user, testKeys: testKeys, req: req)
-            let entry = History(userID: userID,
-                                requestID: requestID,
-                                kind: .personality,
-                                selectedTests: response.selectedTests,
-                                title: response.archetypeTitle,
-                                subtitle: response.archetypeSubtitle,
-                                zodiacSign: response.zodiacSign,
-                                result: try encodedResult(result: response))
-
-            try await entry.save(on: req.db)
-
-            return response
+        if let entry = try await findEntry(kind: .personality, requestID: requestID, userID: userID, database: req.db) {
+            return try HistoryDTOMapper.decodePersonalityResult(resultJSON: entry.result)
         }
+
+        let response = try await psychologyService.makePersonalityTest(user: user, testKeys: testKeys, req: req)
+        let entry = History(userID: userID,
+                            requestID: requestID,
+                            kind: .personality,
+                            selectedTests: response.selectedTests,
+                            title: response.archetypeTitle,
+                            subtitle: response.archetypeSubtitle,
+                            zodiacSign: response.zodiacSign,
+                            result: try encodedResult(result: response))
+
+        try await entry.save(on: req.db)
+        return response
     }
 
     private func makeCompatibilityTest(req: Request) async throws -> CompatibilityResultDTO {
@@ -56,31 +51,27 @@ struct PsychologyController: RouteCollection {
         let request = try req.content.decode(CompatibilityTestRequest.self)
         let requestID = try idempotencyKey(req: req)
 
-        return try await Self.compatibilitySingleFlight.run(key: "test:compatibility:\(userID):\(requestID)") {
-            if let entry = try await findEntry(kind: .compatibility, requestID: requestID, userID: userID, database: req.db) {
-                return try HistoryDTOMapper.decodeCompatibilityResult(resultJSON: entry.result)
-            }
-
-            let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
-            let entry = History(userID: userID,
-                                requestID: requestID,
-                                kind: .compatibility,
-                                selectedTests: response.selectedTests,
-                                title: response.title,
-                                subtitle: response.subtitle,
-                                zodiacSign: response.userZodiacSign,
-                                compatibilityScore: response.compatibilityScore,
-                                partnerName: response.partnerName,
-                                partnerZodiacSign: response.partnerZodiacSign,
-                                result: try encodedResult(result: response))
-
-            try await entry.save(on: req.db)
-
-            return response
+        if let entry = try await findEntry(kind: .compatibility, requestID: requestID, userID: userID, database: req.db) {
+            return try HistoryDTOMapper.decodeCompatibilityResult(resultJSON: entry.result)
         }
+
+        let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
+        let entry = History(userID: userID,
+                            requestID: requestID,
+                            kind: .compatibility,
+                            selectedTests: response.selectedTests,
+                            title: response.title,
+                            subtitle: response.subtitle,
+                            zodiacSign: response.userZodiacSign,
+                            compatibilityScore: response.compatibilityScore,
+                            partnerName: response.partnerName,
+                            partnerZodiacSign: response.partnerZodiacSign,
+                            result: try encodedResult(result: response))
+
+        try await entry.save(on: req.db)
+        return response
     }
 
-    // The app repeats a test with the same key when the first answer was lost on the way
     private func idempotencyKey(req: Request) throws -> UUID {
         guard let key = req.headers.first(name: "Idempotency-Key").flatMap(UUID.init(uuidString:)) else {
             throw Abort(.badRequest, reason: "Некорректный идентификатор запроса")
