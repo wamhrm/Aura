@@ -13,10 +13,7 @@ struct OpenAIClient {
     private let model = Environment.get("OPENAI_MODEL") ?? "gpt-5.4"
     private let maxCompletionTokens = 8_000
     private let requestTimeout: TimeAmount = .seconds(60)
-    private let retryDelay: Duration = .seconds(1)
-    private let retryableStatusCodes: Set<UInt> = [429, 500, 502, 503, 504]
 
-    // Only transient HTTP errors get one retry. Invalid generated content is returned as an error.
     func generate<Result>(messages: [OpenAIMessage],
                           responseFormat: OpenAIResponseFormat,
                           req: Request,
@@ -27,13 +24,7 @@ struct OpenAIClient {
                                     responseFormat: responseFormat,
                                     maxCompletionTokens: maxCompletionTokens)
 
-        var response = try await send(request: request, apiKey: apiKey, req: req)
-
-        if retryableStatusCodes.contains(response.status.code) {
-            req.logger.warning("OpenAI \(responseFormat.jsonSchema.name): HTTP \(response.status.code), retrying once")
-            try await Task.sleep(for: retryDelay)
-            response = try await send(request: request, apiKey: apiKey, req: req)
-        }
+        let response = try await send(request: request, apiKey: apiKey, req: req)
 
         guard response.status == .ok else {
             let error = try? response.content.decode(OpenAIErrorResponse.self)
