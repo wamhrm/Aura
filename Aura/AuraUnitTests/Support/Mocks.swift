@@ -105,6 +105,7 @@ final class MockAuthService: AuthServiceProtocol {
     private(set) var savedProfile: ProfileInfoModel?
     private(set) var showsMainScreen = false
     private(set) var didAskAIConsent = false
+    private var expiredSessionMessage: String?
 
     init(user: UserModel? = nil) {
         if let user {
@@ -172,6 +173,19 @@ final class MockAuthService: AuthServiceProtocol {
         showsMainScreen = false
         didAskAIConsent = false
         authState.send(.signedOut)
+    }
+
+    func endExpiredSession() {
+        expiredSessionMessage = "Сессия истекла. Войдите снова"
+        showsMainScreen = false
+        didAskAIConsent = false
+        authState.send(.signedOut)
+    }
+
+    func takeExpiredSessionMessage() -> String? {
+        let message = expiredSessionMessage
+        expiredSessionMessage = nil
+        return message
     }
 
     func deleteAccount() async throws {

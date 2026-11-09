@@ -31,12 +31,14 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
 
     private let networkService: any NetworkServiceProtocol
+    private let authService: any AuthServiceProtocol
     private var currentUser: UserModel?
     private var cancellables = Set<AnyCancellable>()
 
     init(networkService: any NetworkServiceProtocol,
          authService: any AuthServiceProtocol) {
         self.networkService = networkService
+        self.authService = authService
 
         authService.authState
             .sink { [weak self] in
@@ -67,53 +69,66 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     func fetchDailyInsight() async throws -> DailyContentModel {
-        let insight = try await networkService.fetchDailyInsight()
+        let insight = try await request { try await networkService.fetchDailyInsight() }
         dailyInsight.send(insight)
         return insight
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
-        let tip = try await networkService.fetchDailyTip()
+        let tip = try await request { try await networkService.fetchDailyTip() }
         dailyTip.send(tip)
         return tip
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
-        let horoscope = try await networkService.fetchCurrentHoroscope()
+        let horoscope = try await request { try await networkService.fetchCurrentHoroscope() }
         self.horoscope.send(horoscope)
         return horoscope
     }
 
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
-        let result = try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
+        let result = try await request {
+            try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
+        }
         await reloadHistory()
         return result
     }
 
     func makeCompatibilityTest(request: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
-        let result = try await networkService.makeCompatibilityTest(request, requestID: requestID)
+        let result = try await self.request {
+            try await networkService.makeCompatibilityTest(request, requestID: requestID)
+        }
         await reloadHistory()
         return result
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        let history = try await networkService.fetchHistory()
+        let history = try await request { try await networkService.fetchHistory() }
         historyCells.send(history)
         return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
-        try await networkService.fetchHistoryDetails(id: id)
+        try await request { try await networkService.fetchHistoryDetails(id: id) }
     }
 
     func deleteHistory(id: UUID) async throws {
-        try await networkService.deleteHistory(id: id)
+        try await request { try await networkService.deleteHistory(id: id) }
         historyCells.send(historyCells.value.filter { $0.id != id })
     }
 
     private func reloadHistory() async {
-        guard let history = try? await networkService.fetchHistory() else { return }
+        guard let history = try? await request({ try await networkService.fetchHistory() }) else { return }
         historyCells.send(history)
+    }
+
+    private func request<T>(_ operation: () async throws -> T) async throws -> T {
+        do {
+            return try await operation()
+        } catch NetworkError.sessionExpired {
+            authService.endExpiredSession()
+            throw NetworkError.sessionExpired
+        }
     }
 }
 

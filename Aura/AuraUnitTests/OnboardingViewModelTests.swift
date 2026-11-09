@@ -209,4 +209,15 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")
     }
 
+    func test_welcome_explainsWhyTheSessionEnded() {
+        let auth = MockAuthService(user: makeUser())
+        auth.endExpiredSession()
+
+        let viewModel = makeViewModel(auth: auth)
+
+        XCTAssertTrue(viewModel.showAlert)
+        XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")
+        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
+    }
+
 }

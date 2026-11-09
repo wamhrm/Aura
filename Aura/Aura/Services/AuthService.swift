@@ -28,6 +28,8 @@ protocol AuthServiceProtocol {
     func confirmEmail(code: String) async throws
     func signOut() async throws
     func deleteAccount() async throws
+    func endExpiredSession()
+    func takeExpiredSessionMessage() -> String?
 }
 
 @MainActor
@@ -40,6 +42,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private let keychain: any KeychainHelperProtocol
     private let userDefaults: UserDefaults
     private let legacyUserDirectory: URL
+    private var expiredSessionMessage: String?
 
     init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
@@ -62,46 +65,62 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func createAccount(name: String, email: String, password: String) async throws {
-        let response = try await networkService.createAccount(name: name,
-                                                              email: normalizeEmail(email),
-                                                              password: password)
+        let response = try await request {
+            try await networkService.createAccount(name: name,
+                                                   email: normalizeEmail(email),
+                                                   password: password)
+        }
         try startSession(response: response)
     }
 
     func signIn(email: String, password: String) async throws {
-        let response = try await networkService.signIn(email: normalizeEmail(email),
-                                                       password: password)
+        let response = try await request {
+            try await networkService.signIn(email: normalizeEmail(email),
+                                            password: password)
+        }
         try startSession(response: response)
     }
 
     func requestPasswordReset(email: String) async throws {
-        try await networkService.requestPasswordReset(email: normalizeEmail(email))
+        try await request {
+            try await networkService.requestPasswordReset(email: normalizeEmail(email))
+        }
     }
 
     func resetPassword(email: String, code: String, newPassword: String) async throws {
-        let response = try await networkService.resetPassword(email: normalizeEmail(email),
-                                                              code: code,
-                                                              password: newPassword)
+        let response = try await request {
+            try await networkService.resetPassword(email: normalizeEmail(email),
+                                                   code: code,
+                                                   password: newPassword)
+        }
         try startSession(response: response)
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
-        let response = try await networkService.updateProfileInfo(request)
+        let response = try await self.request {
+            try await networkService.updateProfileInfo(request)
+        }
         saveUser(response.user)
         return response
     }
 
     func giveAIConsent() async throws {
-        let user = try await networkService.giveAIConsent()
+        let user = try await request {
+            try await networkService.giveAIConsent()
+        }
         saveUser(user)
     }
 
     func sendEmailConfirmationCode() async throws {
-        try await networkService.sendEmailConfirmationCode()
+        try await request {
+            try await networkService.sendEmailConfirmationCode()
+        }
     }
 
     func confirmEmail(code: String) async throws {
-        let user = try await networkService.confirmEmail(code: code)
+        let user = try await request {
+            try await networkService.confirmEmail(code: code)
+        }
         saveUser(user)
     }
 
@@ -111,8 +130,34 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     func deleteAccount() async throws {
-        try await networkService.deleteAccount()
+        try await request {
+            try await networkService.deleteAccount()
+        }
         try endSession()
+    }
+
+    func endExpiredSession() {
+        do {
+            try endSession()
+            expiredSessionMessage = NetworkError.sessionExpired.errorDescription
+        } catch {
+            expiredSessionMessage = nil
+        }
+    }
+
+    func takeExpiredSessionMessage() -> String? {
+        let message = expiredSessionMessage
+        expiredSessionMessage = nil
+        return message
+    }
+
+    private func request<T>(_ operation: () async throws -> T) async throws -> T {
+        do {
+            return try await operation()
+        } catch NetworkError.sessionExpired {
+            endExpiredSession()
+            throw NetworkError.sessionExpired
+        }
     }
 
     private func endSession() throws {

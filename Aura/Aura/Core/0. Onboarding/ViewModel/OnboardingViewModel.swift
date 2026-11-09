@@ -92,6 +92,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
 
         setupSubscriptions()
+
+        if let message = authService.takeExpiredSessionMessage() {
+            presentAlert(message)
+        }
     }
 
     var isSignedIn: Bool {
@@ -172,7 +176,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         hasSession = false
         hasLoadingFailed = false
         onboardingRoutes = []
-        presentAlert("Сессия истекла. Войдите снова")
+        presentAlert(authService.takeExpiredSessionMessage() ?? "Сессия истекла. Войдите снова")
     }
 
     func hidesSystemBackButton(route: OnboardingRoutes) -> Bool {

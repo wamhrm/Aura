@@ -214,6 +214,80 @@ final class AuthServiceTests: XCTestCase {
         guard case .signedIn(let user) = auth.authState.value else { return XCTFail("No session") }
         XCTAssertEqual(user, confirmed)
     }
+
+    func test_rejectedToken_endsTheLocalSessionWithoutLogout() async throws {
+        let keychain = MockKeychainHelper()
+        let storage = makeStorage()
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        auth.noteAIConsentAsked()
+        auth.finishOnboarding()
+        network.errorToThrow = NetworkError.sessionExpired
+
+        do {
+            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            XCTFail("The request must fail")
+        } catch NetworkError.sessionExpired {
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertEqual(network.logoutCount, 0)
+        XCTAssertNil(try keychain.loadAuthToken())
+        XCTAssertNil(storage.loadUser())
+        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertFalse(auth.didAskAIConsent)
+        guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
+        XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
+    }
+
+    func test_serverError_keepsTheLocalSession() async throws {
+        let keychain = MockKeychainHelper()
+        let storage = makeStorage()
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        network.errorToThrow = NetworkError.server("Ошибка сервера")
+
+        do {
+            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            XCTFail("The request must fail")
+        } catch let error as NetworkError {
+            guard case .server = error else { return XCTFail("Unexpected error: \(error)") }
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
+        XCTAssertEqual(storage.loadUser(), network.user)
+        guard case .signedIn = auth.authState.value else { return XCTFail("A server error ended the session") }
+    }
+
+    func test_contentRequest_withRejectedToken_endsTheLocalSession() async throws {
+        let keychain = MockKeychainHelper()
+        let storage = makeStorage()
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        auth.finishOnboarding()
+        let content = ContentService(networkService: network, authService: auth)
+        network.errorToThrow = NetworkError.sessionExpired
+
+        do {
+            _ = try await content.fetchHistory()
+            XCTFail("The request must fail")
+        } catch NetworkError.sessionExpired {
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertEqual(network.logoutCount, 0)
+        XCTAssertNil(try keychain.loadAuthToken())
+        XCTAssertNil(storage.loadUser())
+        XCTAssertFalse(auth.showsMainScreen)
+        guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
+    }
 }
 
 // These tests access the in-memory Keychain only on MainActor.
@@ -243,14 +317,17 @@ private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unc
 final class MockNetworkService: NetworkServiceProtocol {
     var user = makeUser()
     var history: [HistoryCellModel] = []
+    var errorToThrow: (any Error)?
     var beforeHistoryResponse: (() async throws -> Void)?
+    private(set) var logoutCount = 0
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         AuthTokenResponse(token: "new-token", user: user)
     }
 
     func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
-        UpdateProfileInfoResponse(user: user, horoscope: nil)
+        if let errorToThrow { throw errorToThrow }
+        return UpdateProfileInfoResponse(user: user, horoscope: nil)
     }
 
     func giveAIConsent() async throws -> UserModel {
@@ -264,7 +341,10 @@ final class MockNetworkService: NetworkServiceProtocol {
     // Other requirements of the existing network protocol.
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse { throw serverError }
-    func logout() async throws { throw serverError }
+    func logout() async throws {
+        logoutCount += 1
+        throw serverError
+    }
     func deleteAccount() async throws { throw serverError }
     func requestPasswordReset(email: String) async throws { throw serverError }
     func sendEmailConfirmationCode() async throws { throw serverError }
@@ -274,6 +354,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel { throw serverError }
     func makeCompatibilityTest(_ testRequest: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel { throw serverError }
     func fetchHistory() async throws -> [HistoryCellModel] {
+        if let errorToThrow { throw errorToThrow }
         let response = history
         try await beforeHistoryResponse?()
         return response
