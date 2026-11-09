@@ -77,8 +77,6 @@ extension OnboardingView {
                 PsychotypeStepView(vm: vm)
             case .aiConsent:
                 AIConsentStepView(vm: vm)
-            case .notifications:
-                NotificationsStepView(vm: vm)
             case .loading:
                 LoadingStepView(vm: vm)
         }

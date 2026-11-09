@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 
 enum OnboardingRoutes: Hashable {
-    case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent, notifications, loading
+    case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent, loading
 
     var progress: Double? {
         let signUpRoutes: [OnboardingRoutes] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent]
@@ -367,14 +367,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : finishOnboarding()
         } else {
-            // The notifications step stays hidden until the reminders are real
-            continueFromNotifications()
+            onboardingRoutes.append(.loading)
+            prepareProfile()
         }
-    }
-
-    func continueFromNotifications() {
-        onboardingRoutes.append(.loading)
-        prepareProfile()
     }
 
     func retryLoading() {
