@@ -21,8 +21,6 @@ fileprivate enum RequestAuthorization {
 }
 
 protocol NetworkServiceProtocol: Sendable {
-    var sessionExpiredEvents: AsyncStream<String> { get }
-
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
     func signInWithApple(identityToken: String,
@@ -33,7 +31,6 @@ protocol NetworkServiceProtocol: Sendable {
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse
     func deleteAccount() async throws
-    func fetchCurrentUser() async throws -> UserModel
     func giveAIConsent() async throws -> UserModel
     func sendEmailConfirmationCode() async throws
     func confirmEmail(code: String) async throws -> UserModel
@@ -54,12 +51,8 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     // The server may wait for OpenAI up to 121 seconds
     private static let aiTimeout: TimeInterval = 130
 
-    let sessionExpiredEvents: AsyncStream<String>
-
     private let baseURL: String
     private let session: URLSession
-    private let sessionExpiredContinuation: AsyncStream<String>.Continuation
-
     private let keychain: any KeychainHelperProtocol
 
     init(baseURL: String = Constants.baseURL,
@@ -68,7 +61,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         self.baseURL = baseURL
         self.session = session
         self.keychain = keychain
-        (sessionExpiredEvents, sessionExpiredContinuation) = AsyncStream.makeStream(of: String.self)
     }
 
     private static func makeSession() -> URLSession {
@@ -119,11 +111,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func deleteAccount() async throws {
         _ = try await request(endpoint: "/auth/account", method: .delete)
-    }
-
-    func fetchCurrentUser() async throws -> UserModel {
-        let data = try await request(endpoint: "/auth/me", method: .get)
-        return try decode(UserModel.self, data: data)
     }
 
     func giveAIConsent() async throws -> UserModel {
@@ -261,12 +248,11 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             case 200...299:
                 return data
             case 401:
-                guard let token else {
-                    throw NetworkError(statusCode: httpResponse.statusCode, data: data)
+                if token != nil {
+                    throw NetworkError.sessionExpired
                 }
 
-                sessionExpiredContinuation.yield(token)
-                throw NetworkError.sessionExpired
+                throw NetworkError(statusCode: httpResponse.statusCode, data: data)
             default:
                 if httpResponse.statusCode >= 500 {
                     Self.logger.error("\(method.rawValue, privacy: .public) \(endpoint, privacy: .public) failed with status \(httpResponse.statusCode)")

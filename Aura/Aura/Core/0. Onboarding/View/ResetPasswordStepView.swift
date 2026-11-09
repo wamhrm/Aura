@@ -46,5 +46,5 @@ struct ResetPasswordStepView: View {
 }
 
 #Preview {
-    ResetPasswordStepView(vm: OnboardingViewModel(authService: AuthService.preview) {})
+    ResetPasswordStepView(vm: OnboardingViewModel(authService: AuthService.preview))
 }

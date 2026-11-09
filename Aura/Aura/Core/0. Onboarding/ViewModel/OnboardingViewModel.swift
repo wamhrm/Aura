@@ -84,12 +84,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private var cancellables = Set<AnyCancellable>()
 
     private let authService: any AuthServiceProtocol
-    private let onFinish: () -> Void
 
-    init(authService: any AuthServiceProtocol,
-         onFinish: @escaping () -> Void) {
+    init(authService: any AuthServiceProtocol) {
         self.authService = authService
-        self.onFinish = onFinish
 
         if case .signedIn(let user) = authService.authState.value {
             hasSession = true
@@ -394,6 +391,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     func chooseAIConsent(_ allows: Bool) {
         allowsAIAnalysis = allows
+        authService.noteAIConsentAsked()
 
         // A returning user with a filled profile only lacked the consent
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
@@ -480,8 +478,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func finishOnboarding() {
-        guard case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo else { return }
-        onFinish()
+        authService.finishOnboarding()
     }
 
     private func continueAfterSignIn() {

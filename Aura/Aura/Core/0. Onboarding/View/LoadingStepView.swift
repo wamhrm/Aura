@@ -65,5 +65,5 @@ extension LoadingStepView {
 }
 
 #Preview {
-    LoadingStepView(vm: OnboardingViewModel(authService: AuthService.preview) {})
+    LoadingStepView(vm: OnboardingViewModel(authService: AuthService.preview))
 }

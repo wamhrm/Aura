@@ -234,7 +234,7 @@ enum OnboardingTextFieldTypes: String {
 
         OnboardingDivider()
 
-        OnboardingAppleButton(vm: OnboardingViewModel(authService: AuthService.preview) {})
+        OnboardingAppleButton(vm: OnboardingViewModel(authService: AuthService.preview))
 
         OnboardingLegalText()
 

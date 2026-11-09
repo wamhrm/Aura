@@ -81,71 +81,112 @@ final class AuthServiceTests: XCTestCase {
         guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
     }
 
-    func test_missingUserFile_restoresUserThroughMe() async throws {
+    func test_tokenWithoutSavedUser_staysSignedOut() throws {
         // Given
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         let storage = makeStorage()
-        let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, storage: storage)
-
-        // When
-        await auth.restoreSessionIfNeeded()
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, storage: storage)
 
         // Then
         XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
-        XCTAssertEqual(storage.loadUser(), network.user)
-        XCTAssertEqual(network.fetchCount, 1)
-        guard case .signedIn(let user) = auth.authState.value else { return XCTFail("Session was not restored") }
-        XCTAssertEqual(user, network.user)
+        XCTAssertNil(storage.loadUser())
+        guard case .signedOut = auth.authState.value else { return XCTFail("Token alone opened a session") }
+        XCTAssertFalse(auth.showsMainScreen)
     }
 
-    func test_unavailableKeychain_preservesSavedData_andRestoresAfterUnlock() async throws {
+    func test_unavailableKeychain_keepsSavedUser_andStaysSignedOut() throws {
         // Given
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         keychain.readFails = true
         let storage = makeStorage()
-        storage.saveUser(user: makeUser())
-        let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, storage: storage)
+        let user = makeUser()
+        storage.saveUser(user: user)
 
         // When
-        await auth.restoreSessionIfNeeded()
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, storage: storage)
 
         // Then
-        XCTAssertNotNil(storage.loadUser())
-        XCTAssertEqual(network.fetchCount, 0)
-
-        // When access becomes available
-        keychain.readFails = false
-        await auth.restoreSessionIfNeeded()
-
-        // Then
-        guard case .signedIn = auth.authState.value else { return XCTFail("Session was not restored") }
-        XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
+        XCTAssertEqual(storage.loadUser(), user)
+        guard case .signedOut = auth.authState.value else { return XCTFail("Unreadable token opened a session") }
+        XCTAssertFalse(auth.showsMainScreen)
     }
 
-    func test_consentAndConfirmation_doNotReplaceCurrentProfile() async throws {
+    func test_launch_showsMainScreen_onlyWithACompleteProfile() throws {
+        // Given / When
+        let complete = try makeStoredAuth(user: makeUser())
+        let incomplete = try makeStoredAuth(user: makeUser(dateOfBirth: nil))
+        let signedOut = try makeStoredAuth(user: nil)
+
+        // Then
+        XCTAssertTrue(complete.showsMainScreen)
+        XCTAssertFalse(incomplete.showsMainScreen)
+        XCTAssertFalse(signedOut.showsMainScreen)
+    }
+
+    func test_signIn_staysInOnboarding_untilItFinishes() async throws {
+        // Given
+        let auth = try makeStoredAuth(user: nil)
+
+        // When
+        try await auth.signIn(email: "test@test.com", password: "password")
+
+        // Then
+        XCTAssertFalse(auth.showsMainScreen)
+
+        // When the onboarding flow finishes
+        auth.finishOnboarding()
+
+        // Then
+        XCTAssertTrue(auth.showsMainScreen)
+        auth.noteAIConsentAsked()
+        XCTAssertTrue(auth.didAskAIConsent)
+        try auth.signOut()
+        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertFalse(auth.didAskAIConsent)
+    }
+
+    private func makeStoredAuth(user: UserModel?) throws -> AuthService {
+        let keychain = MockKeychainHelper()
+        let storage = makeStorage()
+        let network = MockNetworkService()
+
+        if let user {
+            try keychain.saveAuthToken("saved-token")
+            storage.saveUser(user: user)
+            network.user = user
+        }
+
+        return AuthService(networkService: network, keychain: keychain, storage: storage)
+    }
+
+    func test_profileConsentAndConfirmation_saveTheUserFromTheServer() async throws {
         // Given
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let network = MockNetworkService()
-        network.user = makeUser(hasAIConsent: false, isEmailConfirmed: false)
         let auth = AuthService(networkService: network, keychain: keychain, storage: storage)
         try await auth.signIn(email: "test@test.com", password: "password")
-        network.user = makeUser(dateOfBirth: "20.01.1990", hasAIConsent: false, isEmailConfirmed: false)
+
+        // When the profile is saved
+        let saved = makeUser(dateOfBirth: "20.01.1990", hasAIConsent: false, isEmailConfirmed: false)
+        network.user = saved
         _ = try await auth.updateProfileInfo(ProfileInfoModel())
 
-        // When the endpoints return an older profile
-        network.user = makeUser()
+        // Then
+        XCTAssertEqual(storage.loadUser(), saved)
+
+        // When consent and confirmation return the next user
+        let confirmed = makeUser(dateOfBirth: "01.01.2001", hasAIConsent: true, isEmailConfirmed: true)
+        network.user = confirmed
         try await auth.giveAIConsent()
         try await auth.confirmEmail(code: "123456")
 
         // Then
-        XCTAssertEqual(storage.loadUser()?.dateOfBirth, "20.01.1990")
-        XCTAssertEqual(storage.loadUser()?.hasAIConsent, true)
-        XCTAssertEqual(storage.loadUser()?.isEmailConfirmed, true)
+        XCTAssertEqual(storage.loadUser(), confirmed)
+        guard case .signedIn(let user) = auth.authState.value else { return XCTFail("No session") }
+        XCTAssertEqual(user, confirmed)
     }
 }
 
@@ -174,16 +215,9 @@ private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unc
 
 @MainActor
 final class MockNetworkService: NetworkServiceProtocol {
-    nonisolated let sessionExpiredEvents = AsyncStream<String> { $0.finish() }
     var user = makeUser()
-    var fetchCount = 0
     var history: [HistoryCellModel] = []
     var beforeHistoryResponse: (() async throws -> Void)?
-
-    func fetchCurrentUser() async throws -> UserModel {
-        fetchCount += 1
-        return user
-    }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         AuthTokenResponse(token: "new-token", user: user)

@@ -8,38 +8,28 @@
 import SwiftUI
 
 struct RootView: View {
-    @StateObject private var vm: RootViewModel
-    @Environment(\.scenePhase) private var scenePhase
-
-    private let authService: AuthService
+    @ObservedObject private var authService: AuthService
     private let contentService: ContentService
 
     init(authService: AuthService,
          contentService: ContentService) {
         self.authService = authService
         self.contentService = contentService
-        _vm = StateObject(wrappedValue: RootViewModel(authService: authService,
-                                                      contentService: contentService))
     }
 
     var body: some View {
         Group {
-            switch vm.screen {
-                case .onboarding:
-                    OnboardingView(authService: authService) {
-                        vm.finishOnboarding()
-                    }
+            if authService.showsMainScreen {
+                MainTabView(authService: authService,
+                            contentService: contentService,
+                            promptsAIConsentAutomatically: !authService.didAskAIConsent)
                     .transition(.opacity)
-                case .main:
-                    MainTabView(authService: authService,
-                                contentService: contentService,
-                                promptsAIConsentAutomatically: !vm.hasFinishedOnboarding)
-                        .transition(.opacity)
+            } else {
+                OnboardingView(authService: authService)
+                    .transition(.opacity)
             }
         }
-        .onChange(of: scenePhase) { _, phase in
-            vm.handleScenePhase(phase)
-        }
+        .animation(.easeInOut(duration: 0.3), value: authService.showsMainScreen)
     }
 }
 

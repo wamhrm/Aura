@@ -4,7 +4,6 @@
 //
 
 import Combine
-import SwiftUI
 import XCTest
 @testable import Aura
 
@@ -24,8 +23,8 @@ final class OnboardingViewModelTests: XCTestCase {
         guard case .signedIn = auth.authState.value else { return XCTFail("Session was ended") }
     }
 
-    private func makeViewModel(auth: MockAuthService, onFinish: @escaping () -> Void = {}) -> OnboardingViewModel {
-        OnboardingViewModel(authService: auth, onFinish: onFinish)
+    private func makeViewModel(auth: MockAuthService) -> OnboardingViewModel {
+        OnboardingViewModel(authService: auth)
     }
 
     private func signIn(_ viewModel: OnboardingViewModel) async {
@@ -75,14 +74,13 @@ final class OnboardingViewModelTests: XCTestCase {
         // Given
         let auth = MockAuthService()
         auth.serverUser = makeUser()
-        var didFinish = false
-        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        let viewModel = makeViewModel(auth: auth)
 
         // When
         await signIn(viewModel)
 
         // Then
-        XCTAssertTrue(didFinish)
+        XCTAssertTrue(auth.showsMainScreen)
     }
 
     func test_signIn_withFullProfileWithoutConsent_asksOnlyForTheConsent() async {
@@ -135,45 +133,43 @@ final class OnboardingViewModelTests: XCTestCase {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
         auth.serverUser = makeUser(hasAIConsent: false)
         auth.aiConsentError = serverError
-        var didFinish = false
-        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        let viewModel = makeViewModel(auth: auth)
 
         viewModel.chooseAIConsent(true)
-        await waitUntil { viewModel.hasLoadingFailed || didFinish }
+        await waitUntil { viewModel.hasLoadingFailed || auth.showsMainScreen }
 
         XCTAssertTrue(viewModel.hasLoadingFailed)
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
-        XCTAssertFalse(didFinish)
+        XCTAssertFalse(auth.showsMainScreen)
 
         auth.aiConsentError = nil
         viewModel.retryLoading()
-        await waitUntil { didFinish }
+        await waitUntil { auth.showsMainScreen }
         XCTAssertFalse(viewModel.hasLoadingFailed)
     }
 
     func test_returningUser_decliningConsent_finishesWithoutARequest() {
         // Given
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
-        var didFinish = false
-        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        let viewModel = makeViewModel(auth: auth)
 
         // When
         viewModel.chooseAIConsent(false)
 
         // Then
-        XCTAssertTrue(didFinish)
+        XCTAssertTrue(auth.showsMainScreen)
+        XCTAssertTrue(auth.didAskAIConsent)
         XCTAssertEqual(auth.aiConsentCount, 0)
     }
 
     func test_returningUser_allowingConsent_savesIt_andFinishes() async {
         // Given
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
-        var didFinish = false
-        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        let viewModel = makeViewModel(auth: auth)
 
         // When
         viewModel.chooseAIConsent(true)
-        await waitUntil { didFinish }
+        await waitUntil { auth.showsMainScreen }
 
         // Then
         XCTAssertEqual(auth.aiConsentCount, 1)
@@ -183,12 +179,11 @@ final class OnboardingViewModelTests: XCTestCase {
         // Given
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
         auth.serverUser = makeUser(hasAIConsent: false)
-        var didFinish = false
-        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        let viewModel = makeViewModel(auth: auth)
 
         // When
         viewModel.chooseAIConsent(false)
-        await waitUntil { didFinish }
+        await waitUntil { auth.showsMainScreen }
 
         // Then
         XCTAssertNotNil(auth.savedProfile)
@@ -199,68 +194,18 @@ final class OnboardingViewModelTests: XCTestCase {
     func test_sessionExpiration_duringProfileSave_cancelsPreparation_andDoesNotFinish() async {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
         auth.profileSaveDelay = .seconds(30)
-        var didFinish = false
-        let viewModel = makeViewModel(auth: auth) { didFinish = true }
+        let viewModel = makeViewModel(auth: auth)
         viewModel.chooseAIConsent(true)
         await waitUntil { auth.savedProfile != nil }
 
         auth.authState.send(.signedOut)
         await waitUntil { auth.profileSaveFinished }
 
-        XCTAssertFalse(didFinish)
+        XCTAssertFalse(auth.showsMainScreen)
         XCTAssertFalse(viewModel.hasLoadingFailed)
         XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
         XCTAssertEqual(auth.aiConsentCount, 0)
         XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")
     }
 
-    // MARK: - Which screen the app opens
-    func test_root_newDay_refreshesContent_beforeTheIntervalExpires() async throws {
-        let auth = MockAuthService(user: makeUser())
-        let content = MockContentService()
-        let viewModel = RootViewModel(authService: auth, contentService: content, refreshInterval: 48 * 60 * 60)
-        let tomorrow = try XCTUnwrap(Calendar.current.date(byAdding: .day, value: 1, to: Date()))
-        var contentRefreshes = 0
-        let subscription = content.refreshRequested.sink { contentRefreshes += 1 }
-        defer { subscription.cancel() }
-
-        viewModel.handleScenePhase(.active, now: tomorrow)
-        await waitUntil { contentRefreshes == 1 }
-
-        XCTAssertEqual(auth.refreshUserCount, 1)
-        XCTAssertEqual(contentRefreshes, 1)
-    }
-
-    func test_root_opensTheMainScreen_onlyWithACompleteProfile() {
-        // Given
-        let content = MockContentService()
-
-        // When
-        let complete = RootViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
-        let incomplete = RootViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: nil)), contentService: content)
-        let signedOut = RootViewModel(authService: MockAuthService(), contentService: content)
-
-        // Then
-        XCTAssertEqual(complete.screen, .main)
-        XCTAssertEqual(incomplete.screen, .onboarding)
-        XCTAssertEqual(signedOut.screen, .onboarding)
-    }
-
-    func test_root_refreshesTheUser_onlyAfterTheInterval() async {
-        // Given
-        let auth = MockAuthService(user: makeUser())
-        let content = MockContentService()
-        let justOpened = RootViewModel(authService: auth, contentService: content)
-        let openedLongAgo = RootViewModel(authService: auth, contentService: content, refreshInterval: 0)
-
-        // When
-        justOpened.handleScenePhase(.active)
-        let refreshesBeforeTheInterval = auth.refreshUserCount
-        openedLongAgo.handleScenePhase(.active)
-        await waitUntil { auth.refreshUserCount == 1 }
-
-        // Then
-        XCTAssertEqual(refreshesBeforeTheInterval, 0)
-        XCTAssertEqual(auth.refreshUserCount, 1)
-    }
 }

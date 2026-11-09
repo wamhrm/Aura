@@ -68,5 +68,5 @@ struct NameAndBirthStepView: View {
 }
 
 #Preview {
-    NameAndBirthStepView(vm: OnboardingViewModel(authService: AuthService.preview) {})
+    NameAndBirthStepView(vm: OnboardingViewModel(authService: AuthService.preview))
 }

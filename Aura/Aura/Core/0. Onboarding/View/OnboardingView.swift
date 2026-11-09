@@ -10,10 +10,8 @@ import SwiftUI
 struct OnboardingView: View {
     @StateObject private var vm: OnboardingViewModel
 
-    init(authService: any AuthServiceProtocol,
-         onFinish: @escaping () -> Void) {
-        _vm = StateObject(wrappedValue: OnboardingViewModel(authService: authService,
-                                                            onFinish: onFinish))
+    init(authService: any AuthServiceProtocol) {
+        _vm = StateObject(wrappedValue: OnboardingViewModel(authService: authService))
     }
 
     var body: some View {
@@ -88,5 +86,5 @@ extension OnboardingView {
 }
 
 #Preview {
-    OnboardingView(authService: AuthService.preview) {}
+    OnboardingView(authService: AuthService.preview)
 }

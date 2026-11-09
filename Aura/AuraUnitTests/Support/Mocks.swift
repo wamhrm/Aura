@@ -70,9 +70,10 @@ final class MockAuthService: AuthServiceProtocol {
     private(set) var createAccountCount = 0
     private(set) var resetPasswordCount = 0
     private(set) var aiConsentCount = 0
-    private(set) var refreshUserCount = 0
     private(set) var confirmedCode: String?
     private(set) var savedProfile: ProfileInfoModel?
+    private(set) var showsMainScreen = false
+    private(set) var didAskAIConsent = false
 
     init(user: UserModel? = nil) {
         if let user {
@@ -80,6 +81,15 @@ final class MockAuthService: AuthServiceProtocol {
         } else {
             authState = CurrentValueSubject(.signedOut)
         }
+    }
+
+    func noteAIConsentAsked() {
+        didAskAIConsent = true
+    }
+
+    func finishOnboarding() {
+        guard case .signedIn(let user) = authState.value, user.hasCompletedProfileInfo else { return }
+        showsMainScreen = true
     }
 
     func createAccount(name: String, email: String, password: String) async throws {
@@ -132,19 +142,17 @@ final class MockAuthService: AuthServiceProtocol {
 
     func signOut() throws {
         if let errorToThrow { throw errorToThrow }
+        showsMainScreen = false
+        didAskAIConsent = false
         authState.send(.signedOut)
     }
 
     func deleteAccount() async throws {
         if let errorToThrow { throw errorToThrow }
+        showsMainScreen = false
+        didAskAIConsent = false
         authState.send(.signedOut)
     }
-
-    func refreshUser() {
-        refreshUserCount += 1
-    }
-
-    func restoreSessionIfNeeded() async { }
 
     private func startSession() throws {
         if let errorToThrow { throw errorToThrow }
