@@ -101,10 +101,6 @@ final class MockAuthService: AuthServiceProtocol {
         try startSession()
     }
 
-    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
-        try startSession()
-    }
-
     func requestPasswordReset(email: String) async throws {
         if let errorToThrow { throw errorToThrow }
     }

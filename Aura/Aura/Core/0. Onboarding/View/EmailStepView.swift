@@ -23,11 +23,7 @@ struct EmailStepView: View {
 
             Spacer()
 
-            VStack(spacing: 15) {
-                OnboardingDivider()
-                OnboardingAppleButton(vm: vm)
-                OnboardingLegalText()
-            }
+            OnboardingLegalText()
         }
         .padding(.horizontal)
         .padding(.vertical, 10)

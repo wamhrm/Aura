@@ -31,8 +31,6 @@ struct SignInStepView: View {
             Spacer()
 
             VStack(spacing: 15) {
-                OnboardingDivider()
-                OnboardingAppleButton(vm: vm)
                 OnboardingLegalText()
 
                 HStack(spacing: 4) {

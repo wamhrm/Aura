@@ -5,7 +5,6 @@
 //  Created by wamhrm on 27.10.2026.
 //
 
-import AuthenticationServices
 import SwiftUI
 
 struct OnboardingTopBar: View {
@@ -117,38 +116,6 @@ struct OnboardingTextButton: View {
     }
 }
 
-struct OnboardingDivider: View {
-    var body: some View {
-        HStack(spacing: 15) {
-            Rectangle()
-                .frame(height: 0.5)
-
-            Text("или")
-                .font(Adaptive.size(.callout, .system(size: 15)))
-
-            Rectangle()
-                .frame(height: 0.5)
-        }
-        .foregroundStyle(.gray)
-    }
-}
-
-struct OnboardingAppleButton: View {
-    @ObservedObject var vm: OnboardingViewModel
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        SignInWithAppleButton(.continue) { request in
-            vm.prepareAppleSignIn(request)
-        } onCompletion: { result in
-            vm.completeAppleSignIn(result)
-        }
-        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-        .frame(height: 50)
-        .clipShape(.rect(cornerRadius: 10))
-    }
-}
-
 struct OnboardingLegalText: View {
     
     private var legalText: LocalizedStringKey {
@@ -231,10 +198,6 @@ enum OnboardingTextFieldTypes: String {
         OnboardingTextButton(title: "Забыли пароль?") {
 
         }
-
-        OnboardingDivider()
-
-        OnboardingAppleButton(vm: OnboardingViewModel(authService: AuthService.preview))
 
         OnboardingLegalText()
 

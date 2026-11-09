@@ -240,7 +240,6 @@ final class MockNetworkService: NetworkServiceProtocol {
 
     // Other requirements of the existing network protocol.
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse { throw serverError }
-    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws -> AuthTokenResponse { throw serverError }
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func logout() async throws { throw serverError }
     func deleteAccount() async throws { throw serverError }

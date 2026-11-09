@@ -20,7 +20,6 @@ protocol AuthServiceProtocol {
     func finishOnboarding()
     func createAccount(name: String, email: String, password: String) async throws
     func signIn(email: String, password: String) async throws
-    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, newPassword: String) async throws
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
@@ -69,14 +68,6 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     func signIn(email: String, password: String) async throws {
         let response = try await networkService.signIn(email: normalizeEmail(email),
                                                        password: password)
-        try startSession(response: response)
-    }
-
-    func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) async throws {
-        let response = try await networkService.signInWithApple(identityToken: identityToken,
-                                                                authorizationCode: authorizationCode,
-                                                                nonce: nonce,
-                                                                name: name)
         try startSession(response: response)
     }
 

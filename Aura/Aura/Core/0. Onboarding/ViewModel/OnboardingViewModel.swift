@@ -5,9 +5,7 @@
 //  Created by wamhrm on 27.10.2026.
 //
 
-import AuthenticationServices
 import Combine
-import CryptoKit
 import Foundation
 import SwiftUI
 
@@ -78,7 +76,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false
-    private var appleSignInNonce: String?
     private var hasSession = false
     private var preparationTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
@@ -353,35 +350,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    func prepareAppleSignIn(_ request: ASAuthorizationAppleIDRequest) {
-        let nonce = Self.makeNonce()
-        appleSignInNonce = nonce
-        request.requestedScopes = [.fullName]
-        request.nonce = Self.sha256(nonce)
-    }
-
-    func completeAppleSignIn(_ result: Result<ASAuthorization, any Error>) {
-        switch result {
-            case .success(let authorization):
-                guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                      let tokenData = credential.identityToken,
-                      let identityToken = String(data: tokenData, encoding: .utf8),
-                      let nonce = appleSignInNonce else {
-                    presentAlert("Не удалось войти через Apple")
-                    return
-                }
-
-                let authorizationCode = credential.authorizationCode.flatMap { String(data: $0, encoding: .utf8) }
-                signInWithApple(identityToken: identityToken,
-                                authorizationCode: authorizationCode,
-                                nonce: nonce,
-                                name: displayName.isEmpty ? credential.fullName?.givenName : displayName)
-            case .failure(let error):
-                guard (error as? ASAuthorizationError)?.code != .canceled else { return }
-                presentAlert("Не удалось войти через Apple")
-        }
-    }
-
     func continueFromPsychotype() {
         guard profileInfo.hasAllAnswers else {
             presentAlert("Ответьте на все вопросы")
@@ -411,26 +379,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     func retryLoading() {
         prepareProfile()
-    }
-
-    private func signInWithApple(identityToken: String, authorizationCode: String?, nonce: String, name: String?) {
-        guard !isLoading else { return }
-
-        isLoading = true
-
-        Task {
-            do {
-                try await authService.signInWithApple(identityToken: identityToken,
-                                                      authorizationCode: authorizationCode,
-                                                      nonce: nonce,
-                                                      name: name)
-                continueAfterSignIn()
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
-        }
     }
 
     private func giveAIConsent() {
@@ -536,15 +484,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return "Пароль должен быть не короче \(InputLimits.minPasswordLength) символов"
         }
         return nil
-    }
-
-    private static func makeNonce() -> String {
-        let bytes = (0..<32).map { _ in UInt8.random(in: .min ... .max) }
-        return Data(bytes).base64EncodedString()
-    }
-
-    private static func sha256(_ value: String) -> String {
-        SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     private static func isValidEmail(_ email: String) -> Bool {

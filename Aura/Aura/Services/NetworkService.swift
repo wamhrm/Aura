@@ -17,10 +17,6 @@ fileprivate enum HTTPMethod: String {
 protocol NetworkServiceProtocol: Sendable {
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
-    func signInWithApple(identityToken: String,
-                         authorizationCode: String?,
-                         nonce: String,
-                         name: String?) async throws -> AuthTokenResponse
     func logout() async throws
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse
@@ -71,17 +67,6 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         let body = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
         return try await fetch(endpoint: "/auth/signIn", method: .post, body: body)
-    }
-
-    func signInWithApple(identityToken: String,
-                         authorizationCode: String?,
-                         nonce: String,
-                         name: String?) async throws -> AuthTokenResponse {
-        let body = try JSONEncoder().encode(AppleSignInBody(identityToken: identityToken,
-                                                            authorizationCode: authorizationCode,
-                                                            nonce: nonce,
-                                                            name: name))
-        return try await fetch(endpoint: "/auth/apple", method: .post, body: body)
     }
 
     func logout() async throws {
@@ -308,13 +293,6 @@ private struct PasswordResetBody: Encodable {
 
 private struct EmailConfirmationBody: Encodable {
     let code: String
-}
-
-private struct AppleSignInBody: Encodable {
-    let identityToken: String
-    let authorizationCode: String?
-    let nonce: String
-    let name: String?
 }
 
 nonisolated private struct ServerErrorResponse: Decodable {
