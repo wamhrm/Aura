@@ -9,17 +9,44 @@ import SwiftUI
 
 struct EmailConfirmationSheetView: View {
     @ObservedObject var vm: EmailConfirmationViewModel
-
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(vm.subtitle)
-                    .font(Adaptive.size(.footnote, .system(size: 15)))
-                    .foregroundStyle(.secondary)
+            ZStack {
+                BackgroundView()
 
-                if vm.isCodeSent {
+                if vm.isLoading {
+                    LoadingView(title: vm.loadingTitle)
+                        .transition(.opacity)
+                } else {
+                    confirmationForm()
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
+            .padding(.horizontal)
+            .navigationTitle("Подтвердите почту")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                toolbarItem()
+            }
+            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+                Button("OK", role: .cancel) {}
+            }
+        }
+        .presentationDetents([.height(vm.sheetHeight)])
+        .animation(.easeInOut(duration: 0.25), value: vm.isSheetExtended)
+    }
+
+    private func confirmationForm() -> some View {
+        VStack(alignment: .leading, spacing: 30) {
+            Text(vm.subtitle)
+                .font(Adaptive.size(.footnote, .system(size: 15)))
+                .foregroundStyle(.secondary)
+
+            if vm.isCodeSent {
+                VStack(spacing: 25) {
                     OnboardingTextField(text: $vm.code, type: .code)
 
                     ClassicButton(title: vm.confirmButtonTitle) {
@@ -30,27 +57,15 @@ struct EmailConfirmationSheetView: View {
                         vm.sendCode()
                     }
                     .frame(maxWidth: .infinity)
-                } else {
-                    ClassicButton(title: vm.sendCodeButtonTitle) {
-                        vm.sendCode()
-                    }
                 }
+            } else {
+                ClassicButton(title: vm.sendCodeButtonTitle) {
+                    vm.sendCode()
+                }
+            }
 
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal)
-            .padding(.top, 10)
-            .navigationTitle("Подтвердите почту")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                toolbarItem()
-            }
-            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-                Button("OK", role: .cancel) {}
-            }
+            Spacer(minLength: 0)
         }
-        .disabled(vm.isLoading)
-        .presentationDetents([.height(Adaptive.size(320, 340))])
     }
 }
 

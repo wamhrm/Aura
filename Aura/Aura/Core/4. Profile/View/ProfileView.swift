@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var vm: ProfileViewModel
-
     let aiConsentButton: () -> Void
 
     var body: some View {

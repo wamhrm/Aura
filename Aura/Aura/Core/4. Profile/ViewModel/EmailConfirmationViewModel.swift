@@ -14,6 +14,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
     @Published var showAlert = false
     @Published var alertMessage = ""
+    @Published var isSheetExtended = false
     @Published private(set) var isCodeSent = false
     @Published private(set) var isLoading = false
 
@@ -27,7 +28,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
     var subtitle: String {
         isCodeSent ? "Мы отправили код на \(email). Введите его, чтобы проходить тесты"
-                   : "Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код"
+                   : "Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код."
     }
 
     var sendCodeButtonTitle: String {
@@ -36,6 +37,14 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
     var confirmButtonTitle: String {
         isLoading ? "Проверяем..." : "Проверить код"
+    }
+    
+    var sheetHeight: CGFloat {
+        isSheetExtended ? Adaptive.size(340, 360) : Adaptive.size(200, 220)
+    }
+    
+    var loadingTitle: String {
+        isCodeSent ? "Проверяем..." : "Отправляем..."
     }
 
     func sendCode() {
@@ -47,8 +56,12 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
             do {
                 try await authService.sendEmailConfirmationCode()
                 isCodeSent = true
+                isSheetExtended = true
             } catch {
-                if case NetworkError.limited = error { isCodeSent = true }
+                if case NetworkError.limited = error {
+                    isCodeSent = true
+                    isSheetExtended = true
+                }
                 presentAlert(error.userMessage)
             }
 

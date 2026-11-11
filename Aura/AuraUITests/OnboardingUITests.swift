@@ -27,7 +27,7 @@ final class OnboardingUITests: AuraUITestCase {
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Далее")
         fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
-        tapButton("Создать аккаунт")
+        tapButton("Далее")
         XCTAssertTrue(text("Расскажите о себе").waitForExistence(timeout: 15), "the profile questions did not open")
     }
 
@@ -91,7 +91,7 @@ final class OnboardingUITests: AuraUITestCase {
         app.textFields["Электронная почта"].firstMatch.typeText("@example.test")
         tapButton("Далее")
         fillField(app.secureTextFields["Пароль"].firstMatch, text: "short")
-        tapButton("Создать аккаунт")
+        tapButton("Далее")
 
         // Then
         XCTAssertEqual(alertText(), "Пароль должен быть не короче 8 символов")

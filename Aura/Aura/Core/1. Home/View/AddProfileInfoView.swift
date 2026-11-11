@@ -16,8 +16,25 @@ struct AddProfileInfoView: View {
         ZStack {
             BackgroundView()
 
-            ScrollView {
-                VStack(spacing: 16) {
+            if vm.isLoading {
+                LoadingView(title: "Сохраняем...")
+                    .transition(.opacity)
+            } else {
+                profileForm()
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
+        .navigationTitle("О вас")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            Button("ОК", role: .cancel) { }
+        }
+    }
+
+    private func profileForm() -> some View {
+        ScrollView {
+            VStack(spacing: 16) {
                     ProfileInfoSection(title: "Ваше имя") {
                         CompatibilityTextFieldView(title: "Введите имя",
                                                    text: $vm.name)
@@ -56,12 +73,6 @@ struct AddProfileInfoView: View {
             .scrollIndicators(.hidden)
             .dismissKeyboardOnTap()
             .scrollDismissesKeyboard(.interactively)
-        }
-        .navigationTitle("О вас")
-        .navigationBarTitleDisplayMode(.inline)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-            Button("ОК", role: .cancel) { }
-        }
     }
 }
 

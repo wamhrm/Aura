@@ -16,68 +16,72 @@ struct SettingsSheetView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 30) {
-                VStack(alignment: .leading, spacing: 15) {
-                    headerText("Оформление")
+            ZStack {
+                BackgroundView()
+                
+                VStack(alignment: .leading, spacing: 30) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        headerText("Оформление")
 
-                    HStack(spacing: 15) {
-                        themeButtonsView(type: .bright,
-                                         isSelected: selectedTheme == .light) {
-                            selectedTheme = .light
-                        }
-
-                        themeButtonsView(type: .dark,
-                                         isSelected: selectedTheme == .dark) {
-                            selectedTheme = .dark
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 15) {
-                    headerText("Акцентный цвет")
-
-                    HStack {
-                        ForEach(AccentColorOption.allCases) { option in
-                            accentColorView(color: option.color,
-                                            isSelected: accentColor == option.rawValue) {
-                                accentColor = option.rawValue
+                        HStack(spacing: 15) {
+                            themeButtonsView(type: .bright,
+                                             isSelected: selectedTheme == .light) {
+                                selectedTheme = .light
                             }
-                            .frame(maxWidth: .infinity)
+
+                            themeButtonsView(type: .dark,
+                                             isSelected: selectedTheme == .dark) {
+                                selectedTheme = .dark
+                            }
                         }
                     }
+
+                    VStack(alignment: .leading, spacing: 15) {
+                        headerText("Акцентный цвет")
+
+                        HStack {
+                            ForEach(AccentColorOption.allCases) { option in
+                                accentColorView(color: option.color,
+                                                isSelected: accentColor == option.rawValue) {
+                                    accentColor = option.rawValue
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                    }
+
+                    VStack(spacing: 15) {
+                        customButton(.updateInfo) {
+                            vm.showAddProfileInfo()
+                            dismiss()
+                        }
+
+                        customButton(.signOut) {
+                            vm.requestSignOut()
+                        }
+
+                        customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
+                            vm.requestAccountDeletion()
+                        }
+                        .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
+                            deleteAccountAlertView()
+                        } message: {
+                            Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
+                        }
+                    }
+                    .disabled(vm.isDeletingAccount)
+
+                    legalLinksView()
                 }
-
-                VStack(spacing: 15) {
-                    customButton(.updateInfo) {
-                        vm.showAddProfileInfo()
-                        dismiss()
-                    }
-
-                    customButton(.signOut) {
-                        vm.requestSignOut()
-                    }
-
-                    customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
-                        vm.requestAccountDeletion()
-                    }
-                    .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
-                        deleteAccountAlertView()
-                    } message: {
-                        Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
-                    }
+                .padding(.horizontal)
+                .navigationTitle("Настройки")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    toolbarItem()
                 }
-                .disabled(vm.isDeletingAccount)
-
-                legalLinksView()
-            }
-            .padding(.horizontal)
-            .navigationTitle("Настройки")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                toolbarItem()
-            }
-            .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
-                alertView()
+                .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
+                    alertView()
+                }
             }
         }
         .interactiveDismissDisabled(vm.isDeletingAccount)

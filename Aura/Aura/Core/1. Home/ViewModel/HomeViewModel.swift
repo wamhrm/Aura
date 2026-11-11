@@ -11,7 +11,7 @@ import Foundation
 import SwiftUI
 
 enum HomeRoutes: Hashable {
-    case horoscopeDetails, allTests, testResults
+    case horoscopeDetails, allTests, testResults, aiConsent
     case testDetails(PersonalityTestTypes)
 }
 
@@ -32,12 +32,16 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var allowsAIAnalysis = false
     @Published private(set) var isLoading = false
     @Published private(set) var isLoadingScreen = true
+    @Published private(set) var isUpdatingInfo = false
+    @Published private(set) var hasUpdateFailed = false
+    @Published private(set) var updateMessage = ""
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
 
     private var currentUser: UserModel?
+    private var didPromptAIConsent = false
     private var personalityRequestID: UUID?
     private var personalityRequestUser: UserModel?
     private var personalityRequestTests: [PersonalityTestTypes]?
@@ -47,8 +51,17 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
+        didPromptAIConsent = authService.didAskAIConsent
 
         setupSubscriptions()
+    }
+
+    var updateTitle: String {
+        hasUpdateFailed ? "Не удалось обновить информацию" : "Обновляем информацию"
+    }
+
+    var updateIcon: String {
+        hasUpdateFailed ? "exclamationmark" : "sparkles"
     }
 
     var greetingText: String {
@@ -57,6 +70,10 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     var testButtonTitle: String {
         isLoading ? "Готовим результат..." : "Проверить себя"
+    }
+
+    var showsLoadingScreen: Bool {
+        isLoadingScreen || (horoscope == nil && horoscopeState == .loading)
     }
 
     func isSelected(_ test: PersonalityTestTypes) -> Bool {
@@ -109,9 +126,9 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         allowsAIAnalysis = user.allowsAIAnalysis
         if user.hasConfirmedEmail { emailConfirmation = nil }
         userName = user.name
-        isLoadingScreen = false
 
         guard let previousUser, previousUser.id == user.id else {
+            isLoadingScreen = true
             Task { await refresh() }
             return
         }
@@ -119,6 +136,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         if previousUser.dateOfBirth != user.dateOfBirth {
             horoscope = nil
             horoscopeState = .loading
+            isLoadingScreen = true
             Task { await loadHoroscope() }
         }
 
@@ -137,6 +155,47 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     func showTestDetails(_ test: PersonalityTestTypes) {
         homeRoutes.append(.testDetails(test))
+    }
+
+    func showAIConsent() {
+        guard !homeRoutes.contains(.aiConsent) else { return }
+        homeRoutes.append(.aiConsent)
+    }
+
+    func allowAIConsent() {
+        guard !isUpdatingInfo else { return }
+
+        updateInfo()
+        homeRoutes = []
+    }
+
+    func declineAIConsent() {
+        homeRoutes = []
+    }
+
+    private func updateInfo() {
+        isUpdatingInfo = true
+        hasUpdateFailed = false
+
+        Task {
+            do {
+                try await authService.giveAIConsent()
+                try await refreshUnlockedContent()
+                homeRoutes = []
+            } catch {
+                updateMessage = error.userMessage
+                hasUpdateFailed = true
+            }
+
+            isUpdatingInfo = false
+        }
+    }
+
+    private func refreshUnlockedContent() async throws {
+        _ = try await contentService.fetchDailyInsight()
+
+        guard contentService.historyCells.value.contains(where: { $0.kind == .personality }) else { return }
+        _ = try await contentService.fetchDailyTip()
     }
 
     func toggleTestSelection(_ test: PersonalityTestTypes) {
@@ -229,6 +288,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 horoscopeState = .failed(error.userMessage)
             }
         }
+
+        revealScreenIfReady()
     }
 
     private func loadDailyInsight() async {
@@ -248,5 +309,14 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 insightState = .failed(error.userMessage)
             }
         }
+
+        revealScreenIfReady()
+    }
+
+    private func revealScreenIfReady() {
+        let horoscopeReady = horoscope != nil || horoscopeState != .loading
+        let insightReady = !allowsAIAnalysis || insightState != .loading
+        guard horoscopeReady && insightReady else { return }
+        isLoadingScreen = false
     }
 }

@@ -15,17 +15,19 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $vm.onboardingRoutes) {
-            ZStack {
-                BackgroundView()
+        ZStack {
+            onboardingStack()
 
-                OnboardingIntroView(vm: vm)
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: OnboardingRoutes.self) { destination in
-                destinationView(destination)
+            if vm.isLoading {
+                ZStack {
+                    BackgroundView()
+                    
+                    LoadingView(title: vm.activityTitle)
+                }
+                .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .disabled(vm.isLoading)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
@@ -37,31 +39,83 @@ struct OnboardingView: View {
             }
         }
     }
+
+    private func onboardingStack() -> some View {
+        NavigationStack(path: $vm.onboardingRoutes) {
+            ZStack {
+                BackgroundView()
+
+                if !vm.isPreparingProfile && !vm.hasLoadingFailed {
+                    VStack(spacing: 20) {
+                        TabView(selection: $vm.introPage) {
+                            ForEach(IntroPages.allCases, id: \.self) { item in
+                                VStack(spacing: 20) {
+                                    Spacer()
+
+                                    if let icon = item.icon {
+                                        OnboardingIcon(icon: icon, size: Adaptive.size(80, 100))
+                                    } else {
+                                        LogoImage(size: Adaptive.size(80, 100))
+                                    }
+
+                                    VStack(spacing: 15) {
+                                        Text(item.title)
+                                            .font(Adaptive.size(.title3, .title2))
+                                            .bold()
+
+                                        Text(item.subtitle)
+                                            .font(Adaptive.size(.caption2, .callout))
+                                            .foregroundStyle(.deepGray)
+                                    }
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 25)
+
+                                    Spacer()
+                                }
+                                .tag(item.rawValue)
+                            }
+                        }
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+
+                        HStack(spacing: 8) {
+                            ForEach(IntroPages.allCases, id: \.self) { item in
+                                Capsule()
+                                    .fill(item.rawValue == vm.introPage ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.fieldBorder))
+                                    .frame(width: item.rawValue == vm.introPage ? 22 : 8, height: 8)
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.25), value: vm.introPage)
+
+                        VStack(spacing: 15) {
+                            ClassicButton(title: vm.introButtonTitle) {
+                                vm.showNextIntroPage()
+                            }
+
+                            OnboardingTextButton(title: "У меня уже есть аккаунт") {
+                                vm.showSignIn()
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
+                    }
+                    .transition(.opacity)
+                } else {
+                    LoadingView(title: vm.loadingTitle)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.35), value: vm.isPreparingProfile)
+            .animation(.easeInOut(duration: 0.35), value: vm.hasLoadingFailed)
+            .navigationDestination(for: OnboardingRoutes.self) { destination in
+                destinationView(destination)
+            }
+        }
+    }
 }
 
 extension OnboardingView {
-    private func destinationView(_ route: OnboardingRoutes) -> some View {
-        ZStack {
-            BackgroundView()
-                .dismissKeyboardOnTap()
-
-            VStack(spacing: 0) {
-                if route != .loading {
-                    OnboardingTopBar(progress: route.progress) {
-                        vm.goBack()
-                    }
-                }
-
-                stepView(route)
-                    .frame(maxHeight: .infinity)
-            }
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .navigationBarBackButtonHidden(vm.hidesSystemBackButton(route: route))
-    }
-
     @ViewBuilder
-    private func stepView(_ route: OnboardingRoutes) -> some View {
+    private func destinationView(_ route: OnboardingRoutes) -> some View {
         switch route {
             case .nameAndBirth:
                 NameAndBirthStepView(vm: vm)
@@ -76,9 +130,12 @@ extension OnboardingView {
             case .psychotype:
                 PsychotypeStepView(vm: vm)
             case .aiConsent:
-                AIConsentStepView(vm: vm)
-            case .loading:
-                LoadingStepView(vm: vm)
+                AIConsentView(title: vm.aiConsentButtonTitle,
+                              isDisabled: vm.isLoading,
+                              allow: { vm.chooseAIConsent(true) },
+                              decline: { vm.chooseAIConsent(false) },
+                              back: vm.goBack)
+                .navigationBarBackButtonHidden(true)
         }
     }
 }

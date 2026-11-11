@@ -7,45 +7,6 @@
 
 import SwiftUI
 
-struct OnboardingTopBar: View {
-    let progress: Double?
-    let onBack: () -> Void
-
-    var body: some View {
-        HStack(spacing: 15) {
-            Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .font(Adaptive.size(.title3, .title2))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.deepGray)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .padding(.horizontal, -14)
-            .padding(.vertical, -11)
-
-            if let progress {
-                GeometryReader { bar in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.fieldBorder)
-
-                        Capsule()
-                            .fill(.tint)
-                            .frame(width: bar.size.width * progress)
-                    }
-                }
-                .frame(height: 10)
-            } else {
-                Spacer()
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .animation(.easeInOut(duration: 0.3), value: progress)
-    }
-}
-
 struct OnboardingHeader: View {
     let title: String
     let subtitle: String
@@ -182,23 +143,66 @@ enum OnboardingTextFieldTypes: String {
     }
 }
 
-#Preview {
-    VStack(spacing: 20) {
-        OnboardingTopBar(progress: 0.3) {
+struct LoadingView: View {
+    let title: String
+    @State private var isRotating = false
 
+    var body: some View {
+        VStack(spacing: 30) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .stroke(Color.fieldBorder, lineWidth: 5)
+
+                Circle()
+                    .trim(from: 0, to: 0.3)
+                    .stroke(.tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(isRotating ? 360 : 0))
+                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isRotating)
+
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.tint)
+            }
+            .frame(width: 40, height: 40)
+
+            Text(title)
+                .font(Adaptive.size(.title3, .callout))
+                .bold()
+                .multilineTextAlignment(.center)
+
+            Spacer()
         }
-
-        OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 8 символов")
-
-        OnboardingTextField(text: .constant(""), type: .password)
-
-        OnboardingTextButton(title: "Забыли пароль?") {
-
+        .padding(.horizontal)
+        .onAppear {
+            isRotating = true
         }
-
-        OnboardingLegalText()
-
-        OnboardingIcon(icon: "bell.badge", size: 80)
     }
-    .padding(.horizontal)
+}
+
+#Preview("Loading") {
+    ZStack {
+        BackgroundView()
+        LoadingView(title: "Сохраняем профиль и настройки")
+    }
+}
+
+#Preview {
+    ScrollView {
+        VStack(spacing: 20) {
+            OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 8 символов")
+
+            OnboardingTextField(text: .constant(""), type: .password)
+
+            OnboardingTextButton(title: "Забыли пароль?") {
+
+            }
+
+            OnboardingLegalText()
+
+            OnboardingIcon(icon: "bell.badge", size: 80)
+        }
+    }
 }

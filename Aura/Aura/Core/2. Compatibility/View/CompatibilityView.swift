@@ -121,6 +121,17 @@ struct CompatibilityView: View {
                 destinationView(destination)
             }
         }
+        .overlay {
+            if vm.isLoading {
+                ZStack {
+                    BackgroundView()
+                    
+                    LoadingView(title: "Готовим результат...")
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }

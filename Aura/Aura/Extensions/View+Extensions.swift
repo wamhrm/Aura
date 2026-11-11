@@ -61,7 +61,6 @@ extension View {
     func onboardingViewModifier() -> some View {
         self
             .padding(.horizontal)
-            .padding(.top)
             .padding(.bottom, 10)
     }
     

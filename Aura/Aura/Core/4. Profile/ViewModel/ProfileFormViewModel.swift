@@ -50,9 +50,8 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
                 onSuccess()
             } catch {
                 presentAlert(error.userMessage)
+                isLoading = false
             }
-
-            isLoading = false
         }
     }
 

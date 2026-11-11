@@ -18,8 +18,12 @@ struct HomeView: View {
             ZStack {
                 BackgroundView()
 
-                if vm.isLoadingScreen {
-                    ProgressView()
+                if vm.isUpdatingInfo || vm.hasUpdateFailed {
+                    LoadingView(title: vm.updateTitle)
+                        .transition(.opacity)
+                } else if vm.showsLoadingScreen {
+                    LoadingView(title: "Загружаем информацию")
+                        .transition(.opacity)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 15) {
@@ -47,6 +51,7 @@ struct HomeView: View {
                                     Text(insight.text)
                                         .font(.system(size: Adaptive.size(14, 15))).italic()
                                         .fontWeight(.medium)
+                                        .transition(.opacity)
                                 } else if case .failed(let message) = vm.insightState {
                                     LoadFailedView(message: message) {
                                         vm.retryDailyInsight()
@@ -63,6 +68,7 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(.tint.opacity(0.85))
                             .clipShape(.rect(cornerRadius: 12))
+                            .animation(.easeInOut(duration: 0.35), value: vm.dailyInsight?.id)
 
                             if let horoscope = vm.horoscope {
                                 VStack(alignment: .leading, spacing: 10) {
@@ -151,14 +157,29 @@ struct HomeView: View {
                     }
                     .bottomAreaPadding(50)
                     .scrollIndicators(.hidden)
+                    .transition(.opacity)
                 }
             }
+            .animation(.easeInOut(duration: 0.35), value: vm.isUpdatingInfo)
+            .animation(.easeInOut(duration: 0.35), value: vm.hasUpdateFailed)
+            .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
             .navigationTitle("Главная")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: HomeRoutes.self) { destination in
                 destinationView(destination)
             }
         }
+        .overlay {
+            if vm.isLoading {
+                ZStack {
+                    BackgroundView()
+                    
+                    LoadingView(title: "Готовим результат...")
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }
@@ -205,6 +226,11 @@ extension HomeView {
                 if let result = vm.personalityResult {
                     PersonalityResultView(result: result)
                 }
+            case .aiConsent:
+                AIConsentView(isDisabled: vm.isUpdatingInfo,
+                              allow: vm.allowAIConsent,
+                              decline: vm.declineAIConsent)
+                    .navigationBarBackButtonHidden(true)
         }
     }
 

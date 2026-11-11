@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 
 enum OnboardingRoutes: Hashable {
-    case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent, loading
+    case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent
 
     var progress: Double? {
         let signUpRoutes: [OnboardingRoutes] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent]
@@ -67,12 +67,14 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var newPassword = ""
     @Published private(set) var isResetCodeSent = false
 
+    @Published private(set) var isPreparingProfile = false
     @Published private(set) var hasLoadingFailed = false
 
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published var showSignOutAlert = false
     @Published private(set) var isLoading = false
+    @Published private(set) var activityTitle = ""
 
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false
@@ -119,10 +121,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isLoading ? "Проверяем..." : "Далее"
     }
 
-    var createAccountButtonTitle: String {
-        isLoading ? "Создаём аккаунт..." : "Создать аккаунт"
-    }
-
     var signInButtonTitle: String {
         isLoading ? "Входим..." : "Войти"
     }
@@ -137,6 +135,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     var aiConsentButtonTitle: String {
         isLoading ? "Сохраняем..." : "Разрешить"
+    }
+
+    var psychotypeButtonTitle: String {
+        !isSignedIn && isLoading ? "Создаём аккаунт..." : "Далее"
     }
 
     var loadingTitle: String {
@@ -176,13 +178,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         preparationTask?.cancel()
         hasSession = false
+        isPreparingProfile = false
         hasLoadingFailed = false
         onboardingRoutes = []
         presentAlert(authService.takeExpiredSessionMessage() ?? "Сессия истекла. Войдите снова")
-    }
-
-    func hidesSystemBackButton(route: OnboardingRoutes) -> Bool {
-        route == .loading || isOnlyStepOfSignedInUser
     }
 
     func goBack() {
@@ -253,7 +252,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
 
-        isLoading = true
+        beginLoading("Проверяем...")
 
         Task {
             do {
@@ -267,29 +266,13 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    func createAccount() {
-        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
-
+    func continueFromPassword() {
         if let message = passwordError(password) {
             presentAlert(message)
             return
         }
 
-        guard !isLoading else { return }
-
-        isLoading = true
-
-        Task {
-            do {
-                try await authService.createAccount(name: displayName,
-                                                    email: email, password: password)
-                continueAfterSignIn()
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
-        }
+        onboardingRoutes.append(.psychotype)
     }
 
     func signIn() {
@@ -302,7 +285,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
 
-        isLoading = true
+        beginLoading("Входим...")
 
         Task {
             do {
@@ -326,7 +309,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
 
-        isLoading = true
+        beginLoading("Отправляем...")
 
         Task {
             do {
@@ -356,7 +339,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
 
-        isLoading = true
+        beginLoading("Сохраняем...")
 
         Task {
             do {
@@ -376,7 +359,39 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        onboardingRoutes.append(.aiConsent)
+        guard !isSignedIn else {
+            onboardingRoutes.append(.aiConsent)
+            return
+        }
+
+        createAccount()
+    }
+
+    private func createAccount() {
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let message = passwordError(password) {
+            presentAlert(message)
+            return
+        }
+
+        guard !isLoading else { return }
+
+        beginLoading("Создаём аккаунт...")
+
+        Task {
+            do {
+                try await authService.createAccount(name: displayName,
+                                                    email: email,
+                                                    password: password)
+                password = ""
+                onboardingRoutes.append(.aiConsent)
+            } catch {
+                presentAlert(error.userMessage)
+            }
+
+            isLoading = false
+        }
     }
 
     func chooseAIConsent(_ allows: Bool) {
@@ -386,7 +401,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : finishOnboarding()
         } else {
-            onboardingRoutes.append(.loading)
             prepareProfile()
         }
     }
@@ -395,10 +409,15 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         prepareProfile()
     }
 
+    private func beginLoading(_ title: String) {
+        activityTitle = title
+        isLoading = true
+    }
+
     private func giveAIConsent() {
         guard !isLoading else { return }
 
-        isLoading = true
+        beginLoading("Сохраняем...")
 
         Task {
             do {
@@ -414,7 +433,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     private func prepareProfile() {
         guard preparationTask == nil, isSignedIn else { return }
+
+        onboardingRoutes = []
         hasLoadingFailed = false
+        isPreparingProfile = true
 
         var request = profileInfo
         request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
@@ -434,12 +456,13 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
                 finishOnboarding()
             } catch is CancellationError {
-                return
+                isPreparingProfile = false
             } catch NetworkError.cancelled {
-                return
+                isPreparingProfile = false
             } catch {
                 alertMessage = error.userMessage
                 hasLoadingFailed = true
+                isPreparingProfile = false
             }
         }
     }

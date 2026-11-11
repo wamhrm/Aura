@@ -129,6 +129,51 @@ struct AIConsentLock: View {
     }
 }
 
+struct AIConsentContentView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 30) {
+                VStack(alignment: .center, spacing: 25) {
+                    Image(systemName: "sparkles")
+                        .font(Adaptive.size(.title2, .title))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(15)
+                        .background(LinearGradient(colors: [.purple, .softPurple],
+                                                   startPoint: .topLeading,
+                                                   endPoint: .bottomTrailing))
+                        .clipShape(.circle)
+
+                    Text("Анализ с помощью AI")
+                        .font(Adaptive.size(.default, .title3))
+                        .bold()
+                }
+                .frame(maxWidth: .infinity)
+
+                VStack(alignment: .leading, spacing: 25) {
+                    Text("Инсайт и совет дня, тесты личности и совместимости составляет сервис искусственного интеллекта OpenAI (США). Для этого Aura передаёт ему:")
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("• дату и время рождения, пол и ответы анкеты;")
+                        Text("• для теста совместимости — дату и время рождения и пол партнёра.")
+                    }
+
+                    Text("Имена и адрес почты не передаются. Гороскоп работает и без этого разрешения.")
+
+                    if let url = Constants.privacyPolicyURL {
+                        Link("Политика конфиденциальности", destination: url)
+                            .fontWeight(.semibold)
+                    }
+                }
+            }
+            .font(Adaptive.size(.system(size: 14), .callout))
+            .padding(.top)
+            .onboardingViewModifier()
+        }
+        .scrollIndicators(.hidden)
+    }
+}
+
 struct BirthDateFieldsView: View {
     @Binding var birthDate: Date
     @Binding var knowsBirthTime: Bool

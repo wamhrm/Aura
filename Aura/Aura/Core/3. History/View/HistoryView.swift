@@ -15,43 +15,26 @@ struct HistoryView: View {
             ZStack {
                 BackgroundView()
 
-                VStack(alignment: .leading, spacing: 15) {
-                    ScrollView {
-                        if vm.historyCells.isEmpty {
-                            emptyListView()
-                                .containerRelativeFrame(.vertical)
-                        } else {
-                            LazyVStack {
-                                ForEach(vm.historyCells) { item in
-                                    Button {
-                                        vm.openHistoryCellDetails(item)
-                                    } label: {
-                                        HistoryCellView(cell: item)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .tint(.primaryText)
-                                            .contextMenu {
-                                                Button("Удалить", role: .destructive) {
-                                                    vm.requestDeletion(item: item)
-                                                }
-                                            }
-                                    }
-                                }
-                            }
-                            .disabled(vm.isLoading)
-                            .padding(.horizontal)
-                        }
-                    }
-                    .refreshable {
-                        await vm.fetchHistory()
-                    }
-                    .overlay {
-                        if vm.isLoading {
-                            ProgressView()
-                        }
-                    }
+                if vm.historyCells.isEmpty && vm.loadState == .loading {
+                    LoadingView(title: "Загружаем историю")
+                        .transition(.opacity)
+                } else {
+                    historyList()
+                        .transition(.opacity)
                 }
-                .bottomAreaPadding(15)
             }
+            .animation(.easeInOut(duration: 0.35), value: vm.loadState)
+            .overlay {
+                if vm.isLoading {
+                    ZStack {
+                        BackgroundView()
+                        
+                        LoadingView(title: "Открываем результат")
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
             .navigationTitle("История тестов")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: HistoryRoutes.self) { route in
@@ -73,6 +56,40 @@ struct HistoryView: View {
 }
 
 extension HistoryView {
+    private func historyList() -> some View {
+        VStack(alignment: .leading, spacing: 15) {
+            ScrollView {
+                if vm.historyCells.isEmpty {
+                    emptyListView()
+                        .containerRelativeFrame(.vertical)
+                } else {
+                    LazyVStack {
+                        ForEach(vm.historyCells) { item in
+                            Button {
+                                vm.openHistoryCellDetails(item)
+                            } label: {
+                                HistoryCellView(cell: item)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .tint(.primaryText)
+                                    .contextMenu {
+                                        Button("Удалить", role: .destructive) {
+                                            vm.requestDeletion(item: item)
+                                        }
+                                    }
+                            }
+                        }
+                    }
+                    .disabled(vm.isLoading)
+                    .padding(.horizontal)
+                }
+            }
+            .refreshable {
+                await vm.fetchHistory()
+            }
+        }
+        .bottomAreaPadding(15)
+    }
+
     @ViewBuilder
     private func emptyListView() -> some View {
         switch vm.loadState {

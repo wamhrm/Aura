@@ -64,7 +64,7 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     // MARK: - Forms
-    func test_password_ofSevenCharacters_isRejected_andOfEightIsAccepted() async {
+    func test_password_ofSevenCharacters_isRejected_andOfEightIsAccepted() {
         // Given
         let auth = MockAuthService()
         let viewModel = makeViewModel(auth: auth)
@@ -72,15 +72,15 @@ final class OnboardingViewModelTests: XCTestCase {
 
         // When
         viewModel.password = "1234567"
-        viewModel.createAccount()
+        viewModel.continueFromPassword()
         let alertAfterSevenCharacters = viewModel.alertMessage
         viewModel.password = "12345678"
-        viewModel.createAccount()
-        await waitUntil { auth.createAccountCount == 1 }
+        viewModel.continueFromPassword()
 
         // Then
         XCTAssertEqual(alertAfterSevenCharacters, "Пароль должен быть не короче 8 символов")
-        XCTAssertEqual(auth.createAccountCount, 1)
+        XCTAssertEqual(viewModel.onboardingRoutes, [.psychotype])
+        XCTAssertEqual(auth.createAccountCount, 0)
     }
 
     func test_resetCode_withLetters_showsAlert_andSendsNothing() {
@@ -139,22 +139,77 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.name, "Дмитрий")
     }
 
-    func test_registration_afterTheBirthDateStep_continuesWithTheQuestions() async {
-        // Given
+    func test_registration_createsTheAccount_onlyAfterThePsychotypeStep() async {
         let auth = MockAuthService()
         auth.serverUser = makeUser(dateOfBirth: nil, gender: nil)
         let viewModel = makeViewModel(auth: auth)
         viewModel.name = "Анна"
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
-        viewModel.continueFromNameAndBirth()
 
-        // When
-        viewModel.createAccount()
+        viewModel.continueFromNameAndBirth()
+        viewModel.continueFromEmail()
+        await waitUntil { viewModel.onboardingRoutes == [.email, .password] }
+        viewModel.continueFromPassword()
+
+        XCTAssertEqual(viewModel.onboardingRoutes, [.email, .password, .psychotype])
+        XCTAssertEqual(auth.createAccountCount, 0)
+
+        viewModel.continueFromPsychotype()
+        XCTAssertEqual(viewModel.alertMessage, "Ответьте на все вопросы")
+        XCTAssertEqual(auth.createAccountCount, 0)
+
+        viewModel.profileInfo.gender = "man"
+        viewModel.profileInfo.socialType = "introvert"
+        viewModel.profileInfo.conflictStyle = "mediator"
+        viewModel.profileInfo.emotionalCore = "logic"
+        viewModel.profileInfo.decisionStyle = "planner"
+        viewModel.profileInfo.coreFocus = "stability"
+        viewModel.continueFromPsychotype()
         await waitUntil { !viewModel.isLoading }
 
-        // Then
-        XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth, .psychotype])
+        XCTAssertEqual(auth.createAccountCount, 1)
+        XCTAssertEqual(viewModel.onboardingRoutes, [.email, .password, .psychotype, .aiConsent])
+    }
+
+    func test_signedInUser_continuesFromPsychotype_withoutCreatingAnAccount() {
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.onboardingRoutes = [.psychotype]
+        viewModel.profileInfo.gender = "man"
+        viewModel.profileInfo.socialType = "introvert"
+        viewModel.profileInfo.conflictStyle = "mediator"
+        viewModel.profileInfo.emotionalCore = "logic"
+        viewModel.profileInfo.decisionStyle = "planner"
+        viewModel.profileInfo.coreFocus = "stability"
+
+        viewModel.continueFromPsychotype()
+
+        XCTAssertEqual(auth.createAccountCount, 0)
+        XCTAssertEqual(viewModel.onboardingRoutes, [.psychotype, .aiConsent])
+    }
+
+    func test_failedAccountCreation_staysOnThePsychotypeStep() async {
+        let auth = MockAuthService()
+        auth.errorToThrow = serverError
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.name = "Анна"
+        viewModel.email = "anna@mail.ru"
+        viewModel.password = "12345678"
+        viewModel.onboardingRoutes = [.psychotype]
+        viewModel.profileInfo.gender = "man"
+        viewModel.profileInfo.socialType = "introvert"
+        viewModel.profileInfo.conflictStyle = "mediator"
+        viewModel.profileInfo.emotionalCore = "logic"
+        viewModel.profileInfo.decisionStyle = "planner"
+        viewModel.profileInfo.coreFocus = "stability"
+
+        viewModel.continueFromPsychotype()
+        await waitUntil { viewModel.showAlert }
+
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        XCTAssertEqual(viewModel.onboardingRoutes, [.psychotype])
+        XCTAssertEqual(viewModel.password, "12345678")
     }
 
     // MARK: - AI consent
@@ -168,6 +223,7 @@ final class OnboardingViewModelTests: XCTestCase {
         await waitUntil { viewModel.hasLoadingFailed || auth.showsMainScreen }
 
         XCTAssertTrue(viewModel.hasLoadingFailed)
+        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
         XCTAssertFalse(auth.showsMainScreen)
 

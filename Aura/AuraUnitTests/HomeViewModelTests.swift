@@ -51,6 +51,16 @@ final class HomeViewModelTests: XCTestCase {
     }
 
     // MARK: - Daily insight
+    func test_homeStaysHidden_untilTheHoroscopeArrives() async {
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
+                                      contentService: MockContentService())
+
+        XCTAssertTrue(viewModel.showsLoadingScreen)
+        await waitUntil { !viewModel.showsLoadingScreen }
+
+        XCTAssertNotNil(viewModel.horoscope)
+    }
+
     func test_withoutConsent_theInsightIsNotRequested() async {
         // Given
         let content = MockContentService()
@@ -156,6 +166,7 @@ final class HomeViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
         XCTAssertTrue(viewModel.isCodeSent)
+        XCTAssertTrue(viewModel.isSheetExtended)
     }
 
     func test_sendCode_whenTheServerFails_keepsTheCodeFieldClosed() async {
@@ -171,6 +182,7 @@ final class HomeViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
         XCTAssertFalse(viewModel.isCodeSent)
+        XCTAssertFalse(viewModel.isSheetExtended)
     }
 
     func test_personalityRetry_reusesTheRequestID_untilTheAnswersChange() async throws {
@@ -215,5 +227,65 @@ final class HomeViewModelTests: XCTestCase {
 
         // Then
         XCTAssertNotEqual(content.personalityRequestIDs.last, firstID)
+    }
+
+    func test_showAIConsent_opensTheConsentScreen() {
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
+                                      contentService: MockContentService())
+
+        viewModel.showAIConsent()
+
+        XCTAssertEqual(viewModel.homeRoutes, [.aiConsent])
+    }
+
+    func test_allowAIConsent_loadsInsight_thenResetsTheRoutes() async {
+        let content = MockContentService()
+        let auth = MockAuthService(user: makeUser(hasAIConsent: false))
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
+        viewModel.showAIConsent()
+
+        viewModel.allowAIConsent()
+        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.isUpdatingInfo }
+
+        XCTAssertEqual(auth.aiConsentCount, 1)
+        XCTAssertGreaterThanOrEqual(content.insightCount, 1)
+        XCTAssertEqual(content.tipCount, 0)
+    }
+
+    func test_allowAIConsent_withPersonalityHistory_alsoLoadsTheTip() async {
+        let content = MockContentService()
+        content.historyCells.send([.personalityPlaceholder])
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
+                                      contentService: content)
+        viewModel.showAIConsent()
+
+        viewModel.allowAIConsent()
+        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.isUpdatingInfo }
+
+        XCTAssertGreaterThanOrEqual(content.insightCount, 1)
+        XCTAssertEqual(content.tipCount, 1)
+    }
+
+    func test_failedInfoUpdate_staysOnTheLoadingScreen() async {
+        let auth = MockAuthService(user: makeUser(hasAIConsent: false))
+        auth.errorToThrow = serverError
+        let viewModel = HomeViewModel(authService: auth, contentService: MockContentService())
+        viewModel.showAIConsent()
+
+        viewModel.allowAIConsent()
+        await waitUntil { viewModel.hasUpdateFailed }
+
+        XCTAssertTrue(viewModel.homeRoutes.isEmpty)
+        XCTAssertEqual(viewModel.updateMessage, "Ошибка сервера")
+    }
+
+    func test_declineAIConsent_resetsTheRoutes() async {
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
+                                      contentService: MockContentService())
+        viewModel.showAIConsent()
+
+        viewModel.declineAIConsent()
+
+        XCTAssertTrue(viewModel.homeRoutes.isEmpty)
     }
 }

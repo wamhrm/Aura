@@ -12,7 +12,6 @@ struct MainTabView: View {
     @StateObject private var compatibilityViewModel: CompatibilityViewModel
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var profileViewModel: ProfileViewModel
-    @StateObject private var aiConsentViewModel: AIConsentViewModel
 
     @State private var selectedTab: Tabs = .home
 
@@ -30,8 +29,6 @@ struct MainTabView: View {
         _profileViewModel = StateObject(wrappedValue: ProfileViewModel(
             authService: authService,
             contentService: contentService))
-        _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(
-            authService: authService))
     }
 
     var body: some View {
@@ -40,7 +37,7 @@ struct MainTabView: View {
                 HomeView(vm: homeViewModel) {
                     selectedTab = .compatibility
                 } aiConsentButton: {
-                    aiConsentViewModel.request()
+                    showAIConsent()
                 }
             } label: {
                 Image(systemName: Tabs.home.icon)
@@ -48,7 +45,7 @@ struct MainTabView: View {
 
             Tab(value: .compatibility) {
                 CompatibilityView(vm: compatibilityViewModel) {
-                    aiConsentViewModel.request()
+                    showAIConsent()
                 }
             } label: {
                 Image(systemName: Tabs.compatibility.icon)
@@ -62,16 +59,20 @@ struct MainTabView: View {
 
             Tab(value: .profile) {
                 ProfileView(vm: profileViewModel) {
-                    aiConsentViewModel.request()
+                    showAIConsent()
                 }
             } label: {
                 Image(systemName: Tabs.profile.icon)
             }
         }
         .tabBarMinimizeBehavior(.never)
-        .sheet(isPresented: $aiConsentViewModel.showConsent) {
-            AIConsentView(vm: aiConsentViewModel)
-        }
+    }
+}
+
+extension MainTabView {
+    private func showAIConsent() {
+        selectedTab = .home
+        homeViewModel.showAIConsent()
     }
 }
 
