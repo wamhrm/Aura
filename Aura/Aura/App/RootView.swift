@@ -21,8 +21,7 @@ struct RootView: View {
         Group {
             if authService.showsMainScreen {
                 MainTabView(authService: authService,
-                            contentService: contentService,
-                            promptsAIConsentAutomatically: !authService.didAskAIConsent)
+                            contentService: contentService)
                     .transition(.opacity)
             } else {
                 OnboardingView(authService: authService)

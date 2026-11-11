@@ -17,8 +17,7 @@ struct MainTabView: View {
     @State private var selectedTab: Tabs = .home
 
     init(authService: AuthService,
-         contentService: ContentService,
-         promptsAIConsentAutomatically: Bool = true) {
+         contentService: ContentService) {
         _homeViewModel = StateObject(wrappedValue: HomeViewModel(
             authService: authService,
             contentService: contentService))
@@ -32,8 +31,7 @@ struct MainTabView: View {
             authService: authService,
             contentService: contentService))
         _aiConsentViewModel = StateObject(wrappedValue: AIConsentViewModel(
-            authService: authService,
-            promptsAutomatically: promptsAIConsentAutomatically))
+            authService: authService))
     }
 
     var body: some View {

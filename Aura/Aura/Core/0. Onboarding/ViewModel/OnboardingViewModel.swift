@@ -219,7 +219,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     func showSignUp() {
-        onboardingRoutes = [.nameAndBirth]
+        onboardingRoutes.append(.nameAndBirth)
     }
 
     func showPasswordReset() {

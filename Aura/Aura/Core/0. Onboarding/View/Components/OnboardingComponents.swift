@@ -51,13 +51,13 @@ struct OnboardingHeader: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(Adaptive.size(.title2, .title))
+                .font(Adaptive.size(.title3, .title2))
                 .bold()
 
             Text(subtitle)
-                .font(Adaptive.size(.footnote, .callout))
+                .font(Adaptive.size(.caption, .callout))
                 .foregroundStyle(.deepGray)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -116,7 +116,6 @@ struct OnboardingTextButton: View {
 }
 
 struct OnboardingLegalText: View {
-    
     private var legalText: LocalizedStringKey {
         let terms = Constants.termsOfUseURL?.absoluteString ?? ""
         let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""

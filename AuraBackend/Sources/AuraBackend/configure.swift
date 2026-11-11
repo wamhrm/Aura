@@ -2,6 +2,7 @@ import Fluent
 import Vapor
 
 func configure(app: Application) async throws {
+    await DotEnvFile.load(path: ".env.local", fileio: app.fileio, logger: app.logger)
     try app.validateEnvironment()
 
     app.http.server.configuration.hostname = "0.0.0.0"

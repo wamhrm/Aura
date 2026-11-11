@@ -20,10 +20,9 @@ final class AIConsentViewModel: ObservableObject {
     private var wasPromptedAutomatically = false
     private var cancellables = Set<AnyCancellable>()
 
-    init(authService: any AuthServiceProtocol,
-         promptsAutomatically: Bool = true) {
+    init(authService: any AuthServiceProtocol) {
         self.authService = authService
-        wasPromptedAutomatically = !promptsAutomatically
+        wasPromptedAutomatically = authService.didAskAIConsent
 
         setupSubscriptions()
     }

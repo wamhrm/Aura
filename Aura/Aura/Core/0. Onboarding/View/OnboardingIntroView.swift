@@ -46,22 +46,22 @@ struct OnboardingIntroView: View {
 
 extension OnboardingIntroView {
     private func pageView(_ item: IntroPages) -> some View {
-        VStack(spacing: 25) {
+        VStack(spacing: 20) {
             Spacer()
 
             if let icon = item.icon {
-                OnboardingIcon(icon: icon, size: Adaptive.size(130, 150))
+                OnboardingIcon(icon: icon, size: Adaptive.size(80, 100))
             } else {
-                LogoImage(size: Adaptive.size(130, 150))
+                LogoImage(size: Adaptive.size(80, 100))
             }
 
-            VStack(spacing: 10) {
+            VStack(spacing: 15) {
                 Text(item.title)
-                    .font(Adaptive.size(.title2, .title))
+                    .font(Adaptive.size(.title3, .title2))
                     .bold()
 
                 Text(item.subtitle)
-                    .font(Adaptive.size(.callout, .body))
+                    .font(Adaptive.size(.caption2, .callout))
                     .foregroundStyle(.deepGray)
             }
             .multilineTextAlignment(.center)

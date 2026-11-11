@@ -11,25 +11,28 @@ struct EmailStepView: View {
     @ObservedObject var vm: OnboardingViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            OnboardingHeader(title: "Какая у вас почта, \(vm.displayName)?",
+        VStack(alignment: .leading, spacing: 35) {
+            OnboardingHeader(title: "Какой у вас адрес электронной почты, \(vm.displayName)?",
                              subtitle: "На неё придёт код, если вы забудете пароль")
 
             OnboardingTextField(text: $vm.email, type: .email)
+            
+            Spacer()
 
             ClassicButton(title: "Далее") {
                 vm.continueFromEmail()
             }
-
-            Spacer()
-
+            
             OnboardingLegalText()
         }
         .padding(.horizontal)
-        .padding(.vertical, 10)
+        .padding(.top)
+        .padding(.bottom, 10)
     }
 }
 
 #Preview {
-    EmailStepView(vm: OnboardingViewModel(authService: AuthService.preview))
+    NavigationStack {
+        EmailStepView(vm: OnboardingViewModel(authService: AuthService.preview))
+    }
 }

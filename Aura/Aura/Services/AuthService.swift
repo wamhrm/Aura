@@ -15,6 +15,7 @@ enum AuthState {
 
 protocol AuthServiceProtocol {
     var authState: CurrentValueSubject<AuthState, Never> { get }
+    var didAskAIConsent: Bool { get }
 
     func noteAIConsentAsked()
     func finishOnboarding()

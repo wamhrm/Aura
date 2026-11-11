@@ -61,13 +61,6 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         }
     }
 
-    private func clearContent() {
-        historyCells.send([])
-        horoscope.send(nil)
-        dailyInsight.send(nil)
-        dailyTip.send(nil)
-    }
-
     func fetchDailyInsight() async throws -> DailyContentModel {
         let insight = try await request { try await networkService.fetchDailyInsight() }
         dailyInsight.send(insight)
@@ -86,7 +79,8 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         return horoscope
     }
 
-    func makePersonalityTest(selectedTests: [PersonalityTestTypes], requestID: UUID) async throws -> PersonalityResultModel {
+    func makePersonalityTest(selectedTests: [PersonalityTestTypes],
+                             requestID: UUID) async throws -> PersonalityResultModel {
         let result = try await request {
             try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
         }
@@ -94,7 +88,8 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         return result
     }
 
-    func makeCompatibilityTest(request: CompatibilityTestRequest, requestID: UUID) async throws -> CompatibilityResultModel {
+    func makeCompatibilityTest(request: CompatibilityTestRequest,
+                               requestID: UUID) async throws -> CompatibilityResultModel {
         let result = try await self.request {
             try await networkService.makeCompatibilityTest(request, requestID: requestID)
         }
@@ -120,6 +115,13 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private func reloadHistory() async {
         guard let history = try? await request({ try await networkService.fetchHistory() }) else { return }
         historyCells.send(history)
+    }
+    
+    private func clearContent() {
+        historyCells.send([])
+        horoscope.send(nil)
+        dailyInsight.send(nil)
+        dailyTip.send(nil)
     }
 
     private func request<T>(_ operation: () async throws -> T) async throws -> T {

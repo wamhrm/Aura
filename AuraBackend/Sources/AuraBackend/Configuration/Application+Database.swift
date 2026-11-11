@@ -7,52 +7,26 @@
 
 import Fluent
 import FluentPostgresDriver
-import Foundation
-import NIOSSL
 import SQLKit
 import Vapor
 
 extension Application {
     func configureDatabase() throws {
-        guard let hostname = Environment.get("POSTGRESQL_HOST"),
-              let username = Environment.get("POSTGRESQL_USER"),
-              let password = Environment.get("POSTGRESQL_PASSWORD"),
-              let database = Environment.get("POSTGRESQL_DBNAME") else {
+        guard let databaseURL = postgresURL() else {
             throw Abort(.internalServerError, reason: "Invalid DB credentials")
         }
 
-        let port = Int(Environment.get("POSTGRESQL_PORT") ?? "5432") ?? 5432
-        let tls = try databaseTLSConfiguration()
-
-        let dbConfig = SQLPostgresConfiguration(hostname: hostname,
-                                                port: port,
-                                                username: username,
-                                                password: password,
-                                                database: database,
-                                                tls: tls)
-
+        let dbConfig = try SQLPostgresConfiguration(url: databaseURL)
         self.databases.use(.postgres(configuration: dbConfig), as: .psql)
     }
 
-    private func databaseTLSConfiguration() throws -> PostgresConnection.Configuration.TLS {
-        let certPath = Environment.get("POSTGRESQL_CA_CERT_PATH") ?? Environment.get("POSTGRESQL_SSL_ROOT_CERT")
-
-        guard let certPath, !certPath.isEmpty else {
-            guard environment != .production else {
-                throw Abort(.internalServerError, reason: "PostgreSQL CA certificate is required in production")
-            }
-            return .disable
+    private func postgresURL() -> String? {
+        let unpooled = Environment.get("DATABASE_URL_UNPOOLED") ?? ""
+        if !unpooled.isEmpty {
+            return unpooled
         }
-
-        guard FileManager.default.isReadableFile(atPath: certPath) else {
-            throw Abort(.internalServerError, reason: "PostgreSQL CA certificate is not readable at the configured path")
-        }
-
-        var tlsConfig = TLSConfiguration.makeClientConfiguration()
-        tlsConfig.trustRoots = .file(certPath)
-        tlsConfig.certificateVerification = .fullVerification
-        
-        return try .require(NIOSSLContext(configuration: tlsConfig))
+        let pooled = Environment.get("DATABASE_URL") ?? ""
+        return pooled.isEmpty ? nil : pooled
     }
 }
 
