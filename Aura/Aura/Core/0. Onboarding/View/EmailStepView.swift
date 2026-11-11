@@ -19,15 +19,13 @@ struct EmailStepView: View {
             
             Spacer()
 
-            ClassicButton(title: "Далее") {
+            ClassicButton(title: vm.emailButtonTitle) {
                 vm.continueFromEmail()
             }
             
             OnboardingLegalText()
         }
-        .padding(.horizontal)
-        .padding(.top)
-        .padding(.bottom, 10)
+        .onboardingViewModifier()
     }
 }
 

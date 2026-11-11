@@ -38,6 +38,7 @@ class AuraUITestCase: XCTestCase {
         let user = try sampleUser()
 
         server.respond(route: "POST /v1/auth/createAccount", status: 201, body: try authBody(user: newUser()))
+        server.respond(route: "POST /v1/auth/email/available", status: 204)
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         server.respond(route: "POST /v1/auth/password/forgot", status: 204)
         server.respond(route: "POST /v1/auth/password/reset", body: try authBody(user: user))

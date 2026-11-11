@@ -115,6 +115,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isSignedIn ? "Когда вы родились?" : "Как вас зовут и когда вы родились?"
     }
 
+    var emailButtonTitle: String {
+        isLoading ? "Проверяем..." : "Далее"
+    }
+
     var createAccountButtonTitle: String {
         isLoading ? "Создаём аккаунт..." : "Создать аккаунт"
     }
@@ -247,7 +251,20 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        onboardingRoutes.append(.password)
+        guard !isLoading else { return }
+
+        isLoading = true
+
+        Task {
+            do {
+                try await authService.ensureEmailAvailable(email: email)
+                onboardingRoutes.append(.password)
+            } catch {
+                presentAlert(error.userMessage)
+            }
+
+            isLoading = false
+        }
     }
 
     func createAccount() {
@@ -264,7 +281,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         Task {
             do {
-                try await authService.createAccount(name: displayName, email: email, password: password)
+                try await authService.createAccount(name: displayName,
+                                                    email: email, password: password)
                 continueAfterSignIn()
             } catch {
                 presentAlert(error.userMessage)
@@ -439,9 +457,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
             finishOnboarding()
         } else if user.hasCompletedProfileInfo {
-            onboardingRoutes = [.aiConsent]
+            onboardingRoutes.append(.aiConsent)
         } else if hasEnteredBirthDate {
-            onboardingRoutes = [.nameAndBirth, .psychotype]
+            onboardingRoutes.append(.psychotype)
         } else {
             onboardingRoutes = [.nameAndBirth]
         }

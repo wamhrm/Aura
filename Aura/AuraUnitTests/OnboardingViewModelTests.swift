@@ -37,6 +37,32 @@ final class OnboardingViewModelTests: XCTestCase {
         await waitUntil { !viewModel.isLoading }
     }
 
+    func test_takenEmail_staysOnEmailStep() async {
+        let auth = MockAuthService()
+        auth.emailTaken = true
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.email = "anna@mail.ru"
+
+        viewModel.continueFromEmail()
+        await waitUntil { viewModel.showAlert }
+
+        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
+        XCTAssertEqual(viewModel.alertMessage, "Пользователь уже зарегистрирован")
+        XCTAssertFalse(viewModel.isLoading)
+    }
+
+    func test_availableEmail_opensPasswordStep() async {
+        let auth = MockAuthService()
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.email = "anna@mail.ru"
+
+        viewModel.continueFromEmail()
+        await waitUntil { viewModel.onboardingRoutes == [.password] }
+
+        XCTAssertFalse(viewModel.showAlert)
+        XCTAssertEqual(auth.emailCheckCount, 1)
+    }
+
     // MARK: - Forms
     func test_password_ofSevenCharacters_isRejected_andOfEightIsAccepted() async {
         // Given

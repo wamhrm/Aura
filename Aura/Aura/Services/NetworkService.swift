@@ -16,6 +16,7 @@ fileprivate enum HTTPMethod: String {
 
 protocol NetworkServiceProtocol: Sendable {
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse
+    func ensureEmailAvailable(email: String) async throws
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
     func logout() async throws
     func requestPasswordReset(email: String) async throws
@@ -61,6 +62,11 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
         let body = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
         return try await fetch(endpoint: "/auth/createAccount", method: .post, body: body)
+    }
+
+    func ensureEmailAvailable(email: String) async throws {
+        let body = try JSONEncoder().encode(EmailBody(email: email))
+        _ = try await send(endpoint: "/auth/email/available", method: .post, body: body)
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
@@ -281,6 +287,10 @@ private struct AuthSignUpBody: Encodable {
 private struct AuthSignInBody: Encodable {
     let email: String
     let password: String
+}
+
+private struct EmailBody: Encodable {
+    let email: String
 }
 
 private struct PasswordResetRequestBody: Encodable {

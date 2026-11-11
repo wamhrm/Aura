@@ -14,6 +14,7 @@ struct AuthController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
         auth.post("createAccount", use: createAccount)
+        auth.post("email", "available", use: checkEmailAvailable)
         auth.post("signIn", use: signIn)
         auth.post("password", "forgot", use: requestPasswordReset)
         auth.post("password", "reset", use: resetPassword)
@@ -41,11 +42,9 @@ struct AuthController: RouteCollection {
         }
         try validatePassword(password: data.password)
 
-        let existingUser = try await User.query(on: req.db)
-            .filter(\.$email == email)
-            .first()
-
-        if existingUser != nil { throw Abort(.conflict, reason: "Пользователь уже зарегистрирован") }
+        if try await emailExists(email, database: req.db) {
+            throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
+        }
 
         let digest = try await req.password.async.hash(data.password)
         let user = User(name: name, email: email, passwordHash: digest)
@@ -57,6 +56,21 @@ struct AuthController: RouteCollection {
         }
 
         return try await issueToken(user: user, database: req.db).encodeResponse(status: .created, for: req)
+    }
+
+    private func checkEmailAvailable(req: Request) async throws -> HTTPStatus {
+        let data = try req.content.decode(EmailAvailabilityRequest.self)
+        let email = normalizedEmail(email: data.email)
+
+        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
+            throw Abort(.badRequest, reason: "Укажите корректный e-mail")
+        }
+
+        if try await emailExists(email, database: req.db) {
+            throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
+        }
+
+        return .noContent
     }
 
     private func signIn(req: Request) async throws -> AuthDTO {
@@ -165,6 +179,10 @@ struct AuthController: RouteCollection {
         guard password.utf8.count <= InputLimits.maxPasswordBytes else {
             throw Abort(.badRequest, reason: "Пароль слишком длинный")
         }
+    }
+
+    private func emailExists(_ email: String, database: any Database) async throws -> Bool {
+        try await User.query(on: database).filter(\.$email == email).first() != nil
     }
 
     private func normalizedEmail(email: String) -> String {

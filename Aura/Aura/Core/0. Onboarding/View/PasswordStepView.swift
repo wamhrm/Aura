@@ -11,22 +11,21 @@ struct PasswordStepView: View {
     @ObservedObject var vm: OnboardingViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 35) {
             OnboardingHeader(title: "Придумайте пароль",
                              subtitle: "Не меньше \(InputLimits.minPasswordLength) символов")
 
             OnboardingTextField(text: $vm.password, type: .password)
+            
+            Spacer()
 
             ClassicButton(title: vm.createAccountButtonTitle) {
                 vm.createAccount()
             }
 
-            Spacer()
-
             OnboardingLegalText()
         }
-        .padding(.horizontal)
-        .padding(.vertical, 10)
+        .onboardingViewModifier()
     }
 }
 

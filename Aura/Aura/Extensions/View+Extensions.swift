@@ -58,6 +58,13 @@ extension View {
             .padding(.top, 5)
     }
     
+    func onboardingViewModifier() -> some View {
+        self
+            .padding(.horizontal)
+            .padding(.top)
+            .padding(.bottom, 10)
+    }
+    
     func compatibilityResultZodiacsModifier() -> some View {
         modifier(CompatibilityResultZodiacsModifier())
     }

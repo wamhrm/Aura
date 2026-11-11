@@ -93,6 +93,8 @@ final class MockAuthService: AuthServiceProtocol {
     private(set) var profileSaveFinished = false
 
     private(set) var createAccountCount = 0
+    private(set) var emailCheckCount = 0
+    var emailTaken = false
     private(set) var resetPasswordCount = 0
     private(set) var aiConsentCount = 0
     private(set) var confirmedCode: String?
@@ -121,6 +123,11 @@ final class MockAuthService: AuthServiceProtocol {
     func createAccount(name: String, email: String, password: String) async throws {
         createAccountCount += 1
         try startSession()
+    }
+
+    func ensureEmailAvailable(email: String) async throws {
+        emailCheckCount += 1
+        if emailTaken { throw NetworkError.userExists }
     }
 
     func signIn(email: String, password: String) async throws {

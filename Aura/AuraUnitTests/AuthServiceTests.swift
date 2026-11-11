@@ -315,6 +315,7 @@ final class MockNetworkService: NetworkServiceProtocol {
     }
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse { throw serverError }
+    func ensureEmailAvailable(email: String) async throws {}
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse { throw serverError }
     func logout() async throws {
         logoutCount += 1

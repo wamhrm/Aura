@@ -12,7 +12,7 @@ struct NameAndBirthStepView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 35) {
                 OnboardingHeader(title: vm.nameAndBirthTitle,
                                  subtitle: "По дате рождения мы определим ваш знак зодиака")
 
@@ -58,8 +58,7 @@ struct NameAndBirthStepView: View {
                     vm.continueFromNameAndBirth()
                 }
             }
-            .padding(.horizontal)
-            .padding(.vertical, 10)
+            .onboardingViewModifier()
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)

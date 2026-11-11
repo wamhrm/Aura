@@ -20,6 +20,7 @@ protocol AuthServiceProtocol {
     func noteAIConsentAsked()
     func finishOnboarding()
     func createAccount(name: String, email: String, password: String) async throws
+    func ensureEmailAvailable(email: String) async throws
     func signIn(email: String, password: String) async throws
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, newPassword: String) async throws
@@ -69,6 +70,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
                                                    password: password)
         }
         try startSession(response: response)
+    }
+
+    func ensureEmailAvailable(email: String) async throws {
+        try await request {
+            try await networkService.ensureEmailAvailable(email: normalizeEmail(email))
+        }
     }
 
     func signIn(email: String, password: String) async throws {

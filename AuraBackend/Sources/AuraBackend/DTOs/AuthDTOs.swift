@@ -22,6 +22,10 @@ struct ForgotPasswordRequest: Content {
     let email: String
 }
 
+struct EmailAvailabilityRequest: Content {
+    let email: String
+}
+
 struct ResetPasswordRequest: Content {
     let email: String
     let code: String
