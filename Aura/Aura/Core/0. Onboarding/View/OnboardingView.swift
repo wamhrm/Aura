@@ -75,18 +75,18 @@ struct OnboardingView: View {
                 }
                 .navigationDestination(for: OnboardingRoutes.self) { destination in
                     destinationView(destination)
-                }
-                .navigationBarBackButtonHidden(vm.isOnlyStepOfSignedInUser)
-                .toolbar {
-                    if vm.isOnlyStepOfSignedInUser {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button {
-                                vm.goBack()
-                            } label: {
-                                Image(systemName: "chevron.left")
+                        .navigationBarBackButtonHidden(vm.isOnlyStepOfSignedInUser)
+                        .toolbar {
+                            if vm.isOnlyStepOfSignedInUser {
+                                ToolbarItem(placement: .topBarLeading) {
+                                    Button {
+                                        vm.goBack()
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                    }
+                                }
                             }
                         }
-                    }
                 }
             }
             .opacity(vm.isLoading ? 0 : 1)
@@ -98,10 +98,14 @@ struct OnboardingView: View {
             .opacity(vm.isLoading ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("ОК", role: .cancel) { }
         }
-        .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert.removeDuplicates()) {
+        .alert("Выйти из аккаунта?", isPresented: Binding {
+            vm.showSignOutAlert
+        } set: { newValue in
+            if vm.showSignOutAlert != newValue { vm.showSignOutAlert = newValue }
+        }) {
             Button("Отмена", role: .cancel) {}
             Button("Выйти", role: .destructive) {
                 vm.signOut()

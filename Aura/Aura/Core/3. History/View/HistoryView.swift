@@ -52,10 +52,14 @@ struct HistoryView: View {
             .opacity(vm.showsLoadingScreen ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("OK", role: .cancel) {}
         }
-        .alert("Удалить результат?", isPresented: $vm.showDeleteAlert.removeDuplicates()) {
+        .alert("Удалить результат?", isPresented: Binding {
+            vm.showDeleteAlert
+        } set: { newValue in
+            if vm.showDeleteAlert != newValue { vm.showDeleteAlert = newValue }
+        }) {
             Button("Отмена", role: .cancel) {}
             Button("Удалить", role: .destructive) {
                 vm.deleteRequestedCell()

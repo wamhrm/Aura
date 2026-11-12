@@ -62,7 +62,11 @@ struct SettingsSheetView: View {
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
                             vm.requestAccountDeletion()
                         }
-                        .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert.removeDuplicates()) {
+                        .alert("Удалить аккаунт?", isPresented: Binding {
+                            vm.showDeleteAccountAlert
+                        } set: { newValue in
+                            if vm.showDeleteAccountAlert != newValue { vm.showDeleteAccountAlert = newValue }
+                        }) {
                             deleteAccountAlertView()
                         } message: {
                             Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
@@ -78,16 +82,24 @@ struct SettingsSheetView: View {
                 .toolbar {
                     toolbarItem()
                 }
-                .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert.removeDuplicates()) {
+                .alert("Выйти из аккаунта?", isPresented: Binding {
+                    vm.showSignOutAlert
+                } set: { newValue in
+                    if vm.showSignOutAlert != newValue { vm.showSignOutAlert = newValue }
+                }) {
                     alertView()
                 }
             }
         }
         .interactiveDismissDisabled(vm.isDeletingAccount)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("ОК", role: .cancel) {}
         }
-        .alert("Не удалось удалить аккаунт", isPresented: $vm.showDeleteAccountError.removeDuplicates()) {
+        .alert("Не удалось удалить аккаунт", isPresented: Binding {
+            vm.showDeleteAccountError
+        } set: { newValue in
+            if vm.showDeleteAccountError != newValue { vm.showDeleteAccountError = newValue }
+        }) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(vm.alertMessage)

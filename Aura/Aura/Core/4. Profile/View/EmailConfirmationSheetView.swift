@@ -57,7 +57,7 @@ struct EmailConfirmationSheetView: View {
             .toolbar {
                 toolbarItem()
             }
-            .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+            .alert(vm.alertMessage, isPresented: vm.alertBinding) {
                 Button("OK", role: .cancel) {}
             }
         }

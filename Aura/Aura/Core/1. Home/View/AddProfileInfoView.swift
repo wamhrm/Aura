@@ -54,7 +54,7 @@ struct AddProfileInfoView: View {
         }
         .navigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("ОК", role: .cancel) { }
         }
     }

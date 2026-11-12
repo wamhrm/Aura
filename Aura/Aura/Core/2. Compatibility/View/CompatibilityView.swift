@@ -115,7 +115,7 @@ struct CompatibilityView: View {
             .opacity(vm.isLoading ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("OK", role: .cancel) {}
         }
         .sheet(item: $vm.emailConfirmation) { confirmation in

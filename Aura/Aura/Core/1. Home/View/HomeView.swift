@@ -185,7 +185,7 @@ struct HomeView: View {
                 Task { await vm.refreshIfNeeded() }
             }
         }
-        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
+        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("OK", role: .cancel) {}
         }
         .sheet(item: $vm.emailConfirmation) { confirmation in

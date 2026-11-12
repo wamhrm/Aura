@@ -26,7 +26,10 @@ final class OnboardingUITests: AuraUITestCase {
         tapButton("Далее")
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Далее")
-        fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
+        tapButton("Показать")
+        let passwordField = app.textFields["Пароль"].firstMatch
+        fillField(passwordField, text: password)
+        XCTAssertEqual(passwordField.value as? String, password)
         tapButton("Далее")
         XCTAssertTrue(text("Расскажите о себе").waitForExistence(timeout: 15), "the profile questions did not open")
     }
@@ -170,7 +173,8 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not open")
         app.terminate()
         app.launch()
-        let arrow = app.buttons["onboardingBack"].firstMatch
+        XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not reopen")
+        let arrow = app.navigationBars.buttons.firstMatch
         XCTAssertTrue(arrow.waitForExistence(timeout: 15), "the onboarding back button did not appear")
 
         // When

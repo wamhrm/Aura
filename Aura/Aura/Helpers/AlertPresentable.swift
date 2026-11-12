@@ -14,6 +14,14 @@ protocol AlertPresentable: AnyObject {
 }
 
 extension AlertPresentable {
+    var alertBinding: Binding<Bool> {
+        Binding {
+            self.showAlert
+        } set: { newValue in
+            if self.showAlert != newValue { self.showAlert = newValue }
+        }
+    }
+
     func presentAlert(_ message: String) {
         alertMessage = message
         showAlert = true
@@ -23,16 +31,5 @@ extension AlertPresentable {
 extension Error {
     var userMessage: String {
         (self as? LocalizedError)?.errorDescription ?? "Что-то пошло не так. Попробуйте ещё раз"
-    }
-}
-
-extension Binding where Value == Bool {
-    func removeDuplicates() -> Binding<Bool> {
-        Binding {
-            wrappedValue
-        } set: { newValue in
-            guard newValue != wrappedValue else { return }
-            wrappedValue = newValue
-        }
     }
 }

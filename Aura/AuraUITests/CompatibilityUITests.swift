@@ -23,7 +23,7 @@ final class CompatibilityUITests: AuraUITestCase {
         // When the name is filled in
         scrollUp(element: app.textFields["Введите имя"].firstMatch)
         fillField(app.textFields["Введите имя"].firstMatch, text: "O’Connor")
-        XCTAssertEqual(app.textFields["Введите имя"].firstMatch.value as? String, "O’Connor")
+        XCTAssertEqual(app.textFields["Введите имя"].firstMatch.value as? String, "O’connor")
         tapButton("Узнать совместимость")
 
         // Then
