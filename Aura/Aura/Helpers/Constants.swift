@@ -56,6 +56,7 @@ nonisolated enum InputLimits {
     static let minPasswordLength = 8
     static let resetCodeLength = 6
     static let minUserAge = 16
+    static let adultAge = 18
     static let maxUserAge = 100
     static let minPersonalityTests = 2
     static let minCompatibilityTests = 3

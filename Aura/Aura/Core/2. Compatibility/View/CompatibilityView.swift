@@ -71,7 +71,7 @@ struct CompatibilityView: View {
                                 }
                                 .font(Adaptive.size(.system(size: 15), .default))
 
-                                ForEach(CompatibilityTestTypes.allCases, id: \.self) { test in
+                                ForEach(vm.availableTests, id: \.self) { test in
                                     TestCellView(type: test,
                                                  hasChosenTest: vm.isSelected(test)) {
                                                         vm.toggleTestSelection(test)

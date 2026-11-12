@@ -70,6 +70,14 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Выберите минимум 3 теста")
         }
 
+        if uniqueSelectedTests.contains(.sexualCompatibility) {
+            guard let userBirthDate = user.dateOfBirth,
+                  UserDateFormatter.isAdult(birthDate: userBirthDate),
+                  UserDateFormatter.isAdult(birthDate: dateOfBirth) else {
+                throw Abort(.badRequest, reason: "Сексуальная совместимость доступна, только если вам и партнёру уже есть 18 лет")
+            }
+        }
+
         guard user.hasCompletedProfileInfo else {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }

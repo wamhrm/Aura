@@ -124,4 +124,21 @@ final class CompatibilityViewModelTests: XCTestCase {
         XCTAssertEqual(loadingWhenNavigating, [true])
     }
 
+    func test_sexualTest_appearsOnlyWhenBothAre18() async {
+        let minor = CompatibilityViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: "13.05.2010")),
+                                           contentService: MockContentService())
+        await waitUntil { minor.availableTests.count == CompatibilityTestTypes.allCases.count - 1 }
+        XCTAssertFalse(minor.availableTests.contains(.sexualCompatibility))
+
+        let adult = CompatibilityViewModel(authService: MockAuthService(user: makeUser()),
+                                           contentService: MockContentService())
+        await waitUntil { adult.availableTests.contains(.sexualCompatibility) }
+        XCTAssertFalse(adult.selectedTests.contains(.sexualCompatibility))
+
+        adult.toggleTestSelection(.sexualCompatibility)
+        XCTAssertTrue(adult.selectedTests.contains(.sexualCompatibility))
+
+        adult.partnerInfo.birthDate = Calendar.current.date(byAdding: .year, value: -17, to: Date())!
+        XCTAssertFalse(adult.selectedTests.contains(.sexualCompatibility))
+    }
 }

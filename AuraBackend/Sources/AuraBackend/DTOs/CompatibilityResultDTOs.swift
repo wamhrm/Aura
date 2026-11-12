@@ -71,7 +71,7 @@ struct CompatibilityTestContent: Codable {
 enum CompatibilityTests: String, CaseIterable {
     static let minSelected = 3
 
-    case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution
+    case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution, sexualCompatibility
 
     var title: String {
         switch self {
@@ -85,6 +85,8 @@ enum CompatibilityTests: String, CaseIterable {
                 return "Языки любви"
             case .conflictResolution:
                 return "Конфликты и примирение"
+            case .sexualCompatibility:
+                return "Сексуальная совместимость"
         }
     }
 
@@ -95,7 +97,7 @@ enum CompatibilityTests: String, CaseIterable {
 }
 
 enum CompatibilityItems: String, CaseIterable {
-    case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery
+    case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery, sexualTemperament, sexualChemistry
 
     var title: String {
         switch self {
@@ -119,6 +121,10 @@ enum CompatibilityItems: String, CaseIterable {
                 return "Механика ссор"
             case .peaceRecovery:
                 return "Скорость примирения"
+            case .sexualTemperament:
+                return "Сексуальный темперамент"
+            case .sexualChemistry:
+                return "Сексуальная химия"
         }
     }
 
@@ -134,6 +140,8 @@ enum CompatibilityItems: String, CaseIterable {
                 return [.languageMatch, .translationNeeds]
             case .conflictResolution:
                 return [.conflictMechanics, .peaceRecovery]
+            case .sexualCompatibility:
+                return [.sexualTemperament, .sexualChemistry]
         }
     }
 }

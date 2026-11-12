@@ -51,8 +51,43 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
                 currentUser = user
                 needsAIConsent = !user.allowsAIAnalysis
                 if user.hasConfirmedEmail { emailConfirmation = nil }
+                dropSexualTestIfUnavailable()
             }
             .store(in: &cancellables)
+
+        $partnerInfo
+            .map(\.birthDate)
+            .removeDuplicates()
+            .sink { [weak self] birthDate in
+                self?.dropSexualTest(partnerBirthDate: birthDate)
+            }
+            .store(in: &cancellables)
+    }
+
+    var offersSexualCompatibility: Bool {
+        isSexualCompatibilityAvailable(partnerBirthDate: partnerInfo.birthDate)
+    }
+
+    var availableTests: [CompatibilityTestTypes] {
+        CompatibilityTestTypes.allCases.filter { $0 != .sexualCompatibility || offersSexualCompatibility }
+    }
+
+    private func isSexualCompatibilityAvailable(partnerBirthDate: Date) -> Bool {
+        guard let birthDate = currentUser?.dateOfBirth,
+              let userDate = BirthDateFormatter.date(string: birthDate),
+              BirthDateFormatter.isAdult(date: userDate) else {
+            return false
+        }
+        return BirthDateFormatter.isAdult(date: partnerBirthDate)
+    }
+
+    private func dropSexualTestIfUnavailable() {
+        dropSexualTest(partnerBirthDate: partnerInfo.birthDate)
+    }
+
+    private func dropSexualTest(partnerBirthDate: Date) {
+        guard !isSexualCompatibilityAvailable(partnerBirthDate: partnerBirthDate) else { return }
+        selectedTests.removeAll { $0 == .sexualCompatibility }
     }
 
     func showTestDetails(_ test: CompatibilityTestTypes) {
@@ -60,7 +95,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     func selectAllTests() {
-        selectedTests = CompatibilityTestTypes.allCases
+        selectedTests = availableTests
     }
 
     func isSelected(_ test: CompatibilityTestTypes) -> Bool {
@@ -68,6 +103,8 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     func toggleTestSelection(_ test: CompatibilityTestTypes) {
+        if test == .sexualCompatibility, !offersSexualCompatibility { return }
+
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > InputLimits.minCompatibilityTests else {
                 presentAlert("Нельзя выбрать меньше \(InputLimits.minCompatibilityTests) тестов")
@@ -96,7 +133,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
+        let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests.filter { availableTests.contains($0) })
         let requestID = currentCompatibilityRequestID(for: request)
 
         isLoading = true

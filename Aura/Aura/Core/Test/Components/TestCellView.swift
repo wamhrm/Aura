@@ -156,7 +156,7 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 }
 
 enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
-    case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution
+    case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution, sexualCompatibility
 
     var title: String {
         switch self {
@@ -165,6 +165,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Стили привязанности"
             case .loveLanguages: "Языки любви"
             case .conflictResolution: "Конфликты и примирение"
+            case .sexualCompatibility: "Сексуальная совместимость"
         }
     }
 
@@ -175,6 +176,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ"
             case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях"
             case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения"
+            case .sexualCompatibility: "Возможная динамика влечения и близости. Предпочтения партнёра по этим данным неизвестны"
         }
     }
 
@@ -185,6 +187,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "lock.heart"
             case .loveLanguages: "heart"
             case .conflictResolution: "bubble.left.and.bubble.right"
+            case .sexualCompatibility: "flame"
         }
     }
 
@@ -195,6 +198,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: .systemOrange
             case .loveLanguages: .systemRed
             case .conflictResolution: .systemBlue
+            case .sexualCompatibility: .systemPink
         }
     }
 
@@ -205,6 +209,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ. Стиль привязанности партнёра по этим данным не определяется."
             case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях. Язык любви партнёра по этим данным неизвестен."
             case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения. Реакции партнёра в ссоре по этим данным неизвестны."
+            case .sexualCompatibility: "Возможная динамика влечения, темпа сближения и интимной гармонии. Предпочтения, опыт и желания партнёра по этим данным неизвестны."
         }
     }
 
@@ -230,6 +235,10 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
                         "Триггеры напряжения",
                         "Стратегии примирения",
                         "Зоны договоренностей"]
+            case .sexualCompatibility: ["Сексуальный темперамент",
+                        "Сексуальная химия",
+                        "Темп сближения",
+                        "Возможные различия"]
         }
     }
 }

@@ -19,6 +19,15 @@ enum BirthDateFormatter {
         return earliest...latest
     }
 
+    static func isAdult(date: Date) -> Bool {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let latest = calendar.date(byAdding: .year, value: -InputLimits.adultAge, to: today) else {
+            return false
+        }
+        return calendar.startOfDay(for: date) <= latest
+    }
+
     static func dateString(date: Date) -> String {
         formatter("dd.MM.yyyy").string(from: date)
     }

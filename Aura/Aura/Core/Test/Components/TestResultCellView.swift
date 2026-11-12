@@ -74,7 +74,7 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
 }
 
 enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
-    case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery
+    case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery, sexualTemperament, sexualChemistry
     
     var title: String {
         switch self {
@@ -88,6 +88,8 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
             case .translationNeeds: "Трудности перевода"
             case .conflictMechanics: "Механика ссор"
             case .peaceRecovery: "Скорость примирения"
+            case .sexualTemperament: "Сексуальный темперамент"
+            case .sexualChemistry: "Сексуальная химия"
         }
     }
 
@@ -103,6 +105,8 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
             case .translationNeeds: "📖"
             case .conflictMechanics: "🧨"
             case .peaceRecovery: "🏳️"
+            case .sexualTemperament: "🔥"
+            case .sexualChemistry: "🧪"
         }
     }
 }

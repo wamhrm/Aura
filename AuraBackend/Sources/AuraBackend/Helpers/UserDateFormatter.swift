@@ -10,6 +10,7 @@ import Foundation
 enum UserDateFormatter {
     static let maxAgeInYears = 100
     static let minAgeInYears = 16
+    static let adultAgeInYears = 18
 
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
@@ -47,6 +48,14 @@ enum UserDateFormatter {
 
     static func isOldEnough(birthDate: Date) -> Bool {
         guard let latestDate = calendar.date(byAdding: .year, value: -minAgeInYears, to: Date()) else {
+            return false
+        }
+
+        return birthDate <= latestDate
+    }
+
+    static func isAdult(birthDate: Date) -> Bool {
+        guard let latestDate = calendar.date(byAdding: .year, value: -adultAgeInYears, to: Date()) else {
             return false
         }
 
