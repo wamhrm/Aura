@@ -228,12 +228,12 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     func finishProfileEditing() async {
         if let savingStarted {
-            let deadline = savingStarted.advanced(by: .seconds(CoveredTransition.appearSeconds))
+            let deadline = savingStarted.advanced(by: .seconds(0.35))
             try? await Task.sleep(until: deadline, clock: .continuous)
         }
 
         profileRoutes = []
-        try? await Task.sleep(for: CoveredTransition.settleDuration)
+        try? await Task.sleep(for: .milliseconds(50))
         isSavingProfile = false
         savingStarted = nil
         profileForm = nil

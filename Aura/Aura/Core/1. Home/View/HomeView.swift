@@ -14,11 +14,12 @@ struct HomeView: View {
     let aiConsentButton: () -> Void
 
     var body: some View {
-        NavigationStack(path: $vm.homeRoutes) {
-                    ZStack {
-                        BackgroundView()
+        ZStack {
+            NavigationStack(path: $vm.homeRoutes) {
+                ZStack {
+                    BackgroundView()
 
-                        ScrollView {
+                    ScrollView {
                         VStack(alignment: .leading, spacing: 15) {
                             HStack(spacing: 15) {
                                 LogoImage(size: 32)
@@ -37,9 +38,11 @@ struct HomeView: View {
                                     .fontWeight(.heavy)
 
                                 if !vm.allowsAIAnalysis {
-                                    AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
-                                                  onAllow: aiConsentButton)
-                                        .frame(maxWidth: .infinity)
+                                    AIConsentLock(
+                                        title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
+                                        onAllow: aiConsentButton
+                                    )
+                                    .frame(maxWidth: .infinity)
                                 } else if let insight = vm.dailyInsight {
                                     Text(insight.text)
                                         .font(.system(size: Adaptive.size(14, 15))).italic()
@@ -100,7 +103,7 @@ struct HomeView: View {
                                         .font(Adaptive.size(.system(size: 18), .title3))
                                         .bold()
                                         .foregroundStyle(.white)
-                                    
+
                                     Spacer()
 
                                     sparkImageWithBackground(Adaptive.size(.medium, .large), .white)
@@ -108,9 +111,12 @@ struct HomeView: View {
                                 .padding(.horizontal, 7)
                                 .padding(18)
                                 .frame(maxWidth: .infinity)
-                                .background(LinearGradient(colors: [.purple, .blue],
-                                                           startPoint: .leading,
-                                                           endPoint: .trailing))
+                                .background(
+                                    LinearGradient(
+                                        colors: [.purple, .blue],
+                                        startPoint: .leading,
+                                        endPoint: .trailing)
+                                )
                                 .clipShape(.rect(cornerRadius: 12))
                             }
 
@@ -121,12 +127,14 @@ struct HomeView: View {
                                 .disabled(!vm.allowsAIAnalysis)
 
                                 ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
-                                    TestCellView(type: test,
-                                                 hasChosenTest: vm.isSelected(test)) {
-                                                        vm.toggleTestSelection(test)
-                                                    } onTapHandler: {
-                                                        vm.showTestDetails(test)
-                                                    }
+                                    TestCellView(
+                                        type: test,
+                                        hasChosenTest: vm.isSelected(test)
+                                    ) {
+                                        vm.toggleTestSelection(test)
+                                    } onTapHandler: {
+                                        vm.showTestDetails(test)
+                                    }
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
 
@@ -140,23 +148,39 @@ struct HomeView: View {
                             .padding(.top, 15)
                             .overlay {
                                 if !vm.allowsAIAnalysis {
-                                    AIConsentLock(title: "Разрешите анализ с помощью AI для прохождения тестов",
-                                                  onAllow: aiConsentButton)
+                                    AIConsentLock(
+                                        title: "Разрешите анализ с помощью AI для прохождения тестов",
+                                        onAllow: aiConsentButton)
                                 }
                             }
                         }
                         .padding(.horizontal)
                     }
-                        .bottomAreaPadding(50)
-                        .scrollIndicators(.hidden)
-                    }
-                    .navigationTitle("Главная")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .navigationDestination(for: HomeRoutes.self) { destination in
-                        destinationView(destination)
-                    }
+                    .bottomAreaPadding(50)
+                    .scrollIndicators(.hidden)
+                }
+                .navigationTitle("Главная")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: HomeRoutes.self) { destination in
+                    destinationView(destination)
+                }
+            }
+            .transaction { transaction in
+                if vm.showsLoadingScreen {
+                    transaction.disablesAnimations = true
+                }
+            }
+            .opacity(vm.showsLoadingScreen ? 0 : 1)
+            .allowsHitTesting(!vm.showsLoadingScreen)
+
+            ZStack {
+                BackgroundView()
+                LoadingView(title: vm.isLoading ? vm.loadingTitle : "Загружаем информацию")
+            }
+            .opacity(vm.showsLoadingScreen ? 1 : 0)
+            .allowsHitTesting(vm.showsLoadingScreen)
         }
-        .loadingCover(isPresented: vm.loadingTitle != nil, title: vm.loadingTitle ?? "")
+        .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }

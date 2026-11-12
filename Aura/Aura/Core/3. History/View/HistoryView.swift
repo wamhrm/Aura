@@ -11,37 +11,53 @@ struct HistoryView: View {
     @ObservedObject var vm: HistoryViewModel
 
     var body: some View {
-        NavigationStack(path: $vm.historyRoutes) {
-            ZStack {
-                BackgroundView()
+        ZStack {
+            NavigationStack(path: $vm.historyRoutes) {
+                ZStack {
+                    BackgroundView()
 
-                VStack(alignment: .leading, spacing: 15) {
-                    ScrollView {
-                        if vm.historyCells.isEmpty {
-                            emptyListView()
-                                .containerRelativeFrame(.vertical)
-                        } else {
-                            LazyVStack {
-                                ForEach(vm.historyCells) { item in
-                                    historyCell(item)
+                    VStack(alignment: .leading, spacing: 15) {
+                        ScrollView {
+                            if vm.historyCells.isEmpty {
+                                emptyListView()
+                                    .containerRelativeFrame(.vertical)
+                            } else {
+                                LazyVStack {
+                                    ForEach(vm.historyCells) { item in
+                                        historyCell(item)
+                                    }
                                 }
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
+                        }
+                        .refreshable {
+                            await vm.fetchHistory()
                         }
                     }
-                    .refreshable {
-                        await vm.fetchHistory()
-                    }
+                    .bottomAreaPadding(15)
                 }
-                .bottomAreaPadding(15)
+                .navigationTitle("История тестов")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: HistoryRoutes.self) { route in
+                    destinationView(route)
+                }
             }
-            .navigationTitle("История тестов")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: HistoryRoutes.self) { route in
-                destinationView(route)
+            .transaction { transaction in
+                if vm.showsLoadingScreen {
+                    transaction.disablesAnimations = true
+                }
             }
+            .opacity(vm.showsLoadingScreen ? 0 : 1)
+            .allowsHitTesting(!vm.showsLoadingScreen)
+
+            ZStack {
+                BackgroundView()
+                LoadingView(title: vm.isLoading ? "Открываем результат" : "Загружаем историю")
+            }
+            .opacity(vm.showsLoadingScreen ? 1 : 0)
+            .allowsHitTesting(vm.showsLoadingScreen)
         }
-        .loadingCover(isPresented: vm.loadingTitle != nil, title: vm.loadingTitle ?? "")
+        .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }

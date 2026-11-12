@@ -13,34 +13,50 @@ struct EmailConfirmationSheetView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 30) {
-                Text(vm.subtitle)
-                    .font(Adaptive.size(.footnote, .system(size: 15)))
-                    .foregroundStyle(.secondary)
+            ZStack {
+                VStack(alignment: .leading, spacing: 30) {
+                    Text(vm.subtitle)
+                        .font(Adaptive.size(.footnote, .system(size: 15)))
+                        .foregroundStyle(.secondary)
 
-                if vm.isCodeSent {
-                    VStack(spacing: 25) {
-                        OnboardingTextField(text: $vm.code, type: .code)
+                    if vm.isCodeSent {
+                        VStack(spacing: 25) {
+                            OnboardingTextField(text: $vm.code, type: .code)
 
-                        ClassicButton(title: vm.confirmButtonTitle) {
-                            vm.confirm()
+                            ClassicButton(title: vm.confirmButtonTitle) {
+                                vm.confirm()
+                            }
+
+                            OnboardingTextButton(title: "Отправить код ещё раз") {
+                                vm.sendCode()
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-
-                        OnboardingTextButton(title: "Отправить код ещё раз") {
+                    } else {
+                        ClassicButton(title: vm.sendCodeButtonTitle) {
                             vm.sendCode()
                         }
-                        .frame(maxWidth: .infinity)
+                        .disabled(vm.isLoading)
                     }
-                } else {
-                    ClassicButton(title: vm.sendCodeButtonTitle) {
-                        vm.sendCode()
-                    }
-                    .disabled(vm.isLoading)
-                }
 
-                Spacer()
+                    Spacer()
+                }
+                .transaction { transaction in
+                    if vm.isCodeSent && vm.isLoading {
+                        transaction.disablesAnimations = true
+                    }
+                }
+                .opacity(vm.isCodeSent && vm.isLoading ? 0 : 1)
+                .allowsHitTesting(!(vm.isCodeSent && vm.isLoading))
+
+                ZStack {
+                    BackgroundView()
+                    LoadingView(title: vm.loadingTitle)
+                }
+                .opacity(vm.isCodeSent && vm.isLoading ? 1 : 0)
+                .allowsHitTesting(vm.isCodeSent && vm.isLoading)
             }
-            .loadingCover(isPresented: vm.isCodeSent && vm.isLoading, title: vm.loadingTitle)
+            .animation(.easeInOut(duration: 0.35), value: vm.isCodeSent && vm.isLoading)
             .padding(.horizontal)
             .navigationTitle("Подтвердите почту")
             .navigationBarTitleDisplayMode(.inline)

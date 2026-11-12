@@ -23,28 +23,26 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published var showDeleteAlert = false
-    @Published private(set) var loadingTitle: String?
+    @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
 
     private var currentUserId: UUID?
     private var cellToDelete: HistoryCellModel?
-    private var coverTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
-
-    private static let historyLoadTitle = "Загружаем историю"
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
         self.historyCells = contentService.historyCells.value
-        if historyCells.isEmpty {
-            loadingTitle = Self.historyLoadTitle
-        }
 
         setupSubscriptions()
+    }
+
+    var showsLoadingScreen: Bool {
+        isLoading || (historyCells.isEmpty && loadState == .loading)
     }
 
     private func setupSubscriptions() {
@@ -88,7 +86,6 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
         guard currentUserId != nil else { return }
         if historyCells.isEmpty {
             loadState = .loading
-            if coverTask == nil { loadingTitle = Self.historyLoadTitle }
         }
 
         do {
@@ -101,8 +98,6 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                 presentAlert(error.userMessage)
             }
         }
-
-        if coverTask == nil { loadingTitle = nil }
     }
 
     func retry() {
@@ -129,32 +124,28 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     }
 
     func openHistoryCellDetails(_ item: HistoryCellModel) {
-        guard coverTask == nil else { return }
+        guard !isLoading else { return }
 
-        loadingTitle = "Открываем результат"
-        coverTask = Task {
-            defer { self.coverTask = nil }
+        isLoading = true
+        Task {
+            defer { isLoading = false }
+            let started = ContinuousClock.now
 
             do {
-                try await CoveredTransition.run(hide: { self.restoreCover() }) {
-                    let details = try await self.contentService.fetchHistoryDetails(id: item.id)
-                    
-                    guard let route = self.route(for: details) else {
-                        throw HistoryOpenError.missingResult
-                    }
-                    
-                    return route
-                } commit: { route in
-                    self.historyRoutes.append(route)
+                let details = try await contentService.fetchHistoryDetails(id: item.id)
+                guard let route = route(for: details) else {
+                    throw HistoryOpenError.missingResult
                 }
+
+                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
+                try Task.checkCancellation()
+                historyRoutes.append(route)
+                try await Task.sleep(for: .milliseconds(50))
+                try Task.checkCancellation()
             } catch {
-                self.presentAlert("Не удалось открыть результат")
+                presentAlert("Не удалось открыть результат")
             }
         }
-    }
-
-    private func restoreCover() {
-        loadingTitle = historyCells.isEmpty && loadState == .loading ? Self.historyLoadTitle : nil
     }
 
     private func route(for details: HistoryCellModel) -> HistoryRoutes? {

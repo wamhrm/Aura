@@ -5,7 +5,6 @@
 //  Created by wamhrm on 05.05.2026.
 //
 
-
 import Combine
 import Foundation
 
@@ -29,14 +28,13 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published private(set) var allowsAIAnalysis = false
-    @Published private(set) var loadingTitle: String?
+    @Published private(set) var isLoading = false
+    @Published private(set) var isLoadingScreen = true
+    @Published private(set) var loadingTitle = ""
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private var coverTask: Task<Void, Never>?
-
-    private static let homeLoadTitle = "Загружаем информацию"
 
     private var currentUser: UserModel?
     private var personalityRequestID: UUID?
@@ -48,13 +46,16 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
-        loadingTitle = Self.homeLoadTitle
 
         setupSubscriptions()
     }
 
     var greetingText: String {
         "Здравствуйте, \(userName.capitalized)"
+    }
+
+    var showsLoadingScreen: Bool {
+        isLoading || isLoadingScreen
     }
 
     private var isHomeReady: Bool {
@@ -115,7 +116,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         userName = user.name
 
         guard let previousUser, previousUser.id == user.id else {
-            loadingTitle = Self.homeLoadTitle
+            isLoadingScreen = true
             Task { await refresh() }
             return
         }
@@ -123,7 +124,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         if previousUser.dateOfBirth != user.dateOfBirth {
             horoscope = nil
             horoscopeState = .loading
-            if coverTask == nil { loadingTitle = Self.homeLoadTitle }
+            if !isLoading { isLoadingScreen = true }
             Task { await loadHoroscope() }
         }
 
@@ -150,11 +151,28 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     func allowAIConsent() {
-        performCovered("Обновляем информацию") {
-            try await self.authService.giveAIConsent()
-            try await self.refreshUnlockedContent()
-        } commit: {
-            self.homeRoutes = []
+        guard !isLoading else { return }
+        isLoading = true
+        loadingTitle = "Обновляем информацию"
+
+        Task {
+            defer {
+                isLoading = false
+                revealScreenIfReady()
+            }
+            let started = ContinuousClock.now
+
+            do {
+                try await authService.giveAIConsent()
+                try await refreshUnlockedContent()
+                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
+                try Task.checkCancellation()
+                homeRoutes = []
+                try await Task.sleep(for: .milliseconds(50))
+                try Task.checkCancellation()
+            } catch {
+                presentAlert(error.userMessage)
+            }
         }
     }
 
@@ -192,7 +210,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     func makePersonalityTest() {
-        guard coverTask == nil else { return }
+        guard !isLoading else { return }
 
         if let currentUser, !currentUser.hasConfirmedEmail {
             emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
@@ -201,35 +219,27 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
         let tests = selectedTests
         let requestID = currentPersonalityRequestID()
+        isLoading = true
+        loadingTitle = "Готовим результат..."
 
-        performCovered("Готовим результат...") {
-            self.personalityResult = try await self.contentService.makePersonalityTest(selectedTests: tests, requestID: requestID)
-        } commit: {
-            self.homeRoutes.append(.testResults)
-        }
-    }
-
-    private func performCovered(_ title: String,
-                                operation: @escaping () async throws -> Void,
-                                commit: @escaping () -> Void = {}) {
-        guard coverTask == nil else { return }
-
-        loadingTitle = title
-        coverTask = Task {
-            defer { self.coverTask = nil }
+        Task {
+            defer {
+                isLoading = false
+                revealScreenIfReady()
+            }
+            let started = ContinuousClock.now
 
             do {
-                try await CoveredTransition.run(hide: { self.restoreCover() },
-                                                operation: operation,
-                                                commit: commit)
+                personalityResult = try await contentService.makePersonalityTest(selectedTests: tests, requestID: requestID)
+                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
+                try Task.checkCancellation()
+                homeRoutes.append(.testResults)
+                try await Task.sleep(for: .milliseconds(50))
+                try Task.checkCancellation()
             } catch {
-                self.presentAlert(error.userMessage)
+                presentAlert(error.userMessage)
             }
         }
-    }
-
-    private func restoreCover() {
-        loadingTitle = isHomeReady ? nil : Self.homeLoadTitle
     }
 
     private func currentPersonalityRequestID() -> UUID {
@@ -323,8 +333,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     private func revealScreenIfReady() {
-        guard coverTask == nil else { return }
+        guard !isLoading else { return }
         
-        loadingTitle = isHomeReady ? nil : Self.homeLoadTitle
+        isLoadingScreen = !isHomeReady
     }
 }

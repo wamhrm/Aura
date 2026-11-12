@@ -91,28 +91,6 @@ extension View {
         )
     }
 
-    /// Place this outside `NavigationStack`. Route changes under the cover do not slide.
-    func loadingCover(isPresented: Bool, title: String) -> some View {
-        ZStack {
-            self
-                .transaction { transaction in
-                    if isPresented {
-                        transaction.disablesAnimations = true
-                    }
-                }
-                .opacity(isPresented ? 0 : 1)
-                .allowsHitTesting(!isPresented)
-
-            ZStack {
-                BackgroundView()
-                LoadingView(title: title)
-            }
-            .opacity(isPresented ? 1 : 0)
-            .allowsHitTesting(isPresented)
-        }
-        .animation(.easeInOut(duration: CoveredTransition.appearSeconds), value: isPresented)
-    }
-    
     private func sparkleImage(_ size: Image.Scale, _ padding: CGFloat) -> some View {
         Image(systemName: "sparkles")
             .imageScale(size)
@@ -130,36 +108,5 @@ private struct CompatibilityResultZodiacsModifier: ViewModifier {
             .padding(Adaptive.size(10, 12))
             .background(.tint.opacity(0.25))
             .clipShape(.circle)
-    }
-}
-
-@MainActor
-enum CoveredTransition {
-    static let appearSeconds: TimeInterval = 0.35
-    static let settleDuration: Duration = .milliseconds(50)
-
-    /// Runs `operation` under an already visible cover, then `commit`.
-    /// `leaveCover` returns true when this screen is about to be replaced and the cover must stay.
-    static func run<T>(hide: () -> Void,
-                       operation: () async throws -> T,
-                       commit: (T) -> Void = { _ in },
-                       leaveCover: () -> Bool = { false }) async throws {
-        let started = ContinuousClock.now
-
-        do {
-            let result = try await operation()
-            try await Task.sleep(until: started.advanced(by: .seconds(appearSeconds)),
-                                 clock: .continuous)
-            try Task.checkCancellation()
-            commit(result)
-            guard !leaveCover() else { return }
-            try await Task.sleep(for: settleDuration)
-            try Task.checkCancellation()
-        } catch {
-            hide()
-            throw error
-        }
-
-        hide()
     }
 }

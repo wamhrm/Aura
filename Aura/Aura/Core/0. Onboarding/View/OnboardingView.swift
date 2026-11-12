@@ -15,68 +15,87 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $vm.onboardingRoutes) {
-            ZStack {
-                BackgroundView()
+        ZStack {
+            NavigationStack(path: $vm.onboardingRoutes) {
+                ZStack {
+                    BackgroundView()
 
-                VStack(spacing: 20) {
-                    TabView(selection: $vm.introPage) {
-                        ForEach(IntroPages.allCases, id: \.self) { item in
-                            VStack(spacing: 20) {
-                                Spacer()
+                    VStack(spacing: 20) {
+                        TabView(selection: $vm.introPage) {
+                            ForEach(IntroPages.allCases, id: \.self) { item in
+                                VStack(spacing: 20) {
+                                    Spacer()
 
-                                if let icon = item.icon {
-                                    OnboardingIcon(icon: icon, size: Adaptive.size(80, 100))
-                                } else {
-                                    LogoImage(size: Adaptive.size(80, 100))
+                                    if let icon = item.icon {
+                                        OnboardingIcon(icon: icon, size: Adaptive.size(80, 100))
+                                    } else {
+                                        LogoImage(size: Adaptive.size(80, 100))
+                                    }
+
+                                    VStack(spacing: 15) {
+                                        Text(item.title)
+                                            .font(Adaptive.size(.title3, .title2))
+                                            .bold()
+
+                                        Text(item.subtitle)
+                                            .font(Adaptive.size(.caption2, .callout))
+                                            .foregroundStyle(.deepGray)
+                                    }
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 25)
+
+                                    Spacer()
                                 }
-
-                                VStack(spacing: 15) {
-                                    Text(item.title)
-                                        .font(Adaptive.size(.title3, .title2))
-                                        .bold()
-
-                                    Text(item.subtitle)
-                                        .font(Adaptive.size(.caption2, .callout))
-                                        .foregroundStyle(.deepGray)
-                                }
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 25)
-
-                                Spacer()
+                                .tag(item.rawValue)
                             }
-                            .tag(item.rawValue)
                         }
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
+                        .tabViewStyle(.page(indexDisplayMode: .never))
 
-                    HStack(spacing: 8) {
-                        ForEach(IntroPages.allCases, id: \.self) { item in
-                            Capsule()
-                                .fill(item.rawValue == vm.introPage ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.fieldBorder))
-                                .frame(width: item.rawValue == vm.introPage ? 22 : 8, height: 8)
+                        HStack(spacing: 8) {
+                            ForEach(IntroPages.allCases, id: \.self) { item in
+                                Capsule()
+                                    .fill(item.rawValue == vm.introPage ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.fieldBorder))
+                                    .frame(width: item.rawValue == vm.introPage ? 22 : 8, height: 8)
+                            }
                         }
-                    }
-                    .animation(.easeInOut(duration: 0.25), value: vm.introPage)
+                        .animation(.easeInOut(duration: 0.25), value: vm.introPage)
 
-                    VStack(spacing: 15) {
-                        ClassicButton(title: vm.introButtonTitle) {
-                            vm.showNextIntroPage()
-                        }
+                        VStack(spacing: 15) {
+                            ClassicButton(title: vm.introButtonTitle) {
+                                vm.showNextIntroPage()
+                            }
 
-                        OnboardingTextButton(title: "У меня уже есть аккаунт") {
-                            vm.showSignIn()
+                            OnboardingTextButton(title: "У меня уже есть аккаунт") {
+                                vm.showSignIn()
+                            }
                         }
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 10)
+                }
+                .navigationDestination(for: OnboardingRoutes.self) { destination in
+                    destinationView(destination)
                 }
             }
-            .navigationDestination(for: OnboardingRoutes.self) { destination in
-                destinationView(destination)
+            .onChange(of: vm.onboardingRoutes) { previous, current in
+                vm.resetTextFields(from: previous, to: current)
             }
+            .transaction { transaction in
+                if vm.isLoading {
+                    transaction.disablesAnimations = true
+                }
+            }
+            .opacity(vm.isLoading ? 0 : 1)
+            .allowsHitTesting(!vm.isLoading)
+
+            ZStack {
+                BackgroundView()
+                LoadingView(title: vm.loadingTitle)
+            }
+            .opacity(vm.isLoading ? 1 : 0)
+            .allowsHitTesting(vm.isLoading)
         }
-        .loadingCover(isPresented: vm.loadingTitle != nil, title: vm.loadingTitle ?? "")
+        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }

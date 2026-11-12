@@ -12,27 +12,43 @@ struct ProfileView: View {
     let aiConsentButton: () -> Void
 
     var body: some View {
-        NavigationStack(path: $vm.profileRoutes) {
-            ZStack {
-                BackgroundView()
+        ZStack {
+            NavigationStack(path: $vm.profileRoutes) {
+                ZStack {
+                    BackgroundView()
 
-                if let user = vm.user {
-                    SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
+                    if let user = vm.user {
+                        SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
+                    }
+                }
+                .navigationTitle("Профиль")
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: ProfileRoutes.self) { destination in
+                    destinationView(destination)
+                }
+                .toolbar {
+                    toolbarItem()
+                }
+                .sheet(isPresented: $vm.showSettings, onDismiss: vm.openProfileFormIfNeeded) {
+                    sheetView()
                 }
             }
-            .navigationTitle("Профиль")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: ProfileRoutes.self) { destination in
-                destinationView(destination)
+            .transaction { transaction in
+                if vm.isSavingProfile {
+                    transaction.disablesAnimations = true
+                }
             }
-            .toolbar {
-                toolbarItem()
+            .opacity(vm.isSavingProfile ? 0 : 1)
+            .allowsHitTesting(!vm.isSavingProfile)
+
+            ZStack {
+                BackgroundView()
+                LoadingView(title: "Сохраняем...")
             }
-            .sheet(isPresented: $vm.showSettings, onDismiss: vm.openProfileFormIfNeeded) {
-                sheetView()
-            }
+            .opacity(vm.isSavingProfile ? 1 : 0)
+            .allowsHitTesting(vm.isSavingProfile)
         }
-        .loadingCover(isPresented: vm.isSavingProfile, title: "Сохраняем...")
+        .animation(.easeInOut(duration: 0.35), value: vm.isSavingProfile)
     }
 }
 

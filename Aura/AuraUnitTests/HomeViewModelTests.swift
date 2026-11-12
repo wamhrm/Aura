@@ -59,8 +59,8 @@ final class HomeViewModelTests: XCTestCase {
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
                                       contentService: MockContentService())
 
-        XCTAssertNotNil(viewModel.loadingTitle)
-        await waitUntil { viewModel.loadingTitle == nil }
+        XCTAssertTrue(viewModel.showsLoadingScreen)
+        await waitUntil { !viewModel.showsLoadingScreen }
 
         XCTAssertNotNil(viewModel.horoscope)
     }
@@ -249,7 +249,7 @@ final class HomeViewModelTests: XCTestCase {
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
-        await waitUntil { viewModel.homeRoutes.isEmpty && viewModel.loadingTitle == nil }
+        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.showsLoadingScreen }
 
         XCTAssertEqual(auth.aiConsentCount, 1)
         XCTAssertGreaterThanOrEqual(content.insightCount, 1)
@@ -264,7 +264,7 @@ final class HomeViewModelTests: XCTestCase {
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
-        await waitUntil { viewModel.homeRoutes.isEmpty && viewModel.loadingTitle == nil }
+        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.showsLoadingScreen }
 
         XCTAssertGreaterThanOrEqual(content.insightCount, 1)
         XCTAssertGreaterThanOrEqual(content.tipCount, 1)

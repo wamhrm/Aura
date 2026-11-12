@@ -39,16 +39,13 @@ struct HistoryCellView: View {
                     VStack(spacing: 0) {
                         Text(cell.compatibilityScoreText)
                             .font(Adaptive.size(.footnote, .system(size: 14)))
-
-                        Text("знаки")
-                            .font(Adaptive.size(.caption2, .caption2))
                     }
                     .foregroundStyle(.white)
                     .bold()
                     .padding(.vertical, 3)
                     .padding(.horizontal, 6)
-                    .background(.tint.opacity(0.75))
-                    .clipShape(.rect(cornerRadius: 7))
+                    .background(.accentBlue)
+                    .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }

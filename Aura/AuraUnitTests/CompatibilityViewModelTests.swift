@@ -55,7 +55,7 @@ final class CompatibilityViewModelTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(viewModel.emailConfirmation)
-        XCTAssertNil(viewModel.loadingTitle)
+        XCTAssertFalse(viewModel.isLoading)
     }
 
     func test_retry_reusesTheRequestID_untilTheUserOrPartnerChanges() async throws {
@@ -93,4 +93,24 @@ final class CompatibilityViewModelTests: XCTestCase {
         // Then
         XCTAssertNotEqual(content.compatibilityRequestIDs.last, changedUserID)
     }
+    func test_resultRoute_isAddedUnderLoading_andRepeatedTapSendsOneRequest() async {
+        let content = MockContentService()
+        let viewModel = CompatibilityViewModel(authService: MockAuthService(user: makeUser()),
+                                               contentService: content)
+        viewModel.partnerInfo.name = "Анна"
+        var loadingWhenNavigating: [Bool] = []
+        let subscription = viewModel.$compatibilityRoutes.dropFirst().sink { _ in
+            loadingWhenNavigating.append(viewModel.isLoading)
+        }
+        defer { subscription.cancel() }
+
+        viewModel.makeCompatibilityTest()
+        viewModel.makeCompatibilityTest()
+        await waitUntil { !viewModel.isLoading }
+
+        XCTAssertEqual(content.compatibilityRequests.count, 1)
+        XCTAssertEqual(viewModel.compatibilityRoutes, [.compatibilityResults])
+        XCTAssertEqual(loadingWhenNavigating, [true])
+    }
+
 }

@@ -22,13 +22,12 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var loadingTitle: String?
+    @Published private(set) var isLoading = false
     @Published private(set) var needsAIConsent = false
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
-    private var coverTask: Task<Void, Never>?
     
     private var currentUser: UserModel?
     private var compatibilityRequestID: UUID?
@@ -82,7 +81,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     func makeCompatibilityTest() {
-        guard coverTask == nil else { return }
+        guard !isLoading else { return }
 
         if let currentUser, !currentUser.hasConfirmedEmail {
             emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
@@ -99,30 +98,21 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
         let requestID = currentCompatibilityRequestID(for: request)
 
-        performCovered("Готовим результат...") {
-            self.compatibilityResult = try await self.contentService.makeCompatibilityTest(request: request,
-                                                                                           requestID: requestID)
-        } commit: {
-            self.clearFields()
-            self.compatibilityRoutes.append(.compatibilityResults)
-        }
-    }
-
-    private func performCovered(_ title: String,
-                                operation: @escaping () async throws -> Void,
-                                commit: @escaping () -> Void = {}) {
-        guard coverTask == nil else { return }
-
-        loadingTitle = title
-        coverTask = Task {
-            defer { self.coverTask = nil }
+        isLoading = true
+        Task {
+            defer { isLoading = false }
+            let started = ContinuousClock.now
 
             do {
-                try await CoveredTransition.run(hide: { self.loadingTitle = nil },
-                                                operation: operation,
-                                                commit: commit)
+                compatibilityResult = try await contentService.makeCompatibilityTest(request: request, requestID: requestID)
+                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
+                try Task.checkCancellation()
+                clearFields()
+                compatibilityRoutes.append(.compatibilityResults)
+                try await Task.sleep(for: .milliseconds(50))
+                try Task.checkCancellation()
             } catch {
-                self.presentAlert(error.userMessage)
+                presentAlert(error.userMessage)
             }
         }
     }
