@@ -41,20 +41,14 @@ struct EmailConfirmationSheetView: View {
 
                     Spacer()
                 }
-                .transaction { transaction in
-                    if vm.isCodeSent && vm.isLoading {
-                        transaction.disablesAnimations = true
-                    }
-                }
                 .opacity(vm.isCodeSent && vm.isLoading ? 0 : 1)
-                .allowsHitTesting(!(vm.isCodeSent && vm.isLoading))
 
                 ZStack {
                     BackgroundView()
-                    LoadingView(title: vm.loadingTitle)
+                    LoadingView(title: vm.loadingTitle,
+                                isPresented: vm.isCodeSent && vm.isLoading)
                 }
                 .opacity(vm.isCodeSent && vm.isLoading ? 1 : 0)
-                .allowsHitTesting(vm.isCodeSent && vm.isLoading)
             }
             .animation(.easeInOut(duration: 0.35), value: vm.isCodeSent && vm.isLoading)
             .padding(.horizontal)
@@ -63,12 +57,12 @@ struct EmailConfirmationSheetView: View {
             .toolbar {
                 toolbarItem()
             }
-            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+            .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
                 Button("OK", role: .cancel) {}
             }
         }
         .presentationDetents([.height(vm.sheetHeight)])
-        .animation(.easeInOut(duration: 0.25), value: vm.isSheetExtended)
+        .animation(.easeInOut(duration: 0.25), value: vm.isCodeSent)
     }
 }
 

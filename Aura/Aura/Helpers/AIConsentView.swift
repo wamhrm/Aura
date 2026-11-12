@@ -2,7 +2,7 @@
 //  AIConsentView.swift
 //  Aura
 //
-//  Created by wamhrm on 23.10.2026.
+//  Created by wamhrm on 13/11/2026.
 //
 
 import SwiftUI
@@ -44,7 +44,9 @@ struct AIConsentView: View {
 }
 
 #Preview {
-    NavigationStack {
-        AIConsentView(allow: {}, decline: {})
+    AIConsentView() {
+        
+    } decline: {
+        
     }
 }

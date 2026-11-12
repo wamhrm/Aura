@@ -97,7 +97,6 @@ struct CompatibilityView: View {
                         .padding(.horizontal)
                         .bottomAreaPadding(50)
                     }
-                    .scrollIndicators(.hidden)
                     .dismissKeyboardOnTap()
                     .scrollDismissesKeyboard(.interactively)
                 }
@@ -107,23 +106,16 @@ struct CompatibilityView: View {
                     destinationView(destination)
                 }
             }
-            .transaction { transaction in
-                if vm.isLoading {
-                    transaction.disablesAnimations = true
-                }
-            }
             .opacity(vm.isLoading ? 0 : 1)
-            .allowsHitTesting(!vm.isLoading)
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: "Готовим результат...")
+                LoadingView(title: "Готовим результат...", isPresented: vm.isLoading)
             }
             .opacity(vm.isLoading ? 1 : 0)
-            .allowsHitTesting(vm.isLoading)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
             Button("OK", role: .cancel) {}
         }
         .sheet(item: $vm.emailConfirmation) { confirmation in
@@ -133,6 +125,21 @@ struct CompatibilityView: View {
 }
 
 extension CompatibilityView {
+    @ViewBuilder
+    private func destinationView(_ route: CompatibilityRoutes) -> some View {
+        switch route {
+            case .testDetails(let test):
+                TestDetailsView(type: test,
+                                isSelected: vm.isSelected(test)) {
+                    vm.toggleTestSelection(test)
+                }
+            case .compatibilityResults:
+                if let result = vm.compatibilityResult {
+                    CompatibilityResultView(result: result)
+                }
+        }
+    }
+    
     private func headerText(_ title: String) -> some View {
         Text(title)
             .font(Adaptive.size(.footnote, .system(size: 14)))
@@ -161,21 +168,6 @@ extension CompatibilityView {
                 .font(Adaptive.size(.system(size: 14), .callout))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
-        }
-    }
-
-    @ViewBuilder
-    private func destinationView(_ route: CompatibilityRoutes) -> some View {
-        switch route {
-            case .testDetails(let test):
-                TestDetailsView(type: test,
-                                isSelected: vm.isSelected(test)) {
-                    vm.toggleTestSelection(test)
-                }
-            case .compatibilityResults:
-                if let result = vm.compatibilityResult {
-                    CompatibilityResultView(result: result)
-                }
         }
     }
 }

@@ -37,6 +37,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private let contentService: any ContentServiceProtocol
 
     private var currentUser: UserModel?
+    private var lastRefreshDate: Date?
     private var personalityRequestID: UUID?
     private var personalityRequestUser: UserModel?
     private var personalityRequestTests: [PersonalityTestTypes]?
@@ -113,11 +114,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         currentUser = user
         allowsAIAnalysis = user.allowsAIAnalysis
         if user.hasConfirmedEmail { emailConfirmation = nil }
-        userName = user.name
+        userName = user.name.capitalized
 
         guard let previousUser, previousUser.id == user.id else {
             isLoadingScreen = true
-            Task { await refresh() }
+            Task { await refreshIfNeeded() }
             return
         }
 
@@ -128,7 +129,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             Task { await loadHoroscope() }
         }
 
-        if !previousUser.allowsAIAnalysis && user.allowsAIAnalysis {
+        if !previousUser.allowsAIAnalysis && user.allowsAIAnalysis && !isLoading {
             Task { await loadDailyInsight() }
         }
     }
@@ -155,24 +156,28 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         isLoading = true
         loadingTitle = "Обновляем информацию"
 
+        let sessionID = authService.sessionID
+
         Task {
-            defer {
-                isLoading = false
-                revealScreenIfReady()
-            }
-            let started = ContinuousClock.now
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.giveAIConsent()
-                try await refreshUnlockedContent()
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                guard sessionID == authService.sessionID else { return }
+                try await fetchInsight()
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 homeRoutes = []
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
+
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
+            revealScreenIfReady()
         }
     }
 
@@ -180,21 +185,9 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         homeRoutes = []
     }
 
-    private func refreshUnlockedContent() async throws {
-        async let insight = fetchInsight()
-        async let tip = fetchDailyTip()
-        try await insight
-        try await tip
-    }
-
     private func fetchInsight() async throws {
         dailyInsight = try await contentService.fetchDailyInsight()
         insightState = .loaded
-    }
-
-    private func fetchDailyTip() async throws {
-        guard currentUser?.dateOfBirth != nil else { return }
-        _ = try await contentService.fetchDailyTip()
     }
 
     func toggleTestSelection(_ test: PersonalityTestTypes) {
@@ -213,7 +206,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         guard !isLoading else { return }
 
         if let currentUser, !currentUser.hasConfirmedEmail {
-            emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
+            emailConfirmation = EmailConfirmationViewModel(authService: authService,
+                                                           email: currentUser.email ?? "")
             return
         }
 
@@ -222,23 +216,27 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         isLoading = true
         loadingTitle = "Готовим результат..."
 
+        let sessionID = authService.sessionID
+
         Task {
-            defer {
-                isLoading = false
-                revealScreenIfReady()
-            }
-            let started = ContinuousClock.now
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                personalityResult = try await contentService.makePersonalityTest(selectedTests: tests, requestID: requestID)
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                personalityResult = try await contentService.makePersonalityTest(selectedTests: tests,
+                                                                                 requestID: requestID)
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 homeRoutes.append(.testResults)
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
+
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
+            revealScreenIfReady()
         }
     }
 
@@ -265,6 +263,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     func refresh() async {
         guard let user = currentUser else { return }
+        lastRefreshDate = Date()
 
         async let horoscopeLoad = loadHoroscope()
 
@@ -273,6 +272,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
 
         await horoscopeLoad
+    }
+
+    func refreshIfNeeded() async {
+        if let lastRefreshDate, Calendar.current.isDateInToday(lastRefreshDate) { return }
+        await refresh()
     }
 
     func retryHoroscope() {
@@ -285,56 +289,54 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     private func loadHoroscope() async {
         guard currentUser != nil else { return }
+        let sessionID = authService.sessionID
+        let deadline = ContinuousClock.now + .seconds(1)
         if horoscope == nil { horoscopeState = .loading }
 
         do {
-            horoscope = try await contentService.fetchCurrentHoroscope()
+            let horoscope = try await contentService.fetchCurrentHoroscope()
+            guard sessionID == authService.sessionID else { return }
+            self.horoscope = horoscope
             horoscopeState = .loaded
         } catch {
+            guard sessionID == authService.sessionID else { return }
             if horoscope == nil {
                 horoscopeState = .failed(error.userMessage)
             }
         }
         
-        try? await Task.sleep(for: .seconds(1))
+        try? await Task.sleep(until: deadline, clock: .continuous)
+        guard sessionID == authService.sessionID else { return }
         revealScreenIfReady()
     }
 
     private func loadDailyInsight() async {
         guard currentUser?.allowsAIAnalysis == true else { return }
+        let sessionID = authService.sessionID
+        let deadline = ContinuousClock.now + .seconds(1)
 
         if dailyInsight?.isFromToday != true {
             dailyInsight = nil
             insightState = .loading
         }
 
-        async let tip = loadDailyTip()
-        await fetchInsightQuietly()
-        
-        try? await Task.sleep(for: .seconds(1))
-        revealScreenIfReady()
-        await tip
-    }
-
-    private func fetchInsightQuietly() async {
         do {
             try await fetchInsight()
         } catch {
+            guard sessionID == authService.sessionID else { return }
             if dailyInsight?.isFromToday != true {
                 dailyInsight = nil
                 insightState = .failed(error.userMessage)
             }
         }
-    }
 
-    private func loadDailyTip() async {
-        guard currentUser?.dateOfBirth != nil else { return }
-        _ = try? await contentService.fetchDailyTip()
+        try? await Task.sleep(until: deadline, clock: .continuous)
+        guard sessionID == authService.sessionID else { return }
+        revealScreenIfReady()
     }
 
     private func revealScreenIfReady() {
         guard !isLoading else { return }
-        
         isLoadingScreen = !isHomeReady
     }
 }

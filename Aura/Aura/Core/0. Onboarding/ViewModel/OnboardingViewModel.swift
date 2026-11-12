@@ -74,9 +74,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var isLoading = false
     @Published private(set) var loadingTitle = ""
 
-    private var hasEnteredBirthDate = false
     private var hasSession = false
-    private var loadingTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
 
     private let authService: any AuthServiceProtocol
@@ -86,7 +84,11 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         if case .signedIn(let user) = authService.authState.value {
             hasSession = true
-            name = user.name
+            name = user.name.capitalized
+            birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
+            knowsBirthTime = user.birthTime != nil
+            birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
+            profileInfo = user.profileInfo
             onboardingRoutes = [.nameAndBirth]
         }
 
@@ -103,7 +105,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     var displayName: String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
+        name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
     }
 
     var introButtonTitle: String {
@@ -122,7 +124,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         introPage == IntroPages.allCases.count - 1
     }
 
-    private var isOnlyStepOfSignedInUser: Bool {
+    var isOnlyStepOfSignedInUser: Bool {
         isSignedIn && onboardingRoutes.count == 1
     }
 
@@ -145,7 +147,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private func handleSessionEnd() {
         guard hasSession else { return }
 
-        loadingTask?.cancel()
         hasSession = false
         isLoading = false
         onboardingRoutes = []
@@ -164,7 +165,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         Task {
             do {
                 try await authService.signOut()
-                loadingTask?.cancel()
                 hasSession = false
                 isLoading = false
                 onboardingRoutes = []
@@ -175,25 +175,24 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     func showNextIntroPage() {
-        if isLastIntroPage {
-            start()
-        } else {
-            withAnimation { introPage += 1 }
-        }
+        isLastIntroPage ? start() : withAnimation { introPage += 1 }
     }
 
     func start() {
         resetTextFields()
+        resetRegistrationFields()
         onboardingRoutes.append(.nameAndBirth)
     }
 
     func showSignIn() {
         resetTextFields()
+        resetRegistrationFields()
         onboardingRoutes.append(.signIn)
     }
 
     func showSignUp() {
         resetTextFields()
+        resetRegistrationFields()
         onboardingRoutes.append(.nameAndBirth)
     }
 
@@ -210,7 +209,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        hasEnteredBirthDate = true
         onboardingRoutes.append(isSignedIn ? .psychotype : .email)
     }
 
@@ -225,13 +223,24 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         guard !isCheckingEmail else { return }
 
         isCheckingEmail = true
+        let routes = onboardingRoutes
+        let sessionID = authService.sessionID
 
         Task {
             do {
                 try await authService.ensureEmailAvailable(email: email)
-                onboardingRoutes.append(.password)
+                
+                if onboardingRoutes == routes,
+                   self.email.trimmingCharacters(in: .whitespacesAndNewlines) == email,
+                   sessionID == authService.sessionID {
+                    onboardingRoutes.append(.password)
+                }
             } catch {
-                presentAlert(error.userMessage)
+                if onboardingRoutes == routes,
+                   self.email.trimmingCharacters(in: .whitespacesAndNewlines) == email,
+                   sessionID == authService.sessionID {
+                    presentAlert(error.userMessage)
+                }
             }
 
             isCheckingEmail = false
@@ -258,15 +267,18 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         guard !isLoading else { return }
         isLoading = true
         loadingTitle = "Входим..."
+        
+        var sessionID = authService.sessionID
 
-        loadingTask = Task {
-            defer { loadingTask = nil }
-            let started = ContinuousClock.now
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.signIn(email: email, password: password)
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                sessionID = authService.sessionID
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
 
                 if continueAfterSignIn() {
                     authService.finishOnboarding()
@@ -274,13 +286,12 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 }
 
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
-            } catch is CancellationError {
-            } catch NetworkError.cancelled {
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
 
+            guard sessionID == authService.sessionID else { return }
             isLoading = false
         }
     }
@@ -297,23 +308,24 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isLoading = true
         loadingTitle = "Отправляем..."
 
-        loadingTask = Task {
-            defer { loadingTask = nil }
-            let started = ContinuousClock.now
+        let sessionID = authService.sessionID
+
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.requestPasswordReset(email: email)
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 isResetCodeSent = true
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
-            } catch is CancellationError {
-            } catch NetworkError.cancelled {
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
 
+            guard sessionID == authService.sessionID else { return }
             isLoading = false
         }
     }
@@ -336,14 +348,17 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isLoading = true
         loadingTitle = "Сохраняем..."
 
-        loadingTask = Task {
-            defer { loadingTask = nil }
-            let started = ContinuousClock.now
+        var sessionID = authService.sessionID
+
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.resetPassword(email: email, code: code, newPassword: newPassword)
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                sessionID = authService.sessionID
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
 
                 if continueAfterSignIn() {
                     authService.finishOnboarding()
@@ -351,13 +366,12 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 }
 
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
-            } catch is CancellationError {
-            } catch NetworkError.cancelled {
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
 
+            guard sessionID == authService.sessionID else { return }
             isLoading = false
         }
     }
@@ -390,34 +404,33 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isLoading = true
         loadingTitle = "Создаём аккаунт..."
 
-        loadingTask = Task {
-            defer { loadingTask = nil }
-            let started = ContinuousClock.now
+        var sessionID = authService.sessionID
+
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.createAccount(name: displayName, email: email, password: password)
-                name = ""
-                self.email = ""
-                password = ""
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                sessionID = authService.sessionID
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 onboardingRoutes.append(.aiConsent)
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
-            } catch is CancellationError {
-            } catch NetworkError.cancelled {
+                guard sessionID == authService.sessionID else { return }
+                resetTextFields()
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
 
+            guard sessionID == authService.sessionID else { return }
             isLoading = false
         }
     }
 
     func chooseAIConsent(_ allows: Bool) {
         guard !isLoading else { return }
-
-        authService.noteAIConsentAsked()
 
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : authService.finishOnboarding()
@@ -431,23 +444,25 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isLoading = true
         loadingTitle = "Сохраняем..."
 
-        loadingTask = Task {
-            defer { loadingTask = nil }
-            let started = ContinuousClock.now
+        let sessionID = authService.sessionID
+
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.giveAIConsent()
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 authService.finishOnboarding()
-            } catch is CancellationError {
-                isLoading = false
-            } catch NetworkError.cancelled {
-                isLoading = false
+                return
             } catch {
-                isLoading = false
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
+
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
         }
     }
 
@@ -461,70 +476,65 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         isLoading = true
         loadingTitle = "Сохраняем профиль и настройки"
-        loadingTask = Task {
-            defer { loadingTask = nil }
-            let started = ContinuousClock.now
+
+        let sessionID = authService.sessionID
+
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 _ = try await authService.updateProfileInfo(preparedRequest)
-                try Task.checkCancellation()
+                guard sessionID == authService.sessionID else { return }
 
                 if allowsAIAnalysis {
                     try await authService.giveAIConsent()
-                    try Task.checkCancellation()
                 }
 
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 authService.finishOnboarding()
-            } catch is CancellationError {
-                isLoading = false
-            } catch NetworkError.cancelled {
-                isLoading = false
+                return
             } catch {
-                isLoading = false
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
+
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
         }
     }
 
     private func continueAfterSignIn() -> Bool {
         guard case .signedIn(let user) = authService.authState.value else { return false }
 
-        email = ""
+        name = user.name.capitalized
         password = ""
-        resetCode = ""
-        newPassword = ""
-        isResetCodeSent = false
-        name = user.name
 
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
             return true
         } else if user.hasCompletedProfileInfo {
             onboardingRoutes.append(.aiConsent)
-        } else if hasEnteredBirthDate {
-            onboardingRoutes.append(.psychotype)
         } else {
+            birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
+            knowsBirthTime = user.birthTime != nil
+            birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
+            profileInfo = user.profileInfo
             onboardingRoutes = [.nameAndBirth]
         }
         return false
     }
 
-    func resetTextFields(from previous: [OnboardingRoutes], to current: [OnboardingRoutes]) {
-        guard current.last == .signIn,
-              let left = previous.last,
-              left != .resetPassword else { return }
-        resetTextFields()
-    }
-
-    private func resetTextFields() {
+    func resetTextFields() {
         name = ""
         email = ""
         password = ""
         resetCode = ""
         newPassword = ""
         isResetCodeSent = false
-        hasEnteredBirthDate = false
+    }
+
+    private func resetRegistrationFields() {
         birthDate = BirthDateFormatter.defaultDate
         knowsBirthTime = false
         birthTime = BirthDateFormatter.defaultTime
@@ -544,6 +554,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
         if name.count < InputLimits.minNameLength {
             return "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
+        }
+        if name.count > InputLimits.maxNameLength {
+            return "Имя должно быть не длиннее \(InputLimits.maxNameLength) символов"
         }
         return nil
     }

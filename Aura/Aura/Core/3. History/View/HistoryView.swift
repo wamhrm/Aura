@@ -42,26 +42,20 @@ struct HistoryView: View {
                     destinationView(route)
                 }
             }
-            .transaction { transaction in
-                if vm.showsLoadingScreen {
-                    transaction.disablesAnimations = true
-                }
-            }
             .opacity(vm.showsLoadingScreen ? 0 : 1)
-            .allowsHitTesting(!vm.showsLoadingScreen)
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: vm.isLoading ? "Открываем результат" : "Загружаем историю")
+                LoadingView(title: vm.isLoading ? "Открываем результат" : "Загружаем историю",
+                            isPresented: vm.showsLoadingScreen)
             }
             .opacity(vm.showsLoadingScreen ? 1 : 0)
-            .allowsHitTesting(vm.showsLoadingScreen)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
             Button("OK", role: .cancel) {}
         }
-        .alert("Удалить результат?", isPresented: $vm.showDeleteAlert) {
+        .alert("Удалить результат?", isPresented: $vm.showDeleteAlert.removeDuplicates()) {
             Button("Отмена", role: .cancel) {}
             Button("Удалить", role: .destructive) {
                 vm.deleteRequestedCell()

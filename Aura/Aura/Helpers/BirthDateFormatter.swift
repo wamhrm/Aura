@@ -11,12 +11,13 @@ enum BirthDateFormatter {
     static let defaultDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
     static let defaultTime = Calendar.current.date(from: DateComponents(hour: 12, minute: 0)) ?? Date()
 
-    static let dateRange: ClosedRange<Date> = {
-        let now = Date()
-        let earliest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.maxUserAge, day: 1), to: now) ?? now
-        let latest = Calendar.current.date(byAdding: DateComponents(year: -InputLimits.minUserAge, day: -1), to: now) ?? now
+    static var dateRange: ClosedRange<Date> {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let earliest = calendar.date(byAdding: DateComponents(year: -InputLimits.maxUserAge - 1, day: 1), to: today) ?? today
+        let latest = calendar.date(byAdding: .year, value: -InputLimits.minUserAge, to: today) ?? today
         return earliest...latest
-    }()
+    }
 
     static func dateString(date: Date) -> String {
         formatter("dd.MM.yyyy").string(from: date)

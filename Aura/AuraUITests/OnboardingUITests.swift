@@ -39,7 +39,7 @@ final class OnboardingUITests: AuraUITestCase {
         server.respond(route: "GET /v1/daily/insight", status: 500, body: failure)
 
         // When
-        chooseAnswers(["Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
+        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
         tapButton("Разрешить")
 
@@ -54,7 +54,7 @@ final class OnboardingUITests: AuraUITestCase {
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         server.respond(route: "POST /v1/auth/aiConsent", status: 500, body: try failingBody(serverError))
         try openProfileQuestions()
-        chooseAnswers(["Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
+        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
         tapButton("Разрешить")
 
@@ -126,7 +126,7 @@ final class OnboardingUITests: AuraUITestCase {
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         try openProfileQuestions()
-        chooseAnswers(["Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
+        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
 
         // When
@@ -170,8 +170,8 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not open")
         app.terminate()
         app.launch()
-        let arrow = app.buttons["chevron.left"].firstMatch
-        XCTAssertTrue(arrow.waitForExistence(timeout: 15), "the date step did not reopen")
+        let arrow = app.buttons["onboardingBack"].firstMatch
+        XCTAssertTrue(arrow.waitForExistence(timeout: 15), "the onboarding back button did not appear")
 
         // When
         arrow.tap()

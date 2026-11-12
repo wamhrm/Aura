@@ -15,6 +15,9 @@ struct AuraApp: App {
     @AppStorage(Constants.selectedThemeKey,
                 store: Constants.userDefaults) private var selectedTheme = AppTheme.light
 
+    @AppStorage(Constants.accentColorKey,
+                store: Constants.userDefaults) private var accentColor = AccentColorOption.blue.rawValue
+
     init() {
         let networkService = NetworkService()
         let authService = AuthService(networkService: networkService)
@@ -29,6 +32,7 @@ struct AuraApp: App {
             RootView(authService: authService,
                      contentService: contentService)
                 .preferredColorScheme(selectedTheme.colorScheme)
+                .tint(AccentColorOption.color(accentColor))
         }
     }
 }

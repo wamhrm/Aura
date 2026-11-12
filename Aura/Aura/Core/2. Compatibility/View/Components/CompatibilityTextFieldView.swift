@@ -17,14 +17,18 @@ struct CompatibilityTextFieldView: View {
                 .font(Adaptive.size(.footnote, .system(size: 14)))
                 .foregroundStyle(.gray)
                 .fontWeight(.medium)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled()
+                .onChange(of: text) { _, newValue in
+                    let capitalized = newValue.capitalized
+                    if capitalized != newValue {
+                        text = capitalized
+                    }
+                }
                 .frame(height: Adaptive.size(46, 48))
                 .padding(.leading)
                 .background(Color.fieldBackground)
                 .clipShape(.rect(cornerRadius: 10))
-                .onChange(of: text) { _, newValue in
-                    let filtered = newValue.filter { $0.isLetter || $0.isWhitespace || $0 == "-" }
-                    text = String(filtered.prefix(InputLimits.maxNameLength))
-                }
         }
     }
 }

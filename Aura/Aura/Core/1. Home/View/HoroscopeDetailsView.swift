@@ -27,7 +27,9 @@ struct HoroscopeDetailsView: View {
                             .fontDesign(.monospaced)
                             .bold()
                         
-                        HoroscopeDateView(dateStart: horoscope.dateStart, dateEnd: horoscope.dateEnd, isCellDetails: true)
+                        HoroscopeDateView(dateStart: horoscope.dateStart,
+                                          dateEnd: horoscope.dateEnd,
+                                          isCellDetails: true)
                             .padding(10)
                             .background(Color.fieldBackground.opacity(0.45))
                             .clipShape(.rect(cornerRadius: 10))
@@ -45,9 +47,7 @@ struct HoroscopeDetailsView: View {
                             .font(Adaptive.size(.callout, .default))
                             .fontWeight(.semibold)
                         
-                        Text("""
-                            "\(horoscope.description)"
-                            """)
+                        Text(horoscope.description)
                             .font(.system(size: Adaptive.size(14, 15)))
                             .italic()
                             .foregroundStyle(.deepGray)

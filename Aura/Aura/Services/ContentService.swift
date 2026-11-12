@@ -10,6 +10,7 @@ import Foundation
 
 protocol ContentServiceProtocol {
     var historyCells: CurrentValueSubject<[HistoryCellModel], Never> { get }
+    var historyState: CurrentValueSubject<LoadState, Never> { get }
     var horoscope: CurrentValueSubject<HoroscopeModel?, Never> { get }
     var dailyInsight: CurrentValueSubject<DailyContentModel?, Never> { get }
     var dailyTip: CurrentValueSubject<DailyContentModel?, Never> { get }
@@ -26,6 +27,7 @@ protocol ContentServiceProtocol {
 
 final class ContentService: ObservableObject, ContentServiceProtocol {
     let historyCells = CurrentValueSubject<[HistoryCellModel], Never>([])
+    let historyState = CurrentValueSubject<LoadState, Never>(.loading)
     let horoscope = CurrentValueSubject<HoroscopeModel?, Never>(nil)
     let dailyInsight = CurrentValueSubject<DailyContentModel?, Never>(nil)
     let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
@@ -84,7 +86,11 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         let result = try await request {
             try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
         }
-        await reloadHistory()
+        let sessionID = authService.sessionID
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            _ = try? await fetchHistory()
+        }
         return result
     }
 
@@ -93,14 +99,29 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         let result = try await self.request {
             try await networkService.makeCompatibilityTest(request, requestID: requestID)
         }
-        await reloadHistory()
+        let sessionID = authService.sessionID
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            _ = try? await fetchHistory()
+        }
         return result
     }
 
     func fetchHistory() async throws -> [HistoryCellModel] {
-        let history = try await request { try await networkService.fetchHistory() }
-        historyCells.send(history)
-        return history
+        let sessionID = authService.sessionID
+        if historyCells.value.isEmpty { historyState.send(.loading) }
+
+        do {
+            let history = try await request { try await networkService.fetchHistory() }
+            historyState.send(.loaded)
+            historyCells.send(history)
+            return history
+        } catch {
+            if sessionID == authService.sessionID, historyCells.value.isEmpty {
+                historyState.send(.failed(error.userMessage))
+            }
+            throw error
+        }
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
@@ -112,12 +133,8 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         historyCells.send(historyCells.value.filter { $0.id != id })
     }
 
-    private func reloadHistory() async {
-        guard let history = try? await request({ try await networkService.fetchHistory() }) else { return }
-        historyCells.send(history)
-    }
-    
     private func clearContent() {
+        historyState.send(.loading)
         historyCells.send([])
         horoscope.send(nil)
         dailyInsight.send(nil)
@@ -125,9 +142,14 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     }
 
     private func request<T>(_ operation: () async throws -> T) async throws -> T {
+        let sessionID = authService.sessionID
+
         do {
-            return try await operation()
+            let result = try await operation()
+            guard sessionID == authService.sessionID else { throw NetworkError.cancelled }
+            return result
         } catch NetworkError.sessionExpired {
+            guard sessionID == authService.sessionID else { throw NetworkError.cancelled }
             authService.endExpiredSession()
             throw NetworkError.sessionExpired
         }

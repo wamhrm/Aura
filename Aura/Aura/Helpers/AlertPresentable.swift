@@ -25,3 +25,14 @@ extension Error {
         (self as? LocalizedError)?.errorDescription ?? "Что-то пошло не так. Попробуйте ещё раз"
     }
 }
+
+extension Binding where Value == Bool {
+    func removeDuplicates() -> Binding<Bool> {
+        Binding {
+            wrappedValue
+        } set: { newValue in
+            guard newValue != wrappedValue else { return }
+            wrappedValue = newValue
+        }
+    }
+}

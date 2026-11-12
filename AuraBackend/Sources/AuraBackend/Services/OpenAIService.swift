@@ -32,7 +32,7 @@ struct OpenAIService {
                                           analysis.overview.title,
                                           analysis.overview.description)
 
-                return PersonalityResultDTO(name: user.name,
+                return PersonalityResultDTO(name: user.name.capitalized,
                                             zodiacSign: userSign.rawValue,
                                             selectedTests: selectedTests.map(\.rawValue),
                                             archetypeTitle: analysis.archetypeTitle,
@@ -73,16 +73,17 @@ struct OpenAIService {
                                           analysis.forecast.potentialTitle,
                                           analysis.forecast.potentialDescription)
 
-                return CompatibilityResultDTO(userName: user.name,
+                return CompatibilityResultDTO(userName: user.name.capitalized,
                                               userZodiacSign: userSign.rawValue,
-                                              partnerName: partner.partnerName,
+                                              partnerName: partner.partnerName.capitalized,
                                               partnerZodiacSign: partnerSign.rawValue,
                                               compatibilityScore: score,
                                               selectedTests: selectedTests.map(\.rawValue),
                                               title: analysis.title,
                                               subtitle: analysis.subtitle,
                                               overview: analysis.overview,
-                                              emotionalBar: try validator.compatibilityBars(bars: analysis.emotionalBar),
+                                              emotionalBar: try validator.compatibilityBars(bars: analysis.emotionalBar,
+                                                                                                              score: score),
                                               sections: try validator.compatibilitySections(sections: analysis.sections,
                                                                                             selectedTests: selectedTests),
                                               forecast: analysis.forecast)

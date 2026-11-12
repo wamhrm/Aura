@@ -27,6 +27,34 @@ enum HistoryTestKind: String, Codable, Hashable {
 }
 
 extension HistoryCellModel {
+    var iconHandler: String {
+        switch kind {
+            case .personality:
+                zodiacSign.icon
+            case .compatibility:
+                partnerZodiacSign?.icon ?? "👤"
+        }
+    }
+
+    var titleText: String {
+        switch kind {
+            case .personality:
+                archetypeTitle
+            case .compatibility:
+                (partnerName ?? "").capitalized
+        }
+    }
+
+    var dateText: String {
+        guard let date = try? Date(createdAt, strategy: .iso8601) else { return "" }
+
+        return date.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "ru_RU")))
+    }
+
+    var compatibilityScoreText: String {
+        "\(compatibilityScore ?? 0)%"
+    }
+    
     static let personalityPlaceholder = HistoryCellModel(
         id: UUID(),
         kind: .personality,
@@ -54,34 +82,4 @@ extension HistoryCellModel {
         partnerZodiacSign: CompatibilityResultModel.mock.partnerZodiacSign,
         personalityResult: nil,
         compatibilityResult: CompatibilityResultModel.mock)
-}
-
-extension HistoryCellModel {
-    var iconHandler: String {
-        switch kind {
-            case .personality:
-                zodiacSign.icon
-            case .compatibility:
-                partnerZodiacSign?.icon ?? "👤"
-        }
-    }
-
-    var titleText: String {
-        switch kind {
-            case .personality:
-                archetypeTitle
-            case .compatibility:
-                partnerName ?? ""
-        }
-    }
-
-    var dateText: String {
-        guard let date = try? Date(createdAt, strategy: .iso8601) else { return "" }
-
-        return date.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "ru_RU")))
-    }
-
-    var compatibilityScoreText: String {
-        "\(compatibilityScore ?? 0)%"
-    }
 }

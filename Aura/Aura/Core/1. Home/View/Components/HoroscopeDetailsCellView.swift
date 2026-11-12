@@ -18,8 +18,7 @@ struct HoroscopeDetailsCellView: View {
                     .font(Adaptive.size(.title3, .title2))
                     .foregroundStyle(Color(type.color))
                     .padding(10)
-                    .frame(width: Adaptive.size(35, 35),
-                           height: Adaptive.size(35, 35))
+                    .frame(width: 35, height: 35)
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(type.color).opacity(0.2)))
                 
                 Text(type.title)

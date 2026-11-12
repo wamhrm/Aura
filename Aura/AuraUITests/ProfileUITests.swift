@@ -65,6 +65,28 @@ final class ProfileUITests: AuraUITestCase {
         XCTAssertTrue(server.requests.contains("PATCH /v1/auth/profileInfo"))
     }
 
+    func test_editForm_whenSavingFails_keepsInput_andAllowsRetry() throws {
+        server.respond(route: "PATCH /v1/auth/profileInfo", status: 500, body: try failingBody(serverError))
+        try launchSignedIn()
+        openSettings()
+        tapButton("Обновить информацию о себе")
+        let name = app.textFields["Введите имя"].firstMatch
+        fillField(name, text: "-Мария")
+        let enteredName = name.value as? String
+
+        tapButton("Готово")
+
+        XCTAssertEqual(alertText(), serverError)
+        closeAlert()
+        XCTAssertTrue(app.navigationBars["О вас"].exists)
+        XCTAssertEqual(name.value as? String, enteredName)
+
+        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: sampleUser()))
+        tapButton("Готово")
+
+        XCTAssertTrue(app.navigationBars["Профиль"].waitForExistence(timeout: 10), "the form did not close after retry")
+    }
+
     func test_settings_closeWithTheCross() throws {
         // Given
         try launchSignedIn()

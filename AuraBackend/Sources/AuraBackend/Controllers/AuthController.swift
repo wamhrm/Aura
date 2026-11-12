@@ -28,7 +28,7 @@ struct AuthController: RouteCollection {
 
     private func createAccount(req: Request) async throws -> Response {
         let data = try req.content.decode(CreateAccountRequest.self)
-        let name = data.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = data.name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
         let email = normalizedEmail(email: data.email)
 
         guard name.count >= InputLimits.minNameLength else {
@@ -98,10 +98,12 @@ struct AuthController: RouteCollection {
             throw Abort(.badRequest, reason: "Укажите корректный e-mail")
         }
 
-        if let user = try await User.query(on: req.db).filter(\.$email == email).first(), user.passwordHash != nil {
-            try await emailCodeService.sendReset(user: user, req: req)
+        guard let user = try await User.query(on: req.db).filter(\.$email == email).first(),
+              user.passwordHash != nil else {
+            throw Abort(.notFound, reason: "Такая почта не зарегистрирована")
         }
 
+        try await emailCodeService.sendReset(user: user, req: req)
         return .noContent
     }
 

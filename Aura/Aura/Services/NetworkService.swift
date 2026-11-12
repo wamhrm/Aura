@@ -79,7 +79,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     }
 
     func requestPasswordReset(email: String) async throws {
-        let body = try JSONEncoder().encode(PasswordResetRequestBody(email: email))
+        let body = try JSONEncoder().encode(EmailBody(email: email))
         _ = try await send(endpoint: "/auth/password/forgot", method: .post, body: body)
     }
 
@@ -215,7 +215,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.setValue(idempotencyKey.uuidString, forHTTPHeaderField: "Idempotency-Key")
         }
 
-        let token = try? keychain.loadAuthToken()
+        let token = try keychain.loadAuthToken()
         if let token {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -290,10 +290,6 @@ private struct AuthSignInBody: Encodable {
 }
 
 private struct EmailBody: Encodable {
-    let email: String
-}
-
-private struct PasswordResetRequestBody: Encodable {
     let email: String
 }
 

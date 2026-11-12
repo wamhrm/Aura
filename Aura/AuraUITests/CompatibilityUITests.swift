@@ -22,7 +22,8 @@ final class CompatibilityUITests: AuraUITestCase {
 
         // When the name is filled in
         scrollUp(element: app.textFields["Введите имя"].firstMatch)
-        fillField(app.textFields["Введите имя"].firstMatch, text: "Анна-Мария")
+        fillField(app.textFields["Введите имя"].firstMatch, text: "O’Connor")
+        XCTAssertEqual(app.textFields["Введите имя"].firstMatch.value as? String, "O’Connor")
         tapButton("Узнать совместимость")
 
         // Then
@@ -85,7 +86,7 @@ final class CompatibilityUITests: AuraUITestCase {
         }
 
         // When one of the three selected tests is removed
-        firstTest.buttons.firstMatch.tap()
+        app.buttons["Убрать Астрология пары"].firstMatch.tap()
 
         // Then
         XCTAssertEqual(alertText(), "Нельзя выбрать меньше 3 тестов")
@@ -93,7 +94,7 @@ final class CompatibilityUITests: AuraUITestCase {
 
         // When all tests are selected, one can be removed
         tapButton("Выбрать все")
-        firstTest.buttons.firstMatch.tap()
+        app.buttons["Убрать Астрология пары"].firstMatch.tap()
 
         // Then
         XCTAssertEqual(app.alerts.count, 0)

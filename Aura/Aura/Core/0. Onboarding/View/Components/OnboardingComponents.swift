@@ -43,6 +43,13 @@ struct OnboardingTextField: View {
             .textContentType(type.contentType)
             .textInputAutocapitalization(type == .name ? .words : .never)
             .autocorrectionDisabled()
+            .onChange(of: text) { _, newValue in
+                guard type == .name else { return }
+                let capitalized = newValue.capitalized
+                if capitalized != newValue {
+                    text = capitalized
+                }
+            }
 
             if type.isSecure {
                 Button {
@@ -143,51 +150,6 @@ enum OnboardingTextFieldTypes: String {
     }
 }
 
-struct LoadingView: View {
-    let title: String
-    @State private var isRotating = false
-
-    var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
-
-            ZStack {
-                Circle()
-                    .stroke(Color.fieldBorder, lineWidth: 5)
-
-                Circle()
-                    .trim(from: 0, to: 0.3)
-                    .stroke(.tint, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(isRotating ? 360 : 0))
-                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isRotating)
-
-                Image(systemName: "sparkles")
-                    .font(.system(size: 20))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.tint)
-            }
-            .frame(width: 40, height: 40)
-
-            Text(title)
-                .font(Adaptive.size(.title3, .callout))
-                .bold()
-                .multilineTextAlignment(.center)
-
-            Spacer()
-        }
-        .padding(.horizontal)
-        .onAppear {
-            isRotating = true
-        }
-    }
-}
-
-#Preview("Loading") {
-    ZStack {
-        BackgroundView()
-        LoadingView(title: "Сохраняем профиль и настройки")
-    }
-}
 
 #Preview {
     ScrollView {

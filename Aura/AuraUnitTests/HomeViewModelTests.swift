@@ -11,6 +11,44 @@ import XCTest
 
 @MainActor
 final class HomeViewModelTests: XCTestCase {
+    func test_refreshIfNeeded_doesNotRepeatTodaysInitialRequests() async {
+        let content = MockContentService()
+        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
+        await waitUntil { !viewModel.showsLoadingScreen }
+
+        await viewModel.refreshIfNeeded()
+
+        XCTAssertEqual(content.horoscopeCount, 1)
+        XCTAssertEqual(content.insightCount, 1)
+    }
+
+    func test_confirmationCode_withSixLetters_sendsNothing() {
+        let auth = MockAuthService()
+        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
+        viewModel.code = "abcdef"
+
+        viewModel.confirm()
+
+        XCTAssertTrue(viewModel.showAlert)
+        XCTAssertNil(auth.confirmedCode)
+        XCTAssertFalse(viewModel.isLoading)
+    }
+
+    func test_resendingConfirmationCode_usesTheSendingTitle() async {
+        let viewModel = EmailConfirmationViewModel(authService: MockAuthService(), email: "anna@mail.ru")
+        viewModel.sendCode()
+        await waitUntil { viewModel.isCodeSent && !viewModel.isLoading }
+        viewModel.code = "123456"
+        viewModel.confirm()
+        await waitUntil { !viewModel.isLoading }
+        XCTAssertEqual(viewModel.loadingTitle, "Проверяем...")
+
+        viewModel.sendCode()
+
+        XCTAssertEqual(viewModel.loadingTitle, "Отправляем...")
+        await waitUntil { !viewModel.isLoading }
+    }
+
     func test_refresh_hidesOutdatedInsight_beforeRequestingNewContent() async {
         let content = MockContentService()
         content.dailyContentDate = "2000-01-01"
@@ -170,7 +208,6 @@ final class HomeViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
         XCTAssertTrue(viewModel.isCodeSent)
-        XCTAssertTrue(viewModel.isSheetExtended)
     }
 
     func test_sendCode_whenTheServerFails_keepsTheCodeFieldClosed() async {
@@ -186,7 +223,6 @@ final class HomeViewModelTests: XCTestCase {
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
         XCTAssertFalse(viewModel.isCodeSent)
-        XCTAssertFalse(viewModel.isSheetExtended)
     }
 
     func test_personalityRetry_reusesTheRequestID_untilTheAnswersChange() async throws {
@@ -246,34 +282,37 @@ final class HomeViewModelTests: XCTestCase {
         let content = MockContentService()
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         let viewModel = HomeViewModel(authService: auth, contentService: content)
+        await waitUntil { !viewModel.showsLoadingScreen }
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
         await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.showsLoadingScreen }
 
         XCTAssertEqual(auth.aiConsentCount, 1)
-        XCTAssertGreaterThanOrEqual(content.insightCount, 1)
-        XCTAssertGreaterThanOrEqual(content.tipCount, 1)
+        XCTAssertEqual(content.insightCount, 1)
+        XCTAssertEqual(content.tipCount, 0)
     }
 
-    func test_allowAIConsent_withPersonalityHistory_alsoLoadsTheTip() async {
+    func test_allowAIConsent_withPersonalityHistory_leavesTheTipToProfile() async {
         let content = MockContentService()
         content.historyCells.send([.personalityPlaceholder])
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
                                       contentService: content)
+        await waitUntil { !viewModel.showsLoadingScreen }
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
         await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.showsLoadingScreen }
 
-        XCTAssertGreaterThanOrEqual(content.insightCount, 1)
-        XCTAssertGreaterThanOrEqual(content.tipCount, 1)
+        XCTAssertEqual(content.insightCount, 1)
+        XCTAssertEqual(content.tipCount, 0)
     }
 
     func test_failedInfoUpdate_staysOnTheConsentScreen() async {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         auth.errorToThrow = serverError
         let viewModel = HomeViewModel(authService: auth, contentService: MockContentService())
+        await waitUntil { !viewModel.showsLoadingScreen }
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()

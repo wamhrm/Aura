@@ -48,7 +48,8 @@ struct ProfileController: RouteCollection {
             throw Abort(.badRequest, reason: "Укажите время рождения в формате ЧЧ:ММ")
         }
 
-        guard ProfileInfoOptions.socialTypes.contains(profileInfo.socialType),
+        guard ProfileInfoOptions.genders.contains(profileInfo.gender),
+              ProfileInfoOptions.socialTypes.contains(profileInfo.socialType),
               ProfileInfoOptions.conflictStyles.contains(profileInfo.conflictStyle),
               ProfileInfoOptions.emotionalCores.contains(profileInfo.emotionalCore),
               ProfileInfoOptions.decisionStyles.contains(profileInfo.decisionStyle),
@@ -56,7 +57,7 @@ struct ProfileController: RouteCollection {
             throw Abort(.badRequest, reason: "Некорректные данные профиля")
         }
 
-        if let name = profileInfo.name?.trimmingCharacters(in: .whitespacesAndNewlines) {
+        if let name = profileInfo.name?.trimmingCharacters(in: .whitespacesAndNewlines).capitalized {
             guard name.count >= InputLimits.minNameLength else {
                 throw Abort(.badRequest, reason: "Имя должно содержать минимум 2 символа")
             }
@@ -69,6 +70,7 @@ struct ProfileController: RouteCollection {
 
         user.dateOfBirth = dateOfBirth
         user.birthTime = birthTime
+        user.gender = profileInfo.gender
         user.socialType = profileInfo.socialType
         user.conflictStyle = profileInfo.conflictStyle
         user.emotionalCore = profileInfo.emotionalCore

@@ -11,6 +11,83 @@ import XCTest
 
 @MainActor
 final class OnboardingViewModelTests: XCTestCase {
+    func test_lateProfileResponse_doesNotEndLoadingOfANewSignIn() async {
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
+        auth.profileSaveDelay = .milliseconds(100)
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.chooseAIConsent(true)
+        await waitUntil { auth.savedProfile != nil }
+        auth.endExpiredSession()
+        await waitUntil { !viewModel.isLoading }
+        auth.serverUser = makeUser()
+        viewModel.email = "anna@mail.ru"
+        viewModel.password = "12345678"
+        viewModel.signIn()
+        await waitUntil { auth.profileSaveFinished }
+
+        XCTAssertTrue(viewModel.isLoading)
+        await waitUntil { auth.showsMainScreen }
+        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
+        XCTAssertEqual(auth.aiConsentCount, 0)
+    }
+
+    func test_signIn_discardsTheAbandonedRegistrationDraft() async {
+        let auth = MockAuthService()
+        auth.serverUser = makeUser(dateOfBirth: nil, socialType: nil)
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.birthDate = BirthDateFormatter.date(string: "01.01.1990")!
+        viewModel.knowsBirthTime = true
+        viewModel.profileInfo.gender = "man"
+        viewModel.profileInfo.socialType = "introvert"
+        viewModel.onboardingRoutes = [.nameAndBirth, .email]
+        viewModel.showSignIn()
+
+        await signIn(viewModel, auth: auth)
+
+        XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth])
+        XCTAssertEqual(viewModel.birthDate, BirthDateFormatter.defaultDate)
+        XCTAssertFalse(viewModel.knowsBirthTime)
+        XCTAssertNil(viewModel.profileInfo.socialType)
+    }
+
+    func test_emailResponse_afterGoingBack_doesNotOpenPassword() async {
+        let auth = MockAuthService()
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.email = "anna@mail.ru"
+        viewModel.onboardingRoutes = [.nameAndBirth, .email]
+        auth.beforeEmailResponse = { viewModel.goBack() }
+
+        viewModel.continueFromEmail()
+        await waitUntil { !viewModel.isCheckingEmail }
+
+        XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth])
+        XCTAssertFalse(viewModel.showAlert)
+    }
+
+    func test_emailResponse_afterEditingTheAddress_doesNotOpenPassword() async {
+        let auth = MockAuthService()
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.email = "anna@mail.ru"
+        viewModel.onboardingRoutes = [.email]
+        auth.beforeEmailResponse = { viewModel.email = "other@mail.ru" }
+
+        viewModel.continueFromEmail()
+        await waitUntil { !viewModel.isCheckingEmail }
+
+        XCTAssertEqual(viewModel.onboardingRoutes, [.email])
+        XCTAssertFalse(viewModel.showAlert)
+    }
+
+    func test_nameLongerThanTheLimit_doesNotOpenTheEmailStep() {
+        let viewModel = makeViewModel(auth: MockAuthService())
+        viewModel.name = String(repeating: "A", count: InputLimits.maxNameLength + 1)
+
+        viewModel.continueFromNameAndBirth()
+
+        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
+        XCTAssertTrue(viewModel.showAlert)
+    }
+
     func test_failedSignOut_showsError_andKeepsCurrentStep() async {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         let viewModel = makeViewModel(auth: auth)
@@ -83,71 +160,21 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(auth.createAccountCount, 0)
     }
 
-    func test_switchingBetweenRegistrationAndSignIn_clearsTheFields() async {
+    func test_showSignIn_clearsTheRegistrationFields() {
         // Given
-        let auth = MockAuthService()
-        auth.serverUser = makeUser(dateOfBirth: nil)
-        let viewModel = makeViewModel(auth: auth)
-        viewModel.onboardingRoutes = [.signIn]
-        viewModel.email = "anna@mail.ru"
-        viewModel.password = "12345678"
-
-        // When registration starts from the sign-in screen
-        viewModel.showSignUp()
-
-        // Then
-        XCTAssertEqual(viewModel.email, "")
-        XCTAssertEqual(viewModel.password, "")
-
+        let viewModel = makeViewModel(auth: MockAuthService())
         viewModel.name = "Анна"
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
-        viewModel.continueFromNameAndBirth()
-        var routes = viewModel.onboardingRoutes
-        viewModel.onboardingRoutes.removeLast()
-        viewModel.resetTextFields(from: routes, to: viewModel.onboardingRoutes)
-        XCTAssertEqual(viewModel.email, "anna@mail.ru")
 
-        routes = viewModel.onboardingRoutes
-        viewModel.onboardingRoutes.removeLast()
-        viewModel.resetTextFields(from: routes, to: viewModel.onboardingRoutes)
+        // When
+        viewModel.showSignIn()
+
+        // Then
+        XCTAssertEqual(viewModel.onboardingRoutes, [.signIn])
         XCTAssertEqual(viewModel.name, "")
         XCTAssertEqual(viewModel.email, "")
         XCTAssertEqual(viewModel.password, "")
-
-        // When the draft is abandoned and the user signs in
-        viewModel.name = "Анна"
-        viewModel.continueFromNameAndBirth()
-        viewModel.onboardingRoutes = []
-        viewModel.showSignIn()
-        viewModel.email = "anna@mail.ru"
-        viewModel.password = "12345678"
-        viewModel.signIn()
-        await waitUntil { !viewModel.isLoading }
-
-        // Then the old registration does not skip the date step
-        XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth])
-        XCTAssertEqual(viewModel.name, "Дмитрий")
-        XCTAssertEqual(viewModel.email, "")
-        XCTAssertEqual(viewModel.password, "")
-    }
-
-    func test_returningFromPasswordReset_keepsTheSignInFields() {
-        // Given
-        let viewModel = makeViewModel(auth: MockAuthService())
-        viewModel.onboardingRoutes = [.signIn]
-        viewModel.email = "anna@mail.ru"
-        viewModel.password = "12345678"
-        viewModel.showPasswordReset()
-        let routes = viewModel.onboardingRoutes
-
-        // When
-        viewModel.onboardingRoutes.removeLast()
-        viewModel.resetTextFields(from: routes, to: viewModel.onboardingRoutes)
-
-        // Then
-        XCTAssertEqual(viewModel.email, "anna@mail.ru")
-        XCTAssertEqual(viewModel.password, "12345678")
     }
 
     func test_resetCode_withLetters_showsAlert_andSendsNothing() {
@@ -227,6 +254,7 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.alertMessage, "Ответьте на все вопросы")
         XCTAssertEqual(auth.createAccountCount, 0)
 
+        viewModel.profileInfo.gender = "man"
         viewModel.profileInfo.socialType = "introvert"
         viewModel.profileInfo.conflictStyle = "mediator"
         viewModel.profileInfo.emotionalCore = "logic"
@@ -246,6 +274,7 @@ final class OnboardingViewModelTests: XCTestCase {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         let viewModel = makeViewModel(auth: auth)
         viewModel.onboardingRoutes = [.psychotype]
+        viewModel.profileInfo.gender = "man"
         viewModel.profileInfo.socialType = "introvert"
         viewModel.profileInfo.conflictStyle = "mediator"
         viewModel.profileInfo.emotionalCore = "logic"
@@ -266,6 +295,7 @@ final class OnboardingViewModelTests: XCTestCase {
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
         viewModel.onboardingRoutes = [.psychotype]
+        viewModel.profileInfo.gender = "man"
         viewModel.profileInfo.socialType = "introvert"
         viewModel.profileInfo.conflictStyle = "mediator"
         viewModel.profileInfo.emotionalCore = "logic"
@@ -311,7 +341,6 @@ final class OnboardingViewModelTests: XCTestCase {
 
         // Then
         XCTAssertTrue(auth.showsMainScreen)
-        XCTAssertTrue(auth.didAskAIConsent)
         XCTAssertEqual(auth.aiConsentCount, 0)
     }
 
@@ -343,14 +372,14 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(auth.aiConsentCount, 0)
     }
 
-    func test_sessionExpiration_duringProfileSave_cancelsPreparation_andDoesNotFinish() async {
+    func test_sessionExpiration_duringProfileSave_doesNotContinueOnboarding() async {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
-        auth.profileSaveDelay = .seconds(30)
+        auth.profileSaveDelay = .milliseconds(100)
         let viewModel = makeViewModel(auth: auth)
         viewModel.chooseAIConsent(true)
         await waitUntil { auth.savedProfile != nil }
 
-        auth.authState.send(.signedOut)
+        auth.endExpiredSession()
         await waitUntil { auth.profileSaveFinished }
 
         XCTAssertFalse(auth.showsMainScreen)

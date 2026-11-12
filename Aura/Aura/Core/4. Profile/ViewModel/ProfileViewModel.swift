@@ -26,17 +26,15 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var hasPersonalityTests = false
     @Published var showSettings = false
     @Published var showSignOutAlert = false
     @Published var showDeleteAccountAlert = false
     @Published var showDeleteAccountError = false
     @Published private(set) var isDeletingAccount = false
 
-    private var personalityResult: PersonalityResultModel?
-    private var loadedPersonalityId: UUID?
+    @Published private var personalityResult: PersonalityResultModel?
+    private var personalityHistoryID: UUID?
     private var currentUserId: UUID?
-    private var savingStarted: ContinuousClock.Instant?
     private var openProfileFormAfterSettings = false
 
     private let authService: any AuthServiceProtocol
@@ -50,6 +48,10 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         self.contentService = contentService
 
         setupSubscriptions()
+    }
+
+    var hasPersonalityTests: Bool {
+        personalityResult != nil
     }
 
     var profileDisplayHandler: ProfileDisplayModel {
@@ -73,9 +75,17 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
         contentService.historyCells
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] cells in
+            .sink { [weak self] _ in
                 guard let self else { return }
-                Task { await loadPersonality(from: cells) }
+                Task { await loadPersonality() }
+            }
+            .store(in: &cancellables)
+
+        contentService.historyState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self, !hasPersonalityTests, state != .loaded else { return }
+                personalityState = state
             }
             .store(in: &cancellables)
 
@@ -108,7 +118,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
         guard currentUserId == user.id else {
             currentUserId = user.id
-            Task { await refresh() }
+            Task { await loadDailyTip() }
             return
         }
 
@@ -119,6 +129,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     func refresh() async {
         guard currentUserId != nil else { return }
+        let sessionID = authService.sessionID
 
         if dailyTip?.isFromToday != true {
             dailyTip = nil
@@ -127,14 +138,15 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         }
 
         do {
-            let history = try await contentService.fetchHistory()
-            await loadPersonality(from: history)
+            _ = try await contentService.fetchHistory()
         } catch {
+            guard sessionID == authService.sessionID else { return }
             if !hasPersonalityTests {
                 personalityState = .failed(error.userMessage)
             }
         }
 
+        guard sessionID == authService.sessionID else { return }
         await loadDailyTip()
     }
 
@@ -149,16 +161,20 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     private func loadDailyTip() async {
         guard user?.allowsAIAnalysis == true, user?.dateOfBirth != nil else { return }
         if dailyTip?.isFromToday == true { return }
+        let sessionID = authService.sessionID
 
-        if dailyTip == nil {
-            tipState = .loading
-        }
+        dailyTip = nil
+        tipState = .loading
+        updateProfileDisplay()
 
         do {
-            dailyTip = try await contentService.fetchDailyTip()
+            let tip = try await contentService.fetchDailyTip()
+            guard sessionID == authService.sessionID else { return }
+            dailyTip = tip
             tipState = .loaded
             updateProfileDisplay()
         } catch {
+            guard sessionID == authService.sessionID else { return }
             if dailyTip?.isFromToday != true {
                 dailyTip = nil
                 tipState = .failed(error.userMessage)
@@ -167,32 +183,34 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    private func loadPersonality(from history: [HistoryCellModel]) async {
-        guard currentUserId != nil else { return }
+    private func loadPersonality() async {
+        guard currentUserId != nil, contentService.historyState.value == .loaded else { return }
+        let sessionID = authService.sessionID
 
-        guard let latest = history.first(where: { $0.kind == .personality }) else {
+        guard let latest = contentService.historyCells.value.first(where: { $0.kind == .personality }) else {
             clearPersonality()
             return
         }
 
-        if loadedPersonalityId == latest.id, personalityResult != nil {
-            return
-        }
-
-        if !hasPersonalityTests {
-            personalityState = .loading
-        }
+        guard personalityHistoryID != latest.id else { return }
+        personalityHistoryID = latest.id
+        if !hasPersonalityTests { personalityState = .loading }
 
         do {
-            let historyDetails = try await contentService.fetchHistoryDetails(id: latest.id)
-            guard let result = historyDetails.personalityResult else {
+            let details = try await contentService.fetchHistoryDetails(id: latest.id)
+            guard sessionID == authService.sessionID,
+                  personalityHistoryID == latest.id,
+                  contentService.historyCells.value.first(where: { $0.kind == .personality })?.id == latest.id else { return }
+            guard let result = details.personalityResult else {
                 clearPersonality()
                 return
             }
-
-            loadedPersonalityId = latest.id
             applyPersonality(result: result)
         } catch {
+            guard sessionID == authService.sessionID,
+                  personalityHistoryID == latest.id,
+                  contentService.historyCells.value.first(where: { $0.kind == .personality })?.id == latest.id else { return }
+            personalityHistoryID = nil
             if !hasPersonalityTests {
                 personalityState = .failed(error.userMessage)
             }
@@ -202,7 +220,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     func showAddProfileInfo() {
         guard let user else { return }
 
-        profileForm = ProfileFormViewModel(authService: authService, user: user)
+        profileForm = ProfileFormViewModel(user: user)
         profileRoutes.append(.addProfileInfo)
     }
 
@@ -217,26 +235,41 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         showAddProfileInfo()
     }
 
-    func noteProfileSaving(_ isSaving: Bool) {
-        if isSaving {
-            if savingStarted == nil { savingStarted = .now }
-        } else {
-            savingStarted = nil
-        }
-        isSavingProfile = isSaving
-    }
+    func saveProfileInfo() {
+        guard let profileForm, !isSavingProfile else { return }
 
-    func finishProfileEditing() async {
-        if let savingStarted {
-            let deadline = savingStarted.advanced(by: .seconds(0.35))
-            try? await Task.sleep(until: deadline, clock: .continuous)
+        let request: ProfileInfoModel
+        do {
+            request = try profileForm.profileInfoRequest()
+        } catch {
+            profileForm.presentAlert(error.userMessage)
+            return
         }
 
-        profileRoutes = []
-        try? await Task.sleep(for: .milliseconds(50))
-        isSavingProfile = false
-        savingStarted = nil
-        profileForm = nil
+        isSavingProfile = true
+
+        let sessionID = authService.sessionID
+
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
+
+            do {
+                _ = try await authService.updateProfileInfo(request)
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
+                profileRoutes = []
+                try await Task.sleep(for: .milliseconds(50))
+                guard sessionID == authService.sessionID else { return }
+                self.profileForm = nil
+            } catch {
+                guard sessionID == authService.sessionID else { return }
+                profileForm.presentAlert(error.userMessage)
+            }
+
+            guard sessionID == authService.sessionID else { return }
+            isSavingProfile = false
+        }
     }
 
     func openSettings() {
@@ -289,14 +322,12 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     private func applyPersonality(result: PersonalityResultModel) {
         personalityResult = result
-        hasPersonalityTests = true
         personalityState = .loaded
         updateProfileDisplay()
     }
 
     private func clearPersonality() {
-        loadedPersonalityId = nil
-        hasPersonalityTests = false
+        personalityHistoryID = nil
         personalityResult = nil
         personalityState = .loaded
         updateProfileDisplay()

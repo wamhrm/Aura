@@ -11,6 +11,17 @@ import XCTest
 
 @MainActor
 final class CompatibilityViewModelTests: XCTestCase {
+    func test_partnerNameLongerThanTheLimit_sendsNothing() async {
+        let content = MockContentService()
+        let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
+        viewModel.partnerInfo.name = String(repeating: "A", count: InputLimits.maxNameLength + 1)
+
+        viewModel.makeCompatibilityTest()
+        await waitUntil { viewModel.showAlert }
+
+        XCTAssertTrue(content.compatibilityRequests.isEmpty)
+    }
+
     func test_partnerName_ofSpacesAndOneLetter_showsAlert_andSendsNothing() async {
         // Given
         let content = MockContentService()

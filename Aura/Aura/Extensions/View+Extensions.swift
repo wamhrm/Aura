@@ -65,7 +65,11 @@ extension View {
     }
     
     func compatibilityResultZodiacsModifier() -> some View {
-        modifier(CompatibilityResultZodiacsModifier())
+        self
+            .font(Adaptive.size(.callout, .default))
+            .padding(Adaptive.size(10, 12))
+            .background(.tint.opacity(0.25))
+            .clipShape(.circle)
     }
 
     func zodiacSignModifier() -> some View {
@@ -97,16 +101,5 @@ extension View {
             .padding(.top, 10)
             .foregroundStyle(.white)
             .padding(padding)
-    }
-}
-
-private struct CompatibilityResultZodiacsModifier: ViewModifier {
-
-    func body(content: Content) -> some View {
-        content
-            .font(Adaptive.size(.callout, .default))
-            .padding(Adaptive.size(10, 12))
-            .background(.tint.opacity(0.25))
-            .clipShape(.circle)
     }
 }

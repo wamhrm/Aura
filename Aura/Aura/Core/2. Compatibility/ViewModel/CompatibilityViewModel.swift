@@ -84,7 +84,8 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         guard !isLoading else { return }
 
         if let currentUser, !currentUser.hasConfirmedEmail {
-            emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
+            emailConfirmation = EmailConfirmationViewModel(authService: authService,
+                                                           email: currentUser.email ?? "")
             return
         }
 
@@ -99,21 +100,28 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         let requestID = currentCompatibilityRequestID(for: request)
 
         isLoading = true
+        let sessionID = authService.sessionID
+
         Task {
-            defer { isLoading = false }
-            let started = ContinuousClock.now
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                compatibilityResult = try await contentService.makeCompatibilityTest(request: request, requestID: requestID)
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
-                clearFields()
+                compatibilityResult = try await contentService.makeCompatibilityTest(request: request,
+                                                                                     requestID: requestID)
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 compatibilityRoutes.append(.compatibilityResults)
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
+                guard sessionID == authService.sessionID else { return }
+                clearFields()
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
             }
+
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
         }
     }
 
@@ -144,6 +152,9 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         guard name.count >= InputLimits.minNameLength else {
             throw PartnerInfoError.invalidName
         }
+        guard name.count <= InputLimits.maxNameLength else {
+            throw PartnerInfoError.nameTooLong
+        }
     }
     
     private func clearFields() {
@@ -155,11 +166,12 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 }
 
 fileprivate enum PartnerInfoError: LocalizedError {
-    case invalidName
+    case invalidName, nameTooLong
 
     var errorDescription: String? {
         switch self {
             case .invalidName: "Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа"
+            case .nameTooLong: "Имя партнёра должно быть не длиннее \(InputLimits.maxNameLength) символов"
         }
     }
 }

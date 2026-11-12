@@ -21,11 +21,10 @@ struct TestCellView<Test: TestCellDisplayable>: View {
     let hasChosenTest: Bool
     let onSelectionToggle: () -> Void
     let onTapHandler: () -> Void
-    
 
     var body: some View {
-        Button(action: onTapHandler) {
-            HStack(spacing: 15) {
+        HStack(spacing: 15) {
+            Button(action: onTapHandler) {
                 HStack(spacing: 15) {
                     TestCellImage(icon: type.icon, color: type.color, iconSize: .title2, backgroundSize: Adaptive.size(43, 45), isResults: false)
 
@@ -59,6 +58,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
                     }
                     .padding(.trailing, 5)
             }
+            .accessibilityLabel(hasChosenTest ? "Убрать \(type.title)" : "Выбрать \(type.title)")
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -170,11 +170,11 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 
     var description: String {
         switch self {
-            case .astrology: "Совместимость ваших знаков"
-            case .behavioralPatterns: "Как вы ведете себя"
-            case .attachmentCompatibility: "Безопасность и дистанция"
-            case .loveLanguages: "Как вы даете и принимаете любовь"
-            case .conflictResolution: "Триггеры и ссоры"
+            case .astrology: "Сочетание солнечных знаков, точки гармонии и возможные противоречия"
+            case .behavioralPatterns: "Ваши особенности поведения и возможные сценарии взаимодействия"
+            case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ"
+            case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях"
+            case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения"
         }
     }
 
@@ -200,11 +200,11 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
 
     var deepDescription: String {
         switch self {
-            case .astrology: "Сравните ваши знаки зодиака и узнайте, где между вами возникает легкость, напряжение, притяжение и долгосрочный потенциал."
-            case .behavioralPatterns: "Разберите, как ваши привычные реакции сочетаются в паре: кто сближается, кто отдаляется, где возникает поддержка, а где недопонимание."
-            case .attachmentCompatibility: "Поймите, насколько ваши стили привязанности подходят друг другу и какие сценарии могут создавать тревогу, холодность или ощущение безопасности."
-            case .loveLanguages: "Сравните ваши способы проявлять любовь, принимать заботу и чувствовать значимость в отношениях."
-            case .conflictResolution: "Узнайте, как вы оба ведете себя в конфликте, какие триггеры усиливают ссоры и какие способы примирения подходят вашей паре."
+            case .astrology: "Сочетание солнечных знаков, точки гармонии и возможные противоречия. Это не натальная карта и не расчёт планет."
+            case .behavioralPatterns: "Ваши особенности поведения и возможные сценарии взаимодействия. Привычки партнёра по этим данным неизвестны."
+            case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ. Стиль привязанности партнёра по этим данным не определяется."
+            case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях. Язык любви партнёра по этим данным неизвестен."
+            case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения. Реакции партнёра в ссоре по этим данным неизвестны."
         }
     }
 

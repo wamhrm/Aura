@@ -15,9 +15,8 @@ enum AuthState {
 
 protocol AuthServiceProtocol {
     var authState: CurrentValueSubject<AuthState, Never> { get }
-    var didAskAIConsent: Bool { get }
+    var sessionID: UUID? { get }
 
-    func noteAIConsentAsked()
     func finishOnboarding()
     func createAccount(name: String, email: String, password: String) async throws
     func ensureEmailAvailable(email: String) async throws
@@ -38,7 +37,7 @@ protocol AuthServiceProtocol {
 final class AuthService: ObservableObject, AuthServiceProtocol {
     private(set) var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
     @Published private(set) var showsMainScreen = false
-    private(set) var didAskAIConsent = false
+    private(set) var sessionID: UUID?
 
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
@@ -53,10 +52,6 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         self.userDefaults = userDefaults
 
         autoSignIn()
-    }
-
-    func noteAIConsentAsked() {
-        didAskAIConsent = true
     }
 
     func finishOnboarding() {
@@ -105,6 +100,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let response = try await self.request {
             try await networkService.updateProfileInfo(request)
         }
+        guard case .signedIn(let user) = authState.value, user.id == response.user.id else {
+            throw NetworkError.sessionExpired
+        }
         saveUser(response.user)
         return response
     }
@@ -112,6 +110,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     func giveAIConsent() async throws {
         let user = try await request {
             try await networkService.giveAIConsent()
+        }
+        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else {
+            throw NetworkError.sessionExpired
         }
         saveUser(user)
     }
@@ -126,11 +127,16 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let user = try await request {
             try await networkService.confirmEmail(code: code)
         }
+        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else {
+            throw NetworkError.sessionExpired
+        }
         saveUser(user)
     }
 
     func signOut() async throws {
+        let sessionID = sessionID
         try? await networkService.logout()
+        guard sessionID == self.sessionID else { throw NetworkError.cancelled }
         try endSession()
     }
 
@@ -157,9 +163,14 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     }
 
     private func request<T>(_ operation: () async throws -> T) async throws -> T {
+        let sessionID = sessionID
+
         do {
-            return try await operation()
+            let result = try await operation()
+            guard sessionID == self.sessionID else { throw NetworkError.cancelled }
+            return result
         } catch NetworkError.sessionExpired {
+            guard sessionID == self.sessionID else { throw NetworkError.cancelled }
             endExpiredSession()
             throw NetworkError.sessionExpired
         }
@@ -168,19 +179,21 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private func endSession() throws {
         try keychain.deleteAuthToken()
         userDefaults.removeObject(forKey: Constants.userKey)
+        sessionID = nil
         showsMainScreen = false
-        didAskAIConsent = false
         authState.send(.signedOut)
     }
 
     private func autoSignIn() {
         guard (try? keychain.loadAuthToken()) != nil, let user = loadUser() else { return }
+        sessionID = UUID()
         authState.send(.signedIn(user))
         openMainIfProfileIsComplete()
     }
 
     private func startSession(response: AuthTokenResponse) throws {
         try keychain.saveAuthToken(response.token)
+        sessionID = UUID()
         saveUser(response.user)
     }
 

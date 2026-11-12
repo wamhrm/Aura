@@ -70,7 +70,7 @@ final class ModelTests: XCTestCase {
     func test_partnerRequest_trimsTheName_andSendsTimeOnlyWhenItIsKnown() {
         // Given
         var partner = PartnerInfoModel()
-        partner.name = "  Анна  "
+        partner.name = "  анна  "
 
         // When
         let withoutTime = partner.compatibilityTestRequest(selectedTests: [.astrology])
@@ -110,17 +110,19 @@ final class ModelTests: XCTestCase {
 
     // MARK: - Birth date
     func test_birthDateRange_allowsOnlyAgesFrom16To100() {
-        // Given
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
         let range = BirthDateFormatter.dateRange
+        let age16 = calendar.date(byAdding: .year, value: -16, to: today)!
+        let age100 = calendar.date(byAdding: .year, value: -100, to: today)!
+        let age100AndSixMonths = calendar.date(byAdding: .month, value: -6, to: age100)!
+        let age101 = calendar.date(byAdding: .year, value: -101, to: today)!
+        let age15 = calendar.date(byAdding: .day, value: 1, to: age16)!
 
-        // When
-        let age15 = Calendar.current.date(byAdding: .year, value: -15, to: Date()) ?? Date()
-        let age17 = Calendar.current.date(byAdding: .year, value: -17, to: Date()) ?? Date()
-        let age101 = Calendar.current.date(byAdding: .year, value: -101, to: Date()) ?? Date()
-
-        // Then
+        XCTAssertTrue(range.contains(age16))
+        XCTAssertTrue(range.contains(age100))
+        XCTAssertTrue(range.contains(age100AndSixMonths))
         XCTAssertFalse(range.contains(age15))
-        XCTAssertTrue(range.contains(age17))
         XCTAssertFalse(range.contains(age101))
     }
 
@@ -129,7 +131,7 @@ final class ModelTests: XCTestCase {
         // Given
         let complete = makeUser()
         let withoutBirthDate = makeUser(dateOfBirth: nil)
-        let withoutAnAnswer = makeUser(socialType: nil)
+        let withoutAnAnswer = makeUser(gender: nil)
 
         // When
         let results = [complete, withoutBirthDate, withoutAnAnswer].map(\.hasCompletedProfileInfo)

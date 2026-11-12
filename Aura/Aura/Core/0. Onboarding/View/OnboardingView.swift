@@ -76,30 +76,32 @@ struct OnboardingView: View {
                 .navigationDestination(for: OnboardingRoutes.self) { destination in
                     destinationView(destination)
                 }
-            }
-            .onChange(of: vm.onboardingRoutes) { previous, current in
-                vm.resetTextFields(from: previous, to: current)
-            }
-            .transaction { transaction in
-                if vm.isLoading {
-                    transaction.disablesAnimations = true
+                .navigationBarBackButtonHidden(vm.isOnlyStepOfSignedInUser)
+                .toolbar {
+                    if vm.isOnlyStepOfSignedInUser {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                vm.goBack()
+                            } label: {
+                                Image(systemName: "chevron.left")
+                            }
+                        }
+                    }
                 }
             }
             .opacity(vm.isLoading ? 0 : 1)
-            .allowsHitTesting(!vm.isLoading)
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: vm.loadingTitle)
+                LoadingView(title: vm.loadingTitle, isPresented: vm.isLoading)
             }
             .opacity(vm.isLoading ? 1 : 0)
-            .allowsHitTesting(vm.isLoading)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
             Button("ОК", role: .cancel) { }
         }
-        .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
+        .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert.removeDuplicates()) {
             Button("Отмена", role: .cancel) {}
             Button("Выйти", role: .destructive) {
                 vm.signOut()

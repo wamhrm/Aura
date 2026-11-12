@@ -18,51 +18,33 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var isLoading = false
 
-    private let authService: any AuthServiceProtocol
-
-    init(authService: any AuthServiceProtocol, user: UserModel) {
-        self.authService = authService
+    init(user: UserModel) {
         profileInfo = user.profileInfo
-        name = user.name
+        name = user.name.capitalized
         birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
         knowsBirthTime = user.birthTime != nil
         birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
     }
 
-    func saveProfileInfo(onLoadingChange: @escaping (Bool) -> Void = { _ in },
-                         onSuccess: @escaping () -> Void) {
-        guard !isLoading else { return }
+    func profileInfoRequest() throws -> ProfileInfoModel {
+        try validateProfileInfoForms()
 
-        do {
-            try validateProfileInfoForms()
-        } catch {
-            presentAlert(error.userMessage)
-            return
-        }
-
-        isLoading = true
-        onLoadingChange(true)
-
-        Task {
-            do {
-                profileInfo.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-                profileInfo.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
-                profileInfo.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
-                _ = try await authService.updateProfileInfo(profileInfo)
-                onSuccess()
-            } catch {
-                presentAlert(error.userMessage)
-                isLoading = false
-                onLoadingChange(false)
-            }
-        }
+        var request = profileInfo
+        request.name = name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
+        request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
+        request.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
+        return request
     }
 
     private func validateProfileInfoForms() throws {
-        guard name.trimmingCharacters(in: .whitespacesAndNewlines).count >= InputLimits.minNameLength else {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard name.count >= InputLimits.minNameLength else {
             throw ProfileInfoError.invalidName
+        }
+
+        guard name.count <= InputLimits.maxNameLength else {
+            throw ProfileInfoError.nameTooLong
         }
 
         guard profileInfo.hasAllAnswers else {
@@ -72,11 +54,12 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
 }
 
 fileprivate enum ProfileInfoError: LocalizedError {
-    case invalidName, incompleteProfileInfo
+    case invalidName, nameTooLong, incompleteProfileInfo
 
     var errorDescription: String? {
         switch self {
             case .invalidName: "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
+            case .nameTooLong: "Имя должно быть не длиннее \(InputLimits.maxNameLength) символов"
             case .incompleteProfileInfo: "Заполните все обязательные поля профиля"
         }
     }

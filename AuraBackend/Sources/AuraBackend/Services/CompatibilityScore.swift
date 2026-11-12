@@ -8,13 +8,22 @@
 enum CompatibilityScore {
     static func calculate(userSign: HoroscopeSign, partnerSign: HoroscopeSign) -> Int {
         switch stepsOnZodiacCircle(first: userSign, second: partnerSign) {
-            case 0: 75
-            case 1: 55
-            case 2: 80
-            case 3: 45
-            case 4: 90
-            case 5: 50
-            default: 65
+            case 0: 58
+            case 1: 45
+            case 2: 68
+            case 3: 30
+            case 4: 82
+            case 5: 38
+            default: 34
+        }
+    }
+
+    static func barRange(score: Int) -> ClosedRange<Int> {
+        switch score {
+            case ...40: 1...4
+            case 41...60: 4...6
+            case 61...80: 6...8
+            default: 8...10
         }
     }
 

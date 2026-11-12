@@ -38,7 +38,7 @@ struct PsychologyService {
     func makeCompatibilityTest(user: User,
                                request: CompatibilityTestRequest,
                                req: Request) async throws -> CompatibilityResultDTO {
-        let partnerName = request.partnerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let partnerName = request.partnerName.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
 
         guard partnerName.count >= InputLimits.minNameLength else {
             throw Abort(.badRequest, reason: "Имя партнёра должно содержать минимум 2 символа")

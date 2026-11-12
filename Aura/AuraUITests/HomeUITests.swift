@@ -12,6 +12,7 @@ final class HomeUITests: AuraUITestCase {
         // Given
         try launchSignedIn()
         assertOnMainScreen()
+        XCTAssertEqual(server.requests.filter { $0 == "GET /v1/history" }.count, 1)
 
         // When
         tapButton("Читать")
@@ -56,7 +57,7 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertTrue(text(thirdTest).waitForExistence(timeout: 15), "the tests are not on the main screen")
 
         // When the third test is selected in its row
-        button(part: thirdTest).buttons.firstMatch.tap()
+        app.buttons["Выбрать \(thirdTest)"].firstMatch.tap()
         text(thirdTest).tap()
 
         // Then its details screen knows about it

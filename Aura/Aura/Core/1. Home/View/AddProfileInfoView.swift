@@ -9,8 +9,7 @@ import SwiftUI
 
 struct AddProfileInfoView: View {
     @ObservedObject var vm: ProfileFormViewModel
-    let onLoadingChange: (Bool) -> Void
-    let onSaved: () async -> Void
+    let onSave: () -> Void
 
     var body: some View {
         ZStack {
@@ -23,6 +22,15 @@ struct AddProfileInfoView: View {
                                                    text: $vm.name)
                     }
 
+                    ProfileInfoSection(title: "Ваш пол") {
+                        HStack {
+                            ProfileInfoOptionView(type: .man,
+                                                  selection: $vm.profileInfo.gender)
+                            ProfileInfoOptionView(type: .woman,
+                                                  selection: $vm.profileInfo.gender)
+                        }
+                    }
+
                     ProfileInfoSection(title: "Дата рождения") {
                         BirthDateFieldsView(birthDate: $vm.birthDate,
                                             knowsBirthTime: $vm.knowsBirthTime,
@@ -33,9 +41,7 @@ struct AddProfileInfoView: View {
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)
 
                     ClassicButton(title: "Готово") {
-                        vm.saveProfileInfo(onLoadingChange: onLoadingChange) {
-                            Task { await onSaved() }
-                        }
+                        onSave()
                     }
                     .padding(.top, 5)
                 }
@@ -48,17 +54,19 @@ struct AddProfileInfoView: View {
         }
         .navigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
             Button("ОК", role: .cancel) { }
         }
     }
 }
 
 enum ProfileInfoOption: String, CaseIterable {
-    case introvert, ambivert, extrovert, mediator, direct, avoider, logic, intuitive, planner, spontaneous, procrastinator, stability, growth, peace
+    case man, woman, introvert, ambivert, extrovert, mediator, direct, avoider, logic, intuitive, planner, spontaneous, procrastinator, stability, growth, peace
 
     var title: String {
         switch self {
+            case .man: "Мужской"
+            case .woman: "Женский"
             case .introvert: "Интроверт"
             case .ambivert: "Амбиверт"
             case .extrovert: "Экстраверт"
@@ -78,6 +86,8 @@ enum ProfileInfoOption: String, CaseIterable {
 
     var icon: String {
         switch self {
+            case .man: "👱🏻‍♂️"
+            case .woman: "👩🏻"
             case .introvert: "🌙"
             case .ambivert: "🌗"
             case .extrovert: "🔥"
@@ -98,9 +108,6 @@ enum ProfileInfoOption: String, CaseIterable {
 
 #Preview {
     NavigationStack {
-        AddProfileInfoView(vm: ProfileFormViewModel(authService: AuthService.preview,
-                                                    user: .mock),
-                           onLoadingChange: { _ in },
-                           onSaved: {})
+        AddProfileInfoView(vm: ProfileFormViewModel(user: .mock), onSave: {})
     }
 }

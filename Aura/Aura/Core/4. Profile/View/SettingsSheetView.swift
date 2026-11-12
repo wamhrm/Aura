@@ -62,7 +62,7 @@ struct SettingsSheetView: View {
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
                             vm.requestAccountDeletion()
                         }
-                        .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert) {
+                        .alert("Удалить аккаунт?", isPresented: $vm.showDeleteAccountAlert.removeDuplicates()) {
                             deleteAccountAlertView()
                         } message: {
                             Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
@@ -78,16 +78,16 @@ struct SettingsSheetView: View {
                 .toolbar {
                     toolbarItem()
                 }
-                .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
+                .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert.removeDuplicates()) {
                     alertView()
                 }
             }
         }
         .interactiveDismissDisabled(vm.isDeletingAccount)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
             Button("ОК", role: .cancel) {}
         }
-        .alert("Не удалось удалить аккаунт", isPresented: $vm.showDeleteAccountError) {
+        .alert("Не удалось удалить аккаунт", isPresented: $vm.showDeleteAccountError.removeDuplicates()) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(vm.alertMessage)

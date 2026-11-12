@@ -113,7 +113,6 @@ struct CompatibilityResultView: View {
                 .padding(.horizontal)
                 .bottomAreaPadding(15)
             }
-            .scrollIndicators(.hidden)
         }
         .navigationTitle("Результат теста на совместимость")
         .navigationBarTitleDisplayMode(.inline)
@@ -122,31 +121,33 @@ struct CompatibilityResultView: View {
 
 extension CompatibilityResultView {
     private func compatibilityScaleBar(_ value: Int) -> some View {
-        ZStack {
-            Circle()
-                .stroke(.tint.opacity(0.18), lineWidth: 8)
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .stroke(.tint.opacity(0.18), lineWidth: 8)
 
-            Circle()
-                .trim(from: 0, to: CGFloat(min(max(value, 0), 100)) / 100)
-                .stroke(.tint, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+                Circle()
+                    .trim(from: 0, to: CGFloat(min(max(value, 0), 100)) / 100)
+                    .stroke(.tint, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
 
-            VStack(spacing: 5) {
                 Text("\(min(max(value, 0), 100))%")
                     .font(Adaptive.size(.title3, .system(size: 21)))
                     .bold()
                     .foregroundStyle(.tint)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
-
-                Text("СОВМЕСТИМОСТЬ\nЗНАКОВ")
-                    .font(Adaptive.size(.caption2, .caption))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.deepGray)
-                    .multilineTextAlignment(.center)
             }
+            .frame(width: 150, height: 150)
+
+            VStack(spacing: 2) {
+                Text("Совместимость солнечных знаков")
+                Text("Не зависит от выбранных разделов")
+            }
+            .font(Adaptive.size(.caption2, .caption))
+            .foregroundStyle(Color.deepGray)
+            .multilineTextAlignment(.center)
         }
-        .frame(width: 150, height: 150)
     }
 
     private func resultsWithNumbersSection(_ type: LoveLanguageTypes,

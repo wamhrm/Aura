@@ -29,15 +29,13 @@ struct HoroscopeCellView: View {
                     }
                 }
                 
-                Text("""
-                     "\(horoscope.description)"
-                     """)
-                .font(Adaptive.size(.footnote, .system(size: 15)))
-                .italic()
-                .foregroundStyle(.deepGray)
-                .fontWeight(.medium)
-                .lineLimit(3)
-                .multilineTextAlignment(.leading)
+                Text(horoscope.description)
+                    .font(Adaptive.size(.footnote, .system(size: 15)))
+                    .italic()
+                    .foregroundStyle(.deepGray)
+                    .fontWeight(.medium)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
             }
             .foregroundStyle(.primaryText)
             .padding(22)

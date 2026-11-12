@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var vm: ProfileViewModel
+    @Environment(\.scenePhase) private var scenePhase
     let aiConsentButton: () -> Void
 
     var body: some View {
@@ -33,22 +34,21 @@ struct ProfileView: View {
                     sheetView()
                 }
             }
-            .transaction { transaction in
-                if vm.isSavingProfile {
-                    transaction.disablesAnimations = true
-                }
-            }
             .opacity(vm.isSavingProfile ? 0 : 1)
-            .allowsHitTesting(!vm.isSavingProfile)
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: "Сохраняем...")
+                LoadingView(title: "Сохраняем...", isPresented: vm.isSavingProfile)
             }
             .opacity(vm.isSavingProfile ? 1 : 0)
-            .allowsHitTesting(vm.isSavingProfile)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isSavingProfile)
+        .onAppear {
+            if vm.dailyTip?.isFromToday == false { vm.retryDailyTip() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active, vm.dailyTip?.isFromToday == false { vm.retryDailyTip() }
+        }
     }
 }
 
@@ -58,11 +58,7 @@ extension ProfileView {
         switch route {
             case .addProfileInfo:
                 if let profileForm = vm.profileForm {
-                    AddProfileInfoView(vm: profileForm) { isSaving in
-                        vm.noteProfileSaving(isSaving)
-                    } onSaved: {
-                        await vm.finishProfileEditing()
-                    }
+                    AddProfileInfoView(vm: profileForm, onSave: vm.saveProfileInfo)
                 }
         }
     }

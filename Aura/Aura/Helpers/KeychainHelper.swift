@@ -18,9 +18,11 @@ nonisolated protocol KeychainHelperProtocol: Sendable {
 nonisolated extension KeychainHelperProtocol {
     func loadAuthToken() throws -> String? {
         guard let data = try getToken(path: Constants.tokenPath, key: Constants.tokenKey) else { return nil }
+        
         guard let token = String(data: data, encoding: .utf8) else {
             throw KeychainError(status: errSecDecode)
         }
+        
         return token
     }
 
@@ -34,7 +36,7 @@ nonisolated extension KeychainHelperProtocol {
 }
 
 nonisolated final class KeychainHelper: KeychainHelperProtocol {
-    private static let logger = Logger(subsystem: "ddorsat.Aura", category: "Keychain")
+    private static let logger = Logger(subsystem: "wamhrm.Aura", category: "Keychain")
 
     func saveToken(_ data: Data, path: String, key: String) throws {
         let query = [kSecClass: kSecClassGenericPassword,
@@ -65,9 +67,11 @@ nonisolated final class KeychainHelper: KeychainHelperProtocol {
 
         let status = SecItemCopyMatching(query, &result)
         if status == errSecItemNotFound { return nil }
+        
         guard status == errSecSuccess, let data = result as? Data else {
             throw KeychainError(status: status == errSecSuccess ? errSecDecode : status)
         }
+        
         return data
     }
 

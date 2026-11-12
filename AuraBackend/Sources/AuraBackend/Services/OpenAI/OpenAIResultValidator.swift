@@ -54,12 +54,14 @@ struct OpenAIResultValidator {
         }
     }
 
-    func compatibilityBars(bars: [CompatibilityEmotionalBar]) throws -> [CompatibilityEmotionalBar] {
+    func compatibilityBars(bars: [CompatibilityEmotionalBar], score: Int) throws -> [CompatibilityEmotionalBar] {
+        let range = CompatibilityScore.barRange(score: score)
         let values = Dictionary(bars.map { ($0.key, $0.value) }, uniquingKeysWith: { first, _ in first })
 
         return try CompatibilityEmotionalBar.keys.map { key in
             guard let value = values[key] else { throw Self.unexpectedFormatError }
-            return CompatibilityEmotionalBar(key: key, value: clampedBarValue(value: value))
+            let bounded = min(max(value, range.lowerBound), range.upperBound)
+            return CompatibilityEmotionalBar(key: key, value: bounded)
         }
     }
 

@@ -23,16 +23,19 @@ func waitUntil(file: StaticString = #filePath, line: UInt = #line, _ condition: 
 }
 
 @MainActor
-func makeUser(name: String = "Дмитрий",
+func makeUser(id: UUID = UserModel.mock.id,
+              name: String = "Дмитрий",
               dateOfBirth: String? = "13.05.2000",
+              gender: String? = "man",
               socialType: String? = "introvert",
               hasAIConsent: Bool? = true,
               isEmailConfirmed: Bool? = true) -> UserModel {
-    UserModel(id: UserModel.mock.id,
+    UserModel(id: id,
               name: name,
               email: "test@test.com",
               dateOfBirth: dateOfBirth,
               birthTime: nil,
+              gender: gender,
               socialType: socialType,
               conflictStyle: "mediator",
               emotionalCore: "logic",
@@ -83,6 +86,7 @@ func todayText() -> String {
 @MainActor
 final class MockAuthService: AuthServiceProtocol {
     let authState: CurrentValueSubject<AuthState, Never>
+    private(set) var sessionID: UUID?
 
     var serverUser = UserModel.mock
     var errorToThrow: (any Error)?
@@ -93,24 +97,21 @@ final class MockAuthService: AuthServiceProtocol {
     private(set) var createAccountCount = 0
     private(set) var emailCheckCount = 0
     var emailTaken = false
+    var beforeEmailResponse: (() -> Void)?
     private(set) var resetPasswordCount = 0
     private(set) var aiConsentCount = 0
     private(set) var confirmedCode: String?
     private(set) var savedProfile: ProfileInfoModel?
     private(set) var showsMainScreen = false
-    private(set) var didAskAIConsent = false
     private var expiredSessionMessage: String?
 
     init(user: UserModel? = nil) {
         if let user {
+            sessionID = UUID()
             authState = CurrentValueSubject(.signedIn(user))
         } else {
             authState = CurrentValueSubject(.signedOut)
         }
-    }
-
-    func noteAIConsentAsked() {
-        didAskAIConsent = true
     }
 
     func finishOnboarding() {
@@ -125,6 +126,7 @@ final class MockAuthService: AuthServiceProtocol {
 
     func ensureEmailAvailable(email: String) async throws {
         emailCheckCount += 1
+        beforeEmailResponse?()
         if emailTaken { throw NetworkError.userExists }
     }
 
@@ -142,9 +144,11 @@ final class MockAuthService: AuthServiceProtocol {
     }
 
     func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+        let sessionID = sessionID
         savedProfile = request
         defer { profileSaveFinished = true }
         try await Task.sleep(for: profileSaveDelay)
+        guard sessionID == self.sessionID else { throw NetworkError.cancelled }
         if let errorToThrow { throw errorToThrow }
         authState.send(.signedIn(serverUser))
         return UpdateProfileInfoResponse(user: serverUser, horoscope: .mock)
@@ -170,14 +174,14 @@ final class MockAuthService: AuthServiceProtocol {
     func signOut() async throws {
         if let errorToThrow { throw errorToThrow }
         showsMainScreen = false
-        didAskAIConsent = false
+        sessionID = nil
         authState.send(.signedOut)
     }
 
     func endExpiredSession() {
         expiredSessionMessage = "Сессия истекла. Войдите снова"
         showsMainScreen = false
-        didAskAIConsent = false
+        sessionID = nil
         authState.send(.signedOut)
     }
 
@@ -190,12 +194,13 @@ final class MockAuthService: AuthServiceProtocol {
     func deleteAccount() async throws {
         if let errorToThrow { throw errorToThrow }
         showsMainScreen = false
-        didAskAIConsent = false
+        sessionID = nil
         authState.send(.signedOut)
     }
 
     private func startSession() throws {
         if let errorToThrow { throw errorToThrow }
+        sessionID = UUID()
         authState.send(.signedIn(serverUser))
     }
 }
@@ -203,6 +208,7 @@ final class MockAuthService: AuthServiceProtocol {
 @MainActor
 final class MockContentService: ContentServiceProtocol {
     let historyCells = CurrentValueSubject<[HistoryCellModel], Never>([])
+    let historyState = CurrentValueSubject<LoadState, Never>(.loaded)
     let horoscope = CurrentValueSubject<HoroscopeModel?, Never>(nil)
     let dailyInsight = CurrentValueSubject<DailyContentModel?, Never>(nil)
     let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
@@ -211,6 +217,8 @@ final class MockContentService: ContentServiceProtocol {
     var errorToThrow: (any Error)?
     var dailyContentDate = todayText()
     var beforeContentResponse: (() -> Void)?
+    var beforeDetailsResponse: (() -> Void)?
+    private(set) var detailsCount = 0
 
     private(set) var personalityRequestIDs: [UUID] = []
     private(set) var compatibilityRequests: [CompatibilityTestRequest] = []
@@ -235,15 +243,23 @@ final class MockContentService: ContentServiceProtocol {
 
     func fetchHistory() async throws -> [HistoryCellModel] {
         fetchHistoryCount += 1
+        if historyCells.value.isEmpty { historyState.send(.loading) }
         beforeContentResponse?()
-        if let errorToThrow { throw errorToThrow }
+        if let errorToThrow {
+            if historyCells.value.isEmpty { historyState.send(.failed(errorToThrow.userMessage)) }
+            throw errorToThrow
+        }
+        historyState.send(.loaded)
         historyCells.send(history)
         return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
+        detailsCount += 1
+        let details = historyDetails(id: id)
+        beforeDetailsResponse?()
         if let errorToThrow { throw errorToThrow }
-        return historyDetails(id: id)
+        return details
     }
 
     func deleteHistory(id: UUID) async throws {

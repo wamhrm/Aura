@@ -17,7 +17,11 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
             BackgroundView()
             
             VStack(alignment: .leading, spacing: 20) {
-                TestCellImage(icon: type.icon, color: type.color, iconSize: .title, backgroundSize: Adaptive.size(55, 58), isResults: false)
+                TestCellImage(icon: type.icon,
+                              color: type.color,
+                              iconSize: .title,
+                              backgroundSize: Adaptive.size(55, 58),
+                              isResults: false)
                 
                 Text(type.deepDescription)
                     .font(Adaptive.size(.system(size: 15), .callout))

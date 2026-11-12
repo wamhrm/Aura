@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var vm: HomeViewModel
+    @Environment(\.scenePhase) private var scenePhase
 
     let compatibilityButton: () -> Void
     let aiConsentButton: () -> Void
@@ -126,7 +127,7 @@ struct HomeView: View {
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
 
-                                ForEach(PersonalityTestTypes.allCases[0...2], id: \.self) { test in
+                                ForEach(PersonalityTestTypes.allCases.prefix(3), id: \.self) { test in
                                     TestCellView(
                                         type: test,
                                         hasChosenTest: vm.isSelected(test)
@@ -158,6 +159,7 @@ struct HomeView: View {
                     }
                     .bottomAreaPadding(50)
                     .scrollIndicators(.hidden)
+                    .refreshable { await vm.refresh() }
                 }
                 .navigationTitle("Главная")
                 .navigationBarTitleDisplayMode(.inline)
@@ -165,23 +167,25 @@ struct HomeView: View {
                     destinationView(destination)
                 }
             }
-            .transaction { transaction in
-                if vm.showsLoadingScreen {
-                    transaction.disablesAnimations = true
-                }
-            }
             .opacity(vm.showsLoadingScreen ? 0 : 1)
-            .allowsHitTesting(!vm.showsLoadingScreen)
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: vm.isLoading ? vm.loadingTitle : "Загружаем информацию")
+                LoadingView(title: vm.isLoading ? vm.loadingTitle : "Загружаем информацию",
+                            isPresented: vm.showsLoadingScreen)
             }
             .opacity(vm.showsLoadingScreen ? 1 : 0)
-            .allowsHitTesting(vm.showsLoadingScreen)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+        .onAppear {
+            Task { await vm.refreshIfNeeded() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await vm.refreshIfNeeded() }
+            }
+        }
+        .alert(vm.alertMessage, isPresented: $vm.showAlert.removeDuplicates()) {
             Button("OK", role: .cancel) {}
         }
         .sheet(item: $vm.emailConfirmation) { confirmation in
@@ -191,25 +195,6 @@ struct HomeView: View {
 }
 
 extension HomeView {
-    private func headerText(title: String,
-                            buttonTitle: String,
-                            onTapHandler: @escaping () -> Void) -> some View {
-        HStack {
-            Text(title)
-                .fontWeight(.semibold)
-                .padding(.leading, 4)
-
-            Spacer()
-
-            Button(action: onTapHandler) {
-                Text(buttonTitle)
-                    .foregroundStyle(.tint)
-                    .fontWeight(.medium)
-            }
-        }
-        .font(Adaptive.size(.system(size: 15), .default))
-    }
-
     @ViewBuilder
     private func destinationView(_ route: HomeRoutes) -> some View {
         switch route {
@@ -231,6 +216,25 @@ extension HomeView {
                 AIConsentView(allow: vm.allowAIConsent,
                               decline: vm.declineAIConsent)
         }
+    }
+    
+    private func headerText(title: String,
+                            buttonTitle: String,
+                            onTapHandler: @escaping () -> Void) -> some View {
+        HStack {
+            Text(title)
+                .fontWeight(.semibold)
+                .padding(.leading, 4)
+
+            Spacer()
+
+            Button(action: onTapHandler) {
+                Text(buttonTitle)
+                    .foregroundStyle(.tint)
+                    .fontWeight(.medium)
+            }
+        }
+        .font(Adaptive.size(.system(size: 15), .default))
     }
 
     private func sparkImageWithBackground(_ size: Image.Scale, _ color: Color) -> some View {

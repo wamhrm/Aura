@@ -59,8 +59,12 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             .sink { [weak self] cells in
                 guard let self else { return }
                 historyCells = cells
-                if !cells.isEmpty { loadState = .loaded }
             }
+            .store(in: &cancellables)
+
+        contentService.historyState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.loadState = $0 }
             .store(in: &cancellables)
     }
 
@@ -84,17 +88,13 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     func fetchHistory() async {
         guard currentUserId != nil else { return }
-        if historyCells.isEmpty {
-            loadState = .loading
-        }
+        let sessionID = authService.sessionID
 
         do {
-            historyCells = try await contentService.fetchHistory()
-            loadState = .loaded
+            _ = try await contentService.fetchHistory()
         } catch {
-            if historyCells.isEmpty {
-                loadState = .failed(error.userMessage)
-            } else {
+            guard sessionID == authService.sessionID else { return }
+            if !contentService.historyCells.value.isEmpty {
                 presentAlert(error.userMessage)
             }
         }
@@ -127,9 +127,11 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
         guard !isLoading else { return }
 
         isLoading = true
+        let sessionID = authService.sessionID
+
         Task {
-            defer { isLoading = false }
-            let started = ContinuousClock.now
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 let details = try await contentService.fetchHistoryDetails(id: item.id)
@@ -137,14 +139,17 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                     throw HistoryOpenError.missingResult
                 }
 
-                try await Task.sleep(until: started.advanced(by: .seconds(0.35)), clock: .continuous)
-                try Task.checkCancellation()
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
                 historyRoutes.append(route)
                 try await Task.sleep(for: .milliseconds(50))
-                try Task.checkCancellation()
             } catch {
+                guard sessionID == authService.sessionID else { return }
                 presentAlert("Не удалось открыть результат")
             }
+
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
         }
     }
 

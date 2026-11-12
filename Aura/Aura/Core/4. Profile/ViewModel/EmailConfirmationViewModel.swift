@@ -14,9 +14,9 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published var isSheetExtended = false
     @Published private(set) var isCodeSent = false
     @Published private(set) var isLoading = false
+    @Published private(set) var loadingTitle = ""
 
     private let authService: any AuthServiceProtocol
     private let email: String
@@ -40,27 +40,22 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     }
     
     var sheetHeight: CGFloat {
-        isSheetExtended ? Adaptive.size(340, 360) : Adaptive.size(200, 220)
+        isCodeSent ? Adaptive.size(340, 360) : Adaptive.size(200, 220)
     }
     
-    var loadingTitle: String {
-        isCodeSent ? "Проверяем..." : "Отправляем..."
-    }
-
     func sendCode() {
         guard !isLoading else { return }
 
         isLoading = true
+        loadingTitle = "Отправляем..."
 
         Task {
             do {
                 try await authService.sendEmailConfirmationCode()
                 isCodeSent = true
-                isSheetExtended = true
             } catch {
                 if case NetworkError.limited = error {
                     isCodeSent = true
-                    isSheetExtended = true
                 }
                 presentAlert(error.userMessage)
             }
@@ -74,12 +69,13 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
         let code = code.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard code.count == InputLimits.resetCodeLength else {
+        guard code.count == InputLimits.resetCodeLength, code.allSatisfy(\.isNumber) else {
             presentAlert("Код состоит из \(InputLimits.resetCodeLength) цифр")
             return
         }
 
         isLoading = true
+        loadingTitle = "Проверяем..."
 
         Task {
             do {
