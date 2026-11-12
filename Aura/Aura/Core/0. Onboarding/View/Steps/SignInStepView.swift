@@ -14,7 +14,7 @@ struct SignInStepView: View {
         ZStack {
             BackgroundView()
             
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 35) {
                 OnboardingHeader(title: "С возвращением",
                                  subtitle: "Войдите в свой аккаунт")
 

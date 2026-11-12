@@ -15,37 +15,11 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        ZStack {
-            onboardingStack()
-
-            if vm.isLoading {
-                ZStack {
-                    BackgroundView()
-                    
-                    LoadingView(title: vm.activityTitle)
-                }
-                .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
-        .disabled(vm.isLoading)
-        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
-            Button("ОК", role: .cancel) { }
-        }
-        .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
-            Button("Отмена", role: .cancel) {}
-            Button("Выйти", role: .destructive) {
-                vm.signOut()
-            }
-        }
-    }
-
-    private func onboardingStack() -> some View {
         NavigationStack(path: $vm.onboardingRoutes) {
             ZStack {
-                BackgroundView()
+                ZStack {
+                    BackgroundView()
 
-                if !vm.isPreparingProfile && !vm.hasLoadingFailed {
                     VStack(spacing: 20) {
                         TabView(selection: $vm.introPage) {
                             ForEach(IntroPages.allCases, id: \.self) { item in
@@ -98,16 +72,30 @@ struct OnboardingView: View {
                         .padding(.horizontal)
                         .padding(.bottom, 10)
                     }
-                    .transition(.opacity)
-                } else {
-                    LoadingView(title: vm.loadingTitle)
-                        .transition(.opacity)
                 }
+                .navigationDestination(for: OnboardingRoutes.self) { destination in
+                    destinationView(destination)
+                }
+                .opacity(vm.isLoading ? 0 : 1)
+                .allowsHitTesting(!vm.isLoading)
+
+                ZStack {
+                    BackgroundView()
+
+                    LoadingView(title: vm.activityTitle)
+                }
+                .opacity(vm.isLoading ? 1 : 0)
+                .allowsHitTesting(vm.isLoading)
             }
-            .animation(.easeInOut(duration: 0.35), value: vm.isPreparingProfile)
-            .animation(.easeInOut(duration: 0.35), value: vm.hasLoadingFailed)
-            .navigationDestination(for: OnboardingRoutes.self) { destination in
-                destinationView(destination)
+            .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
+            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
+                Button("ОК", role: .cancel) { }
+            }
+            .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
+                Button("Отмена", role: .cancel) {}
+                Button("Выйти", role: .destructive) {
+                    vm.signOut()
+                }
             }
         }
     }
@@ -130,12 +118,8 @@ extension OnboardingView {
             case .psychotype:
                 PsychotypeStepView(vm: vm)
             case .aiConsent:
-                AIConsentView(title: vm.aiConsentButtonTitle,
-                              isDisabled: vm.isLoading,
-                              allow: { vm.chooseAIConsent(true) },
-                              decline: { vm.chooseAIConsent(false) },
-                              back: vm.goBack)
-                .navigationBarBackButtonHidden(true)
+                AIConsentView(allow: { vm.chooseAIConsent(true) },
+                              decline: { vm.chooseAIConsent(false) })
         }
     }
 }

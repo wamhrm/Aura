@@ -30,11 +30,11 @@ final class OnboardingViewModelTests: XCTestCase {
         OnboardingViewModel(authService: auth)
     }
 
-    private func signIn(_ viewModel: OnboardingViewModel) async {
+    private func signIn(_ viewModel: OnboardingViewModel, auth: MockAuthService) async {
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
         viewModel.signIn()
-        await waitUntil { !viewModel.isLoading }
+        await waitUntil { !viewModel.isLoading || auth.showsMainScreen }
     }
 
     func test_takenEmail_staysOnEmailStep() async {
@@ -106,7 +106,7 @@ final class OnboardingViewModelTests: XCTestCase {
         let viewModel = makeViewModel(auth: auth)
 
         // When
-        await signIn(viewModel)
+        await signIn(viewModel, auth: auth)
 
         // Then
         XCTAssertTrue(auth.showsMainScreen)
@@ -119,7 +119,7 @@ final class OnboardingViewModelTests: XCTestCase {
         let viewModel = makeViewModel(auth: auth)
 
         // When
-        await signIn(viewModel)
+        await signIn(viewModel, auth: auth)
 
         // Then
         XCTAssertEqual(viewModel.onboardingRoutes, [.aiConsent])
@@ -132,7 +132,7 @@ final class OnboardingViewModelTests: XCTestCase {
         let viewModel = makeViewModel(auth: auth)
 
         // When
-        await signIn(viewModel)
+        await signIn(viewModel, auth: auth)
 
         // Then
         XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth])
@@ -220,17 +220,17 @@ final class OnboardingViewModelTests: XCTestCase {
         let viewModel = makeViewModel(auth: auth)
 
         viewModel.chooseAIConsent(true)
-        await waitUntil { viewModel.hasLoadingFailed || auth.showsMainScreen }
+        await waitUntil { viewModel.showAlert || auth.showsMainScreen }
 
-        XCTAssertTrue(viewModel.hasLoadingFailed)
-        XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
+        XCTAssertTrue(viewModel.showAlert)
+        XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth])
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        XCTAssertFalse(viewModel.isLoading)
         XCTAssertFalse(auth.showsMainScreen)
 
         auth.aiConsentError = nil
-        viewModel.retryLoading()
+        viewModel.chooseAIConsent(true)
         await waitUntil { auth.showsMainScreen }
-        XCTAssertFalse(viewModel.hasLoadingFailed)
     }
 
     func test_returningUser_decliningConsent_finishesWithoutARequest() {
@@ -273,7 +273,6 @@ final class OnboardingViewModelTests: XCTestCase {
         // Then
         XCTAssertNotNil(auth.savedProfile)
         XCTAssertEqual(auth.aiConsentCount, 0)
-        XCTAssertFalse(viewModel.hasLoadingFailed)
     }
 
     func test_sessionExpiration_duringProfileSave_cancelsPreparation_andDoesNotFinish() async {
@@ -287,7 +286,7 @@ final class OnboardingViewModelTests: XCTestCase {
         await waitUntil { auth.profileSaveFinished }
 
         XCTAssertFalse(auth.showsMainScreen)
-        XCTAssertFalse(viewModel.hasLoadingFailed)
+        XCTAssertFalse(viewModel.isLoading)
         XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
         XCTAssertEqual(auth.aiConsentCount, 0)
         XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")

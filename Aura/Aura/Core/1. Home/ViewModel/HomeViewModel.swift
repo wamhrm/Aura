@@ -41,7 +41,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private let contentService: any ContentServiceProtocol
 
     private var currentUser: UserModel?
-    private var didPromptAIConsent = false
     private var personalityRequestID: UUID?
     private var personalityRequestUser: UserModel?
     private var personalityRequestTests: [PersonalityTestTypes]?
@@ -51,17 +50,12 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
-        didPromptAIConsent = authService.didAskAIConsent
 
         setupSubscriptions()
     }
 
     var updateTitle: String {
         hasUpdateFailed ? "Не удалось обновить информацию" : "Обновляем информацию"
-    }
-
-    var updateIcon: String {
-        hasUpdateFailed ? "exclamationmark" : "sparkles"
     }
 
     var greetingText: String {
@@ -166,7 +160,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         guard !isUpdatingInfo else { return }
 
         updateInfo()
-        homeRoutes = []
     }
 
     func declineAIConsent() {
@@ -183,6 +176,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 try await refreshUnlockedContent()
                 homeRoutes = []
             } catch {
+                homeRoutes = []
                 updateMessage = error.userMessage
                 hasUpdateFailed = true
             }

@@ -62,7 +62,8 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertFalse(app.tabBars.firstMatch.exists)
 
         server.respond(route: "POST /v1/auth/aiConsent", body: try json(sampleUser()))
-        tapButton("Повторить")
+        confirmAlert("ОК")
+        tapButton("Разрешить")
         assertOnMainScreen()
     }
 

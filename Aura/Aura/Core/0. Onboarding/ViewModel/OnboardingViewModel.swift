@@ -67,12 +67,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var newPassword = ""
     @Published private(set) var isResetCodeSent = false
 
-    @Published private(set) var isPreparingProfile = false
-    @Published private(set) var hasLoadingFailed = false
-
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published var showSignOutAlert = false
+    @Published private(set) var isCheckingEmail = false
     @Published private(set) var isLoading = false
     @Published private(set) var activityTitle = ""
 
@@ -118,7 +116,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     var emailButtonTitle: String {
-        isLoading ? "Проверяем..." : "Далее"
+        isCheckingEmail ? "Проверяем..." : "Далее"
     }
 
     var signInButtonTitle: String {
@@ -133,20 +131,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isLoading ? "Сохраняем..." : "Сохранить пароль"
     }
 
-    var aiConsentButtonTitle: String {
-        isLoading ? "Сохраняем..." : "Разрешить"
-    }
-
     var psychotypeButtonTitle: String {
         !isSignedIn && isLoading ? "Создаём аккаунт..." : "Далее"
-    }
-
-    var loadingTitle: String {
-        hasLoadingFailed ? "Не удалось сохранить настройки" : "Сохраняем профиль и настройки"
-    }
-
-    var loadingIcon: String {
-        hasLoadingFailed ? "exclamationmark" : "sparkles"
     }
 
     private var isLastIntroPage: Bool {
@@ -178,8 +164,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         preparationTask?.cancel()
         hasSession = false
-        isPreparingProfile = false
-        hasLoadingFailed = false
+        isLoading = false
         onboardingRoutes = []
         presentAlert(authService.takeExpiredSessionMessage() ?? "Сессия истекла. Войдите снова")
     }
@@ -250,9 +235,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        guard !isLoading else { return }
+        guard !isCheckingEmail else { return }
 
-        beginLoading("Проверяем...")
+        isCheckingEmail = true
 
         Task {
             do {
@@ -262,7 +247,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 presentAlert(error.userMessage)
             }
 
-            isLoading = false
+            isCheckingEmail = false
         }
     }
 
@@ -385,6 +370,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                                                     email: email,
                                                     password: password)
                 password = ""
+                try await Task.sleep(for: .milliseconds(500))
                 onboardingRoutes.append(.aiConsent)
             } catch {
                 presentAlert(error.userMessage)
@@ -399,14 +385,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         authService.noteAIConsentAsked()
 
         if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
-            allows ? giveAIConsent() : finishOnboarding()
+            allows ? giveAIConsent() : authService.finishOnboarding()
         } else {
             prepareProfile()
         }
-    }
-
-    func retryLoading() {
-        prepareProfile()
     }
 
     private func beginLoading(_ title: String) {
@@ -422,7 +404,8 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         Task {
             do {
                 try await authService.giveAIConsent()
-                finishOnboarding()
+                onboardingRoutes = []
+                authService.finishOnboarding()
             } catch {
                 presentAlert(error.userMessage)
             }
@@ -432,11 +415,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func prepareProfile() {
-        guard preparationTask == nil, isSignedIn else { return }
+        guard preparationTask == nil, isSignedIn, !isLoading else { return }
 
-        onboardingRoutes = []
-        hasLoadingFailed = false
-        isPreparingProfile = true
+        beginLoading("Сохраняем профиль и настройки")
 
         var request = profileInfo
         request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
@@ -454,21 +435,16 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                     try Task.checkCancellation()
                 }
 
-                finishOnboarding()
+                onboardingRoutes = []
+                authService.finishOnboarding()
             } catch is CancellationError {
-                isPreparingProfile = false
             } catch NetworkError.cancelled {
-                isPreparingProfile = false
             } catch {
-                alertMessage = error.userMessage
-                hasLoadingFailed = true
-                isPreparingProfile = false
+                presentAlert(error.userMessage)
             }
-        }
-    }
 
-    private func finishOnboarding() {
-        authService.finishOnboarding()
+            isLoading = false
+        }
     }
 
     private func continueAfterSignIn() {
@@ -478,7 +454,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         password = ""
 
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
-            finishOnboarding()
+            authService.finishOnboarding()
         } else if user.hasCompletedProfileInfo {
             onboardingRoutes.append(.aiConsent)
         } else if hasEnteredBirthDate {
@@ -533,4 +509,3 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         return !local.isEmpty && !domain.isEmpty
     }
 }
-

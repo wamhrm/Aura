@@ -14,15 +14,60 @@ struct AddProfileInfoView: View {
 
     var body: some View {
         ZStack {
-            BackgroundView()
+            ZStack {
+                BackgroundView()
 
-            if vm.isLoading {
-                LoadingView(title: "Сохраняем...")
-                    .transition(.opacity)
-            } else {
-                profileForm()
-                    .transition(.opacity)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        ProfileInfoSection(title: "Ваше имя") {
+                            CompatibilityTextFieldView(title: "Введите имя",
+                                                       text: $vm.name)
+                        }
+
+                        ProfileInfoSection(title: "Ваш пол") {
+                            HStack {
+                                ProfileInfoOptionView(type: .man,
+                                                      selection: $vm.profileInfo.gender)
+                                ProfileInfoOptionView(type: .woman,
+                                                      selection: $vm.profileInfo.gender)
+                            }
+                        }
+
+                        ProfileInfoSection(title: "Дата рождения") {
+                            BirthDateFieldsView(birthDate: $vm.birthDate,
+                                                knowsBirthTime: $vm.knowsBirthTime,
+                                                birthTime: $vm.birthTime,
+                                                dateRange: BirthDateFormatter.dateRange)
+                        }
+
+                        PsychotypeSectionsView(profileInfo: $vm.profileInfo)
+
+                        ClassicButton(title: vm.saveButtonTitle) {
+                            vm.saveProfileInfo {
+                                dismiss()
+                            }
+                        }
+                        .padding(.top, 5)
+                        .disabled(vm.isLoading)
+                    }
+                    .disabled(vm.isLoading)
+                    .padding(.horizontal)
+                }
+                .bottomAreaPadding(50)
+                .scrollIndicators(.hidden)
+                .dismissKeyboardOnTap()
+                .scrollDismissesKeyboard(.interactively)
             }
+            .opacity(vm.isLoading ? 0 : 1)
+            .allowsHitTesting(!vm.isLoading)
+
+            ZStack {
+                BackgroundView()
+
+                LoadingView(title: "Сохраняем...")
+            }
+            .opacity(vm.isLoading ? 1 : 0)
+            .allowsHitTesting(vm.isLoading)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .navigationTitle("О вас")
@@ -30,49 +75,6 @@ struct AddProfileInfoView: View {
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }
-    }
-
-    private func profileForm() -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                    ProfileInfoSection(title: "Ваше имя") {
-                        CompatibilityTextFieldView(title: "Введите имя",
-                                                   text: $vm.name)
-                    }
-
-                    ProfileInfoSection(title: "Ваш пол") {
-                        HStack {
-                            ProfileInfoOptionView(type: .man,
-                                                  selection: $vm.profileInfo.gender)
-                            ProfileInfoOptionView(type: .woman,
-                                                  selection: $vm.profileInfo.gender)
-                        }
-                    }
-
-                    ProfileInfoSection(title: "Дата рождения") {
-                        BirthDateFieldsView(birthDate: $vm.birthDate,
-                                            knowsBirthTime: $vm.knowsBirthTime,
-                                            birthTime: $vm.birthTime,
-                                            dateRange: BirthDateFormatter.dateRange)
-                    }
-
-                    PsychotypeSectionsView(profileInfo: $vm.profileInfo)
-
-                    ClassicButton(title: vm.saveButtonTitle) {
-                        vm.saveProfileInfo {
-                            dismiss()
-                        }
-                    }
-                    .padding(.top, 5)
-                    .disabled(vm.isLoading)
-                }
-                .disabled(vm.isLoading)
-                .padding(.horizontal)
-            }
-            .bottomAreaPadding(50)
-            .scrollIndicators(.hidden)
-            .dismissKeyboardOnTap()
-            .scrollDismissesKeyboard(.interactively)
     }
 }
 

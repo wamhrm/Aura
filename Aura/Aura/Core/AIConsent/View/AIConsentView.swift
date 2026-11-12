@@ -8,11 +8,8 @@
 import SwiftUI
 
 struct AIConsentView: View {
-    var title: String = "Разрешить"
-    var isDisabled = false
     let allow: () -> Void
     let decline: () -> Void
-    var back: (() -> Void)? = nil
 
     var body: some View {
         ZStack {
@@ -23,7 +20,7 @@ struct AIConsentView: View {
                     AIConsentContentView()
 
                     VStack(spacing: 5) {
-                        ClassicButton(title: title) {
+                        ClassicButton(title: "Разрешить") {
                             allow()
                         }
 
@@ -39,25 +36,8 @@ struct AIConsentView: View {
                         }
                     }
                     .padding(.bottom)
-                    .disabled(isDisabled)
                     .onboardingViewModifier()
                 }
-            }
-            .toolbar {
-                toolbarItem()
-            }
-        }
-    }
-}
-
-extension AIConsentView {
-    @ToolbarContentBuilder
-    private func toolbarItem() -> some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            Button {
-                (back ?? decline)()
-            } label: {
-                Image(systemName: "chevron.left")
             }
         }
     }

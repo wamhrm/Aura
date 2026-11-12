@@ -131,7 +131,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             } catch {
                 presentAlert(error.userMessage)
             }
-            
+
             isLoading = false
         }
     }

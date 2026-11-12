@@ -182,7 +182,7 @@ struct BirthDateFieldsView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            DatePicker("Дата",
+            DatePicker("Дата рождения",
                        selection: $birthDate,
                        in: dateRange,
                        displayedComponents: .date)

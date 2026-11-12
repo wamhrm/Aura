@@ -14,7 +14,7 @@ struct ResetPasswordStepView: View {
         ZStack {
             BackgroundView()
             
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 35) {
                 if vm.isResetCodeSent {
                     OnboardingHeader(title: "Введите код из письма",
                                      subtitle: "Если аккаунт с почтой \(vm.email) есть, мы отправили на неё код. Он действует 15 минут.")

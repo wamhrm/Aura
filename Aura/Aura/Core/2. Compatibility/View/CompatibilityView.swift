@@ -9,11 +9,12 @@ import SwiftUI
 
 struct CompatibilityView: View {
     @ObservedObject var vm: CompatibilityViewModel
-
     let aiConsentButton: () -> Void
 
     var body: some View {
-        NavigationStack(path: $vm.compatibilityRoutes) {
+        ZStack {
+            ZStack {
+                NavigationStack(path: $vm.compatibilityRoutes) {
             ZStack {
                 BackgroundView()
 
@@ -53,14 +54,10 @@ struct CompatibilityView: View {
                                 }
                             }
 
-                            VStack(alignment: .leading) {
-                                headerText("Дата рождения")
-
-                                BirthDateFieldsView(birthDate: $vm.partnerInfo.birthDate,
-                                                    knowsBirthTime: $vm.partnerInfo.knowsBirthTime,
-                                                    birthTime: $vm.partnerInfo.birthTime,
-                                                    dateRange: BirthDateFormatter.dateRange)
-                            }
+                            BirthDateFieldsView(birthDate: $vm.partnerInfo.birthDate,
+                                                knowsBirthTime: $vm.partnerInfo.knowsBirthTime,
+                                                birthTime: $vm.partnerInfo.birthTime,
+                                                dateRange: BirthDateFormatter.dateRange)
                         }
                         .padding(20)
                         .backgroundWithShape(12, .cardBackground, true)
@@ -120,16 +117,18 @@ struct CompatibilityView: View {
             .navigationDestination(for: CompatibilityRoutes.self) { destination in
                 destinationView(destination)
             }
-        }
-        .overlay {
-            if vm.isLoading {
-                ZStack {
-                    BackgroundView()
-                    
-                    LoadingView(title: "Готовим результат...")
                 }
-                .transition(.opacity)
             }
+            .opacity(vm.isLoading ? 0 : 1)
+            .allowsHitTesting(!vm.isLoading)
+
+            ZStack {
+                BackgroundView()
+
+                LoadingView(title: "Готовим результат...")
+            }
+            .opacity(vm.isLoading ? 1 : 0)
+            .allowsHitTesting(vm.isLoading)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {

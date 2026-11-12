@@ -14,18 +14,13 @@ struct HomeView: View {
     let aiConsentButton: () -> Void
 
     var body: some View {
-        NavigationStack(path: $vm.homeRoutes) {
+        ZStack {
             ZStack {
-                BackgroundView()
+                NavigationStack(path: $vm.homeRoutes) {
+                    ZStack {
+                        BackgroundView()
 
-                if vm.isUpdatingInfo || vm.hasUpdateFailed {
-                    LoadingView(title: vm.updateTitle)
-                        .transition(.opacity)
-                } else if vm.showsLoadingScreen {
-                    LoadingView(title: "Загружаем информацию")
-                        .transition(.opacity)
-                } else {
-                    ScrollView {
+                        ScrollView {
                         VStack(alignment: .leading, spacing: 15) {
                             HStack(spacing: 15) {
                                 LogoImage(size: 32)
@@ -155,30 +150,30 @@ struct HomeView: View {
                         .disabled(vm.isLoading)
                         .padding(.horizontal)
                     }
-                    .bottomAreaPadding(50)
-                    .scrollIndicators(.hidden)
-                    .transition(.opacity)
+                        .bottomAreaPadding(50)
+                        .scrollIndicators(.hidden)
+                    }
+                    .navigationTitle("Главная")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .navigationDestination(for: HomeRoutes.self) { destination in
+                        destinationView(destination)
+                    }
                 }
             }
-            .animation(.easeInOut(duration: 0.35), value: vm.isUpdatingInfo)
-            .animation(.easeInOut(duration: 0.35), value: vm.hasUpdateFailed)
-            .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
-            .navigationTitle("Главная")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: HomeRoutes.self) { destination in
-                destinationView(destination)
+            .opacity(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading ? 0 : 1)
+            .allowsHitTesting(!(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading))
+
+            ZStack {
+                BackgroundView()
+
+                LoadingView(title: vm.isLoading ? "Готовим результат..." : vm.isUpdatingInfo || vm.hasUpdateFailed ? vm.updateTitle : "Загружаем информацию")
             }
+            .opacity(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading ? 1 : 0)
+            .allowsHitTesting(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading)
         }
-        .overlay {
-            if vm.isLoading {
-                ZStack {
-                    BackgroundView()
-                    
-                    LoadingView(title: "Готовим результат...")
-                }
-                .transition(.opacity)
-            }
-        }
+        .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
+        .animation(.easeInOut(duration: 0.35), value: vm.isUpdatingInfo)
+        .animation(.easeInOut(duration: 0.35), value: vm.hasUpdateFailed)
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
@@ -227,10 +222,8 @@ extension HomeView {
                     PersonalityResultView(result: result)
                 }
             case .aiConsent:
-                AIConsentView(isDisabled: vm.isUpdatingInfo,
-                              allow: vm.allowAIConsent,
+                AIConsentView(allow: vm.allowAIConsent,
                               decline: vm.declineAIConsent)
-                    .navigationBarBackButtonHidden(true)
         }
     }
 

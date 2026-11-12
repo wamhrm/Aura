@@ -25,6 +25,8 @@ struct EmailStepView: View {
                 ClassicButton(title: vm.emailButtonTitle) {
                     vm.continueFromEmail()
                 }
+                .disabled(vm.isCheckingEmail)
+                .animation(.easeInOut(duration: 0.2), value: vm.isCheckingEmail)
                 
                 OnboardingLegalText()
             }

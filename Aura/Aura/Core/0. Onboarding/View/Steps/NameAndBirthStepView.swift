@@ -65,7 +65,6 @@ struct NameAndBirthStepView: View {
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-            .environment(\.locale, Locale(identifier: "ru_RU"))
         }
     }
 }

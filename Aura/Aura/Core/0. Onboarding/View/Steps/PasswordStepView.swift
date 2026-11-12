@@ -19,12 +19,12 @@ struct PasswordStepView: View {
                                  subtitle: "Не меньше \(InputLimits.minPasswordLength) символов")
 
                 OnboardingTextField(text: $vm.password, type: .password)
-                
+            
                 Spacer()
 
-            ClassicButton(title: "Далее") {
-                vm.continueFromPassword()
-            }
+                ClassicButton(title: "Далее") {
+                    vm.continueFromPassword()
+                }
 
                 OnboardingLegalText()
             }
