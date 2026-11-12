@@ -9,7 +9,6 @@ import Foundation
 
 struct PartnerInfoModel {
     var name = ""
-    var gender = ProfileInfoOption.man.rawValue
     var birthDate = BirthDateFormatter.defaultDate
     var knowsBirthTime = false
     var birthTime = BirthDateFormatter.defaultTime
@@ -19,7 +18,6 @@ struct PartnerInfoModel {
             partnerName: name.trimmingCharacters(in: .whitespacesAndNewlines),
             partnerDateOfBirth: BirthDateFormatter.dateString(date: birthDate),
             partnerBirthTime: knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : nil,
-            partnerGender: gender,
             selectedTests: selectedTests.map(\.rawValue))
     }
 }

@@ -144,13 +144,6 @@ struct FlowLayout: Layout {
 #Preview {
     ScrollView {
         VStack(spacing: 16) {
-            ProfileInfoSection(title: "Ваш пол") {
-                HStack {
-                    ProfileInfoOptionView(type: .man, selection: .constant("man"))
-                    ProfileInfoOptionView(type: .woman, selection: .constant(nil))
-                }
-            }
-
             PsychotypeSectionsView(profileInfo: .constant(ProfileInfoModel()))
         }
         .padding(.horizontal)

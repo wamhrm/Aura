@@ -26,21 +26,6 @@ final class CompatibilityViewModelTests: XCTestCase {
         XCTAssertTrue(content.compatibilityRequests.isEmpty)
     }
 
-    func test_chosenGender_goesToTheServerAsItsKey() async {
-        // Given
-        let content = MockContentService()
-        let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
-        viewModel.partnerInfo.name = "Анна"
-
-        // When
-        viewModel.selectGender(.female)
-        viewModel.makeCompatibilityTest()
-        await waitUntil { !content.compatibilityRequests.isEmpty }
-
-        // Then
-        XCTAssertEqual(content.compatibilityRequests.first?.partnerGender, "woman")
-    }
-
     func test_serverFailure_keepsTheFormFilled() async {
         // Given
         let content = MockContentService()

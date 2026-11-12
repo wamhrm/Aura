@@ -39,7 +39,6 @@ struct PsychologyService {
                                request: CompatibilityTestRequest,
                                req: Request) async throws -> CompatibilityResultDTO {
         let partnerName = request.partnerName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let partnerGender = request.partnerGender.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard partnerName.count >= InputLimits.minNameLength else {
             throw Abort(.badRequest, reason: "Имя партнёра должно содержать минимум 2 символа")
@@ -47,10 +46,6 @@ struct PsychologyService {
 
         guard partnerName.count <= InputLimits.maxNameLength else {
             throw Abort(.badRequest, reason: "Имя партнёра должно быть не длиннее 50 символов")
-        }
-
-        guard ProfileInfoOptions.genders.contains(partnerGender) else {
-            throw Abort(.badRequest, reason: "Укажите пол партнёра")
         }
 
         guard let dateOfBirth = UserDateFormatter.birthDate(date: request.partnerDateOfBirth) else {
@@ -82,7 +77,6 @@ struct PsychologyService {
         let partnerRequest = CompatibilityTestRequest(partnerName: partnerName,
                                                       partnerDateOfBirth: request.partnerDateOfBirth,
                                                       partnerBirthTime: request.partnerBirthTime,
-                                                      partnerGender: partnerGender,
                                                       selectedTests: request.selectedTests)
 
         try await requireFreeTestSlot(user: user, database: req.db)

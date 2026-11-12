@@ -48,8 +48,7 @@ struct ProfileController: RouteCollection {
             throw Abort(.badRequest, reason: "Укажите время рождения в формате ЧЧ:ММ")
         }
 
-        guard ProfileInfoOptions.genders.contains(profileInfo.gender),
-              ProfileInfoOptions.socialTypes.contains(profileInfo.socialType),
+        guard ProfileInfoOptions.socialTypes.contains(profileInfo.socialType),
               ProfileInfoOptions.conflictStyles.contains(profileInfo.conflictStyle),
               ProfileInfoOptions.emotionalCores.contains(profileInfo.emotionalCore),
               ProfileInfoOptions.decisionStyles.contains(profileInfo.decisionStyle),
@@ -70,7 +69,6 @@ struct ProfileController: RouteCollection {
 
         user.dateOfBirth = dateOfBirth
         user.birthTime = birthTime
-        user.gender = profileInfo.gender
         user.socialType = profileInfo.socialType
         user.conflictStyle = profileInfo.conflictStyle
         user.emotionalCore = profileInfo.emotionalCore

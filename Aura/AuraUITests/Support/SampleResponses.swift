@@ -18,7 +18,6 @@ enum SampleResponses {
             "email": "anna@example.test",
             "dateOfBirth": "13.05.2000",
             "birthTime": "08:15",
-            "gender": "woman",
             "socialType": "extrovert",
             "conflictStyle": "direct",
             "emotionalCore": "intuitive",

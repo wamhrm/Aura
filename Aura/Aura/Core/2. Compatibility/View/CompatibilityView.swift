@@ -44,14 +44,6 @@ struct CompatibilityView: View {
                                                            text: $vm.partnerInfo.name)
                             }
 
-                            VStack(alignment: .leading) {
-                                headerText("Пол *")
-
-                                SelectionButtons<CompatibilityButtons.genderOptions> { button in
-                                    vm.selectGender(button)
-                                }
-                            }
-
                             BirthDateFieldsView(birthDate: $vm.partnerInfo.birthDate,
                                                 knowsBirthTime: $vm.partnerInfo.knowsBirthTime,
                                                 birthTime: $vm.partnerInfo.birthTime,
@@ -168,33 +160,6 @@ extension CompatibilityView {
                 if let result = vm.compatibilityResult {
                     CompatibilityResultView(result: result)
                 }
-        }
-    }
-
-    private struct SelectionButtons<T: RawRepresentable & CaseIterable & Hashable>: View where T.RawValue == String {
-        let onTapHandler: (T) -> Void
-
-        @State private var selected = T.allCases.first!
-
-        var body: some View {
-            HStack(spacing: 12) {
-                ForEach(Array(T.allCases), id: \.self) { item in
-                    Button {
-                        selected = item
-                        onTapHandler(item)
-                    } label: {
-                        Text(item.rawValue)
-                            .font(Adaptive.size(.footnote, .system(size: 14)))
-                            .foregroundStyle(selected == item ? .white : .deepGray)
-                            .bold()
-                            .padding(.vertical, Adaptive.size(10, 11))
-                            .padding(.horizontal, Adaptive.size(20, 21))
-                            .background(selected == item ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.clear))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(.gray, lineWidth: 1))
-                            .clipShape(.rect(cornerRadius: 10))
-                    }
-                }
-            }
         }
     }
 }

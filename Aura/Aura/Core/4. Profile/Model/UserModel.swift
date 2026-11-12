@@ -13,7 +13,6 @@ struct UserModel: Codable, Equatable, Identifiable {
     let email: String?
     let dateOfBirth: String?
     let birthTime: String?
-    let gender: String?
     let socialType: String?
     let conflictStyle: String?
     let emotionalCore: String?
@@ -80,7 +79,6 @@ extension UserModel {
                                 email: "test@test.com",
                                 dateOfBirth: "13.05.2000",
                                 birthTime: "12:00",
-                                gender: "man",
                                 socialType: "introvert",
                                 conflictStyle: "mediator",
                                 emotionalCore: "logic",

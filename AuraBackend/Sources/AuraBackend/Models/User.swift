@@ -26,9 +26,6 @@ final class User: Model, Authenticatable, @unchecked Sendable {
     @OptionalField(key: "birth_time")
     var birthTime: String?
 
-    @OptionalField(key: "gender")
-    var gender: String?
-
     @OptionalField(key: "social_type")
     var socialType: String?
 
@@ -74,7 +71,6 @@ extension User {
 
     var hasCompletedProfileInfo: Bool {
         dateOfBirth != nil &&
-        gender != nil &&
         socialType != nil &&
         conflictStyle != nil &&
         emotionalCore != nil &&
@@ -88,7 +84,6 @@ extension User {
                 email: email,
                 dateOfBirth: dateOfBirth.map(UserDateFormatter.string),
                 birthTime: birthTime,
-                gender: gender,
                 socialType: socialType,
                 conflictStyle: conflictStyle,
                 emotionalCore: emotionalCore,

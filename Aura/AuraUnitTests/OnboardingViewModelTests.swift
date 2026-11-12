@@ -128,7 +128,7 @@ final class OnboardingViewModelTests: XCTestCase {
     func test_signIn_withEmptyProfile_opensTheFirstStep_withTheNameFilled() async {
         // Given
         let auth = MockAuthService()
-        auth.serverUser = makeUser(dateOfBirth: nil, gender: nil)
+        auth.serverUser = makeUser(dateOfBirth: nil)
         let viewModel = makeViewModel(auth: auth)
 
         // When
@@ -141,7 +141,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
     func test_registration_createsTheAccount_onlyAfterThePsychotypeStep() async {
         let auth = MockAuthService()
-        auth.serverUser = makeUser(dateOfBirth: nil, gender: nil)
+        auth.serverUser = makeUser(dateOfBirth: nil)
         let viewModel = makeViewModel(auth: auth)
         viewModel.name = "Анна"
         viewModel.email = "anna@mail.ru"
@@ -159,7 +159,6 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.alertMessage, "Ответьте на все вопросы")
         XCTAssertEqual(auth.createAccountCount, 0)
 
-        viewModel.profileInfo.gender = "man"
         viewModel.profileInfo.socialType = "introvert"
         viewModel.profileInfo.conflictStyle = "mediator"
         viewModel.profileInfo.emotionalCore = "logic"
@@ -173,10 +172,9 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     func test_signedInUser_continuesFromPsychotype_withoutCreatingAnAccount() {
-        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         let viewModel = makeViewModel(auth: auth)
         viewModel.onboardingRoutes = [.psychotype]
-        viewModel.profileInfo.gender = "man"
         viewModel.profileInfo.socialType = "introvert"
         viewModel.profileInfo.conflictStyle = "mediator"
         viewModel.profileInfo.emotionalCore = "logic"
@@ -197,7 +195,6 @@ final class OnboardingViewModelTests: XCTestCase {
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
         viewModel.onboardingRoutes = [.psychotype]
-        viewModel.profileInfo.gender = "man"
         viewModel.profileInfo.socialType = "introvert"
         viewModel.profileInfo.conflictStyle = "mediator"
         viewModel.profileInfo.emotionalCore = "logic"
@@ -214,7 +211,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
     // MARK: - AI consent
     func test_profilePreparation_whenConsentFails_showsError_andAllowsRetry() async {
-        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.serverUser = makeUser(hasAIConsent: false)
         auth.aiConsentError = serverError
         let viewModel = makeViewModel(auth: auth)
@@ -262,7 +259,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
     func test_newUser_decliningConsent_savesProfile_andFinishesWithoutConsentRequest() async {
         // Given
-        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.serverUser = makeUser(hasAIConsent: false)
         let viewModel = makeViewModel(auth: auth)
 
@@ -276,7 +273,7 @@ final class OnboardingViewModelTests: XCTestCase {
     }
 
     func test_sessionExpiration_duringProfileSave_cancelsPreparation_andDoesNotFinish() async {
-        let auth = MockAuthService(user: makeUser(dateOfBirth: nil, gender: nil))
+        let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.profileSaveDelay = .seconds(30)
         let viewModel = makeViewModel(auth: auth)
         viewModel.chooseAIConsent(true)

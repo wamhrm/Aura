@@ -25,7 +25,6 @@ func waitUntil(file: StaticString = #filePath, line: UInt = #line, _ condition: 
 @MainActor
 func makeUser(name: String = "Дмитрий",
               dateOfBirth: String? = "13.05.2000",
-              gender: String? = "man",
               socialType: String? = "introvert",
               hasAIConsent: Bool? = true,
               isEmailConfirmed: Bool? = true) -> UserModel {
@@ -34,7 +33,6 @@ func makeUser(name: String = "Дмитрий",
               email: "test@test.com",
               dateOfBirth: dateOfBirth,
               birthTime: nil,
-              gender: gender,
               socialType: socialType,
               conflictStyle: "mediator",
               emotionalCore: "logic",

@@ -13,20 +13,6 @@ enum CompatibilityRoutes: Hashable {
     case compatibilityResults
 }
 
-enum CompatibilityButtons {
-    enum genderOptions: String, CaseIterable {
-        case male = "Мужской"
-        case female = "Женский"
-
-        var key: String {
-            switch self {
-                case .male: ProfileInfoOption.man.rawValue
-                case .female: ProfileInfoOption.woman.rawValue
-            }
-        }
-    }
-}
-
 @MainActor
 final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
@@ -80,10 +66,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
     func isSelected(_ test: CompatibilityTestTypes) -> Bool {
         selectedTests.contains(test)
-    }
-
-    func selectGender(_ option: CompatibilityButtons.genderOptions) {
-        partnerInfo.gender = option.key
     }
 
     func toggleTestSelection(_ test: CompatibilityTestTypes) {

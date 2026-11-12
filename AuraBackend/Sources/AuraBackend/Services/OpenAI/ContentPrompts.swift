@@ -11,15 +11,16 @@ enum ContentPrompts {
     static func userProfile(user: User) -> String {
         """
         Данные пользователя:
+        - имя: \(user.name)
         - дата рождения: \(user.dateOfBirth.map(UserDateFormatter.string) ?? "не указана")
         - время рождения: \(user.birthTime ?? "не указано")
-        - пол: \(user.gender ?? "не указано")
         - социальный тип: \(user.socialType ?? "не указано")
         - стиль конфликта: \(user.conflictStyle ?? "не указано")
         - эмоциональное ядро: \(user.emotionalCore ?? "не указано")
         - стиль принятия решений: \(user.decisionStyle ?? "не указано")
         - фокус в отношениях: \(user.coreFocus ?? "не указано")
         - знак зодиака: \(user.dateOfBirth.flatMap(HoroscopeSign.from)?.title ?? "не указан")
+        Пол не указан. Если он важен для текста, определи его по имени и не пиши имя в ответе.
         """
     }
 

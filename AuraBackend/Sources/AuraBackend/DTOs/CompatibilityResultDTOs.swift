@@ -11,7 +11,6 @@ struct CompatibilityTestRequest: Content {
     let partnerName: String
     let partnerDateOfBirth: String
     let partnerBirthTime: String?
-    let partnerGender: String
     let selectedTests: [String]
 }
 

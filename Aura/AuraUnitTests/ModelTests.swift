@@ -129,7 +129,7 @@ final class ModelTests: XCTestCase {
         // Given
         let complete = makeUser()
         let withoutBirthDate = makeUser(dateOfBirth: nil)
-        let withoutAnAnswer = makeUser(gender: nil)
+        let withoutAnAnswer = makeUser(socialType: nil)
 
         // When
         let results = [complete, withoutBirthDate, withoutAnAnswer].map(\.hasCompletedProfileInfo)

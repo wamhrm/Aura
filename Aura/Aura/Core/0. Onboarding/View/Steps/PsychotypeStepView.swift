@@ -19,13 +19,6 @@ struct PsychotypeStepView: View {
                     OnboardingHeader(title: "Расскажите о себе",
                                      subtitle: "Ответы помогут точнее составить ваш психологический профиль")
 
-                    ProfileInfoSection(title: "Ваш пол") {
-                        HStack {
-                            ProfileInfoOptionView(type: .man, selection: $vm.profileInfo.gender)
-                            ProfileInfoOptionView(type: .woman, selection: $vm.profileInfo.gender)
-                        }
-                    }
-
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)
                     
                 ClassicButton(title: "Далее") {

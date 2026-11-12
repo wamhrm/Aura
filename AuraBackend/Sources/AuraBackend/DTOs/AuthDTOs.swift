@@ -42,7 +42,6 @@ struct UserDTO: Content {
     let email: String?
     let dateOfBirth: String?
     let birthTime: String?
-    let gender: String?
     let socialType: String?
     let conflictStyle: String?
     let emotionalCore: String?
@@ -66,7 +65,6 @@ struct UpdateProfileInfoRequest: Content {
     var name: String? = nil
     let dateOfBirth: String
     let birthTime: String?
-    let gender: String
     let socialType: String
     let conflictStyle: String
     let emotionalCore: String
@@ -83,7 +81,6 @@ enum InputLimits {
 }
 
 enum ProfileInfoOptions {
-    static let genders: Set<String> = ["man", "woman"]
     static let socialTypes: Set<String> = ["introvert", "ambivert", "extrovert"]
     static let conflictStyles: Set<String> = ["mediator", "direct", "avoider"]
     static let emotionalCores: Set<String> = ["logic", "intuitive"]

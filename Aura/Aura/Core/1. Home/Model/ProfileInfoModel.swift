@@ -11,7 +11,6 @@ struct ProfileInfoModel: Codable, Equatable {
     var name: String?
     var dateOfBirth = ""
     var birthTime = ""
-    var gender: String?
     var socialType: String?
     var conflictStyle: String?
     var emotionalCore: String?
@@ -21,7 +20,6 @@ struct ProfileInfoModel: Codable, Equatable {
     init() { }
 
     var hasAllAnswers: Bool {
-        gender != nil &&
         socialType != nil &&
         conflictStyle != nil &&
         emotionalCore != nil &&
@@ -32,7 +30,6 @@ struct ProfileInfoModel: Codable, Equatable {
     init(user: UserModel) {
         self.dateOfBirth = user.dateOfBirth ?? ""
         self.birthTime = user.birthTime ?? ""
-        self.gender = user.gender
         self.socialType = user.socialType
         self.conflictStyle = user.conflictStyle
         self.emotionalCore = user.emotionalCore

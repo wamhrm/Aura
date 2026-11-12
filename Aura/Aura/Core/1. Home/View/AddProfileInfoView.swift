@@ -23,15 +23,6 @@ struct AddProfileInfoView: View {
                                                    text: $vm.name)
                     }
 
-                    ProfileInfoSection(title: "Ваш пол") {
-                        HStack {
-                            ProfileInfoOptionView(type: .man,
-                                                  selection: $vm.profileInfo.gender)
-                            ProfileInfoOptionView(type: .woman,
-                                                  selection: $vm.profileInfo.gender)
-                        }
-                    }
-
                     ProfileInfoSection(title: "Дата рождения") {
                         BirthDateFieldsView(birthDate: $vm.birthDate,
                                             knowsBirthTime: $vm.knowsBirthTime,
@@ -64,12 +55,10 @@ struct AddProfileInfoView: View {
 }
 
 enum ProfileInfoOption: String, CaseIterable {
-    case man, woman, introvert, ambivert, extrovert, mediator, direct, avoider, logic, intuitive, planner, spontaneous, procrastinator, stability, growth, peace
+    case introvert, ambivert, extrovert, mediator, direct, avoider, logic, intuitive, planner, spontaneous, procrastinator, stability, growth, peace
 
     var title: String {
         switch self {
-            case .man: "Мужской"
-            case .woman: "Женский"
             case .introvert: "Интроверт"
             case .ambivert: "Амбиверт"
             case .extrovert: "Экстраверт"
@@ -89,8 +78,6 @@ enum ProfileInfoOption: String, CaseIterable {
 
     var icon: String {
         switch self {
-            case .man: "👱🏻‍♂️"
-            case .woman: "👩🏻"
             case .introvert: "🌙"
             case .ambivert: "🌗"
             case .extrovert: "🔥"
