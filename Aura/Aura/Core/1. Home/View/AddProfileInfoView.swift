@@ -6,70 +6,55 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct AddProfileInfoView: View {
     @ObservedObject var vm: ProfileFormViewModel
-    @Environment(\.dismiss) private var dismiss
+    let onLoadingChange: (Bool) -> Void
+    let onSaved: () async -> Void
 
     var body: some View {
         ZStack {
-            ZStack {
-                BackgroundView()
+            BackgroundView()
 
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ProfileInfoSection(title: "Ваше имя") {
-                            CompatibilityTextFieldView(title: "Введите имя",
-                                                       text: $vm.name)
-                        }
-
-                        ProfileInfoSection(title: "Ваш пол") {
-                            HStack {
-                                ProfileInfoOptionView(type: .man,
-                                                      selection: $vm.profileInfo.gender)
-                                ProfileInfoOptionView(type: .woman,
-                                                      selection: $vm.profileInfo.gender)
-                            }
-                        }
-
-                        ProfileInfoSection(title: "Дата рождения") {
-                            BirthDateFieldsView(birthDate: $vm.birthDate,
-                                                knowsBirthTime: $vm.knowsBirthTime,
-                                                birthTime: $vm.birthTime,
-                                                dateRange: BirthDateFormatter.dateRange)
-                        }
-
-                        PsychotypeSectionsView(profileInfo: $vm.profileInfo)
-
-                        ClassicButton(title: vm.saveButtonTitle) {
-                            vm.saveProfileInfo {
-                                dismiss()
-                            }
-                        }
-                        .padding(.top, 5)
-                        .disabled(vm.isLoading)
+            ScrollView {
+                VStack(spacing: 16) {
+                    ProfileInfoSection(title: "Ваше имя") {
+                        CompatibilityTextFieldView(title: "Введите имя",
+                                                   text: $vm.name)
                     }
-                    .disabled(vm.isLoading)
-                    .padding(.horizontal)
+
+                    ProfileInfoSection(title: "Ваш пол") {
+                        HStack {
+                            ProfileInfoOptionView(type: .man,
+                                                  selection: $vm.profileInfo.gender)
+                            ProfileInfoOptionView(type: .woman,
+                                                  selection: $vm.profileInfo.gender)
+                        }
+                    }
+
+                    ProfileInfoSection(title: "Дата рождения") {
+                        BirthDateFieldsView(birthDate: $vm.birthDate,
+                                            knowsBirthTime: $vm.knowsBirthTime,
+                                            birthTime: $vm.birthTime,
+                                            dateRange: BirthDateFormatter.dateRange)
+                    }
+
+                    PsychotypeSectionsView(profileInfo: $vm.profileInfo)
+
+                    ClassicButton(title: "Готово") {
+                        vm.saveProfileInfo(onLoadingChange: onLoadingChange) {
+                            Task { await onSaved() }
+                        }
+                    }
+                    .padding(.top, 5)
                 }
-                .bottomAreaPadding(50)
-                .scrollIndicators(.hidden)
-                .dismissKeyboardOnTap()
-                .scrollDismissesKeyboard(.interactively)
+                .padding(.horizontal)
             }
-            .opacity(vm.isLoading ? 0 : 1)
-            .allowsHitTesting(!vm.isLoading)
-
-            ZStack {
-                BackgroundView()
-
-                LoadingView(title: "Сохраняем...")
-            }
-            .opacity(vm.isLoading ? 1 : 0)
-            .allowsHitTesting(vm.isLoading)
+            .bottomAreaPadding(50)
+            .scrollIndicators(.hidden)
+            .dismissKeyboardOnTap()
+            .scrollDismissesKeyboard(.interactively)
         }
-        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .navigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
@@ -127,6 +112,8 @@ enum ProfileInfoOption: String, CaseIterable {
 #Preview {
     NavigationStack {
         AddProfileInfoView(vm: ProfileFormViewModel(authService: AuthService.preview,
-                                                    user: .mock))
+                                                    user: .mock),
+                           onLoadingChange: { _ in },
+                           onSaved: {})
     }
 }

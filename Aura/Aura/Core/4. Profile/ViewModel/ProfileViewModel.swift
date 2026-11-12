@@ -22,6 +22,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var personalityState = LoadState.loading
     @Published private(set) var tipState = LoadState.loading
     @Published private(set) var profileForm: ProfileFormViewModel?
+    @Published private(set) var isSavingProfile = false
     
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -35,6 +36,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     private var personalityResult: PersonalityResultModel?
     private var loadedPersonalityId: UUID?
     private var currentUserId: UUID?
+    private var savingStarted: ContinuousClock.Instant?
+    private var openProfileFormAfterSettings = false
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
@@ -144,8 +147,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     private func loadDailyTip() async {
-        let hasResult = hasPersonalityTests || contentService.historyCells.value.contains { $0.kind == .personality }
-        guard hasResult, user?.allowsAIAnalysis == true else { return }
+        guard user?.allowsAIAnalysis == true, user?.dateOfBirth != nil else { return }
+        if dailyTip?.isFromToday == true { return }
 
         if dailyTip == nil {
             tipState = .loading
@@ -201,6 +204,39 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
         profileForm = ProfileFormViewModel(authService: authService, user: user)
         profileRoutes.append(.addProfileInfo)
+    }
+
+    func editProfileAfterSettings() {
+        openProfileFormAfterSettings = true
+        showSettings = false
+    }
+
+    func openProfileFormIfNeeded() {
+        guard openProfileFormAfterSettings else { return }
+        openProfileFormAfterSettings = false
+        showAddProfileInfo()
+    }
+
+    func noteProfileSaving(_ isSaving: Bool) {
+        if isSaving {
+            if savingStarted == nil { savingStarted = .now }
+        } else {
+            savingStarted = nil
+        }
+        isSavingProfile = isSaving
+    }
+
+    func finishProfileEditing() async {
+        if let savingStarted {
+            let deadline = savingStarted.advanced(by: .seconds(CoveredTransition.appearSeconds))
+            try? await Task.sleep(until: deadline, clock: .continuous)
+        }
+
+        profileRoutes = []
+        try? await Task.sleep(for: CoveredTransition.settleDuration)
+        isSavingProfile = false
+        savingStarted = nil
+        profileForm = nil
     }
 
     func openSettings() {

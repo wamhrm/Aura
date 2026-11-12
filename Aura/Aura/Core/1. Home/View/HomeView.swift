@@ -14,9 +14,7 @@ struct HomeView: View {
     let aiConsentButton: () -> Void
 
     var body: some View {
-        ZStack {
-            ZStack {
-                NavigationStack(path: $vm.homeRoutes) {
+        NavigationStack(path: $vm.homeRoutes) {
                     ZStack {
                         BackgroundView()
 
@@ -132,10 +130,10 @@ struct HomeView: View {
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
 
-                                ClassicButton(title: vm.testButtonTitle) {
+                                ClassicButton(title: "Проверить себя") {
                                     vm.makePersonalityTest()
                                 }
-                                .disabled(vm.isLoading || !vm.allowsAIAnalysis)
+                                .disabled(!vm.allowsAIAnalysis)
                                 .padding(.top, 10)
                             }
                             .blur(radius: !vm.allowsAIAnalysis ? 5 : 0)
@@ -147,7 +145,6 @@ struct HomeView: View {
                                 }
                             }
                         }
-                        .disabled(vm.isLoading)
                         .padding(.horizontal)
                     }
                         .bottomAreaPadding(50)
@@ -158,23 +155,8 @@ struct HomeView: View {
                     .navigationDestination(for: HomeRoutes.self) { destination in
                         destinationView(destination)
                     }
-                }
-            }
-            .opacity(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading ? 0 : 1)
-            .allowsHitTesting(!(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading))
-
-            ZStack {
-                BackgroundView()
-
-                LoadingView(title: vm.isLoading ? "Готовим результат..." : vm.isUpdatingInfo || vm.hasUpdateFailed ? vm.updateTitle : "Загружаем информацию")
-            }
-            .opacity(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading ? 1 : 0)
-            .allowsHitTesting(vm.showsLoadingScreen || vm.isUpdatingInfo || vm.hasUpdateFailed || vm.isLoading)
         }
-        .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
-        .animation(.easeInOut(duration: 0.35), value: vm.isUpdatingInfo)
-        .animation(.easeInOut(duration: 0.35), value: vm.hasUpdateFailed)
-        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
+        .loadingCover(isPresented: vm.loadingTitle != nil, title: vm.loadingTitle ?? "")
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }

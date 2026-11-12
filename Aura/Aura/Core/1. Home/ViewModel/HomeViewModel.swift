@@ -8,7 +8,6 @@
 
 import Combine
 import Foundation
-import SwiftUI
 
 enum HomeRoutes: Hashable {
     case horoscopeDetails, allTests, testResults, aiConsent
@@ -30,15 +29,14 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published private(set) var allowsAIAnalysis = false
-    @Published private(set) var isLoading = false
-    @Published private(set) var isLoadingScreen = true
-    @Published private(set) var isUpdatingInfo = false
-    @Published private(set) var hasUpdateFailed = false
-    @Published private(set) var updateMessage = ""
+    @Published private(set) var loadingTitle: String?
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
+    private var coverTask: Task<Void, Never>?
+
+    private static let homeLoadTitle = "Загружаем информацию"
 
     private var currentUser: UserModel?
     private var personalityRequestID: UUID?
@@ -50,24 +48,19 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
+        loadingTitle = Self.homeLoadTitle
 
         setupSubscriptions()
-    }
-
-    var updateTitle: String {
-        hasUpdateFailed ? "Не удалось обновить информацию" : "Обновляем информацию"
     }
 
     var greetingText: String {
         "Здравствуйте, \(userName.capitalized)"
     }
 
-    var testButtonTitle: String {
-        isLoading ? "Готовим результат..." : "Проверить себя"
-    }
-
-    var showsLoadingScreen: Bool {
-        isLoadingScreen || (horoscope == nil && horoscopeState == .loading)
+    private var isHomeReady: Bool {
+        let horoscopeReady = horoscope != nil || horoscopeState != .loading
+        let insightReady = !allowsAIAnalysis || insightState != .loading
+        return horoscopeReady && insightReady
     }
 
     func isSelected(_ test: PersonalityTestTypes) -> Bool {
@@ -122,7 +115,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         userName = user.name
 
         guard let previousUser, previousUser.id == user.id else {
-            isLoadingScreen = true
+            loadingTitle = Self.homeLoadTitle
             Task { await refresh() }
             return
         }
@@ -130,7 +123,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         if previousUser.dateOfBirth != user.dateOfBirth {
             horoscope = nil
             horoscopeState = .loading
-            isLoadingScreen = true
+            if coverTask == nil { loadingTitle = Self.homeLoadTitle }
             Task { await loadHoroscope() }
         }
 
@@ -157,38 +150,32 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     func allowAIConsent() {
-        guard !isUpdatingInfo else { return }
-
-        updateInfo()
+        performCovered("Обновляем информацию") {
+            try await self.authService.giveAIConsent()
+            try await self.refreshUnlockedContent()
+        } commit: {
+            self.homeRoutes = []
+        }
     }
 
     func declineAIConsent() {
         homeRoutes = []
     }
 
-    private func updateInfo() {
-        isUpdatingInfo = true
-        hasUpdateFailed = false
-
-        Task {
-            do {
-                try await authService.giveAIConsent()
-                try await refreshUnlockedContent()
-                homeRoutes = []
-            } catch {
-                homeRoutes = []
-                updateMessage = error.userMessage
-                hasUpdateFailed = true
-            }
-
-            isUpdatingInfo = false
-        }
+    private func refreshUnlockedContent() async throws {
+        async let insight = fetchInsight()
+        async let tip = fetchDailyTip()
+        try await insight
+        try await tip
     }
 
-    private func refreshUnlockedContent() async throws {
-        _ = try await contentService.fetchDailyInsight()
+    private func fetchInsight() async throws {
+        dailyInsight = try await contentService.fetchDailyInsight()
+        insightState = .loaded
+    }
 
-        guard contentService.historyCells.value.contains(where: { $0.kind == .personality }) else { return }
+    private func fetchDailyTip() async throws {
+        guard currentUser?.dateOfBirth != nil else { return }
         _ = try await contentService.fetchDailyTip()
     }
 
@@ -205,7 +192,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     func makePersonalityTest() {
-        guard !isLoading else { return }
+        guard coverTask == nil else { return }
 
         if let currentUser, !currentUser.hasConfirmedEmail {
             emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
@@ -214,19 +201,35 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
         let tests = selectedTests
         let requestID = currentPersonalityRequestID()
-        isLoading = true
 
-        Task {
-            do {
-                personalityResult = try await contentService.makePersonalityTest(selectedTests: tests,
-                                                                                 requestID: requestID)
-                homeRoutes.append(.testResults)
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
+        performCovered("Готовим результат...") {
+            self.personalityResult = try await self.contentService.makePersonalityTest(selectedTests: tests, requestID: requestID)
+        } commit: {
+            self.homeRoutes.append(.testResults)
         }
+    }
+
+    private func performCovered(_ title: String,
+                                operation: @escaping () async throws -> Void,
+                                commit: @escaping () -> Void = {}) {
+        guard coverTask == nil else { return }
+
+        loadingTitle = title
+        coverTask = Task {
+            defer { self.coverTask = nil }
+
+            do {
+                try await CoveredTransition.run(hide: { self.restoreCover() },
+                                                operation: operation,
+                                                commit: commit)
+            } catch {
+                self.presentAlert(error.userMessage)
+            }
+        }
+    }
+
+    private func restoreCover() {
+        loadingTitle = isHomeReady ? nil : Self.homeLoadTitle
     }
 
     private func currentPersonalityRequestID() -> UUID {
@@ -253,7 +256,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     func refresh() async {
         guard let user = currentUser else { return }
 
-        async let horoscopeLoad: Void = loadHoroscope()
+        async let horoscopeLoad = loadHoroscope()
 
         if user.allowsAIAnalysis {
             await loadDailyInsight()
@@ -282,7 +285,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 horoscopeState = .failed(error.userMessage)
             }
         }
-
+        
+        try? await Task.sleep(for: .seconds(1))
         revealScreenIfReady()
     }
 
@@ -294,23 +298,33 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             insightState = .loading
         }
 
+        async let tip = loadDailyTip()
+        await fetchInsightQuietly()
+        
+        try? await Task.sleep(for: .seconds(1))
+        revealScreenIfReady()
+        await tip
+    }
+
+    private func fetchInsightQuietly() async {
         do {
-            dailyInsight = try await contentService.fetchDailyInsight()
-            insightState = .loaded
+            try await fetchInsight()
         } catch {
             if dailyInsight?.isFromToday != true {
                 dailyInsight = nil
                 insightState = .failed(error.userMessage)
             }
         }
+    }
 
-        revealScreenIfReady()
+    private func loadDailyTip() async {
+        guard currentUser?.dateOfBirth != nil else { return }
+        _ = try? await contentService.fetchDailyTip()
     }
 
     private func revealScreenIfReady() {
-        let horoscopeReady = horoscope != nil || horoscopeState != .loading
-        let insightReady = !allowsAIAnalysis || insightState != .loading
-        guard horoscopeReady && insightReady else { return }
-        isLoadingScreen = false
+        guard coverTask == nil else { return }
+        
+        loadingTitle = isHomeReady ? nil : Self.homeLoadTitle
     }
 }

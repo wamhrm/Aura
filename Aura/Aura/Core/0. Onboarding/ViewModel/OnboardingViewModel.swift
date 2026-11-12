@@ -71,13 +71,13 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var alertMessage = ""
     @Published var showSignOutAlert = false
     @Published private(set) var isCheckingEmail = false
-    @Published private(set) var isLoading = false
-    @Published private(set) var activityTitle = ""
+    @Published private(set) var loadingTitle: String?
 
     private var hasEnteredBirthDate = false
     private var allowsAIAnalysis = false
     private var hasSession = false
-    private var preparationTask: Task<Void, Never>?
+    private var opensMainScreen = false
+    private var coverTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
 
     private let authService: any AuthServiceProtocol
@@ -119,22 +119,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         isCheckingEmail ? "Проверяем..." : "Далее"
     }
 
-    var signInButtonTitle: String {
-        isLoading ? "Входим..." : "Войти"
-    }
-
-    var sendCodeButtonTitle: String {
-        isLoading ? "Отправляем..." : "Отправить код"
-    }
-
-    var resetPasswordButtonTitle: String {
-        isLoading ? "Сохраняем..." : "Сохранить пароль"
-    }
-
-    var psychotypeButtonTitle: String {
-        !isSignedIn && isLoading ? "Создаём аккаунт..." : "Далее"
-    }
-
     private var isLastIntroPage: Bool {
         introPage == IntroPages.allCases.count - 1
     }
@@ -162,9 +146,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private func handleSessionEnd() {
         guard hasSession else { return }
 
-        preparationTask?.cancel()
+        coverTask?.cancel()
         hasSession = false
-        isLoading = false
+        loadingTitle = nil
         onboardingRoutes = []
         presentAlert(authService.takeExpiredSessionMessage() ?? "Сессия истекла. Войдите снова")
     }
@@ -181,8 +165,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         Task {
             do {
                 try await authService.signOut()
-                preparationTask?.cancel()
+                coverTask?.cancel()
                 hasSession = false
+                loadingTitle = nil
                 onboardingRoutes = []
             } catch {
                 presentAlert(error.userMessage)
@@ -268,19 +253,14 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        guard !isLoading else { return }
-
-        beginLoading("Входим...")
-
-        Task {
-            do {
-                try await authService.signIn(email: email, password: password)
-                continueAfterSignIn()
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
+        performCovered("Входим...") {
+            try await self.authService.signIn(email: email, password: self.password)
+        } commit: {
+            self.opensMainScreen = self.continueAfterSignIn()
+        } leaveCover: {
+            guard self.opensMainScreen else { return false }
+            self.authService.finishOnboarding()
+            return true
         }
     }
 
@@ -292,19 +272,10 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        guard !isLoading else { return }
-
-        beginLoading("Отправляем...")
-
-        Task {
-            do {
-                try await authService.requestPasswordReset(email: email)
-                withAnimation { isResetCodeSent = true }
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
+        performCovered("Отправляем...") {
+            try await self.authService.requestPasswordReset(email: email)
+        } commit: {
+            self.isResetCodeSent = true
         }
     }
 
@@ -322,19 +293,14 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        guard !isLoading else { return }
-
-        beginLoading("Сохраняем...")
-
-        Task {
-            do {
-                try await authService.resetPassword(email: email, code: code, newPassword: newPassword)
-                continueAfterSignIn()
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
+        performCovered("Сохраняем...") {
+            try await self.authService.resetPassword(email: email, code: code, newPassword: self.newPassword)
+        } commit: {
+            self.opensMainScreen = self.continueAfterSignIn()
+        } leaveCover: {
+            guard self.opensMainScreen else { return false }
+            self.authService.finishOnboarding()
+            return true
         }
     }
 
@@ -360,23 +326,14 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        guard !isLoading else { return }
-
-        beginLoading("Создаём аккаунт...")
-
-        Task {
-            do {
-                try await authService.createAccount(name: displayName,
-                                                    email: email,
-                                                    password: password)
-                password = ""
-                try await Task.sleep(for: .milliseconds(500))
-                onboardingRoutes.append(.aiConsent)
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
+        performCovered("Создаём аккаунт...") {
+            try await self.authService.createAccount(
+                name: self.displayName,
+                email: email,
+                password: self.password)
+            self.password = ""
+        } commit: {
+            self.onboardingRoutes.append(.aiConsent)
         }
     }
 
@@ -391,70 +348,68 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    private func beginLoading(_ title: String) {
-        activityTitle = title
-        isLoading = true
-    }
-
     private func giveAIConsent() {
-        guard !isLoading else { return }
-
-        beginLoading("Сохраняем...")
-
-        Task {
-            do {
-                try await authService.giveAIConsent()
-                onboardingRoutes = []
-                authService.finishOnboarding()
-            } catch {
-                presentAlert(error.userMessage)
-            }
-
-            isLoading = false
+        performCovered("Сохраняем...") {
+            try await self.authService.giveAIConsent()
+        } leaveCover: {
+            self.authService.finishOnboarding()
+            return true
         }
     }
 
     private func prepareProfile() {
-        guard preparationTask == nil, isSignedIn, !isLoading else { return }
-
-        beginLoading("Сохраняем профиль и настройки")
+        guard isSignedIn else { return }
 
         var request = profileInfo
         request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
         request.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
+        let preparedRequest = request
 
-        preparationTask = Task {
-            defer { preparationTask = nil }
+        performCovered("Сохраняем профиль и настройки") {
+            _ = try await self.authService.updateProfileInfo(preparedRequest)
+            try Task.checkCancellation()
 
-            do {
-                _ = try await authService.updateProfileInfo(request)
+            if self.allowsAIAnalysis {
+                try await self.authService.giveAIConsent()
                 try Task.checkCancellation()
-
-                if allowsAIAnalysis {
-                    try await authService.giveAIConsent()
-                    try Task.checkCancellation()
-                }
-
-                onboardingRoutes = []
-                authService.finishOnboarding()
-            } catch is CancellationError {
-            } catch NetworkError.cancelled {
-            } catch {
-                presentAlert(error.userMessage)
             }
-
-            isLoading = false
+        } leaveCover: {
+            self.authService.finishOnboarding()
+            return true
         }
     }
 
-    private func continueAfterSignIn() {
-        guard case .signedIn(let user) = authService.authState.value else { return }
+    private func performCovered(_ title: String,
+                                operation: @escaping () async throws -> Void,
+                                commit: @escaping () -> Void = {},
+                                leaveCover: @escaping () -> Bool = { false }) {
+        guard loadingTitle == nil else { return }
+
+        loadingTitle = title
+        coverTask = Task {
+            defer { self.coverTask = nil }
+
+            do {
+                try await CoveredTransition.run(hide: { self.loadingTitle = nil },
+                                                operation: operation,
+                                                commit: commit,
+                                                leaveCover: leaveCover)
+            } catch {
+                if error is CancellationError { return }
+                if case NetworkError.cancelled = error { return }
+                self.presentAlert(error.userMessage)
+            }
+        }
+    }
+
+    private func continueAfterSignIn() -> Bool {
+        guard case .signedIn(let user) = authService.authState.value else { return false }
 
         name = user.name
         password = ""
 
         if user.hasCompletedProfileInfo && user.allowsAIAnalysis {
-            authService.finishOnboarding()
+            return true
         } else if user.hasCompletedProfileInfo {
             onboardingRoutes.append(.aiConsent)
         } else if hasEnteredBirthDate {
@@ -462,6 +417,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         } else {
             onboardingRoutes = [.nameAndBirth]
         }
+        return false
     }
 
     private func validateSignIn(email: String, password: String) -> String? {

@@ -25,13 +25,11 @@ struct AllTestsView: View {
                         }
                     }
                     
-                    ClassicButton(title: vm.testButtonTitle) {
+                    ClassicButton(title: "Проверить себя") {
                         vm.makePersonalityTest()
                     }
-                    .disabled(vm.isLoading)
                     .padding(.top, 10)
                 }
-                .disabled(vm.isLoading)
                 .padding(.horizontal)
             }
             .scrollIndicators(.hidden)

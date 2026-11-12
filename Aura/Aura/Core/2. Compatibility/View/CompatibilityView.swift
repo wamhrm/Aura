@@ -12,9 +12,7 @@ struct CompatibilityView: View {
     let aiConsentButton: () -> Void
 
     var body: some View {
-        ZStack {
-            ZStack {
-                NavigationStack(path: $vm.compatibilityRoutes) {
+        NavigationStack(path: $vm.compatibilityRoutes) {
             ZStack {
                 BackgroundView()
 
@@ -89,10 +87,9 @@ struct CompatibilityView: View {
                                                 }
                             }
 
-                            ClassicButton(title: vm.testButtonTitle) {
+                            ClassicButton(title: "Узнать совместимость") {
                                 vm.makeCompatibilityTest()
                             }
-                            .disabled(vm.isLoading)
                             .padding(.top, 10)
                         }
                         .blur(radius: vm.needsAIConsent ? 5 : 0)
@@ -104,7 +101,6 @@ struct CompatibilityView: View {
                             }
                         }
                     }
-                    .disabled(vm.isLoading)
                     .padding(.horizontal)
                     .bottomAreaPadding(50)
                 }
@@ -117,20 +113,8 @@ struct CompatibilityView: View {
             .navigationDestination(for: CompatibilityRoutes.self) { destination in
                 destinationView(destination)
             }
-                }
-            }
-            .opacity(vm.isLoading ? 0 : 1)
-            .allowsHitTesting(!vm.isLoading)
-
-            ZStack {
-                BackgroundView()
-
-                LoadingView(title: "Готовим результат...")
-            }
-            .opacity(vm.isLoading ? 1 : 0)
-            .allowsHitTesting(vm.isLoading)
         }
-        .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
+        .loadingCover(isPresented: vm.loadingTitle != nil, title: vm.loadingTitle ?? "")
         .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }

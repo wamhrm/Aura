@@ -27,7 +27,7 @@ struct SignInStepView: View {
                     }
                 }
 
-                ClassicButton(title: vm.signInButtonTitle) {
+                ClassicButton(title: "Войти") {
                     vm.signIn()
                 }
 

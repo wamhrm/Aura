@@ -7,7 +7,6 @@
 
 import Combine
 import Foundation
-import SwiftUI
 
 enum CompatibilityRoutes: Hashable {
     case testDetails(CompatibilityTestTypes)
@@ -37,12 +36,13 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var isLoading = false
+    @Published private(set) var loadingTitle: String?
     @Published private(set) var needsAIConsent = false
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
+    private var coverTask: Task<Void, Never>?
     
     private var currentUser: UserModel?
     private var compatibilityRequestID: UUID?
@@ -56,10 +56,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         self.contentService = contentService
 
         setupSubscriptions()
-    }
-
-    var testButtonTitle: String {
-        isLoading ? "Готовим результат..." : "Узнать совместимость"
     }
 
     private func setupSubscriptions() {
@@ -104,7 +100,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     func makeCompatibilityTest() {
-        guard !isLoading else { return }
+        guard coverTask == nil else { return }
 
         if let currentUser, !currentUser.hasConfirmedEmail {
             emailConfirmation = EmailConfirmationViewModel(authService: authService, email: currentUser.email ?? "")
@@ -120,19 +116,32 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
         let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests)
         let requestID = currentCompatibilityRequestID(for: request)
-        isLoading = true
 
-        Task {
+        performCovered("Готовим результат...") {
+            self.compatibilityResult = try await self.contentService.makeCompatibilityTest(request: request,
+                                                                                           requestID: requestID)
+        } commit: {
+            self.clearFields()
+            self.compatibilityRoutes.append(.compatibilityResults)
+        }
+    }
+
+    private func performCovered(_ title: String,
+                                operation: @escaping () async throws -> Void,
+                                commit: @escaping () -> Void = {}) {
+        guard coverTask == nil else { return }
+
+        loadingTitle = title
+        coverTask = Task {
+            defer { self.coverTask = nil }
+
             do {
-                compatibilityResult = try await contentService.makeCompatibilityTest(request: request,
-                                                                                     requestID: requestID)
-                compatibilityRoutes.append(.compatibilityResults)
-                clearFields()
+                try await CoveredTransition.run(hide: { self.loadingTitle = nil },
+                                                operation: operation,
+                                                commit: commit)
             } catch {
-                presentAlert(error.userMessage)
+                self.presentAlert(error.userMessage)
             }
-
-            isLoading = false
         }
     }
 

@@ -17,11 +17,15 @@ final class HomeViewModelTests: XCTestCase {
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
         await waitUntil { viewModel.insightState == .loaded }
         content.dailyContentDate = todayText()
-        content.beforeContentResponse = { XCTAssertNil(viewModel.dailyInsight) }
+        var didClearInsight = false
+        content.beforeContentResponse = {
+            if viewModel.dailyInsight == nil { didClearInsight = true }
+        }
 
         await viewModel.refresh()
         content.beforeContentResponse = nil
 
+        XCTAssertTrue(didClearInsight)
         XCTAssertEqual(viewModel.dailyInsight?.isFromToday, true)
     }
 
@@ -55,8 +59,8 @@ final class HomeViewModelTests: XCTestCase {
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
                                       contentService: MockContentService())
 
-        XCTAssertTrue(viewModel.showsLoadingScreen)
-        await waitUntil { !viewModel.showsLoadingScreen }
+        XCTAssertNotNil(viewModel.loadingTitle)
+        await waitUntil { viewModel.loadingTitle == nil }
 
         XCTAssertNotNil(viewModel.horoscope)
     }
@@ -245,11 +249,11 @@ final class HomeViewModelTests: XCTestCase {
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
-        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.isUpdatingInfo }
+        await waitUntil { viewModel.homeRoutes.isEmpty && viewModel.loadingTitle == nil }
 
         XCTAssertEqual(auth.aiConsentCount, 1)
         XCTAssertGreaterThanOrEqual(content.insightCount, 1)
-        XCTAssertEqual(content.tipCount, 0)
+        XCTAssertGreaterThanOrEqual(content.tipCount, 1)
     }
 
     func test_allowAIConsent_withPersonalityHistory_alsoLoadsTheTip() async {
@@ -260,23 +264,23 @@ final class HomeViewModelTests: XCTestCase {
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
-        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.isUpdatingInfo }
+        await waitUntil { viewModel.homeRoutes.isEmpty && viewModel.loadingTitle == nil }
 
         XCTAssertGreaterThanOrEqual(content.insightCount, 1)
-        XCTAssertEqual(content.tipCount, 1)
+        XCTAssertGreaterThanOrEqual(content.tipCount, 1)
     }
 
-    func test_failedInfoUpdate_staysOnTheLoadingScreen() async {
+    func test_failedInfoUpdate_staysOnTheConsentScreen() async {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         auth.errorToThrow = serverError
         let viewModel = HomeViewModel(authService: auth, contentService: MockContentService())
         viewModel.showAIConsent()
 
         viewModel.allowAIConsent()
-        await waitUntil { viewModel.hasUpdateFailed }
+        await waitUntil { viewModel.showAlert }
 
-        XCTAssertTrue(viewModel.homeRoutes.isEmpty)
-        XCTAssertEqual(viewModel.updateMessage, "Ошибка сервера")
+        XCTAssertEqual(viewModel.homeRoutes, [.aiConsent])
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
     }
 
     func test_declineAIConsent_resetsTheRoutes() async {

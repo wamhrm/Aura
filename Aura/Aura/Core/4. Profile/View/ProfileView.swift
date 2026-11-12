@@ -28,10 +28,11 @@ struct ProfileView: View {
             .toolbar {
                 toolbarItem()
             }
-            .sheet(isPresented: $vm.showSettings) {
+            .sheet(isPresented: $vm.showSettings, onDismiss: vm.openProfileFormIfNeeded) {
                 sheetView()
             }
         }
+        .loadingCover(isPresented: vm.isSavingProfile, title: "Сохраняем...")
     }
 }
 
@@ -41,7 +42,11 @@ extension ProfileView {
         switch route {
             case .addProfileInfo:
                 if let profileForm = vm.profileForm {
-                    AddProfileInfoView(vm: profileForm)
+                    AddProfileInfoView(vm: profileForm) { isSaving in
+                        vm.noteProfileSaving(isSaving)
+                    } onSaved: {
+                        await vm.finishProfileEditing()
+                    }
                 }
         }
     }

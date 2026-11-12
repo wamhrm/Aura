@@ -34,7 +34,7 @@ final class OnboardingViewModelTests: XCTestCase {
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
         viewModel.signIn()
-        await waitUntil { !viewModel.isLoading || auth.showsMainScreen }
+        await waitUntil { viewModel.loadingTitle == nil || auth.showsMainScreen }
     }
 
     func test_takenEmail_staysOnEmailStep() async {
@@ -48,7 +48,7 @@ final class OnboardingViewModelTests: XCTestCase {
 
         XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
         XCTAssertEqual(viewModel.alertMessage, "Пользователь уже зарегистрирован")
-        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.loadingTitle)
     }
 
     func test_availableEmail_opensPasswordStep() async {
@@ -166,7 +166,7 @@ final class OnboardingViewModelTests: XCTestCase {
         viewModel.profileInfo.decisionStyle = "planner"
         viewModel.profileInfo.coreFocus = "stability"
         viewModel.continueFromPsychotype()
-        await waitUntil { !viewModel.isLoading }
+        await waitUntil { viewModel.loadingTitle == nil }
 
         XCTAssertEqual(auth.createAccountCount, 1)
         XCTAssertEqual(viewModel.onboardingRoutes, [.email, .password, .psychotype, .aiConsent])
@@ -225,7 +225,7 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.showAlert)
         XCTAssertEqual(viewModel.onboardingRoutes, [.nameAndBirth])
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
-        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.loadingTitle)
         XCTAssertFalse(auth.showsMainScreen)
 
         auth.aiConsentError = nil
@@ -286,7 +286,7 @@ final class OnboardingViewModelTests: XCTestCase {
         await waitUntil { auth.profileSaveFinished }
 
         XCTAssertFalse(auth.showsMainScreen)
-        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.loadingTitle)
         XCTAssertTrue(viewModel.onboardingRoutes.isEmpty)
         XCTAssertEqual(auth.aiConsentCount, 0)
         XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")

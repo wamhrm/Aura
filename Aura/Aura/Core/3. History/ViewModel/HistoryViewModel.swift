@@ -7,7 +7,6 @@
 
 import Combine
 import Foundation
-import SwiftUI
 
 enum HistoryRoutes: Hashable {
     case personalityResult(PersonalityResultModel)
@@ -24,20 +23,26 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     @Published var showAlert = false
     @Published var alertMessage = ""
     @Published var showDeleteAlert = false
-    @Published private(set) var isLoading = false
+    @Published private(set) var loadingTitle: String?
 
     private let authService: any AuthServiceProtocol
     private let contentService: any ContentServiceProtocol
 
     private var currentUserId: UUID?
     private var cellToDelete: HistoryCellModel?
+    private var coverTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
+
+    private static let historyLoadTitle = "Загружаем историю"
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {
         self.authService = authService
         self.contentService = contentService
         self.historyCells = contentService.historyCells.value
+        if historyCells.isEmpty {
+            loadingTitle = Self.historyLoadTitle
+        }
 
         setupSubscriptions()
     }
@@ -81,7 +86,10 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     func fetchHistory() async {
         guard currentUserId != nil else { return }
-        if historyCells.isEmpty { loadState = .loading }
+        if historyCells.isEmpty {
+            loadState = .loading
+            if coverTask == nil { loadingTitle = Self.historyLoadTitle }
+        }
 
         do {
             historyCells = try await contentService.fetchHistory()
@@ -93,6 +101,8 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                 presentAlert(error.userMessage)
             }
         }
+
+        if coverTask == nil { loadingTitle = nil }
     }
 
     func retry() {
@@ -119,33 +129,46 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     }
 
     func openHistoryCellDetails(_ item: HistoryCellModel) {
-        guard !isLoading else { return }
+        guard coverTask == nil else { return }
 
-        isLoading = true
+        loadingTitle = "Открываем результат"
+        coverTask = Task {
+            defer { self.coverTask = nil }
 
-        Task {
             do {
-                let historyDetails = try await contentService.fetchHistoryDetails(id: item.id)
-
-                switch historyDetails.kind {
-                    case .personality:
-                        if let result = historyDetails.personalityResult {
-                            historyRoutes.append(.personalityResult(result))
-                        } else {
-                            presentAlert("Не удалось открыть результат")
-                        }
-                    case .compatibility:
-                        if let result = historyDetails.compatibilityResult {
-                            historyRoutes.append(.compatibilityResult(result))
-                        } else {
-                            presentAlert("Не удалось открыть результат")
-                        }
+                try await CoveredTransition.run(hide: { self.restoreCover() }) {
+                    let details = try await self.contentService.fetchHistoryDetails(id: item.id)
+                    
+                    guard let route = self.route(for: details) else {
+                        throw HistoryOpenError.missingResult
+                    }
+                    
+                    return route
+                } commit: { route in
+                    self.historyRoutes.append(route)
                 }
             } catch {
-                presentAlert("Не удалось открыть результат")
+                self.presentAlert("Не удалось открыть результат")
             }
-
-            isLoading = false
         }
     }
+
+    private func restoreCover() {
+        loadingTitle = historyCells.isEmpty && loadState == .loading ? Self.historyLoadTitle : nil
+    }
+
+    private func route(for details: HistoryCellModel) -> HistoryRoutes? {
+        switch details.kind {
+            case .personality:
+                guard let result = details.personalityResult else { return nil }
+                return .personalityResult(result)
+            case .compatibility:
+                guard let result = details.compatibilityResult else { return nil }
+                return .compatibilityResult(result)
+        }
+    }
+}
+
+private enum HistoryOpenError: Error {
+    case missingResult
 }

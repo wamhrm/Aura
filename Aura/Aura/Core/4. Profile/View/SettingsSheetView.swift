@@ -52,8 +52,7 @@ struct SettingsSheetView: View {
 
                     VStack(spacing: 15) {
                         customButton(.updateInfo) {
-                            vm.showAddProfileInfo()
-                            dismiss()
+                            vm.editProfileAfterSettings()
                         }
 
                         customButton(.signOut) {

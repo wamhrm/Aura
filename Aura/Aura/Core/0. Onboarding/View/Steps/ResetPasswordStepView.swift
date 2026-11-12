@@ -22,7 +22,7 @@ struct ResetPasswordStepView: View {
                     OnboardingTextField(text: $vm.resetCode, type: .code)
                     OnboardingTextField(text: $vm.newPassword, type: .newPassword)
 
-                    ClassicButton(title: vm.resetPasswordButtonTitle) {
+                    ClassicButton(title: "Сохранить пароль") {
                         vm.resetPassword()
                     }
 
@@ -36,7 +36,7 @@ struct ResetPasswordStepView: View {
 
                     OnboardingTextField(text: $vm.email, type: .email)
 
-                    ClassicButton(title: vm.sendCodeButtonTitle) {
+                    ClassicButton(title: "Отправить код") {
                         vm.requestPasswordReset()
                     }
                 }

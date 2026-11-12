@@ -13,49 +13,34 @@ struct EmailConfirmationSheetView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                ZStack {
-                    BackgroundView()
+            VStack(alignment: .leading, spacing: 30) {
+                Text(vm.subtitle)
+                    .font(Adaptive.size(.footnote, .system(size: 15)))
+                    .foregroundStyle(.secondary)
 
-                    VStack(alignment: .leading, spacing: 30) {
-                        Text(vm.subtitle)
-                            .font(Adaptive.size(.footnote, .system(size: 15)))
-                            .foregroundStyle(.secondary)
+                if vm.isCodeSent {
+                    VStack(spacing: 25) {
+                        OnboardingTextField(text: $vm.code, type: .code)
 
-                        if vm.isCodeSent {
-                            VStack(spacing: 25) {
-                                OnboardingTextField(text: $vm.code, type: .code)
-
-                                ClassicButton(title: vm.confirmButtonTitle) {
-                                    vm.confirm()
-                                }
-
-                                OnboardingTextButton(title: "Отправить код ещё раз") {
-                                    vm.sendCode()
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                        } else {
-                            ClassicButton(title: vm.sendCodeButtonTitle) {
-                                vm.sendCode()
-                            }
+                        ClassicButton(title: vm.confirmButtonTitle) {
+                            vm.confirm()
                         }
 
-                        Spacer(minLength: 0)
+                        OnboardingTextButton(title: "Отправить код ещё раз") {
+                            vm.sendCode()
+                        }
+                        .frame(maxWidth: .infinity)
                     }
+                } else {
+                    ClassicButton(title: vm.sendCodeButtonTitle) {
+                        vm.sendCode()
+                    }
+                    .disabled(vm.isLoading)
                 }
-                .opacity(vm.isLoading ? 0 : 1)
-                .allowsHitTesting(!vm.isLoading)
 
-                ZStack {
-                    BackgroundView()
-
-                    LoadingView(title: vm.loadingTitle)
-                }
-                .opacity(vm.isLoading ? 1 : 0)
-                .allowsHitTesting(vm.isLoading)
+                Spacer()
             }
-            .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
+            .loadingCover(isPresented: vm.isCodeSent && vm.isLoading, title: vm.loadingTitle)
             .padding(.horizontal)
             .navigationTitle("Подтвердите почту")
             .navigationBarTitleDisplayMode(.inline)

@@ -70,7 +70,7 @@ final class CompatibilityViewModelTests: XCTestCase {
 
         // Then
         XCTAssertNotNil(viewModel.emailConfirmation)
-        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.loadingTitle)
     }
 
     func test_retry_reusesTheRequestID_untilTheUserOrPartnerChanges() async throws {

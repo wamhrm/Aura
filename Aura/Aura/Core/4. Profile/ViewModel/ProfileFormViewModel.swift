@@ -31,18 +31,22 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
         birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
     }
 
-    var saveButtonTitle: String {
-        isLoading ? "Сохраняем..." : "Готово"
-    }
-
-    func saveProfileInfo(onSuccess: @escaping () -> Void) {
+    func saveProfileInfo(onLoadingChange: @escaping (Bool) -> Void = { _ in },
+                         onSuccess: @escaping () -> Void) {
         guard !isLoading else { return }
 
+        do {
+            try validateProfileInfoForms()
+        } catch {
+            presentAlert(error.userMessage)
+            return
+        }
+
         isLoading = true
+        onLoadingChange(true)
 
         Task {
             do {
-                try validateProfileInfoForms()
                 profileInfo.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
                 profileInfo.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
                 profileInfo.birthTime = knowsBirthTime ? BirthDateFormatter.timeString(date: birthTime) : ""
@@ -51,6 +55,7 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
             } catch {
                 presentAlert(error.userMessage)
                 isLoading = false
+                onLoadingChange(false)
             }
         }
     }

@@ -30,18 +30,24 @@ final class ProfileViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.dailyTip?.isFromToday, true)
     }
 
-    func test_lockedProfile_doesNotLoadTip_andFirstResultUnlocksLoading() async {
+    func test_profileWithoutABirthDate_doesNotLoadTheTip() async {
         let content = MockContentService()
-        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: nil)),
+                                         contentService: content)
         await waitUntil { viewModel.personalityState == .loaded }
-        XCTAssertEqual(content.tipCount, 0)
 
-        content.history = [HistoryCellModel.personalityPlaceholder]
-        await viewModel.refresh()
+        XCTAssertEqual(content.tipCount, 0)
+        XCTAssertNil(viewModel.dailyTip)
+    }
+
+    func test_profileWithABirthDate_loadsTheTipWithoutAPersonalityResult() async {
+        let content = MockContentService()
+        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()),
+                                         contentService: content)
         await waitUntil { viewModel.tipState == .loaded }
 
-        XCTAssertTrue(viewModel.hasPersonalityTests)
-        XCTAssertEqual(content.tipCount, 1)
+        XCTAssertFalse(viewModel.hasPersonalityTests)
+        XCTAssertGreaterThanOrEqual(content.tipCount, 1)
         XCTAssertNotNil(viewModel.dailyTip)
     }
 
