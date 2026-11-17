@@ -28,7 +28,7 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Заполните профиль перед прохождением теста")
         }
 
-        try await requireFreeTestSlot(user: user, database: req.db)
+        try await requireFreeTestSlot(userID: user.requireID(), database: req.db)
 
         return try await openAIService.makePersonalityTest(user: user,
                                                 selectedTests: uniqueSelectedTests,
@@ -87,7 +87,7 @@ struct PsychologyService {
                                                       partnerBirthTime: request.partnerBirthTime,
                                                       selectedTests: request.selectedTests)
 
-        try await requireFreeTestSlot(user: user, database: req.db)
+        try await requireFreeTestSlot(userID: user.requireID(), database: req.db)
 
         return try await openAIService.makeCompatibilityTest(user: user,
                                                              partner: partnerRequest,
@@ -95,15 +95,13 @@ struct PsychologyService {
                                                              req: req)
     }
 
-    func takeTestSlot(user: User, database: any Database) async throws {
-        try await requireFreeTestSlot(user: user, database: database)
-        let usage = TestUsage(userID: try user.requireID())
+    func takeTestSlot(userID: UUID, database: any Database) async throws {
+        try await requireFreeTestSlot(userID: userID, database: database)
+        let usage = TestUsage(userID: userID)
         try await usage.save(on: database)
     }
 
-    private func requireFreeTestSlot(user: User, database: any Database) async throws {
-        let userID = try user.requireID()
-
+    private func requireFreeTestSlot(userID: UUID, database: any Database) async throws {
         try await TestUsage.query(on: database)
             .filter(\.$user.$id == userID)
             .filter(\.$createdAt < Date().addingTimeInterval(-dailyTestLimitWindow))

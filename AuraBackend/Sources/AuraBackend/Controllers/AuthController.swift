@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import FluentSQL
 import Vapor
 
 struct AuthController: RouteCollection {
@@ -94,7 +93,7 @@ struct AuthController: RouteCollection {
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
         return try await req.db.transaction { db in
-            guard let currentUser = try await lockedUser(email: email, db: db),
+            guard let currentUser = try await db.lockedUser(email: email),
                   currentUser.id == user.id, currentUser.passwordHash == passwordHash else {
                 throw Abort(.unauthorized, reason: "Неверная почта или пароль")
             }
@@ -126,14 +125,12 @@ struct AuthController: RouteCollection {
 
         let code = data.code.trimmingCharacters(in: .whitespacesAndNewlines)
         let result: Result<AuthDTO, Abort> = try await req.db.transaction { db in
-            guard let user = try await lockedUser(email: email, db: db), user.passwordHash != nil else {
+            guard let user = try await db.lockedUser(email: email), user.passwordHash != nil else {
                 throw Abort(.badRequest, reason: "Код недействителен. Запросите новый")
             }
             let userID = try user.requireID()
-            do {
-                try await emailCodeService.verifyReset(code: code, userID: userID, db: db)
-            } catch let rejection as Abort {
-                return .failure(rejection)
+            if let error = try await emailCodeService.resetCodeError(code: code, userID: userID, db: db) {
+                return .failure(error)
             }
 
             user.passwordHash = try await req.password.async.hash(data.password)
@@ -146,11 +143,6 @@ struct AuthController: RouteCollection {
         return try result.get()
     }
 
-    private func lockedUser(email: String, db: any Database) async throws -> User? {
-        try await db.sql().raw("SELECT * FROM users WHERE email = \(bind: email) FOR UPDATE")
-            .first(decodingFluent: User.self)
-    }
-
     private func sendEmailConfirmationCode(req: Request) async throws -> HTTPStatus {
         try await emailCodeService.sendConfirmation(user: try req.auth.require(User.self), req: req)
         return .noContent
@@ -160,11 +152,9 @@ struct AuthController: RouteCollection {
         let user = try req.auth.require(User.self)
         let data = try req.content.decode(ConfirmEmailRequest.self)
 
-        try await emailCodeService.confirm(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                           user: user,
-                                           req: req)
-
-        return try user.toDTO()
+        return try await emailCodeService.confirm(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                  userID: user.requireID(),
+                                                  db: req.db)
     }
 
     private func issueToken(user: User, database: any Database) async throws -> AuthDTO {

@@ -22,7 +22,12 @@ struct EmailCodeService {
         let userID = try user.requireID()
 
         let code = makeCode()
-        let confirmation = try await saveConfirmation(userID: userID, code: code, database: req.db)
+        let confirmation: EmailConfirmation? = try await req.db.transaction { db in
+            let currentUser = try await db.lockedUser(userID: userID)
+            guard !currentUser.isEmailConfirmed else { return nil }
+            return try await saveConfirmation(userID: userID, code: code, database: db)
+        }
+        guard let confirmation else { return }
 
         do {
             try await emailService.send(recipient: email,
@@ -36,33 +41,36 @@ struct EmailCodeService {
         }
     }
 
-    func confirm(code: String, user: User, req: Request) async throws {
-        guard !user.isEmailConfirmed else { return }
-        let userID = try user.requireID()
+    func confirm(code: String, userID: UUID, db: any Database) async throws -> UserDTO {
+        let result: Result<UserDTO, Abort> = try await db.transaction { db in
+            let user = try await db.lockedUser(userID: userID)
+            guard !user.isEmailConfirmed else { return .success(try user.toDTO()) }
 
-        try await EmailConfirmation.query(on: req.db)
-            .filter(\.$user.$id == userID)
-            .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
-            .delete()
+            try await EmailConfirmation.query(on: db)
+                .filter(\.$user.$id == userID)
+                .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
+                .delete()
 
-        guard let confirmation = try await EmailConfirmation.query(on: req.db)
-            .filter(\.$user.$id == userID)
-            .sort(\.$createdAt, .descending)
-            .first(),
-              confirmation.expiresAt > Date()
-        else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
+            guard let confirmation = try await EmailConfirmation.query(on: db)
+                .filter(\.$user.$id == userID)
+                .sort(\.$createdAt, .descending)
+                .first(), confirmation.expiresAt > Date() else {
+                return .failure(Abort(.badRequest, reason: "Код недействителен. Запросите новый"))
+            }
+            guard confirmation.attempts < maxAttempts else { return .failure(attemptLimitError) }
 
-        try takeAttempt(attempts: confirmation.attempts)
-        confirmation.attempts += 1
-        try await confirmation.save(on: req.db)
+            guard confirmation.codeHash == hash(code: code, userID: userID) else {
+                confirmation.attempts += 1
+                try await confirmation.save(on: db)
+                return .failure(Abort(.badRequest, reason: "Неверный код"))
+            }
 
-        guard confirmation.codeHash == hash(code: code, userID: userID) else {
-            throw Abort(.badRequest, reason: "Неверный код")
+            user.emailConfirmedAt = Date()
+            try await user.save(on: db)
+            try await EmailConfirmation.query(on: db).filter(\.$user.$id == userID).delete()
+            return .success(try user.toDTO())
         }
-
-        user.emailConfirmedAt = Date()
-        try await user.save(on: req.db)
-        try await EmailConfirmation.query(on: req.db).filter(\.$user.$id == userID).delete()
+        return try result.get()
     }
 
     func sendReset(user: User, req: Request) async throws {
@@ -70,7 +78,10 @@ struct EmailCodeService {
         let userID = try user.requireID()
 
         let code = makeCode()
-        let reset = try await saveReset(userID: userID, code: code, database: req.db)
+        let reset = try await req.db.transaction { db in
+            _ = try await db.lockedUser(userID: userID)
+            return try await saveReset(userID: userID, code: code, database: db)
+        }
 
         do {
             try await emailService.send(recipient: email,
@@ -84,7 +95,7 @@ struct EmailCodeService {
         }
     }
 
-    func verifyReset(code: String, userID: UUID, db: any Database) async throws {
+    func resetCodeError(code: String, userID: UUID, db: any Database) async throws -> Abort? {
         try await PasswordReset.query(on: db)
             .filter(\.$user.$id == userID)
             .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
@@ -95,15 +106,15 @@ struct EmailCodeService {
             .sort(\.$createdAt, .descending)
             .first(),
               reset.expiresAt > Date()
-        else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
+        else { return Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
 
-        try takeAttempt(attempts: reset.attempts)
-        reset.attempts += 1
-        try await reset.save(on: db)
-
+        guard reset.attempts < maxAttempts else { return attemptLimitError }
         guard reset.codeHash == hash(code: code, userID: userID) else {
-            throw Abort(.badRequest, reason: "Неверный код")
+            reset.attempts += 1
+            try await reset.save(on: db)
+            return Abort(.badRequest, reason: "Неверный код")
         }
+        return nil
     }
 
     private func saveConfirmation(userID: UUID, code: String, database: any Database) async throws -> EmailConfirmation {
@@ -156,10 +167,8 @@ struct EmailCodeService {
         }
     }
 
-    private func takeAttempt(attempts: Int) throws {
-        guard attempts < maxAttempts else {
-            throw Abort(.tooManyRequests, reason: "Слишком много попыток. Запросите новый код")
-        }
+    private var attemptLimitError: Abort {
+        Abort(.tooManyRequests, reason: "Слишком много попыток. Запросите новый код")
     }
 
     private func makeCode() -> String {

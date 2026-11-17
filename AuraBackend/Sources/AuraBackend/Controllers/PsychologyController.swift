@@ -27,22 +27,18 @@ struct PsychologyController: RouteCollection {
         let testKeys = try req.content.decode([String].self)
         let requestID = try idempotencyKey(req: req)
 
-        if let entry = try await findEntry(kind: .personality, requestID: requestID, userID: userID, database: req.db) {
-            return try HistoryDTOMapper.decodePersonalityResult(resultJSON: entry.result)
+        let entry = try await resultEntry(kind: .personality, requestID: requestID, userID: userID, db: req.db) {
+            let response = try await psychologyService.makePersonalityTest(user: user, testKeys: testKeys, req: req)
+            return History(userID: userID,
+                           requestID: requestID,
+                           kind: .personality,
+                           selectedTests: response.selectedTests,
+                           title: response.archetypeTitle,
+                           subtitle: response.archetypeSubtitle,
+                           zodiacSign: response.zodiacSign,
+                           result: try encodedResult(result: response))
         }
-
-        let response = try await psychologyService.makePersonalityTest(user: user, testKeys: testKeys, req: req)
-        let entry = History(userID: userID,
-                            requestID: requestID,
-                            kind: .personality,
-                            selectedTests: response.selectedTests,
-                            title: response.archetypeTitle,
-                            subtitle: response.archetypeSubtitle,
-                            zodiacSign: response.zodiacSign,
-                            result: try encodedResult(result: response))
-
-        try await saveResult(entry: entry, user: user, on: req.db)
-        return response
+        return try HistoryDTOMapper.decodePersonalityResult(resultJSON: entry.result)
     }
 
     private func makeCompatibilityTest(req: Request) async throws -> CompatibilityResultDTO {
@@ -51,31 +47,50 @@ struct PsychologyController: RouteCollection {
         let request = try req.content.decode(CompatibilityTestRequest.self)
         let requestID = try idempotencyKey(req: req)
 
-        if let entry = try await findEntry(kind: .compatibility, requestID: requestID, userID: userID, database: req.db) {
-            return try HistoryDTOMapper.decodeCompatibilityResult(resultJSON: entry.result)
+        let entry = try await resultEntry(kind: .compatibility, requestID: requestID, userID: userID, db: req.db) {
+            let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
+            return History(userID: userID,
+                           requestID: requestID,
+                           kind: .compatibility,
+                           selectedTests: response.selectedTests,
+                           title: response.title,
+                           subtitle: response.subtitle,
+                           zodiacSign: response.userZodiacSign,
+                           compatibilityScore: response.compatibilityScore,
+                           partnerName: response.partnerName,
+                           partnerZodiacSign: response.partnerZodiacSign,
+                           result: try encodedResult(result: response))
         }
-
-        let response = try await psychologyService.makeCompatibilityTest(user: user, request: request, req: req)
-        let entry = History(userID: userID,
-                            requestID: requestID,
-                            kind: .compatibility,
-                            selectedTests: response.selectedTests,
-                            title: response.title,
-                            subtitle: response.subtitle,
-                            zodiacSign: response.userZodiacSign,
-                            compatibilityScore: response.compatibilityScore,
-                            partnerName: response.partnerName,
-                            partnerZodiacSign: response.partnerZodiacSign,
-                            result: try encodedResult(result: response))
-
-        try await saveResult(entry: entry, user: user, on: req.db)
-        return response
+        return try HistoryDTOMapper.decodeCompatibilityResult(resultJSON: entry.result)
     }
 
-    private func saveResult(entry: History, user: User, on database: any Database) async throws {
-        try await database.transaction { transaction in
-            try await psychologyService.takeTestSlot(user: user, database: transaction)
-            try await entry.save(on: transaction)
+    private func resultEntry(kind: TestKind,
+                             requestID: UUID,
+                             userID: UUID,
+                             db: any Database,
+                             generate: () async throws -> History) async throws -> History {
+        if let saved = try await findEntry(kind: kind, requestID: requestID, userID: userID, database: db) {
+            return saved
+        }
+
+        let entry: History
+        do {
+            entry = try await generate()
+        } catch let error as Abort where error.status == .tooManyRequests {
+            if let saved = try await findEntry(kind: kind, requestID: requestID, userID: userID, database: db) {
+                return saved
+            }
+            throw error
+        }
+
+        return try await db.transaction { db in
+            _ = try await db.lockedUser(userID: userID)
+            if let saved = try await findEntry(kind: kind, requestID: requestID, userID: userID, database: db) {
+                return saved
+            }
+            try await psychologyService.takeTestSlot(userID: userID, database: db)
+            try await entry.save(on: db)
+            return entry
         }
     }
 

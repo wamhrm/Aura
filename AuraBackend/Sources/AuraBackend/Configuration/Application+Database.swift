@@ -7,6 +7,7 @@
 
 import Fluent
 import FluentPostgresDriver
+import FluentSQL
 import SQLKit
 import Vapor
 
@@ -36,6 +37,19 @@ extension Database {
             throw Abort(.internalServerError, reason: "SQL database required")
         }
         return sql
+    }
+
+    func lockedUser(email: String) async throws -> User? {
+        try await sql().raw("SELECT * FROM users WHERE email = \(bind: email) FOR UPDATE")
+            .first(decodingFluent: User.self)
+    }
+
+    func lockedUser(userID: UUID) async throws -> User {
+        guard let user = try await sql().raw("SELECT * FROM users WHERE id = \(bind: userID) FOR UPDATE")
+            .first(decodingFluent: User.self) else {
+            throw Abort(.unauthorized)
+        }
+        return user
     }
 
     func generationLock<T: Sendable>(_ name: String,
