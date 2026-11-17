@@ -7,7 +7,7 @@ Full-stack iOS приложение с психологическими тест
 | Язык                    | Swift 6 (Front-end & Back-end)                       |
 | Фреймворки              | SwiftUI, Vapor                                       |
 | ORM                     | Fluent                                               |
-| Облачная база данных    | PostgreSQL (Timeweb Cloud)                           |
+| Облачная база данных    | PostgreSQL (Neon)                                    |
 | Локальное хранение      | JSON-файлы, Keychain                               |
 | ИИ                      | OpenAI API (GPT-5.4)                                 |
 | Инфраструктура          | Render, Docker                                       |
