@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import FluentSQL
 import Vapor
 
 struct AuthController: RouteCollection {
@@ -92,7 +93,13 @@ struct AuthController: RouteCollection {
 
         if !isPasswordCorrect { throw Abort(.unauthorized, reason: "Неверная почта или пароль") }
 
-        return try await issueToken(user: user, database: req.db)
+        return try await req.db.transaction { db in
+            guard let currentUser = try await lockedUser(email: email, db: db),
+                  currentUser.id == user.id, currentUser.passwordHash == passwordHash else {
+                throw Abort(.unauthorized, reason: "Неверная почта или пароль")
+            }
+            return try await issueToken(user: currentUser, database: db)
+        }
     }
 
     private func requestPasswordReset(req: Request) async throws -> HTTPStatus {
@@ -117,21 +124,31 @@ struct AuthController: RouteCollection {
         let email = normalizedEmail(email: data.email)
         try validatePassword(password: data.password)
 
-        guard let user = try await User.query(on: req.db).filter(\.$email == email).first(),
-              user.passwordHash != nil
-        else { throw Abort(.badRequest, reason: "Код недействителен. Запросите новый") }
+        let code = data.code.trimmingCharacters(in: .whitespacesAndNewlines)
+        let result: Result<AuthDTO, Abort> = try await req.db.transaction { db in
+            guard let user = try await lockedUser(email: email, db: db), user.passwordHash != nil else {
+                throw Abort(.badRequest, reason: "Код недействителен. Запросите новый")
+            }
+            let userID = try user.requireID()
+            do {
+                try await emailCodeService.verifyReset(code: code, userID: userID, db: db)
+            } catch let rejection as Abort {
+                return .failure(rejection)
+            }
 
-        try await emailCodeService.verifyReset(code: data.code.trimmingCharacters(in: .whitespacesAndNewlines),
-                                               user: user,
-                                               req: req)
+            user.passwordHash = try await req.password.async.hash(data.password)
+            user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
+            try await user.save(on: db)
+            try await Token.query(on: db).filter(\.$user.$id == userID).delete()
+            try await PasswordReset.query(on: db).filter(\.$user.$id == userID).delete()
+            return .success(try await issueToken(user: user, database: db))
+        }
+        return try result.get()
+    }
 
-        let userID = try user.requireID()
-        user.passwordHash = try await req.password.async.hash(data.password)
-        user.emailConfirmedAt = user.emailConfirmedAt ?? Date()
-        try await user.save(on: req.db)
-        try await Token.query(on: req.db).filter(\.$user.$id == userID).delete()
-        try await PasswordReset.query(on: req.db).filter(\.$user.$id == userID).delete()
-        return try await issueToken(user: user, database: req.db)
+    private func lockedUser(email: String, db: any Database) async throws -> User? {
+        try await db.sql().raw("SELECT * FROM users WHERE email = \(bind: email) FOR UPDATE")
+            .first(decodingFluent: User.self)
     }
 
     private func sendEmailConfirmationCode(req: Request) async throws -> HTTPStatus {

@@ -84,15 +84,13 @@ struct EmailCodeService {
         }
     }
 
-    func verifyReset(code: String, user: User, req: Request) async throws {
-        let userID = try user.requireID()
-
-        try await PasswordReset.query(on: req.db)
+    func verifyReset(code: String, userID: UUID, db: any Database) async throws {
+        try await PasswordReset.query(on: db)
             .filter(\.$user.$id == userID)
             .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
             .delete()
 
-        guard let reset = try await PasswordReset.query(on: req.db)
+        guard let reset = try await PasswordReset.query(on: db)
             .filter(\.$user.$id == userID)
             .sort(\.$createdAt, .descending)
             .first(),
@@ -101,7 +99,7 @@ struct EmailCodeService {
 
         try takeAttempt(attempts: reset.attempts)
         reset.attempts += 1
-        try await reset.save(on: req.db)
+        try await reset.save(on: db)
 
         guard reset.codeHash == hash(code: code, userID: userID) else {
             throw Abort(.badRequest, reason: "Неверный код")
