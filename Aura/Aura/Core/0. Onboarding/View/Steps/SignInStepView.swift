@@ -38,7 +38,7 @@ struct SignInStepView: View {
 
                     HStack(spacing: 4) {
                         Text("Нет аккаунта?")
-                            .font(Adaptive.size(.footnote, .callout))
+                            .font(Adaptive.size(.footnote, .system(size: 14), .callout))
                             .foregroundStyle(.deepGray)
 
                         OnboardingTextButton(title: "Создать") {

@@ -295,6 +295,45 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             isLoading = false
         }
     }
+    
+    private func createAccount() {
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if let message = passwordError(password) {
+            presentAlert(message)
+            return
+        }
+        
+        guard !isLoading else { return }
+        isLoading = true
+        loadingTitle = "Создаём аккаунт..."
+        
+        var sessionID = authService.sessionID
+        
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            let deadline = ContinuousClock.now + .milliseconds(350)
+            
+            do {
+                try await authService.createAccount(name: displayName,
+                                                    email: email,
+                                                    password: password)
+                sessionID = authService.sessionID
+                try await Task.sleep(until: deadline, clock: .continuous)
+                guard sessionID == authService.sessionID else { return }
+                onboardingRoutes.append(.aiConsent)
+                try await Task.sleep(for: .milliseconds(50))
+                guard sessionID == authService.sessionID else { return }
+                resetTextFields()
+            } catch {
+                guard sessionID == authService.sessionID else { return }
+                presentAlert(error.userMessage)
+            }
+            
+            guard sessionID == authService.sessionID else { return }
+            isLoading = false
+        }
+    }
 
     func requestPasswordReset() {
         let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -322,6 +361,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 try await Task.sleep(for: .milliseconds(50))
             } catch {
                 guard sessionID == authService.sessionID else { return }
+                if case NetworkError.limited = error {
+                    isResetCodeSent = true
+                }
                 presentAlert(error.userMessage)
             }
 
@@ -355,7 +397,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                try await authService.resetPassword(email: email, code: code, newPassword: newPassword)
+                try await authService.resetPassword(email: email,
+                                                    code: code,
+                                                    newPassword: newPassword)
                 sessionID = authService.sessionID
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
@@ -382,7 +426,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         guard profileInfo.hasAllAnswers else {
             presentAlert("Ответьте на все вопросы")
             return
-        }
+            }
 
         guard !isSignedIn else {
             onboardingRoutes.append(.aiConsent)
@@ -392,42 +436,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         createAccount()
     }
 
-    private func createAccount() {
-        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if let message = passwordError(password) {
-            presentAlert(message)
-            return
-        }
-
-        guard !isLoading else { return }
-        isLoading = true
-        loadingTitle = "Создаём аккаунт..."
-
-        var sessionID = authService.sessionID
-
-        Task {
-            guard sessionID == authService.sessionID else { return }
-            let deadline = ContinuousClock.now + .milliseconds(350)
-
-            do {
-                try await authService.createAccount(name: displayName, email: email, password: password)
-                sessionID = authService.sessionID
-                try await Task.sleep(until: deadline, clock: .continuous)
-                guard sessionID == authService.sessionID else { return }
-                onboardingRoutes.append(.aiConsent)
-                try await Task.sleep(for: .milliseconds(50))
-                guard sessionID == authService.sessionID else { return }
-                resetTextFields()
-            } catch {
-                guard sessionID == authService.sessionID else { return }
-                presentAlert(error.userMessage)
-            }
-
-            guard sessionID == authService.sessionID else { return }
-            isLoading = false
-        }
-    }
 
     func chooseAIConsent(_ allows: Bool) {
         guard !isLoading else { return }

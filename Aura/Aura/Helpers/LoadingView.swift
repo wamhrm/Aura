@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+enum LoadState: Equatable {
+    case loading, loaded
+    case failed(String)
+}
+
 struct LoadingView: View {
     let title: String
     var isPresented = true
@@ -46,7 +51,7 @@ struct LoadingView: View {
             .frame(width: 35, height: 35)
 
             Text(phrase)
-                .font(Adaptive.size(.callout, .default))
+                .font(Adaptive.size(.callout, .default, .default))
                 .bold()
                 .multilineTextAlignment(.center)
                 .opacity(textOpacity)

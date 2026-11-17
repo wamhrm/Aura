@@ -17,18 +17,18 @@ struct TestResultCellView<TestResult: TestResultDisplayable>: View {
     let description: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Adaptive.size(10, 12)) {
+        VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
             HStack {
                 Text(test.icon)
-                    .font(Adaptive.size(.default, .system(size: 19)))
+                    .font(Adaptive.size(.default, .system(size: 18), .system(size: 19)))
                 
                 Text(test.title)
-                    .font(.system(size: Adaptive.size(14, 15)))
+                    .font(.system(size: Adaptive.size(14, 15, 15)))
                     .fontWeight(.semibold)
             }
             
             Text(description)
-                .font(Adaptive.size(.footnote, .system(size: 14)))
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                 .foregroundStyle(.deepGray)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

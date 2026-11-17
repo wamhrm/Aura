@@ -192,6 +192,35 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertEqual(auth.resetPasswordCount, 0)
     }
 
+    func test_requestPasswordReset_whenCodeIsAlreadySent_opensTheCodeForm() async {
+        let auth = MockAuthService()
+        auth.errorToThrow = NetworkError.limited("Код уже отправлен")
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.email = "anna@mail.ru"
+
+        viewModel.requestPasswordReset()
+        await waitUntil { !viewModel.isLoading }
+
+        XCTAssertTrue(viewModel.isResetCodeSent)
+        XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
+        XCTAssertTrue(viewModel.showAlert)
+        XCTAssertFalse(auth.showsMainScreen)
+    }
+
+    func test_requestPasswordReset_whenServerFails_keepsTheCodeFormClosed() async {
+        let auth = MockAuthService()
+        auth.errorToThrow = serverError
+        let viewModel = makeViewModel(auth: auth)
+        viewModel.email = "anna@mail.ru"
+
+        viewModel.requestPasswordReset()
+        await waitUntil { !viewModel.isLoading }
+
+        XCTAssertFalse(viewModel.isResetCodeSent)
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        XCTAssertTrue(viewModel.showAlert)
+    }
+
     // MARK: - Where the user lands after signing in
     func test_signIn_withFullProfileAndConsent_finishesOnboarding() async {
         // Given

@@ -14,7 +14,7 @@ struct CompatibilityTextFieldView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             TextField(title, text: $text)
-                .font(Adaptive.size(.footnote, .system(size: 14)))
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                 .foregroundStyle(.gray)
                 .fontWeight(.medium)
                 .textInputAutocapitalization(.words)
@@ -25,7 +25,7 @@ struct CompatibilityTextFieldView: View {
                         text = capitalized
                     }
                 }
-                .frame(height: Adaptive.size(46, 48))
+                .frame(height: Adaptive.size(46, 46, 48))
                 .padding(.leading)
                 .background(Color.fieldBackground)
                 .clipShape(.rect(cornerRadius: 10))

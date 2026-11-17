@@ -27,18 +27,18 @@ struct OnboardingView: View {
                                     Spacer()
 
                                     if let icon = item.icon {
-                                        OnboardingIcon(icon: icon, size: Adaptive.size(80, 100))
+                                        OnboardingIcon(icon: icon, size: Adaptive.size(80, 88, 100))
                                     } else {
-                                        LogoImage(size: Adaptive.size(80, 100))
+                                        LogoImage(size: Adaptive.size(80, 88, 100))
                                     }
 
                                     VStack(spacing: 15) {
                                         Text(item.title)
-                                            .font(Adaptive.size(.title3, .title2))
+                                            .font(Adaptive.size(.title3, .system(size: 21), .title2))
                                             .bold()
 
                                         Text(item.subtitle)
-                                            .font(Adaptive.size(.caption2, .callout))
+                                            .font(Adaptive.size(.caption2, .system(size: 14), .callout))
                                             .foregroundStyle(.deepGray)
                                     }
                                     .multilineTextAlignment(.center)
@@ -75,18 +75,18 @@ struct OnboardingView: View {
                 }
                 .navigationDestination(for: OnboardingRoutes.self) { destination in
                     destinationView(destination)
-                        .navigationBarBackButtonHidden(vm.isOnlyStepOfSignedInUser)
-                        .toolbar {
-                            if vm.isOnlyStepOfSignedInUser {
-                                ToolbarItem(placement: .topBarLeading) {
-                                    Button {
-                                        vm.goBack()
-                                    } label: {
-                                        Image(systemName: "chevron.left")
-                                    }
-                                }
+                }
+                .navigationBarBackButtonHidden(vm.isOnlyStepOfSignedInUser)
+                .toolbar {
+                    if vm.isOnlyStepOfSignedInUser {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                vm.goBack()
+                            } label: {
+                                Image(systemName: "chevron.left")
                             }
                         }
+                    }
                 }
             }
             .opacity(vm.isLoading ? 0 : 1)

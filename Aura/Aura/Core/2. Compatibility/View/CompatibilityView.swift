@@ -24,15 +24,15 @@ struct CompatibilityView: View {
                             VStack(alignment: .leading, spacing: 25) {
                                 HStack(spacing: 10) {
                                     Image(systemName: "heart")
-                                        .font(Adaptive.size(.callout, .default))
+                                        .font(Adaptive.size(.callout, .default, .default))
                                         .foregroundStyle(.tint)
                                         .fontWeight(.semibold)
-                                        .padding(Adaptive.size(7, 9))
+                                        .padding(Adaptive.size(7, 7, 9))
                                         .background(.capsuleBackground)
                                         .clipShape(.circle)
 
                                     Text("Детали партнера")
-                                        .font(Adaptive.size(.system(size: 15), .default))
+                                        .font(Adaptive.size(.system(size: 15), .callout, .default))
                                         .bold()
 
                                     Spacer()
@@ -53,7 +53,7 @@ struct CompatibilityView: View {
                             .padding(20)
                             .backgroundWithShape(12, .cardBackground, true)
 
-                            VStack(alignment: .leading, spacing: 10) {
+                            VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                                 HStack {
                                     Text("Выберите тесты")
                                         .fontWeight(.semibold)
@@ -69,7 +69,7 @@ struct CompatibilityView: View {
                                             .fontWeight(.medium)
                                     }
                                 }
-                                .font(Adaptive.size(.system(size: 15), .default))
+                                .font(Adaptive.size(.system(size: 15), .callout, .default))
 
                                 ForEach(vm.availableTests, id: \.self) { test in
                                     TestCellView(type: test,
@@ -97,6 +97,7 @@ struct CompatibilityView: View {
                         .padding(.horizontal)
                         .bottomAreaPadding(50)
                     }
+                    .scrollIndicators(.hidden)
                     .dismissKeyboardOnTap()
                     .scrollDismissesKeyboard(.interactively)
                 }
@@ -142,7 +143,7 @@ extension CompatibilityView {
     
     private func headerText(_ title: String) -> some View {
         Text(title)
-            .font(Adaptive.size(.footnote, .system(size: 14)))
+            .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
             .foregroundStyle(.deepGray)
             .fontWeight(.medium)
     }
@@ -150,7 +151,7 @@ extension CompatibilityView {
     private func headerView() -> some View {
         VStack(alignment: .center, spacing: 7) {
             Image(systemName: "heart")
-                .font(Adaptive.size(.title2, .title3))
+                .font(Adaptive.size(.title2, .system(size: 24), .title))
                 .fontWeight(.semibold)
                 .foregroundStyle(.white)
                 .padding(15)
@@ -161,11 +162,11 @@ extension CompatibilityView {
                 .padding(.vertical, 12)
 
             Text("Анализ партнера")
-                .font(Adaptive.size(.default, .title3))
+                .font(Adaptive.size(.default, .system(size: 18), .title3))
                 .bold()
 
             Text("Введите информацию о партнере")
-                .font(Adaptive.size(.system(size: 14), .callout))
+                .font(Adaptive.size(.system(size: 14), .system(size: 15), .callout))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
         }

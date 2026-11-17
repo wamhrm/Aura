@@ -58,18 +58,6 @@ final class TestDefaults {
     deinit {
         defaults.removePersistentDomain(forName: suite)
     }
-
-    @MainActor
-    func loadUser() -> UserModel? {
-        guard let data = defaults.data(forKey: Constants.userKey) else { return nil }
-        return try? JSONDecoder().decode(UserModel.self, from: data)
-    }
-
-    @MainActor
-    func saveUser(user: UserModel) {
-        guard let data = try? JSONEncoder().encode(user) else { return }
-        defaults.set(data, forKey: Constants.userKey)
-    }
 }
 
 func makeStorage() -> TestDefaults {
@@ -216,6 +204,7 @@ final class MockContentService: ContentServiceProtocol {
     var history: [HistoryCellModel] = []
     var errorToThrow: (any Error)?
     var dailyContentDate = todayText()
+    var horoscopeDelay = Duration.zero
     var beforeContentResponse: (() -> Void)?
     var beforeDetailsResponse: (() -> Void)?
     private(set) var detailsCount = 0
@@ -288,6 +277,7 @@ final class MockContentService: ContentServiceProtocol {
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         horoscopeCount += 1
+        try await Task.sleep(for: horoscopeDelay)
         if let errorToThrow { throw errorToThrow }
         horoscope.send(.mock)
         return .mock

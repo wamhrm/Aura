@@ -66,15 +66,15 @@ extension View {
     
     func compatibilityResultZodiacsModifier() -> some View {
         self
-            .font(Adaptive.size(.callout, .default))
-            .padding(Adaptive.size(10, 12))
+            .font(Adaptive.size(.callout, .default, .default))
+            .padding(Adaptive.size(10, 10, 12))
             .background(.tint.opacity(0.25))
             .clipShape(.circle)
     }
 
     func zodiacSignModifier() -> some View {
         self
-            .font(Adaptive.size(.title2, .system(size: 24)))
+            .font(Adaptive.size(.title2, .system(size: 23), .system(size: 24)))
             .padding(10)
             .background(LinearGradient(colors: [.softPurple,
                                                 .idealPartnerType1],

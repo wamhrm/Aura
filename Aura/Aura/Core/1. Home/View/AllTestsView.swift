@@ -15,7 +15,7 @@ struct AllTestsView: View {
             BackgroundView()
             
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                     ForEach(PersonalityTestTypes.allCases, id: \.self) { test in
                         TestCellView(type: test,
                                      hasChosenTest: vm.isSelected(test)) {

@@ -21,12 +21,12 @@ struct HomeView: View {
                     BackgroundView()
 
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 15) {
+                        VStack(alignment: .leading, spacing: Adaptive.size(15, 15, 17)) {
                             HStack(spacing: 15) {
                                 LogoImage(size: 32)
 
                                 Text(vm.greetingText)
-                                    .font(Adaptive.size(.callout, .default))
+                                    .font(Adaptive.size(.callout, .default, .default))
                                     .fontWeight(.semibold)
                                     .fontDesign(.monospaced)
 
@@ -35,7 +35,7 @@ struct HomeView: View {
 
                             VStack(alignment: .leading, spacing: 15) {
                                 Text("ИНСАЙТ ДНЯ")
-                                    .font(Adaptive.size(.callout, .default))
+                                    .font(Adaptive.size(.callout, .default, .default))
                                     .fontWeight(.heavy)
 
                                 if !vm.allowsAIAnalysis {
@@ -46,7 +46,7 @@ struct HomeView: View {
                                     .frame(maxWidth: .infinity)
                                 } else if let insight = vm.dailyInsight {
                                     Text(insight.text)
-                                        .font(.system(size: Adaptive.size(14, 15))).italic()
+                                        .font(.system(size: Adaptive.size(14, 15, 15))).italic()
                                         .fontWeight(.medium)
                                         .transition(.opacity)
                                 } else if case .failed(let message) = vm.insightState {
@@ -68,7 +68,7 @@ struct HomeView: View {
                             .animation(.easeInOut(duration: 0.35), value: vm.dailyInsight?.id)
 
                             if let horoscope = vm.horoscope {
-                                VStack(alignment: .leading, spacing: 10) {
+                                VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                                     headerText(title: "Гороскоп на неделю", buttonTitle: "Читать") {
                                         vm.showHoroscopeDetails()
                                     }
@@ -79,9 +79,9 @@ struct HomeView: View {
                                 }
                                 .padding(.top, 15)
                             } else if case .failed(let message) = vm.horoscopeState {
-                                VStack(alignment: .leading, spacing: 10) {
+                                VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                                     Text("Гороскоп на неделю")
-                                        .font(Adaptive.size(.system(size: 15), .default))
+                                        .font(Adaptive.size(.system(size: 15), .callout, .default))
                                         .fontWeight(.semibold)
                                         .padding(.leading, 4)
 
@@ -101,16 +101,16 @@ struct HomeView: View {
                             Button(action: compatibilityButton) {
                                 HStack {
                                     Text("Проверить совместимость")
-                                        .font(Adaptive.size(.system(size: 18), .title3))
+                                        .font(Adaptive.size(.system(size: 18), .system(size: 19), .title3))
                                         .bold()
                                         .foregroundStyle(.white)
 
                                     Spacer()
 
-                                    sparkImageWithBackground(Adaptive.size(.medium, .large), .white)
+                                    sparkImageWithBackground(Adaptive.size(.medium, .large, .large), .white)
                                 }
                                 .padding(.horizontal, 7)
-                                .padding(18)
+                                .padding(Adaptive.size(18, 18, 20))
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     LinearGradient(
@@ -121,7 +121,7 @@ struct HomeView: View {
                                 .clipShape(.rect(cornerRadius: 12))
                             }
 
-                            VStack(alignment: .leading, spacing: 10) {
+                            VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                                 headerText(title: "Проверьте себя", buttonTitle: "Все тесты") {
                                     vm.showAllTests()
                                 }
@@ -234,7 +234,7 @@ extension HomeView {
                     .fontWeight(.medium)
             }
         }
-        .font(Adaptive.size(.system(size: 15), .default))
+        .font(Adaptive.size(.system(size: 15), .callout, .default))
     }
 
     private func sparkImageWithBackground(_ size: Image.Scale, _ color: Color) -> some View {

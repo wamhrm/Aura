@@ -14,11 +14,11 @@ struct OnboardingHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(Adaptive.size(.title3, .title2))
+                .font(Adaptive.size(.title3, .system(size: 21), .title2))
                 .bold()
 
             Text(subtitle)
-                .font(Adaptive.size(.caption, .callout))
+                .font(Adaptive.size(.caption, .system(size: 14), .callout))
                 .foregroundStyle(.deepGray)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -60,9 +60,9 @@ struct OnboardingTextField: View {
                 }
             }
         }
-        .font(Adaptive.size(.callout, .body))
+        .font(Adaptive.size(.callout, .body, .body))
         .padding(.horizontal)
-        .frame(height: Adaptive.size(48, 52))
+        .frame(height: Adaptive.size(48, 50, 52))
         .background(Color.cardBackground)
         .clipShape(.rect(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.fieldBorder, lineWidth: 1.5))
@@ -76,7 +76,7 @@ struct OnboardingTextButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(Adaptive.size(.footnote, .callout))
+                .font(Adaptive.size(.footnote, .system(size: 14), .callout))
                 .fontWeight(.semibold)
                 .foregroundStyle(.tint)
         }
@@ -93,7 +93,7 @@ struct OnboardingLegalText: View {
 
     var body: some View {
         Text(legalText)
-            .font(Adaptive.size(.caption2, .caption))
+            .font(Adaptive.size(.caption2, .caption, .caption))
             .foregroundStyle(.deepGray)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)

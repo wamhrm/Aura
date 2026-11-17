@@ -28,7 +28,7 @@ struct AIConsentView: View {
                             decline()
                         } label: {
                             Text("Не сейчас")
-                                .font(.system(size: Adaptive.size(14, 15)))
+                                .font(.system(size: Adaptive.size(14, 15, 15)))
                                 .foregroundStyle(.deepGray)
                                 .bold()
                                 .frame(maxWidth: .infinity)

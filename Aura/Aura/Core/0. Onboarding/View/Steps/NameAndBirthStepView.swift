@@ -25,7 +25,7 @@ struct NameAndBirthStepView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Дата рождения")
-                            .font(Adaptive.size(.footnote, .callout))
+                            .font(Adaptive.size(.footnote, .system(size: 14), .callout))
                             .foregroundStyle(.deepGray)
                             .fontWeight(.semibold)
 
@@ -52,7 +52,7 @@ struct NameAndBirthStepView: View {
                                        displayedComponents: .hourAndMinute)
                         }
                     }
-                    .font(Adaptive.size(.footnote, .callout))
+                    .font(Adaptive.size(.footnote, .system(size: 14), .callout))
                     .padding()
                     .background(Color.cardBackground)
                     .clipShape(.rect(cornerRadius: 10))

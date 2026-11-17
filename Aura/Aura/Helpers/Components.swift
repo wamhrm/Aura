@@ -28,7 +28,7 @@ struct HoroscopeDateView: View {
 
             Text(dateEnd)
         }
-        .font(Adaptive.size(.caption, .footnote))
+        .font(Adaptive.size(.caption, .footnote, .footnote))
         .fontWeight(isCellDetails ? .bold : .medium)
         .foregroundStyle(.deepGray)
     }
@@ -53,11 +53,11 @@ struct ClassicButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: Adaptive.size(14, 15)))
+                .font(.system(size: Adaptive.size(14, 15, 15)))
                 .foregroundStyle(.white)
                 .bold()
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding()
+                .padding(Adaptive.size(16, 16, 18))
                 .background(.tint)
                 .clipShape(.rect(cornerRadius: 10))
         }
@@ -96,7 +96,7 @@ struct CompleteProfileLock: View {
                 .overlay(Circle().stroke(Color.fieldBorder, lineWidth: 1))
 
             Text(title)
-                .font(Adaptive.size(.system(size: 15), .callout))
+                .font(Adaptive.size(.system(size: 15), .callout, .callout))
                 .fontDesign(.monospaced)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.center)
@@ -115,7 +115,7 @@ struct AIConsentLock: View {
 
             Button(action: onAllow) {
                 Text("Разрешить")
-                    .font(Adaptive.size(.system(size: 15), .callout))
+                    .font(Adaptive.size(.system(size: 15), .callout, .callout))
                     .fontWeight(.semibold)
                     .foregroundStyle(.tint)
                     .padding(.horizontal, 28)
@@ -134,7 +134,7 @@ struct AIConsentContentView: View {
             VStack(alignment: .leading, spacing: 30) {
                 VStack(alignment: .center, spacing: 25) {
                     Image(systemName: "sparkles")
-                        .font(Adaptive.size(.title2, .title))
+                        .font(Adaptive.size(.title2, .system(size: 24), .title))
                         .fontWeight(.semibold)
                         .foregroundStyle(.white)
                         .padding(15)
@@ -144,7 +144,7 @@ struct AIConsentContentView: View {
                         .clipShape(.circle)
 
                     Text("Анализ с помощью AI")
-                        .font(Adaptive.size(.default, .title3))
+                        .font(Adaptive.size(.default, .system(size: 18), .title3))
                         .bold()
                 }
                 .frame(maxWidth: .infinity)
@@ -166,7 +166,7 @@ struct AIConsentContentView: View {
                     }
                 }
             }
-            .font(Adaptive.size(.system(size: 14), .callout))
+            .font(Adaptive.size(.system(size: 14), .system(size: 15), .callout))
             .padding(.top)
             .onboardingViewModifier()
         }
@@ -195,7 +195,7 @@ struct BirthDateFieldsView: View {
                            displayedComponents: .hourAndMinute)
             }
         }
-        .font(Adaptive.size(.footnote, .system(size: 14)))
+        .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
         .fontWeight(.medium)
         .environment(\.locale, Locale(identifier: "ru_RU"))
     }
@@ -214,7 +214,7 @@ struct EmotionalProfileBar: View {
 
                 Text(type.rightSide)
             }
-            .font(Adaptive.size(.caption, .system(size: 14)))
+            .font(Adaptive.size(.caption, .footnote, .system(size: 14)))
             .fontWeight(.semibold)
             .foregroundStyle(.deepGray)
 
@@ -230,7 +230,7 @@ struct EmotionalProfileBar: View {
                         .frame(width: bar.size.width * (CGFloat(value) / CGFloat(10)))
                 }
             }
-            .frame(height: Adaptive.size(8, 10))
+            .frame(height: Adaptive.size(8, 8, 10))
         }
     }
 }
@@ -242,12 +242,12 @@ struct LoadFailedView: View {
     var body: some View {
         VStack(spacing: 10) {
             Text(message)
-                .font(Adaptive.size(.footnote, .system(size: 15)))
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                 .fontWeight(.medium)
                 .multilineTextAlignment(.center)
 
             Button("Повторить", action: onRetry)
-                .font(Adaptive.size(.footnote, .system(size: 15)))
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                 .fontWeight(.semibold)
         }
         .frame(maxWidth: .infinity)

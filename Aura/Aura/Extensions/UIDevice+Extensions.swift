@@ -8,21 +8,43 @@
 import Foundation
 import UIKit
 
+fileprivate enum ScreenSizeClass {
+    case base
+    case air
+    case plus
+}
+
+struct Adaptive {
+    static func size<T>(_ base: T, _ air: T, _ plus: T) -> T {
+        switch UIDevice.screenSizeClass {
+            case .base: base
+            case .air: air
+            case .plus: plus
+        }
+    }
+}
+
 extension UIDevice {
-    static let isPlus: Bool = {
+    fileprivate static let screenSizeClass: ScreenSizeClass = {
         guard let screen = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first?.screen
         else {
-            return false
+            return .base
         }
 
-        return screen.nativeBounds.height >= 2796
-    }()
-}
+        let bounds = screen.nativeBounds
+        let longSide = max(bounds.width, bounds.height)
+        let shortSide = min(bounds.width, bounds.height)
 
-enum Adaptive {
-    static func size<T>(_ base: T, _ plus: T) -> T {
-        UIDevice.isPlus ? plus : base
-    }
+        if longSide >= 2770, shortSide >= 1284 {
+            return .plus
+        }
+
+        if longSide >= 2730 {
+            return .air
+        }
+
+        return .base
+    }()
 }

@@ -48,7 +48,6 @@ struct AddProfileInfoView: View {
                 .padding(.horizontal)
             }
             .bottomAreaPadding(50)
-            .scrollIndicators(.hidden)
             .dismissKeyboardOnTap()
             .scrollDismissesKeyboard(.interactively)
         }

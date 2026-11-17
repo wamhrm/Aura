@@ -56,7 +56,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     var showsLoadingScreen: Bool {
-        isLoading || isLoadingScreen
+        isLoading || (isLoadingScreen && homeRoutes.isEmpty)
     }
 
     private var isHomeReady: Bool {
@@ -160,13 +160,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
         Task {
             guard sessionID == authService.sessionID else { return }
-            let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
                 try await authService.giveAIConsent()
                 guard sessionID == authService.sessionID else { return }
-                try await fetchInsight()
-                try await Task.sleep(until: deadline, clock: .continuous)
+                await loadDailyInsight()
                 guard sessionID == authService.sessionID else { return }
                 homeRoutes = []
                 try await Task.sleep(for: .milliseconds(50))
@@ -177,17 +175,12 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
             guard sessionID == authService.sessionID else { return }
             isLoading = false
-            revealScreenIfReady()
+            await revealScreenIfReady()
         }
     }
 
     func declineAIConsent() {
         homeRoutes = []
-    }
-
-    private func fetchInsight() async throws {
-        dailyInsight = try await contentService.fetchDailyInsight()
-        insightState = .loaded
     }
 
     func toggleTestSelection(_ test: PersonalityTestTypes) {
@@ -236,7 +229,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
             guard sessionID == authService.sessionID else { return }
             isLoading = false
-            revealScreenIfReady()
+            await revealScreenIfReady()
         }
     }
 
@@ -307,11 +300,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         
         try? await Task.sleep(until: deadline, clock: .continuous)
         guard sessionID == authService.sessionID else { return }
-        revealScreenIfReady()
+        await revealScreenIfReady()
     }
 
     private func loadDailyInsight() async {
-        guard currentUser?.allowsAIAnalysis == true else { return }
+        guard signedInUser?.allowsAIAnalysis == true else { return }
         let sessionID = authService.sessionID
         let deadline = ContinuousClock.now + .seconds(1)
 
@@ -321,7 +314,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
 
         do {
-            try await fetchInsight()
+            dailyInsight = try await contentService.fetchDailyInsight()
+            insightState = .loaded
         } catch {
             guard sessionID == authService.sessionID else { return }
             if dailyInsight?.isFromToday != true {
@@ -332,10 +326,13 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
         try? await Task.sleep(until: deadline, clock: .continuous)
         guard sessionID == authService.sessionID else { return }
-        revealScreenIfReady()
+        await revealScreenIfReady()
     }
 
-    private func revealScreenIfReady() {
+    private func revealScreenIfReady() async {
+        if isLoadingScreen && isHomeReady {
+            try? await Task.sleep(for: .milliseconds(350))
+        }
         guard !isLoading else { return }
         isLoadingScreen = !isHomeReady
     }

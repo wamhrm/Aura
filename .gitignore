@@ -1,20 +1,44 @@
+# macOS
 .DS_Store
+
+# Swift
 .build/
 .swiftpm/
-.cursor/
+
+# IDE
 .vscode/
-CLAUDE.md
-AGENTS.md
+.cursor/
 xcuserdata/
 DerivedData/
-*.xcresult
 *.xcuserstate
+
+# Build artifacts
+*.xcresult
+*.xcarchive/
+*.ipa
+*.dSYM/
+*.dSYM.zip
+*.profraw
+
+# Database
 *.sqlite
 *.sqlite3
+
+# Environment
 .env
 .env.*
 !.env.example
-*.profraw
+
+# Secrets
 *.p8
 *.p12
 *.pem
+*.mobileprovision
+
+# Logs
+*.log
+
+# Local documentation
+CLAUDE.md
+AGENTS.md
+TODO.md

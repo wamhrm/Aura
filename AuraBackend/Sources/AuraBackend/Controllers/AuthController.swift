@@ -20,10 +20,15 @@ struct AuthController: RouteCollection {
         auth.post("password", "reset", use: resetPassword)
 
         let authenticated = auth.grouped(UserAuthMiddleware())
+        authenticated.get("me", use: fetchCurrentUser)
         authenticated.post("logout", use: logout)
         authenticated.delete("account", use: deleteAccount)
         authenticated.post("email", "sendCode", use: sendEmailConfirmationCode)
         authenticated.post("email", "confirm", use: confirmEmail)
+    }
+
+    private func fetchCurrentUser(req: Request) throws -> UserDTO {
+        try req.auth.require(User.self).toDTO()
     }
 
     private func createAccount(req: Request) async throws -> Response {

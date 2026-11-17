@@ -37,6 +37,7 @@ class AuraUITestCase: XCTestCase {
     private func setDefaultResponses() throws {
         let user = try sampleUser()
 
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
         server.respond(route: "POST /v1/auth/createAccount", status: 201, body: try authBody(user: newUser()))
         server.respond(route: "POST /v1/auth/email/available", status: 204)
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))

@@ -26,16 +26,16 @@ struct TestCellView<Test: TestCellDisplayable>: View {
         HStack(spacing: 15) {
             Button(action: onTapHandler) {
                 HStack(spacing: 15) {
-                    TestCellImage(icon: type.icon, color: type.color, iconSize: .title2, backgroundSize: Adaptive.size(43, 45), isResults: false)
+                    TestCellImage(icon: type.icon, color: type.color, iconSize: .title2, backgroundSize: Adaptive.size(43, 43, 45), isResults: false)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(type.title)
-                            .font(Adaptive.size(.footnote, .system(size: 14)))
+                            .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                             .fontWeight(.semibold)
                             .multilineTextAlignment(.leading)
 
                         Text(type.description)
-                            .font(Adaptive.size(.caption, .footnote))
+                            .font(Adaptive.size(.caption, .footnote, .footnote))
                             .fontWeight(.medium)
                             .foregroundStyle(.deepGray)
                             .multilineTextAlignment(.leading)
@@ -47,14 +47,14 @@ struct TestCellView<Test: TestCellDisplayable>: View {
             Button(action: onSelectionToggle) {
                 Circle()
                     .fill(.tint.opacity(hasChosenTest ? 0.85 : 0))
-                    .frame(width: Adaptive.size(23, 25),
-                           height: Adaptive.size(23, 25))
+                    .frame(width: Adaptive.size(23, 23, 25),
+                           height: Adaptive.size(23, 23, 25))
                     .overlay(Circle().stroke(Color.fieldBackground, lineWidth: 2))
                     .overlay {
                         Circle()
                             .fill(.cardBackground)
-                            .frame(width: Adaptive.size(8, 10),
-                                   height: Adaptive.size(8, 10))
+                            .frame(width: Adaptive.size(8, 8, 10),
+                                   height: Adaptive.size(8, 8, 10))
                     }
                     .padding(.trailing, 5)
             }
@@ -176,7 +176,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ"
             case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях"
             case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения"
-            case .sexualCompatibility: "Возможная динамика влечения и близости. Предпочтения партнёра по этим данным неизвестны"
+            case .sexualCompatibility: "Возможная динамика влечения и близости"
         }
     }
 
@@ -209,7 +209,7 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
             case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ. Стиль привязанности партнёра по этим данным не определяется."
             case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях. Язык любви партнёра по этим данным неизвестен."
             case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения. Реакции партнёра в ссоре по этим данным неизвестны."
-            case .sexualCompatibility: "Возможная динамика влечения, темпа сближения и интимной гармонии. Предпочтения, опыт и желания партнёра по этим данным неизвестны."
+            case .sexualCompatibility: "Возможная динамика влечения, темпа сближения и интимной гармонии."
         }
     }
 

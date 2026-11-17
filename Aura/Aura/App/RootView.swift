@@ -19,7 +19,20 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if authService.showsMainScreen {
+            if case .loading = authService.restorationState {
+                ZStack {
+                    BackgroundView()
+                    LoadingView(title: "Входим...")
+                }
+            } else if case .failed(let message) = authService.restorationState {
+                ZStack {
+                    BackgroundView()
+                    LoadFailedView(message: message) {
+                        authService.retryRestoreSession()
+                    }
+                    .padding()
+                }
+            } else if authService.showsMainScreen {
                 MainTabView(authService: authService,
                             contentService: contentService)
                     .transition(.opacity)
@@ -28,6 +41,8 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        .task { await authService.restoreSession() }
+        .animation(.easeInOut(duration: 0.3), value: authService.restorationState)
         .animation(.easeInOut(duration: 0.3), value: authService.showsMainScreen)
     }
 }

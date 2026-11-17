@@ -59,7 +59,7 @@ struct ProfileInfoSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Text(title)
-                .font(Adaptive.size(.system(size: 15), .default))
+                .font(Adaptive.size(.system(size: 15), .callout, .default))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
 
@@ -82,10 +82,10 @@ struct ProfileInfoOptionView: View {
     var body: some View {
         HStack {
             Text(type.icon)
-                .font(Adaptive.size(.footnote, .system(size: 15)))
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
 
             Text(type.title)
-                .font(Adaptive.size(.footnote, .system(size: 14)))
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                 .foregroundStyle(isSelected ? .white : .primaryText)
                 .bold()
         }

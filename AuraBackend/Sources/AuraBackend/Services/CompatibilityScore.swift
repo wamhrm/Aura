@@ -21,9 +21,9 @@ enum CompatibilityScore {
     static func barRange(score: Int) -> ClosedRange<Int> {
         switch score {
             case ...40: 1...4
-            case 41...60: 4...6
-            case 61...80: 6...8
-            default: 8...10
+            case 41...60: 1...6
+            case 61...80: 1...8
+            default: 1...10
         }
     }
 

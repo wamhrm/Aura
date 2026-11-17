@@ -167,6 +167,7 @@ final class OnboardingUITests: AuraUITestCase {
     func test_incompleteProfile_afterRelaunch_backArrowOffersToSignOut() throws {
         // Given
         let user = try newUser()
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         try launchOnWelcome()
         signIn()

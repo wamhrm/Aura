@@ -40,7 +40,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     }
     
     var sheetHeight: CGFloat {
-        isCodeSent ? Adaptive.size(340, 360) : Adaptive.size(200, 220)
+        isCodeSent ? Adaptive.size(340, 352, 360) : Adaptive.size(200, 212, 220)
     }
     
     func sendCode() {

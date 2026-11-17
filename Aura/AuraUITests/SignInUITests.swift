@@ -8,40 +8,72 @@
 import XCTest
 
 final class SignInUITests: AuraUITestCase {
-    func test_signIn_restoresSavedContent_whenServerIsUnavailable() throws {
-        // Given
-        try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
-        try launchOnWelcome()
-
-        // When
-        signIn()
-
-        // Then
+    func test_relaunch_loadsCurrentUserWithTheSavedToken() throws {
+        try launchSignedIn()
         assertOnMainScreen()
-        XCTAssertTrue(app.buttons["Читать"].firstMatch.waitForExistence(timeout: 10))
-        openHistory()
-        XCTAssertTrue(button(part: "Тихий стратег").waitForExistence(timeout: 10))
-        openProfile()
-        XCTAssertTrue(text("Общий персональный вывод").waitForExistence(timeout: 10))
-        XCTAssertTrue(text(dailyText).waitForExistence(timeout: 10))
-
-        // When
         app.terminate()
-        let failure = try failingBody(serverError)
-        for route in ["GET /v1/horoscope/current", "GET /v1/daily/insight",
-                      "GET /v1/daily/tip", "GET /v1/history", "GET /v1/history/:historyID"] {
-            server.respond(route: route, status: 503, body: failure)
-        }
+        server.respond(route: "GET /v1/auth/me", body: try json(sampleUser(["name": "Мария"])))
+
         app.launch()
 
-        // Then
+        XCTAssertTrue(text("Здравствуйте, Мария").waitForExistence(timeout: 15))
         assertOnMainScreen()
-        XCTAssertTrue(app.buttons["Читать"].firstMatch.waitForExistence(timeout: 10))
-        openHistory()
-        XCTAssertTrue(button(part: "Тихий стратег").waitForExistence(timeout: 10))
-        openProfile()
-        XCTAssertTrue(text("Общий персональный вывод").waitForExistence(timeout: 10))
-        XCTAssertTrue(text(dailyText).waitForExistence(timeout: 10))
+        XCTAssertEqual(server.requests.filter { $0 == "POST /v1/auth/signIn" }.count, 1)
+        XCTAssertEqual(server.requests.filter { $0 == "GET /v1/auth/me" }.count, 1)
+    }
+
+    func test_relaunch_withIncompleteProfile_continuesOnboarding() throws {
+        let user = try newUser()
+        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
+        server.respond(route: "GET /v1/auth/me", body: try json(user))
+        try launchOnWelcome()
+        signIn()
+        XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15))
+        app.terminate()
+
+        app.launch()
+
+        XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15))
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertEqual(server.requests.filter { $0 == "POST /v1/auth/signIn" }.count, 1)
+        XCTAssertEqual(server.requests.filter { $0 == "GET /v1/auth/me" }.count, 1)
+    }
+
+    func test_relaunch_whenUserRequestFails_keepsTokenAndAllowsRetry() throws {
+        try launchSignedIn()
+        assertOnMainScreen()
+        app.terminate()
+        server.respond(route: "GET /v1/auth/me", status: 503, body: try failingBody(serverError))
+
+        app.launch()
+
+        XCTAssertTrue(text(serverError).waitForExistence(timeout: 15))
+        XCTAssertFalse(welcomeButton.exists)
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertTrue(app.buttons["Повторить"].firstMatch.isHittable)
+        server.respond(route: "GET /v1/auth/me", body: try json(sampleUser()))
+        tapButton("Повторить")
+
+        assertOnMainScreen()
+        XCTAssertEqual(server.requests.filter { $0 == "POST /v1/auth/signIn" }.count, 1)
+        XCTAssertEqual(server.requests.filter { $0 == "GET /v1/auth/me" }.count, 2)
+    }
+
+    func test_relaunch_withRejectedToken_returnsToSignIn() throws {
+        try launchSignedIn()
+        assertOnMainScreen()
+        app.terminate()
+        server.respond(route: "GET /v1/auth/me", status: 401, body: try failingBody("Неверный токен"))
+
+        app.launch()
+
+        XCTAssertEqual(alertText(), "Сессия истекла. Войдите снова")
+        closeAlert()
+        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 10))
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(welcomeButton.waitForExistence(timeout: 10))
+        XCTAssertEqual(server.requests.filter { $0 == "GET /v1/auth/me" }.count, 1)
     }
 
     func test_signIn_withWrongShortPassword_showsTheServerAlert() throws {

@@ -293,6 +293,56 @@ final class HomeViewModelTests: XCTestCase {
         XCTAssertEqual(content.tipCount, 0)
     }
 
+    func test_allowAIConsent_whenInsightFails_opensHomeAndAllowsRetry() async {
+        let auth = MockAuthService(user: makeUser(hasAIConsent: false))
+        let content = MockContentService()
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
+        await waitUntil { !viewModel.showsLoadingScreen }
+        content.errorToThrow = serverError
+        viewModel.showAIConsent()
+
+        viewModel.allowAIConsent()
+        await waitUntil { !viewModel.isLoading }
+
+        XCTAssertTrue(viewModel.homeRoutes.isEmpty)
+        XCTAssertTrue(viewModel.allowsAIAnalysis)
+        XCTAssertEqual(viewModel.insightState, .failed("Ошибка сервера"))
+        XCTAssertFalse(viewModel.showsLoadingScreen)
+        XCTAssertFalse(viewModel.showAlert)
+        XCTAssertEqual(content.insightCount, 1)
+
+        content.errorToThrow = nil
+        viewModel.retryDailyInsight()
+        await waitUntil { viewModel.insightState == .loaded }
+
+        XCTAssertNotNil(viewModel.dailyInsight)
+        XCTAssertEqual(auth.aiConsentCount, 1)
+        XCTAssertEqual(content.insightCount, 2)
+    }
+
+    func test_personalityResult_isVisibleWhileChangedBirthDateReloadsHoroscope() async {
+        let auth = MockAuthService(user: makeUser())
+        let content = MockContentService()
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
+        await waitUntil { !viewModel.showsLoadingScreen }
+        content.horoscopeDelay = .seconds(2)
+
+        viewModel.makePersonalityTest()
+        auth.authState.send(.signedIn(makeUser(dateOfBirth: "20.01.1990")))
+        await waitUntil { content.horoscopeCount == 2 }
+        await waitUntil { !viewModel.isLoading }
+
+        XCTAssertEqual(viewModel.homeRoutes, [.testResults])
+        XCTAssertNotNil(viewModel.personalityResult)
+        XCTAssertEqual(viewModel.horoscopeState, .loading)
+        XCTAssertFalse(viewModel.showsLoadingScreen)
+
+        viewModel.homeRoutes = []
+        XCTAssertTrue(viewModel.showsLoadingScreen)
+        await waitUntil { !viewModel.showsLoadingScreen }
+        XCTAssertEqual(viewModel.horoscopeState, .loaded)
+    }
+
     func test_allowAIConsent_withPersonalityHistory_leavesTheTipToProfile() async {
         let content = MockContentService()
         content.historyCells.send([.personalityPlaceholder])

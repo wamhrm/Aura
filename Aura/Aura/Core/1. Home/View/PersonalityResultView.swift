@@ -15,24 +15,24 @@ struct PersonalityResultView: View {
             BackgroundView()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 15) {
+                VStack(alignment: .leading, spacing: Adaptive.size(15, 15, 17)) {
                     VStack {
                         HStack(spacing: 15) {
                             Text(result.zodiacSign.icon)
-                                .font(Adaptive.size(.default, .title3))
+                                .font(Adaptive.size(.default, .system(size: 18), .title3))
                                 .fontWeight(.semibold)
                                 .padding(10)
                                 .background(.lightPurple)
                                 .clipShape(.circle)
                             
                             Text(result.nameCapitalized)
-                                .font(Adaptive.size(.title3, .title2))
+                                .font(Adaptive.size(.title3, .system(size: 21), .title2))
                                 .fontDesign(.rounded)
                                 .bold()
                         }
-                        .padding(.vertical, Adaptive.size(20, 22))
+                        .padding(.vertical, Adaptive.size(20, 20, 22))
                         
-                        VStack(alignment: .center, spacing: Adaptive.size(15, 17)) {
+                        VStack(alignment: .center, spacing: Adaptive.size(15, 15, 17)) {
                             HStack {
                                 ForEach(result.selectedTests, id: \.self) { test in
                                     TestCellImage(icon: test.icon,
@@ -43,24 +43,24 @@ struct PersonalityResultView: View {
                             }
                             
                             Text(result.archetypeTitle)
-                                .font(Adaptive.size(.default, .system(size: 19)))
+                                .font(Adaptive.size(.default, .system(size: 18), .system(size: 19)))
                                 .foregroundStyle(.tint)
                                 .fontWeight(.semibold)
                             
                             Text(result.archetypeSubtitle)
-                                .font(Adaptive.size(.footnote, .system(size: 14)))
+                                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                                 .foregroundStyle(.deepGray)
                                 .multilineTextAlignment(.center)
                                 .fontWeight(.medium)
                         }
-                        .frame(maxWidth: 300, alignment: .center)
+                        .frame(maxWidth: Adaptive.size(300, 314, 330), alignment: .center)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 10)
                     
                     ResultSectionView(title: result.overview.title) {
                         Text(result.overview.description)
-                            .font(.system(size: Adaptive.size(14, 15)))
+                            .font(.system(size: Adaptive.size(14, 15, 15)))
                             .foregroundStyle(.deepGray)
                     }
                     
@@ -76,7 +76,7 @@ struct PersonalityResultView: View {
                     ForEach(result.sections, id: \.self) { test in
                         ResultSectionView(title: test.selectedTest.title) {
                             Text(test.description)
-                                .font(Adaptive.size(.system(size: 15), .callout))
+                                .font(Adaptive.size(.system(size: 15), .callout, .callout))
                                 .foregroundStyle(.deepGray)
                             
                             VStack(spacing: 15) {
@@ -96,7 +96,6 @@ struct PersonalityResultView: View {
                 .bottomAreaPadding(15)
                 .padding(.horizontal)
             }
-            .scrollIndicators(.hidden)
         }
         .navigationTitle("Результат персонального теста")
         .navigationBarTitleDisplayMode(.inline)

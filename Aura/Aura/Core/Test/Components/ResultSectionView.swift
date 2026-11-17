@@ -14,7 +14,7 @@ struct ResultSectionView<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(Adaptive.size(.system(size: 15), .default))
+                .font(Adaptive.size(.system(size: 15), .callout, .default))
                 .bold()
 
             content()

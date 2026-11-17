@@ -15,6 +15,7 @@ fileprivate enum HTTPMethod: String {
 }
 
 protocol NetworkServiceProtocol: Sendable {
+    func fetchCurrentUser() async throws -> UserModel
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse
     func ensureEmailAvailable(email: String) async throws
     func signIn(email: String, password: String) async throws -> AuthTokenResponse
@@ -53,10 +54,15 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     }
 
     private static func makeSession() -> URLSession {
-        let configuration = URLSessionConfiguration.default
+        URLCache.shared.removeAllCachedResponses()
+        let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForResource = 300
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: configuration)
+    }
+
+    func fetchCurrentUser() async throws -> UserModel {
+        try await fetch(endpoint: "/auth/me", method: .get)
     }
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {

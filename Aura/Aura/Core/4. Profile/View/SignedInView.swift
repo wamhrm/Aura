@@ -17,10 +17,10 @@ struct SignedInView: View {
             BackgroundView()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: Adaptive.size(12, 12, 14)) {
                     VStack(alignment: .center, spacing: 10) {
                         Text(user.nameInitials)
-                            .font(Adaptive.size(.title3, .title2))
+                            .font(Adaptive.size(.title3, .system(size: 21), .title2))
                             .foregroundStyle(.white)
                             .fontWeight(.heavy)
                             .padding(22)
@@ -31,7 +31,7 @@ struct SignedInView: View {
                             .clipShape(.circle)
 
                         Text(user.nameCapitalized)
-                            .font(Adaptive.size(.title3, .title2))
+                            .font(Adaptive.size(.title3, .system(size: 21), .title2))
                             .fontWeight(.bold)
 
                         HStack(alignment: .center, spacing: 5) {
@@ -39,13 +39,13 @@ struct SignedInView: View {
 
                             if let zodiacSign = user.zodiacSign {
                                 Text("·")
-                                    .font(.title3)
+                                    .font(Adaptive.size(.title3, .system(size: 21), .title2))
                                     .bold()
 
                                 Text(zodiacSign.title)
                             }
                         }
-                        .font(Adaptive.size(.footnote, .system(size: 15)))
+                        .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                         .foregroundStyle(.gray)
                         .fontWeight(.semibold)
                     }
@@ -56,7 +56,7 @@ struct SignedInView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("СОВЕТ ДНЯ")
-                                .font(Adaptive.size(.callout, .default))
+                                .font(Adaptive.size(.callout, .default, .default))
                                 .fontWeight(.heavy)
 
                             if vm.needsAIConsent {
@@ -65,7 +65,7 @@ struct SignedInView: View {
                                     .frame(maxWidth: .infinity)
                             } else if let dailyTip = vm.profileDisplayHandler.dailyTip {
                                 Text(dailyTip)
-                                    .font(.system(size: Adaptive.size(14, 15))).italic()
+                                    .font(.system(size: Adaptive.size(14, 15, 15))).italic()
                                     .fontWeight(.medium)
                             } else if case .failed(let message) = vm.tipState {
                                 LoadFailedView(message: message) {
@@ -86,12 +86,12 @@ struct SignedInView: View {
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text("О вас")
-                                .font(Adaptive.size(.system(size: 15), .default))
+                                .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
                             if let overview = vm.profileDisplayHandler.overview {
                                 Text(overview)
-                                    .font(.system(size: Adaptive.size(14, 15)))
+                                    .font(.system(size: Adaptive.size(14, 15, 15)))
                                     .foregroundStyle(.deepGray)
                             }
 
@@ -120,7 +120,7 @@ struct SignedInView: View {
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Ваш психотип")
-                                .font(Adaptive.size(.system(size: 15), .default))
+                                .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
                             VStack(spacing: 15) {

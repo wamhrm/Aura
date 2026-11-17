@@ -64,10 +64,10 @@ final class AuthServiceTests: XCTestCase {
 
         // Then
         guard case .signedOut = auth.authState.value else { return XCTFail("Unexpected signed-in session") }
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
     }
 
-    func test_successfulSignIn_savesTokenAndUser() async throws {
+    func test_successfulSignIn_savesOnlyToken_andKeepsUserInMemory() async throws {
         // Given
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
@@ -79,12 +79,13 @@ final class AuthServiceTests: XCTestCase {
 
         // Then
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
-        XCTAssertEqual(storage.loadUser(), network.user)
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedIn(let user) = auth.authState.value else { return XCTFail("No session") }
         XCTAssertEqual(user, network.user)
     }
 
-    func test_failedTokenDeletion_keepsSessionAndSavedUser() async throws {
+    func test_failedTokenDeletion_keepsSessionAndToken() async throws {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let network = MockNetworkService()
@@ -100,11 +101,12 @@ final class AuthServiceTests: XCTestCase {
         }
 
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
-        XCTAssertEqual(storage.loadUser(), network.user)
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedIn = auth.authState.value else { return XCTFail("Failed sign-out ended the session") }
     }
 
-    func test_successfulSignOut_removesTokenAndSavedUser() async throws {
+    func test_successfulSignOut_removesTokenAndUserFromMemory() async throws {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
@@ -113,47 +115,142 @@ final class AuthServiceTests: XCTestCase {
         try await auth.signOut()
 
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
     }
 
-    func test_tokenWithoutSavedUser_staysSignedOut() throws {
-        // Given
+    func test_tokenAlone_restoresCurrentUserFromTheServer() async throws {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         let storage = makeStorage()
-        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
-        // Then
+        await auth.restoreSession()
+
         XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
-        XCTAssertNil(storage.loadUser())
-        guard case .signedOut = auth.authState.value else { return XCTFail("Token alone opened a session") }
-        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertTrue(auth.showsMainScreen)
+        XCTAssertEqual(auth.restorationState, .loaded)
+        XCTAssertEqual(network.currentUserCount, 1)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
+
+        await auth.restoreSession()
+        XCTAssertEqual(network.currentUserCount, 1)
     }
 
-    func test_unavailableKeychain_keepsSavedUser_andStaysSignedOut() throws {
-        // Given
+    func test_launch_removesOldProfile_andPreservesAppearance() async throws {
+        let storage = makeStorage()
+        storage.defaults.set(try JSONEncoder().encode(makeUser(name: "Старое имя")), forKey: Constants.userKey)
+        storage.defaults.set("dark", forKey: Constants.selectedThemeKey)
+        storage.defaults.set("blue", forKey: Constants.accentColorKey)
+        let keychain = MockKeychainHelper()
+        try keychain.saveAuthToken("saved-token")
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+
+        await auth.restoreSession()
+
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
+        XCTAssertEqual(storage.defaults.string(forKey: Constants.selectedThemeKey), "dark")
+        XCTAssertEqual(storage.defaults.string(forKey: Constants.accentColorKey), "blue")
+        XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
+    }
+
+    func test_unavailableKeychain_showsRestorationError_withoutFetchingUser() async throws {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         keychain.readFails = true
         let storage = makeStorage()
-        let user = makeUser()
-        storage.saveUser(user: user)
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
-        // When
-        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
+        await auth.restoreSession()
 
-        // Then
-        XCTAssertEqual(storage.loadUser(), user)
-        guard case .signedOut = auth.authState.value else { return XCTFail("Unreadable token opened a session") }
-        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertEqual(auth.restorationState, .failed("Данные входа недоступны. Разблокируйте устройство и попробуйте ещё раз"))
+        XCTAssertNil(currentUser(auth))
+        XCTAssertEqual(network.currentUserCount, 0)
+        keychain.readFails = false
+        XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
     }
 
-    func test_launch_showsMainScreen_onlyWithACompleteProfile() throws {
+    func test_restoreFailure_keepsToken_andCanBeRetriedOnce() async throws {
+        let keychain = MockKeychainHelper()
+        try keychain.saveAuthToken("saved-token")
+        let network = MockNetworkService()
+        network.errorToThrow = serverError
+        let storage = makeStorage()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+
+        await auth.restoreSession()
+
+        XCTAssertEqual(auth.restorationState, .failed("Ошибка сервера"))
+        XCTAssertNil(currentUser(auth))
+        XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
+
+        network.errorToThrow = nil
+        auth.retryRestoreSession()
+        auth.retryRestoreSession()
+        await waitUntil { auth.restorationState == .loaded }
+
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertEqual(network.currentUserCount, 2)
+    }
+
+    func test_rejectedStoredToken_returnsToSignIn() async throws {
+        let keychain = MockKeychainHelper()
+        try keychain.saveAuthToken("saved-token")
+        let network = MockNetworkService()
+        network.errorToThrow = NetworkError.sessionExpired
+        let storage = makeStorage()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+
+        await auth.restoreSession()
+
+        XCTAssertEqual(auth.restorationState, .loaded)
+        XCTAssertNil(try keychain.loadAuthToken())
+        XCTAssertNil(currentUser(auth))
+        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
+    }
+
+    func test_failedStoredTokenDeletion_showsError_andKeepsToken() async throws {
+        let keychain = MockKeychainHelper()
+        try keychain.saveAuthToken("saved-token")
+        keychain.deleteFails = true
+        let network = MockNetworkService()
+        network.errorToThrow = NetworkError.sessionExpired
+        let storage = makeStorage()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+
+        await auth.restoreSession()
+
+        XCTAssertEqual(auth.restorationState, .failed("Данные входа недоступны. Разблокируйте устройство и попробуйте ещё раз"))
+        XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
+        XCTAssertNil(currentUser(auth))
+    }
+
+    func test_lateRestorationResponse_cannotRestoreAnEndedSession() async throws {
+        let keychain = MockKeychainHelper()
+        try keychain.saveAuthToken("saved-token")
+        let network = MockNetworkService()
+        let storage = makeStorage()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        network.beforeCurrentUserResponse = { auth.endExpiredSession() }
+
+        await auth.restoreSession()
+
+        XCTAssertNil(currentUser(auth))
+        XCTAssertNil(try keychain.loadAuthToken())
+        XCTAssertEqual(auth.restorationState, .loaded)
+    }
+
+    func test_launch_showsMainScreen_onlyWithACompleteProfile() async throws {
         // Given / When
-        let complete = try makeStoredAuth(user: makeUser())
-        let incomplete = try makeStoredAuth(user: makeUser(dateOfBirth: nil))
-        let signedOut = try makeStoredAuth(user: nil)
+        let complete = try await makeStoredAuth(user: makeUser())
+        let incomplete = try await makeStoredAuth(user: makeUser(dateOfBirth: nil))
+        let signedOut = try await makeStoredAuth(user: nil)
 
         // Then
         XCTAssertTrue(complete.showsMainScreen)
@@ -163,7 +260,7 @@ final class AuthServiceTests: XCTestCase {
 
     func test_signIn_staysInOnboarding_untilItFinishes() async throws {
         // Given
-        let auth = try makeStoredAuth(user: nil)
+        let auth = try await makeStoredAuth(user: nil)
 
         // When
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -180,21 +277,27 @@ final class AuthServiceTests: XCTestCase {
         XCTAssertFalse(auth.showsMainScreen)
     }
 
-    private func makeStoredAuth(user: UserModel?) throws -> AuthService {
+    private func currentUser(_ auth: AuthService) -> UserModel? {
+        if case .signedIn(let user) = auth.authState.value { return user }
+        return nil
+    }
+
+    private func makeStoredAuth(user: UserModel?) async throws -> AuthService {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
         let network = MockNetworkService()
 
         if let user {
             try keychain.saveAuthToken("saved-token")
-            storage.saveUser(user: user)
             network.user = user
         }
 
-        return AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        await auth.restoreSession()
+        return auth
     }
 
-    func test_profileConsentAndConfirmation_saveTheUserFromTheServer() async throws {
+    func test_profileConsentAndConfirmation_updateUserOnlyInMemory() async throws {
         // Given
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
@@ -209,7 +312,8 @@ final class AuthServiceTests: XCTestCase {
         _ = try await auth.updateProfileInfo(ProfileInfoModel())
 
         // Then
-        XCTAssertEqual(storage.loadUser(), saved)
+        XCTAssertEqual(currentUser(auth), saved)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
 
         // When consent and confirmation return the next user
         let confirmed = makeUser(dateOfBirth: "01.01.2001", hasAIConsent: true, isEmailConfirmed: true)
@@ -218,7 +322,8 @@ final class AuthServiceTests: XCTestCase {
         try await auth.confirmEmail(code: "123456")
 
         // Then
-        XCTAssertEqual(storage.loadUser(), confirmed)
+        XCTAssertEqual(currentUser(auth), confirmed)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertEqual(auth.sessionID, sessionID)
         guard case .signedIn(let user) = auth.authState.value else { return XCTFail("No session") }
         XCTAssertEqual(user, confirmed)
@@ -242,7 +347,7 @@ final class AuthServiceTests: XCTestCase {
         }
 
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedOut = auth.authState.value else { return XCTFail("Session was restored") }
     }
 
@@ -265,7 +370,7 @@ final class AuthServiceTests: XCTestCase {
 
         XCTAssertTrue(content.historyCells.value.isEmpty)
         XCTAssertNil(auth.sessionID)
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
     }
 
     func test_contentResponse_afterAnotherSignIn_doesNotPublishOldHistory() async throws {
@@ -290,7 +395,8 @@ final class AuthServiceTests: XCTestCase {
             }
 
             XCTAssertNotEqual(auth.sessionID, previousSession)
-            XCTAssertEqual(storage.loadUser(), nextUser)
+            XCTAssertEqual(currentUser(auth), nextUser)
+            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
             XCTAssertTrue(content.historyCells.value.isEmpty)
         }
     }
@@ -312,7 +418,7 @@ final class AuthServiceTests: XCTestCase {
 
         XCTAssertNil(auth.sessionID)
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedOut = auth.authState.value else { return XCTFail("Session was restored") }
     }
 
@@ -334,7 +440,8 @@ final class AuthServiceTests: XCTestCase {
                 guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
             }
 
-            XCTAssertEqual(storage.loadUser(), nextUser)
+            XCTAssertEqual(currentUser(auth), nextUser)
+            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
             guard case .signedIn(let user) = auth.authState.value else { return XCTFail("Current session was ended") }
             XCTAssertEqual(user, nextUser)
         }
@@ -361,7 +468,8 @@ final class AuthServiceTests: XCTestCase {
             }
 
             XCTAssertTrue(auth.showsMainScreen)
-            XCTAssertEqual(storage.loadUser(), nextUser)
+            XCTAssertEqual(currentUser(auth), nextUser)
+            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
             XCTAssertNil(auth.takeExpiredSessionMessage())
         }
     }
@@ -388,7 +496,8 @@ final class AuthServiceTests: XCTestCase {
             }
 
             XCTAssertTrue(auth.showsMainScreen)
-            XCTAssertEqual(storage.loadUser(), nextUser)
+            XCTAssertEqual(currentUser(auth), nextUser)
+            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
             XCTAssertNil(auth.takeExpiredSessionMessage())
         }
     }
@@ -411,7 +520,8 @@ final class AuthServiceTests: XCTestCase {
         }
 
         XCTAssertNotEqual(auth.sessionID, previousSession)
-        XCTAssertEqual(storage.loadUser(), network.user)
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedIn = auth.authState.value else { return XCTFail("Current session was ended") }
     }
 
@@ -434,7 +544,7 @@ final class AuthServiceTests: XCTestCase {
 
         XCTAssertEqual(network.logoutCount, 0)
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertFalse(auth.showsMainScreen)
         guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
         XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
@@ -458,7 +568,8 @@ final class AuthServiceTests: XCTestCase {
         }
 
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
-        XCTAssertEqual(storage.loadUser(), network.user)
+        XCTAssertEqual(currentUser(auth), network.user)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedIn = auth.authState.value else { return XCTFail("A server error ended the session") }
     }
 
@@ -482,7 +593,7 @@ final class AuthServiceTests: XCTestCase {
 
         XCTAssertEqual(network.logoutCount, 0)
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.loadUser())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertFalse(auth.showsMainScreen)
         guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
     }
@@ -520,6 +631,16 @@ final class MockNetworkService: NetworkServiceProtocol {
     var beforeConfirmationResponse: (() async throws -> Void)?
     var beforeLogoutResponse: (() async throws -> Void)?
     private(set) var logoutCount = 0
+    private(set) var currentUserCount = 0
+    var beforeCurrentUserResponse: (() async throws -> Void)?
+
+    func fetchCurrentUser() async throws -> UserModel {
+        currentUserCount += 1
+        if let errorToThrow { throw errorToThrow }
+        let response = user
+        try await beforeCurrentUserResponse?()
+        return response
+    }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         AuthTokenResponse(token: "new-token", user: user)

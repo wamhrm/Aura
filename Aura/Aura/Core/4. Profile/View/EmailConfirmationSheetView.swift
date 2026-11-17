@@ -16,7 +16,7 @@ struct EmailConfirmationSheetView: View {
             ZStack {
                 VStack(alignment: .leading, spacing: 30) {
                     Text(vm.subtitle)
-                        .font(Adaptive.size(.footnote, .system(size: 15)))
+                        .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                         .foregroundStyle(.secondary)
 
                     if vm.isCodeSent {
@@ -41,6 +41,7 @@ struct EmailConfirmationSheetView: View {
 
                     Spacer()
                 }
+                .animation(nil, value: vm.isCodeSent)
                 .opacity(vm.isCodeSent && vm.isLoading ? 0 : 1)
 
                 ZStack {

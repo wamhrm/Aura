@@ -37,11 +37,11 @@ protocol AuthServiceProtocol {
 final class AuthService: ObservableObject, AuthServiceProtocol {
     private(set) var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
     @Published private(set) var showsMainScreen = false
+    @Published private(set) var restorationState = LoadState.loading
     private(set) var sessionID: UUID?
 
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
-    private let userDefaults: UserDefaults
     private var expiredSessionMessage: String?
 
     init(networkService: any NetworkServiceProtocol,
@@ -49,9 +49,44 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
          userDefaults: UserDefaults = Constants.userDefaults) {
         self.networkService = networkService
         self.keychain = keychain
-        self.userDefaults = userDefaults
+        userDefaults.removeObject(forKey: Constants.userKey)
+    }
 
-        autoSignIn()
+    func restoreSession() async {
+        guard restorationState != .loaded else { return }
+        var sessionID = sessionID
+
+        do {
+            guard try keychain.loadAuthToken() != nil else {
+                restorationState = .loaded
+                return
+            }
+
+            sessionID = UUID()
+            self.sessionID = sessionID
+            let user = try await networkService.fetchCurrentUser()
+            guard sessionID == self.sessionID else { return }
+            authState.send(.signedIn(user))
+            openMainIfProfileIsComplete()
+            restorationState = .loaded
+        } catch NetworkError.sessionExpired {
+            guard sessionID == self.sessionID else { return }
+            do {
+                try endSession()
+                expiredSessionMessage = NetworkError.sessionExpired.errorDescription
+            } catch {
+                restorationState = .failed(error.userMessage)
+            }
+        } catch {
+            guard sessionID == self.sessionID else { return }
+            restorationState = .failed(error.userMessage)
+        }
+    }
+
+    func retryRestoreSession() {
+        guard case .failed = restorationState else { return }
+        restorationState = .loading
+        Task { await restoreSession() }
     }
 
     func finishOnboarding() {
@@ -103,7 +138,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         guard case .signedIn(let user) = authState.value, user.id == response.user.id else {
             throw NetworkError.sessionExpired
         }
-        saveUser(response.user)
+        authState.send(.signedIn(response.user))
         return response
     }
 
@@ -114,7 +149,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else {
             throw NetworkError.sessionExpired
         }
-        saveUser(user)
+        authState.send(.signedIn(user))
     }
 
     func sendEmailConfirmationCode() async throws {
@@ -130,7 +165,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else {
             throw NetworkError.sessionExpired
         }
-        saveUser(user)
+        authState.send(.signedIn(user))
     }
 
     func signOut() async throws {
@@ -178,35 +213,17 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     private func endSession() throws {
         try keychain.deleteAuthToken()
-        userDefaults.removeObject(forKey: Constants.userKey)
         sessionID = nil
         showsMainScreen = false
         authState.send(.signedOut)
-    }
-
-    private func autoSignIn() {
-        guard (try? keychain.loadAuthToken()) != nil, let user = loadUser() else { return }
-        sessionID = UUID()
-        authState.send(.signedIn(user))
-        openMainIfProfileIsComplete()
+        restorationState = .loaded
     }
 
     private func startSession(response: AuthTokenResponse) throws {
         try keychain.saveAuthToken(response.token)
         sessionID = UUID()
-        saveUser(response.user)
-    }
-
-    private func saveUser(_ user: UserModel) {
-        if let data = try? JSONEncoder().encode(user) {
-            userDefaults.set(data, forKey: Constants.userKey)
-        }
-        authState.send(.signedIn(user))
-    }
-
-    private func loadUser() -> UserModel? {
-        guard let data = userDefaults.data(forKey: Constants.userKey) else { return nil }
-        return try? JSONDecoder().decode(UserModel.self, from: data)
+        authState.send(.signedIn(response.user))
+        restorationState = .loaded
     }
 
     private func openMainIfProfileIsComplete() {

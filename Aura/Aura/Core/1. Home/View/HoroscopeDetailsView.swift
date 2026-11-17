@@ -18,12 +18,12 @@ struct HoroscopeDetailsView: View {
                 VStack(spacing: 25) {
                     VStack(spacing: 12) {
                         Text(horoscope.type.icon)
-                            .font(.system(size: Adaptive.size(30, 32)))
+                            .font(.system(size: Adaptive.size(30, 31, 32)))
                             .padding(.top, 8)
                             .padding(.vertical, 18)
                         
                         Text(horoscope.type.title)
-                            .font(.title3)
+                            .font(Adaptive.size(.title3, .system(size: 21), .title2))
                             .fontDesign(.monospaced)
                             .bold()
                         
@@ -44,11 +44,11 @@ struct HoroscopeDetailsView: View {
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text("На этой неделе")
-                            .font(Adaptive.size(.callout, .default))
+                            .font(Adaptive.size(.callout, .default, .default))
                             .fontWeight(.semibold)
                         
                         Text(horoscope.description)
-                            .font(.system(size: Adaptive.size(14, 15)))
+                            .font(.system(size: Adaptive.size(14, 15, 15)))
                             .italic()
                             .foregroundStyle(.deepGray)
                             .fontWeight(.medium)
@@ -70,7 +70,7 @@ struct HoroscopeDetailsView: View {
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
-                        .font(Adaptive.size(.system(size: 15), .default))
+                        .font(Adaptive.size(.system(size: 15), .callout, .default))
                         
                         ForEach(horoscope.items, id: \.self) { item in
                             HoroscopeDetailsCellView(type: item.key, description: item.description)
@@ -80,7 +80,6 @@ struct HoroscopeDetailsView: View {
                 .bottomAreaPadding(15)
                 .padding(.horizontal)
             }
-            .scrollIndicators(.hidden)
         }
         .navigationTitle("Мой гороскоп")
         .navigationBarTitleDisplayMode(.inline)

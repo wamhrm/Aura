@@ -146,14 +146,14 @@ extension SettingsSheetView {
                 Link("Условия использования", destination: url)
             }
         }
-        .font(Adaptive.size(.caption, .footnote))
+        .font(Adaptive.size(.caption, .footnote, .footnote))
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity)
     }
     
     private func headerText(_ title: String) -> some View {
         Text(title)
-            .font(Adaptive.size(.system(size: 15), .default))
+            .font(Adaptive.size(.system(size: 15), .callout, .default))
             .foregroundStyle(.secondary)
     }
 
@@ -163,7 +163,7 @@ extension SettingsSheetView {
         Button(action: completion) {
             VStack(alignment: .center) {
                 Text(type.rawValue)
-                    .font(Adaptive.size(.footnote, .system(size: 15)))
+                    .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                     .bold()
                     .foregroundStyle(type.foregroundColor)
                     .opacity(isLoading ? 0 : 1)
@@ -194,7 +194,7 @@ extension SettingsSheetView {
                 Text(type.rawValue)
             }
             .padding(.vertical, 13)
-            .font(Adaptive.size(.footnote, .system(size: 15)))
+            .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
             .frame(maxWidth: .infinity)
             .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
             .foregroundStyle(isSelected ? .blue : .primary)
@@ -210,7 +210,7 @@ extension SettingsSheetView {
         Button(action: onTapHandler) {
             Circle()
                 .fill(color)
-                .frame(width: Adaptive.size(30, 32), height: Adaptive.size(30, 32))
+                .frame(width: Adaptive.size(30, 30, 32), height: Adaptive.size(30, 30, 32))
                 .overlay(Circle().stroke(Color.white, lineWidth: 1))
                 .overlay(Circle().stroke(isSelected ? Color(.systemGray2) : Color.clear, lineWidth: 4))
                 .shadow(color: .black.opacity(0.1), radius: 2)

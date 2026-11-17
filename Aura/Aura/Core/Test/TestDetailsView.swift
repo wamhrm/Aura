@@ -20,17 +20,17 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 TestCellImage(icon: type.icon,
                               color: type.color,
                               iconSize: .title,
-                              backgroundSize: Adaptive.size(55, 58),
+                              backgroundSize: Adaptive.size(55, 56, 58),
                               isResults: false)
                 
                 Text(type.deepDescription)
-                    .font(Adaptive.size(.system(size: 15), .callout))
+                    .font(Adaptive.size(.system(size: 15), .callout, .callout))
                     .foregroundStyle(.deepGray)
                     .fontWeight(.medium)
                 
                 VStack(alignment: .leading, spacing: 15) {
                     Text("Что включено")
-                        .font(Adaptive.size(.system(size: 15), .default))
+                        .font(Adaptive.size(.system(size: 15), .callout, .default))
                         .bold()
                         .padding(.bottom, 5)
                     
@@ -38,14 +38,14 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark")
                                 .foregroundStyle(.deepGray)
-                                .font(Adaptive.size(.footnote, .system(size: 14)))
+                                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                                 .bold()
                                 .padding(7)
                                 .background(.blue.opacity(0.1))
                                 .clipShape(.circle)
                             
                             Text(item)
-                                .font(Adaptive.size(.footnote, .system(size: 14)))
+                                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }

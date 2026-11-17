@@ -16,11 +16,11 @@ struct HoroscopeCellView: View {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 18) {
                     Text(horoscope.type.icon)
-                        .font(Adaptive.size(.title3, .title2))
+                        .font(Adaptive.size(.title3, .system(size: 21), .title2))
                     
                     VStack(alignment: .leading, spacing: 5) {
                         Text(horoscope.type.title)
-                            .font(Adaptive.size(.callout, .default))
+                            .font(Adaptive.size(.callout, .default, .default))
                             .fontWeight(.semibold)
                         
                         HoroscopeDateView(dateStart: horoscope.dateStart,
@@ -30,7 +30,7 @@ struct HoroscopeCellView: View {
                 }
                 
                 Text(horoscope.description)
-                    .font(Adaptive.size(.footnote, .system(size: 15)))
+                    .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                     .italic()
                     .foregroundStyle(.deepGray)
                     .fontWeight(.medium)

@@ -76,7 +76,7 @@ extension ProfileView {
     
     private func sheetView() -> some View {
         SettingsSheetView(vm: vm)
-            .presentationDetents([.height(Adaptive.size(470, 490))])
+            .presentationDetents([.height(Adaptive.size(470, 482, 490))])
     }
 }
 
