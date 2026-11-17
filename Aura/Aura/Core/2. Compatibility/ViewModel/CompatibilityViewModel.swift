@@ -16,7 +16,7 @@ enum CompatibilityRoutes: Hashable {
 @MainActor
 final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var compatibilityRoutes: [CompatibilityRoutes] = []
-    @Published var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
+    @Published private(set) var selectedTests: [CompatibilityTestTypes] = [.astrology, .behavioralPatterns, .attachmentCompatibility]
     @Published var partnerInfo = PartnerInfoModel()
     @Published private(set) var compatibilityResult: CompatibilityResultModel?
 
@@ -51,7 +51,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
                 currentUser = user
                 needsAIConsent = !user.allowsAIAnalysis
                 if user.hasConfirmedEmail { emailConfirmation = nil }
-                dropSexualTestIfUnavailable()
+                dropSexualTest(partnerBirthDate: partnerInfo.birthDate)
             }
             .store(in: &cancellables)
 
@@ -64,7 +64,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             .store(in: &cancellables)
     }
 
-    var offersSexualCompatibility: Bool {
+    private var offersSexualCompatibility: Bool {
         isSexualCompatibilityAvailable(partnerBirthDate: partnerInfo.birthDate)
     }
 
@@ -79,10 +79,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             return false
         }
         return BirthDateFormatter.isAdult(date: partnerBirthDate)
-    }
-
-    private func dropSexualTestIfUnavailable() {
-        dropSexualTest(partnerBirthDate: partnerInfo.birthDate)
     }
 
     private func dropSexualTest(partnerBirthDate: Date) {

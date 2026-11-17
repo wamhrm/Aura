@@ -161,26 +161,24 @@ extension SettingsSheetView {
                               isLoading: Bool = false,
                               _ completion: @escaping () -> Void) -> some View {
         Button(action: completion) {
-            VStack(alignment: .center) {
-                Text(type.rawValue)
-                    .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
-                    .bold()
-                    .foregroundStyle(type.foregroundColor)
-                    .opacity(isLoading ? 0 : 1)
-                    .overlay {
-                        if isLoading {
-                            ProgressView()
-                                .tint(type.foregroundColor)
-                        }
+            Text(type.rawValue)
+                .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
+                .bold()
+                .foregroundStyle(type.foregroundColor)
+                .opacity(isLoading ? 0 : 1)
+                .overlay {
+                    if isLoading {
+                        ProgressView()
+                            .tint(type.foregroundColor)
                     }
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .background(type.backgroundColor)
-            .overlay {
-                RoundedRectangle(cornerRadius: 10).stroke(type.stroke, lineWidth: 2)
-            }
-            .clipShape(.rect(cornerRadius: 10))
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .background(type.backgroundColor)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10).stroke(type.stroke, lineWidth: 2)
+                }
+                .clipShape(.rect(cornerRadius: 10))
         }
     }
     

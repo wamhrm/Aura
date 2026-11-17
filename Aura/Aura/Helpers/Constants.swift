@@ -14,7 +14,7 @@ nonisolated enum Constants {
     static let selectedThemeKey = "selectedTheme"
     static let accentColorKey = "accentColor"
     
-    static let productionBaseURL = "https://aurawamhrm.space"
+    private static let productionBaseURL = "https://aurawamhrm.space"
     static let apiPath = "/v1"
     
     static var uiTestID: String? {

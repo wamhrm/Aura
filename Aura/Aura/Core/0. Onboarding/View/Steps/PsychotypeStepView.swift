@@ -27,10 +27,10 @@ struct PsychotypeStepView: View {
                     }
 
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)
-                    
-                ClassicButton(title: "Далее") {
-                    vm.continueFromPsychotype()
-                }
+
+                    ClassicButton(title: "Далее") {
+                        vm.continueFromPsychotype()
+                    }
                     .padding(.top)
                 }
                 .onboardingViewModifier()

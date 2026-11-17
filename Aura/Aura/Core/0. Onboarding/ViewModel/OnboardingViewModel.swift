@@ -11,12 +11,6 @@ import SwiftUI
 
 enum OnboardingRoutes: Hashable {
     case nameAndBirth, email, password, signIn, resetPassword, psychotype, aiConsent
-
-    var progress: Double? {
-        let signUpRoutes: [OnboardingRoutes] = [.nameAndBirth, .email, .password, .psychotype, .aiConsent]
-        guard let index = signUpRoutes.firstIndex(of: self) else { return nil }
-        return Double(index + 1) / Double(signUpRoutes.count)
-    }
 }
 
 enum IntroPages: Int, CaseIterable {
@@ -175,13 +169,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     func showNextIntroPage() {
-        isLastIntroPage ? start() : withAnimation { introPage += 1 }
-    }
-
-    func start() {
-        resetTextFields()
-        resetRegistrationFields()
-        onboardingRoutes.append(.nameAndBirth)
+        isLastIntroPage ? showSignUp() : withAnimation { introPage += 1 }
     }
 
     func showSignIn() {
@@ -303,8 +291,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             presentAlert(message)
             return
         }
-        
-        guard !isLoading else { return }
+
         isLoading = true
         loadingTitle = "Создаём аккаунт..."
         
@@ -426,7 +413,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         guard profileInfo.hasAllAnswers else {
             presentAlert("Ответьте на все вопросы")
             return
-            }
+        }
 
         guard !isSignedIn else {
             onboardingRoutes.append(.aiConsent)
@@ -435,7 +422,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         createAccount()
     }
-
 
     func chooseAIConsent(_ allows: Bool) {
         guard !isLoading else { return }
@@ -448,7 +434,6 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func giveAIConsent() {
-        guard !isLoading else { return }
         isLoading = true
         loadingTitle = "Сохраняем..."
 
@@ -475,7 +460,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func prepareProfile(allowsAIAnalysis: Bool) {
-        guard isSignedIn, !isLoading else { return }
+        guard isSignedIn else { return }
 
         var request = profileInfo
         request.dateOfBirth = BirthDateFormatter.dateString(date: birthDate)
@@ -533,7 +518,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         return false
     }
 
-    func resetTextFields() {
+    private func resetTextFields() {
         name = ""
         email = ""
         password = ""

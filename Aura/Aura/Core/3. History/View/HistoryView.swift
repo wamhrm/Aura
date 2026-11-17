@@ -71,7 +71,6 @@ struct HistoryView: View {
 }
 
 extension HistoryView {
-    @ViewBuilder
     private func historyCell(_ item: HistoryCellModel) -> some View {
         Button {
             vm.openHistoryCellDetails(item)

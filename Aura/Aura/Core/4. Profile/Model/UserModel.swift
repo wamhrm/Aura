@@ -20,7 +20,7 @@ struct UserModel: Codable, Equatable, Identifiable {
     let decisionStyle: String?
     let coreFocus: String?
     var hasAIConsent: Bool?
-    var isEmailConfirmed: Bool?
+    let isEmailConfirmed: Bool?
     
     var nameCapitalized: String {
         name.capitalized

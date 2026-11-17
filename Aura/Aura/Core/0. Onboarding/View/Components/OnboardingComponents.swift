@@ -124,14 +124,14 @@ enum OnboardingTextFieldTypes: String {
     case newPassword = "Новый пароль"
     case code = "Код из 6 цифр"
 
-    var isSecure: Bool {
+    fileprivate var isSecure: Bool {
         switch self {
             case .password, .newPassword: true
             case .name, .email, .code: false
         }
     }
 
-    var keyboardType: UIKeyboardType {
+    fileprivate var keyboardType: UIKeyboardType {
         switch self {
             case .email: .emailAddress
             case .code: .numberPad
@@ -139,7 +139,7 @@ enum OnboardingTextFieldTypes: String {
         }
     }
 
-    var contentType: UITextContentType? {
+    fileprivate var contentType: UITextContentType? {
         switch self {
             case .name: .givenName
             case .email: .emailAddress

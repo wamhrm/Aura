@@ -15,29 +15,27 @@ struct AIConsentView: View {
         ZStack {
             BackgroundView()
 
-            VStack(spacing: 0) {
-                VStack(spacing: 20) {
-                    AIConsentContentView()
+            VStack(spacing: 20) {
+                AIConsentContentView()
 
-                    VStack(spacing: 5) {
-                        ClassicButton(title: "Разрешить") {
-                            allow()
-                        }
-
-                        Button {
-                            decline()
-                        } label: {
-                            Text("Не сейчас")
-                                .font(.system(size: Adaptive.size(14, 15, 15)))
-                                .foregroundStyle(.deepGray)
-                                .bold()
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                        }
+                VStack(spacing: 5) {
+                    ClassicButton(title: "Разрешить") {
+                        allow()
                     }
-                    .padding(.bottom)
-                    .onboardingViewModifier()
+
+                    Button {
+                        decline()
+                    } label: {
+                        Text("Не сейчас")
+                            .font(.system(size: Adaptive.size(14, 15, 15)))
+                            .foregroundStyle(.deepGray)
+                            .bold()
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                    }
                 }
+                .padding(.bottom)
+                .onboardingViewModifier()
             }
         }
     }

@@ -41,7 +41,7 @@ struct HoroscopeDetailsCellView: View {
 enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
     case love, health, work
 
-    var title: String {
+    fileprivate var title: String {
         switch self {
             case .love: "Любовь"
             case .health: "Здоровье"
@@ -49,7 +49,7 @@ enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
         }
     }
     
-    var icon: String {
+    fileprivate var icon: String {
         switch self {
             case .love: "heart"
             case .health: "cross.case.fill"
@@ -57,7 +57,7 @@ enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
         }
     }
     
-    var color: UIColor {
+    fileprivate var color: UIColor {
         switch self {
             case .love: .systemRed
             case .health: .systemIndigo

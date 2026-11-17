@@ -86,11 +86,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         let result = try await request {
             try await networkService.makePersonalityTest(selectedTests: selectedTests, requestID: requestID)
         }
-        let sessionID = authService.sessionID
-        Task {
-            guard sessionID == authService.sessionID else { return }
-            _ = try? await fetchHistory()
-        }
+        refreshHistory()
         return result
     }
 
@@ -99,11 +95,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         let result = try await self.request {
             try await networkService.makeCompatibilityTest(request, requestID: requestID)
         }
-        let sessionID = authService.sessionID
-        Task {
-            guard sessionID == authService.sessionID else { return }
-            _ = try? await fetchHistory()
-        }
+        refreshHistory()
         return result
     }
 
@@ -131,6 +123,14 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     func deleteHistory(id: UUID) async throws {
         try await request { try await networkService.deleteHistory(id: id) }
         historyCells.send(historyCells.value.filter { $0.id != id })
+    }
+
+    private func refreshHistory() {
+        let sessionID = authService.sessionID
+        Task {
+            guard sessionID == authService.sessionID else { return }
+            _ = try? await fetchHistory()
+        }
     }
 
     private func clearContent() {

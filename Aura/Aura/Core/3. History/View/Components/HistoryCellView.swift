@@ -36,16 +36,14 @@ struct HistoryCellView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
-                    VStack(spacing: 0) {
-                        Text(cell.compatibilityScoreText)
-                            .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
-                    }
-                    .foregroundStyle(.white)
-                    .bold()
-                    .padding(.vertical, 3)
-                    .padding(.horizontal, 6)
-                    .background(.accentBlue)
-                    .clipShape(.rect(cornerRadius: 8))
+                    Text(cell.compatibilityScoreText)
+                        .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
+                        .foregroundStyle(.white)
+                        .bold()
+                        .padding(.vertical, 3)
+                        .padding(.horizontal, 6)
+                        .background(.accentBlue)
+                        .clipShape(.rect(cornerRadius: 8))
                 }
             }
         }

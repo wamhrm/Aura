@@ -5,7 +5,6 @@
 //  Created by wamhrm on 31.03.2026.
 //
 
-import Foundation
 import SwiftUI
 
 struct BackgroundView: View {
@@ -257,7 +256,7 @@ struct LoadFailedView: View {
 enum EmotionalProfileTypes: String, Codable, CaseIterable {
     case temperament, thinking, organization, relationships, emotionalResonance, innerOpenness, soulAlignment, emotionalWarmth
 
-    var leftSide: String {
+    fileprivate var leftSide: String {
         switch self {
             case .temperament: "Интроверсия"
             case .thinking: "Логика"
@@ -270,7 +269,7 @@ enum EmotionalProfileTypes: String, Codable, CaseIterable {
         }
     }
 
-    var rightSide: String {
+    fileprivate var rightSide: String {
         switch self {
             case .temperament: "Экстраверсия"
             case .thinking: "Интуиция"
@@ -283,7 +282,7 @@ enum EmotionalProfileTypes: String, Codable, CaseIterable {
         }
     }
 
-    var colors: [Color] {
+    fileprivate var colors: [Color] {
         switch self {
             case .temperament, .thinking, .organization, .relationships:
                 [.purple, .softPurple]
