@@ -129,8 +129,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        let available = availableTests
-        let tests = selectedTests.filter { available.contains($0) }
+        let tests = selectedTests.filter { availableTests.contains($0) }
         let request = partnerInfo.compatibilityTestRequest(selectedTests: tests)
         let requestID = currentCompatibilityRequestID(for: request)
 
@@ -165,17 +164,15 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     private func currentCompatibilityRequestID(for request: CompatibilityTestRequest) -> UUID {
-        let user = signedInUser
-
         if let compatibilityRequestID,
-           compatibilityRequestUser == user,
+           compatibilityRequestUser == signedInUser,
            compatibilityRequest == request {
             return compatibilityRequestID
         }
 
         let requestID = UUID()
         compatibilityRequestID = requestID
-        compatibilityRequestUser = user
+        compatibilityRequestUser = signedInUser
         compatibilityRequest = request
         return requestID
     }

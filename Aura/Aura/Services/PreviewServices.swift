@@ -70,6 +70,18 @@ struct PreviewNetworkService: NetworkServiceProtocol {
     }
 }
 
+extension AuthService {
+    static func preview(networkService: PreviewNetworkService = PreviewNetworkService(),
+                        signedIn: Bool = false) -> AuthService {
+        let service = AuthService(networkService: networkService, keychain: PreviewKeychain(), userDefaults: nil)
+        if signedIn {
+            try? service.startSession(response: networkService.session)
+            service.finishOnboarding()
+        }
+        return service
+    }
+}
+
 nonisolated final class PreviewKeychain: KeychainHelperProtocol {
     private let token = Mutex<Data?>(nil)
 

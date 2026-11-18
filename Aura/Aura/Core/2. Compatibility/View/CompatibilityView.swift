@@ -74,10 +74,10 @@ struct CompatibilityView: View {
                                 ForEach(vm.availableTests, id: \.self) { test in
                                     TestCellView(type: test,
                                                  hasChosenTest: vm.isSelected(test)) {
-                                                        vm.toggleTestSelection(test)
-                                                    } onTapHandler: {
-                                                        vm.showTestDetails(test)
-                                                    }
+                                        vm.toggleTestSelection(test)
+                                    } onTapHandler: {
+                                        vm.showTestDetails(test)
+                                    }
                                 }
 
                                 ClassicButton(title: AppLanguage.text("Узнать совместимость")) {
@@ -126,21 +126,6 @@ struct CompatibilityView: View {
 }
 
 extension CompatibilityView {
-    @ViewBuilder
-    private func destinationView(_ route: CompatibilityRoutes) -> some View {
-        switch route {
-            case .testDetails(let test):
-                TestDetailsView(type: test,
-                                isSelected: vm.isSelected(test)) {
-                    vm.toggleTestSelection(test)
-                }
-            case .compatibilityResults:
-                if let result = vm.compatibilityResult {
-                    CompatibilityResultView(result: result)
-                }
-        }
-    }
-    
     private func headerText(_ title: String) -> some View {
         Text(title)
             .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
@@ -169,6 +154,21 @@ extension CompatibilityView {
                 .font(Adaptive.size(.system(size: 14), .system(size: 15), .callout))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)
+        }
+    }
+
+    @ViewBuilder
+    private func destinationView(_ route: CompatibilityRoutes) -> some View {
+        switch route {
+            case .testDetails(let test):
+                TestDetailsView(type: test,
+                                isSelected: vm.isSelected(test)) {
+                    vm.toggleTestSelection(test)
+                }
+            case .compatibilityResults:
+                if let result = vm.compatibilityResult {
+                    CompatibilityResultView(result: result)
+                }
         }
     }
 }

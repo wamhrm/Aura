@@ -105,7 +105,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     private func handleUser(_ user: UserModel) {
         let previousUser = self.user
-
         self.user = user
 
         guard currentUserId == user.id else {

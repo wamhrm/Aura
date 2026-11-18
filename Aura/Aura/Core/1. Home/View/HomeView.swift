@@ -39,10 +39,8 @@ struct HomeView: View {
                                     .fontWeight(.heavy)
 
                                 if !vm.allowsAIAnalysis {
-                                    AIConsentLock(
-                                        title: AppLanguage.text("Разрешите анализ с помощью AI, чтобы получать инсайт дня"),
-                                        onAllow: aiConsentButton
-                                    )
+                                    AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI, чтобы получать инсайт дня"),
+                                                  onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
                                 } else if let insight = vm.dailyInsight {
                                     Text(insight.text)
@@ -112,26 +110,22 @@ struct HomeView: View {
                                 .padding(.horizontal, 7)
                                 .padding(Adaptive.size(18, 18, 20))
                                 .frame(maxWidth: .infinity)
-                                .background(
-                                    LinearGradient(
-                                        colors: [.purple, .blue],
-                                        startPoint: .leading,
-                                        endPoint: .trailing)
-                                )
+                                .background(LinearGradient(colors: [.purple, .blue],
+                                                           startPoint: .leading,
+                                                           endPoint: .trailing))
                                 .clipShape(.rect(cornerRadius: 12))
                             }
 
                             VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
-                                headerText(title: AppLanguage.text("Проверьте себя"), buttonTitle: AppLanguage.text("Все тесты")) {
+                                headerText(title: AppLanguage.text("Проверьте себя"),
+                                           buttonTitle: AppLanguage.text("Все тесты")) {
                                     vm.showAllTests()
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
 
                                 ForEach(PersonalityTestTypes.allCases.prefix(3), id: \.self) { test in
-                                    TestCellView(
-                                        type: test,
-                                        hasChosenTest: vm.isSelected(test)
-                                    ) {
+                                    TestCellView(type: test,
+                                                 hasChosenTest: vm.isSelected(test)) {
                                         vm.toggleTestSelection(test)
                                     } onTapHandler: {
                                         vm.showTestDetails(test)

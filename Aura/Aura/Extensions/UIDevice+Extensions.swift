@@ -8,9 +8,7 @@
 import UIKit
 
 fileprivate enum ScreenSizeClass {
-    case base
-    case air
-    case plus
+    case base, air, plus
 }
 
 struct Adaptive {

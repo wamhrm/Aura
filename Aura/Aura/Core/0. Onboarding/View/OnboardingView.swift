@@ -27,7 +27,8 @@ struct OnboardingView: View {
                                     Spacer()
 
                                     if let icon = item.icon {
-                                        OnboardingIcon(icon: icon, size: Adaptive.size(80, 88, 100))
+                                        OnboardingIcon(icon: icon,
+                                                       size: Adaptive.size(80, 88, 100))
                                     } else {
                                         LogoImage(size: Adaptive.size(80, 88, 100))
                                     }
@@ -101,11 +102,7 @@ struct OnboardingView: View {
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button(AppLanguage.text("ОК"), role: .cancel) { }
         }
-        .alert(AppLanguage.text("Выйти из аккаунта?"), isPresented: Binding {
-            vm.showSignOutAlert
-        } set: { newValue in
-            if vm.showSignOutAlert != newValue { vm.showSignOutAlert = newValue }
-        }) {
+        .alert(AppLanguage.text("Выйти из аккаунта?"), isPresented: vm.binding(\.showSignOutAlert)) {
             Button(AppLanguage.text("Отмена"), role: .cancel) {}
             Button(AppLanguage.text("Выйти"), role: .destructive) {
                 vm.signOut()

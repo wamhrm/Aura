@@ -16,7 +16,7 @@ struct ProfileInfoModel: Codable, Equatable {
     var decisionStyle: String?
     var coreFocus: String?
     
-    init() { }
+    init() {}
 
     var hasAllAnswers: Bool {
         gender != nil &&

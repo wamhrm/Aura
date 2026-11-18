@@ -232,15 +232,3 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
-
-extension AuthService {
-    static func preview(networkService: PreviewNetworkService = PreviewNetworkService(),
-                        signedIn: Bool = false) -> AuthService {
-        let service = AuthService(networkService: networkService, keychain: PreviewKeychain(), userDefaults: nil)
-        if signedIn {
-            try? service.startSession(response: networkService.session)
-            service.finishOnboarding()
-        }
-        return service
-    }
-}

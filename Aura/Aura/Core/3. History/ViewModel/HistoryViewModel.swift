@@ -111,7 +111,6 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
 
     func deleteRequestedCell() {
         guard let item = cellToDelete else { return }
-
         cellToDelete = nil
 
         Task {

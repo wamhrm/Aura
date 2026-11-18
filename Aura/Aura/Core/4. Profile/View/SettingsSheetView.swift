@@ -61,11 +61,7 @@ struct SettingsSheetView: View {
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
                             vm.requestAccountDeletion()
                         }
-                        .alert(AppLanguage.text("Удалить аккаунт?"), isPresented: Binding {
-                            vm.showDeleteAccountAlert
-                        } set: { newValue in
-                            if vm.showDeleteAccountAlert != newValue { vm.showDeleteAccountAlert = newValue }
-                        }) {
+                        .alert(AppLanguage.text("Удалить аккаунт?"), isPresented: vm.binding(\.showDeleteAccountAlert)) {
                             deleteAccountAlertView()
                         } message: {
                             Text(AppLanguage.text("Профиль, история тестов и все результаты будут удалены без возможности восстановления."))
@@ -81,11 +77,8 @@ struct SettingsSheetView: View {
                 .toolbar {
                     toolbarItem()
                 }
-                .alert(AppLanguage.text("Выйти из аккаунта?"), isPresented: Binding {
-                    vm.showSignOutAlert
-                } set: { newValue in
-                    if vm.showSignOutAlert != newValue { vm.showSignOutAlert = newValue }
-                }) {
+                .alert(AppLanguage.text("Выйти из аккаунта?"),
+                       isPresented: vm.binding(\.showSignOutAlert)) {
                     alertView()
                 }
             }
@@ -94,11 +87,8 @@ struct SettingsSheetView: View {
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button(AppLanguage.text("ОК"), role: .cancel) {}
         }
-        .alert(AppLanguage.text("Не удалось удалить аккаунт"), isPresented: Binding {
-            vm.showDeleteAccountError
-        } set: { newValue in
-            if vm.showDeleteAccountError != newValue { vm.showDeleteAccountError = newValue }
-        }) {
+        .alert(AppLanguage.text("Не удалось удалить аккаунт"),
+               isPresented: vm.binding(\.showDeleteAccountError)) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(vm.alertMessage)
@@ -209,11 +199,11 @@ extension SettingsSheetView {
     }
     
     private func themeButton(_ theme: AppTheme) -> some View {
-        let isSelected = selectedTheme == theme
-
-        return Button {
+        Button {
             selectedTheme = theme
         } label: {
+            let isSelected = selectedTheme == theme
+
             HStack(spacing: 10) {
                 Image(systemName: theme.icon)
                 

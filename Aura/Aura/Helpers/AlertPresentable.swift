@@ -15,10 +15,16 @@ protocol AlertPresentable: AnyObject {
 
 extension AlertPresentable {
     var alertBinding: Binding<Bool> {
+        binding(\.showAlert)
+    }
+
+    func binding(_ keyPath: ReferenceWritableKeyPath<Self, Bool>) -> Binding<Bool> {
         Binding {
-            self.showAlert
+            self[keyPath: keyPath]
         } set: { newValue in
-            if self.showAlert != newValue { self.showAlert = newValue }
+            if self[keyPath: keyPath] != newValue {
+                self[keyPath: keyPath] = newValue
+            }
         }
     }
 

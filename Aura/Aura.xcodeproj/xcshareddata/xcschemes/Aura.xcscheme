@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2650"
+   LastUpgradeVersion = "2720"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -29,7 +29,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "NO"
       shouldAutocreateTestPlan = "YES">
-      <!-- The unit-test host is isolated; UI tests override these values for each test. -->
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "AURA_BASE_URL"
@@ -55,8 +54,7 @@
             </BuildableReference>
          </TestableReference>
          <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
+            skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "36F589A42FCDFE3900091154"

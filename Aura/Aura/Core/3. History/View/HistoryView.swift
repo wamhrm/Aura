@@ -55,11 +55,7 @@ struct HistoryView: View {
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("OK", role: .cancel) {}
         }
-        .alert(AppLanguage.text("Удалить результат?"), isPresented: Binding {
-            vm.showDeleteAlert
-        } set: { newValue in
-            if vm.showDeleteAlert != newValue { vm.showDeleteAlert = newValue }
-        }) {
+        .alert(AppLanguage.text("Удалить результат?"), isPresented: vm.binding(\.showDeleteAlert)) {
             Button(AppLanguage.text("Отмена"), role: .cancel) {}
             Button(AppLanguage.text("Удалить"), role: .destructive) {
                 vm.deleteRequestedCell()

@@ -191,7 +191,9 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
                                             requiresAuth: requiresAuth,
                                             idempotencyKey: idempotencyKey,
                                             timeout: timeout)
-        } catch let urlError as URLError where retries && method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
+        } catch let urlError as URLError where retries && method == .get
+                    && Self.isRetryable(urlError, timeout: timeout)
+                    && attempt < 2 {
             try await Task.sleep(for: Self.retryDelay(attempt: attempt))
             return try await send(endpoint: endpoint,
                                   method: method,
