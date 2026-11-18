@@ -8,8 +8,8 @@
 import XCTest
 
 final class OnboardingUITests: AuraUITestCase {
-    private func openNameStep() throws {
-        try launchOnWelcome()
+    private func openNameStep() {
+        launchOnWelcome()
 
         for page in ["Гороскоп на неделю", "Инсайт и совет дня", "Тесты о вас и совместимость"] {
             tapButton("Далее")
@@ -20,8 +20,8 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(app.textFields["Имя"].firstMatch.waitForExistence(timeout: 10), "the name step did not open")
     }
 
-    private func openProfileQuestions() throws {
-        try openNameStep()
+    private func openProfileQuestions() {
+        openNameStep()
         fillField(app.textFields["Имя"].firstMatch, text: "Анна")
         tapButton("Далее")
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
@@ -36,7 +36,7 @@ final class OnboardingUITests: AuraUITestCase {
 
     func test_registration_withUnavailableAI_stillReachesMainScreen() throws {
         // Given
-        try openProfileQuestions()
+        openProfileQuestions()
         let failure = try failingBody(serverError)
         server.respond(route: "GET /v1/horoscope/current", status: 500, body: failure)
         server.respond(route: "GET /v1/daily/insight", status: 500, body: failure)
@@ -55,7 +55,7 @@ final class OnboardingUITests: AuraUITestCase {
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         server.respond(route: "POST /v1/auth/aiConsent", status: 500, body: try failingBody(serverError))
-        try openProfileQuestions()
+        openProfileQuestions()
         chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
         tapButton("Разрешить")
@@ -69,9 +69,9 @@ final class OnboardingUITests: AuraUITestCase {
         assertOnMainScreen()
     }
 
-    func test_registration_showsAlertsForWrongInput() throws {
+    func test_registration_showsAlertsForWrongInput() {
         // Given
-        try openNameStep()
+        openNameStep()
 
         // When the name is empty
         tapButton("Далее")
@@ -100,9 +100,9 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertEqual(alertText(), "Пароль должен быть не короче 8 символов")
     }
 
-    func test_birthTimeSwitch_showsTheTimeField() throws {
+    func test_birthTimeSwitch_showsTheTimeField() {
         // Given
-        try openNameStep()
+        openNameStep()
         XCTAssertFalse(text("Время рождения").exists)
 
         // When
@@ -112,9 +112,9 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(text("Время рождения").waitForExistence(timeout: 3), "the time field did not appear")
     }
 
-    func test_profileQuestions_withoutAnswers_showAlert() throws {
+    func test_profileQuestions_withoutAnswers_showAlert() {
         // Given
-        try openProfileQuestions()
+        openProfileQuestions()
 
         // When
         tapButton("Далее")
@@ -127,7 +127,7 @@ final class OnboardingUITests: AuraUITestCase {
         // Given
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
-        try openProfileQuestions()
+        openProfileQuestions()
         chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
         tapButton("Далее")
 
@@ -146,9 +146,9 @@ final class OnboardingUITests: AuraUITestCase {
         assertOnMainScreen()
     }
 
-    func test_termsLink_opensInSafari() throws {
+    func test_termsLink_opensInSafari() {
         // Given
-        try openNameStep()
+        openNameStep()
         fillField(app.textFields["Имя"].firstMatch, text: "Анна")
         tapButton("Далее")
         let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
@@ -168,7 +168,7 @@ final class OnboardingUITests: AuraUITestCase {
         let user = try newUser()
         server.respond(route: "GET /v1/auth/me", body: try json(user))
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
-        try launchOnWelcome()
+        launchOnWelcome()
         signIn()
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not open")
         app.terminate()

@@ -127,7 +127,7 @@ final class CompatibilityUITests: AuraUITestCase {
         // Given
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
-        try launchOnWelcome()
+        launchOnWelcome()
         signIn()
         tapButton("Не сейчас")
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 20), "the main screen did not open")

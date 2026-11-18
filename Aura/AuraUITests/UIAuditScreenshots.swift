@@ -17,8 +17,8 @@ final class UIAuditScreenshots: AuraUITestCase {
         continueAfterFailure = true
     }
 
-    func test_onboarding() throws {
-        try launchOnWelcome()
+    func test_onboarding() {
+        launchOnWelcome()
         useWindowDirectory()
         shot("intro-welcome")
         for name in ["horoscope", "daily", "tests"] {

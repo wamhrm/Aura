@@ -54,7 +54,7 @@ final class ProfileViewModelTests: AuraUnitTestCase {
         await waitUntil { content.detailsCount == 1 && viewModel.personalityState == .loaded }
 
         XCTAssertFalse(viewModel.hasPersonalityTests)
-        XCTAssertEqual(viewModel.profileDisplayHandler, .placeholder)
+        XCTAssertEqual(viewModel.profileDisplay, .placeholder)
     }
 
     func test_historyFailure_isVisibleOnProfile_andRetryLoadsTheResult() async {
@@ -93,11 +93,11 @@ final class ProfileViewModelTests: AuraUnitTestCase {
         let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
         await waitUntil { viewModel.tipState == .failed(NetworkError.invalidResponse.userMessage) && viewModel.hasPersonalityTests }
         XCTAssertNil(viewModel.dailyTip)
-        XCTAssertNil(viewModel.profileDisplayHandler.dailyTip)
+        XCTAssertNil(viewModel.profileDisplay.dailyTip)
         content.dailyContentDate = todayText()
         content.beforeContentResponse = {
             XCTAssertNil(viewModel.dailyTip)
-            XCTAssertNil(viewModel.profileDisplayHandler.dailyTip)
+            XCTAssertNil(viewModel.profileDisplay.dailyTip)
         }
 
         await viewModel.refresh()
@@ -152,7 +152,7 @@ final class ProfileViewModelTests: AuraUnitTestCase {
 
         // Then
         XCTAssertFalse(viewModel.hasPersonalityTests)
-        XCTAssertEqual(viewModel.profileDisplayHandler, .placeholder)
+        XCTAssertEqual(viewModel.profileDisplay, .placeholder)
     }
 
     // MARK: - Profile form

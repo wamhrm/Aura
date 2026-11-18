@@ -17,7 +17,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published var profileRoutes: [ProfileRoutes] = []
 
     @Published private(set) var user: UserModel?
-    @Published private(set) var profileDisplay: ProfileDisplayModel?
     @Published private(set) var dailyTip: DailyContentModel?
     @Published private(set) var personalityState = LoadState.loading
     @Published private(set) var tipState = LoadState.loading
@@ -55,9 +54,9 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         personalityResult != nil
     }
 
-    var profileDisplayHandler: ProfileDisplayModel {
-        guard hasPersonalityTests, let profileDisplay else { return .placeholder }
-        return profileDisplay
+    var profileDisplay: ProfileDisplayModel {
+        guard let personalityResult else { return .placeholder }
+        return ProfileDisplayModel.make(personalityResult: personalityResult, dailyTip: dailyTip)
     }
 
     var needsAIConsent: Bool {
@@ -100,7 +99,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
                 currentUserId = nil
                 tipRequestID = nil
                 dailyTip = nil
-                updateProfileDisplay()
                 cancellables.removeAll()
         }
     }
@@ -128,7 +126,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         if dailyTip?.isFromToday != true {
             dailyTip = nil
             tipState = .loading
-            updateProfileDisplay()
         }
 
         do {
@@ -161,7 +158,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
         dailyTip = nil
         tipState = .loading
-        updateProfileDisplay()
 
         func isCurrentRequest() -> Bool {
             requestID == tipRequestID && sessionID == authService.sessionID
@@ -173,13 +169,11 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             guard tip.isFromToday else { throw NetworkError.invalidResponse }
             dailyTip = tip
             tipState = .loaded
-            updateProfileDisplay()
         } catch {
             guard isCurrentRequest() else { return }
             if dailyTip?.isFromToday != true {
                 dailyTip = nil
                 tipState = .failed(error.userMessage)
-                updateProfileDisplay()
             }
         }
     }
@@ -197,20 +191,23 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         personalityHistoryID = latest.id
         if !hasPersonalityTests { personalityState = .loading }
 
+        func isCurrentRequest() -> Bool {
+            sessionID == authService.sessionID &&
+            personalityHistoryID == latest.id &&
+            contentService.historyCells.value.first(where: { $0.kind == .personality })?.id == latest.id
+        }
+
         do {
             let details = try await contentService.fetchHistoryDetails(id: latest.id)
-            guard sessionID == authService.sessionID,
-                  personalityHistoryID == latest.id,
-                  contentService.historyCells.value.first(where: { $0.kind == .personality })?.id == latest.id else { return }
+            guard isCurrentRequest() else { return }
             guard let result = details.personalityResult else {
                 clearPersonality()
                 return
             }
-            applyPersonality(result: result)
+            personalityResult = result
+            personalityState = .loaded
         } catch {
-            guard sessionID == authService.sessionID,
-                  personalityHistoryID == latest.id,
-                  contentService.historyCells.value.first(where: { $0.kind == .personality })?.id == latest.id else { return }
+            guard isCurrentRequest() else { return }
             personalityHistoryID = nil
             if !hasPersonalityTests {
                 personalityState = .failed(error.userMessage)
@@ -316,21 +313,9 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         }
     }
 
-    private func updateProfileDisplay() {
-        profileDisplay = ProfileDisplayModel.make(personalityResult: personalityResult,
-                                                  dailyTip: dailyTip)
-    }
-
-    private func applyPersonality(result: PersonalityResultModel) {
-        personalityResult = result
-        personalityState = .loaded
-        updateProfileDisplay()
-    }
-
     private func clearPersonality() {
         personalityHistoryID = nil
         personalityResult = nil
         personalityState = .loaded
-        updateProfileDisplay()
     }
 }

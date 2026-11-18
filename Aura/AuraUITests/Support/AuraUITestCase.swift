@@ -99,7 +99,7 @@ class AuraUITestCase: XCTestCase {
         app.buttons["У меня уже есть аккаунт"].firstMatch
     }
 
-    func launchOnWelcome() throws {
+    func launchOnWelcome() {
         app.launch()
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 20), "the welcome screen did not open")
     }
@@ -107,7 +107,7 @@ class AuraUITestCase: XCTestCase {
     func launchSignedIn(user: [String: Any]? = nil) throws {
         let user = try user ?? sampleUser()
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
-        try launchOnWelcome()
+        launchOnWelcome()
         signIn()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "the main screen did not open")
     }

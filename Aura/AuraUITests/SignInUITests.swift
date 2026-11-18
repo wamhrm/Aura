@@ -26,7 +26,7 @@ final class SignInUITests: AuraUITestCase {
         let user = try newUser()
         server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
         server.respond(route: "GET /v1/auth/me", body: try json(user))
-        try launchOnWelcome()
+        launchOnWelcome()
         signIn()
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15))
         app.terminate()
@@ -80,7 +80,7 @@ final class SignInUITests: AuraUITestCase {
         // Given
         let reason = "Неверная почта или пароль"
         server.respond(route: "POST /v1/auth/signIn", status: 401, body: try failingBody(reason))
-        try launchOnWelcome()
+        launchOnWelcome()
 
         // When
         signIn(password: "short6")
@@ -89,9 +89,9 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertEqual(alertText(), reason)
     }
 
-    func test_signIn_showsAlertsForWrongInput() throws {
+    func test_signIn_showsAlertsForWrongInput() {
         // Given
-        try launchOnWelcome()
+        launchOnWelcome()
         welcomeButton.tap()
 
         // When the fields are empty
@@ -110,9 +110,9 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertEqual(alertText(), "Укажите корректный e-mail")
     }
 
-    func test_eyeButton_showsThePassword() throws {
+    func test_eyeButton_showsThePassword() {
         // Given
-        try launchOnWelcome()
+        launchOnWelcome()
         welcomeButton.tap()
         fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
 
@@ -123,9 +123,9 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertEqual(app.textFields["Пароль"].firstMatch.value as? String, password)
     }
 
-    func test_createButton_opensRegistration() throws {
+    func test_createButton_opensRegistration() {
         // Given
-        try launchOnWelcome()
+        launchOnWelcome()
         welcomeButton.tap()
 
         // When
@@ -142,7 +142,7 @@ final class SignInUITests: AuraUITestCase {
         server.respond(route: sendCode, status: 429,
                        body: try failingBody(dailyLimit),
                        headers: ["X-Aura-Error-Code": "email_code_daily_limit"])
-        try launchOnWelcome()
+        launchOnWelcome()
         welcomeButton.tap()
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Забыли пароль?")
@@ -167,7 +167,7 @@ final class SignInUITests: AuraUITestCase {
         // Given
         let reason = "Неверный код"
         server.respond(route: "POST /v1/auth/password/reset", status: 400, body: try failingBody(reason))
-        try launchOnWelcome()
+        launchOnWelcome()
         welcomeButton.tap()
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Забыли пароль?")
@@ -193,7 +193,7 @@ final class SignInUITests: AuraUITestCase {
     func test_whenTheServerEndsTheSession_appReturnsToWelcome() throws {
         // Given
         server.respond(route: "GET /v1/history", status: 401, body: try failingBody("Неверный токен"))
-        try launchOnWelcome()
+        launchOnWelcome()
 
         // When
         signIn()

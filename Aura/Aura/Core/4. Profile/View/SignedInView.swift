@@ -13,6 +13,8 @@ struct SignedInView: View {
     let aiConsentButton: () -> Void
 
     var body: some View {
+        let display = vm.profileDisplay
+
         ZStack {
             BackgroundView()
 
@@ -63,7 +65,7 @@ struct SignedInView: View {
                                 AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI, чтобы получать совет дня"),
                                               onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
-                            } else if let dailyTip = vm.profileDisplayHandler.dailyTip {
+                            } else if let dailyTip = display.dailyTip {
                                 Text(dailyTip)
                                     .font(.system(size: Adaptive.size(14, 15, 15))).italic()
                                     .fontWeight(.medium)
@@ -89,24 +91,24 @@ struct SignedInView: View {
                                 .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
-                            if let overview = vm.profileDisplayHandler.overview {
+                            if let overview = display.overview {
                                 Text(overview)
                                     .font(.system(size: Adaptive.size(14, 15, 15)))
                                     .foregroundStyle(.deepGray)
                             }
 
-                            if vm.profileDisplayHandler.hasTopics {
+                            if display.hasTopics {
                                 VStack {
-                                    if let socialFilter = vm.profileDisplayHandler.socialFilter {
+                                    if let socialFilter = display.socialFilter {
                                         TestResultCellView(test: PersonalityCellTypes.socialFilter,
                                                            description: socialFilter)
                                     }
 
-                                    if vm.profileDisplayHandler.hasBothTopics {
+                                    if display.hasBothTopics {
                                         Divider()
                                     }
 
-                                    if let emotionalDepth = vm.profileDisplayHandler.emotionalDepth {
+                                    if let emotionalDepth = display.emotionalDepth {
                                         TestResultCellView(test: PersonalityCellTypes.emotionalDepth,
                                                            description: emotionalDepth)
                                     }
@@ -124,19 +126,19 @@ struct SignedInView: View {
                                 .bold()
 
                             VStack(spacing: 15) {
-                                if let temperament = vm.profileDisplayHandler.temperament {
+                                if let temperament = display.temperament {
                                     EmotionalProfileBar(type: .temperament, value: temperament)
                                 }
 
-                                if let thinking = vm.profileDisplayHandler.thinking {
+                                if let thinking = display.thinking {
                                     EmotionalProfileBar(type: .thinking, value: thinking)
                                 }
 
-                                if let organization = vm.profileDisplayHandler.organization {
+                                if let organization = display.organization {
                                     EmotionalProfileBar(type: .organization, value: organization)
                                 }
 
-                                if let relationships = vm.profileDisplayHandler.relationships {
+                                if let relationships = display.relationships {
                                     EmotionalProfileBar(type: .relationships, value: relationships)
                                 }
                             }

@@ -214,19 +214,21 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         let routes = onboardingRoutes
         let sessionID = authService.sessionID
 
+        func isCurrentRequest() -> Bool {
+            onboardingRoutes == routes &&
+            self.email.trimmingCharacters(in: .whitespacesAndNewlines) == email &&
+            sessionID == authService.sessionID
+        }
+
         Task {
             do {
                 try await authService.ensureEmailAvailable(email: email)
-                
-                if onboardingRoutes == routes,
-                   self.email.trimmingCharacters(in: .whitespacesAndNewlines) == email,
-                   sessionID == authService.sessionID {
+
+                if isCurrentRequest() {
                     onboardingRoutes.append(.password)
                 }
             } catch {
-                if onboardingRoutes == routes,
-                   self.email.trimmingCharacters(in: .whitespacesAndNewlines) == email,
-                   sessionID == authService.sessionID {
+                if isCurrentRequest() {
                     presentAlert(error.userMessage)
                 }
             }
