@@ -215,7 +215,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
     }
 
-    func test_failedStoredTokenDeletion_showsError_andKeepsToken() async throws {
+    func test_rejectedStoredToken_returnsToSignIn_whenTokenDeletionFails() async throws {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         keychain.deleteFails = true
@@ -226,9 +226,11 @@ final class AuthServiceTests: AuraUnitTestCase {
 
         await auth.restoreSession()
 
-        XCTAssertEqual(auth.restorationState, .failed("Данные входа недоступны. Разблокируйте устройство и попробуйте ещё раз"))
+        XCTAssertEqual(auth.restorationState, .loaded)
         XCTAssertEqual(try keychain.loadAuthToken(), "saved-token")
         XCTAssertNil(currentUser(auth))
+        XCTAssertNil(auth.sessionID)
+        XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
     }
 
     func test_lateRestorationResponse_cannotRestoreAnEndedSession() async throws {
@@ -550,6 +552,44 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
     }
 
+    func test_rejectedToken_endsTheLocalSession_whenTokenDeletionFails() async throws {
+        let keychain = MockKeychainHelper()
+        let storage = makeStorage()
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        auth.finishOnboarding()
+        keychain.deleteFails = true
+        network.errorToThrow = NetworkError.sessionExpired
+
+        do {
+            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            XCTFail("The request must fail")
+        } catch NetworkError.sessionExpired {
+        }
+
+        XCTAssertNil(currentUser(auth))
+        XCTAssertNil(auth.sessionID)
+        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
+    }
+
+    func test_successfulAccountDeletion_endsTheLocalSession_whenTokenDeletionFails() async throws {
+        let keychain = MockKeychainHelper()
+        let storage = makeStorage()
+        let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        auth.finishOnboarding()
+        keychain.deleteFails = true
+
+        try await auth.deleteAccount()
+
+        XCTAssertNil(currentUser(auth))
+        XCTAssertNil(auth.sessionID)
+        XCTAssertFalse(auth.showsMainScreen)
+        XCTAssertNil(auth.takeExpiredSessionMessage())
+    }
+
     func test_serverError_keepsTheLocalSession() async throws {
         let keychain = MockKeychainHelper()
         let storage = makeStorage()
@@ -671,7 +711,9 @@ final class MockNetworkService: NetworkServiceProtocol {
         try await beforeLogoutResponse?()
         throw serverError
     }
-    func deleteAccount() async throws { throw serverError }
+    func deleteAccount() async throws {
+        if let errorToThrow { throw errorToThrow }
+    }
     func requestPasswordReset(email: String) async throws { throw serverError }
     func sendEmailConfirmationCode() async throws { throw serverError }
     func fetchCurrentHoroscope() async throws -> HoroscopeModel { throw serverError }

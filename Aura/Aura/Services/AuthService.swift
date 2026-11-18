@@ -71,12 +71,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
             restorationState = .loaded
         } catch NetworkError.sessionExpired {
             guard sessionID == self.sessionID else { return }
-            do {
-                try endSession()
-                expiredSessionMessage = NetworkError.sessionExpired.errorDescription
-            } catch {
-                restorationState = .failed(error.userMessage)
-            }
+            endExpiredSession()
         } catch {
             guard sessionID == self.sessionID else { return }
             restorationState = .failed(error.userMessage)
@@ -172,23 +167,20 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let sessionID = sessionID
         try? await networkService.logout()
         guard sessionID == self.sessionID else { throw NetworkError.cancelled }
-        try endSession()
+        try keychain.deleteAuthToken()
+        clearSession()
     }
 
     func deleteAccount() async throws {
         try await request {
             try await networkService.deleteAccount()
         }
-        try endSession()
+        clearInvalidSession()
     }
 
     func endExpiredSession() {
-        do {
-            try endSession()
-            expiredSessionMessage = NetworkError.sessionExpired.errorDescription
-        } catch {
-            expiredSessionMessage = nil
-        }
+        expiredSessionMessage = NetworkError.sessionExpired.errorDescription
+        clearInvalidSession()
     }
 
     func takeExpiredSessionMessage() -> String? {
@@ -211,8 +203,12 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         }
     }
 
-    private func endSession() throws {
-        try keychain.deleteAuthToken()
+    private func clearInvalidSession() {
+        clearSession()
+        try? keychain.deleteAuthToken()
+    }
+
+    private func clearSession() {
         sessionID = nil
         showsMainScreen = false
         authState.send(.signedOut)
