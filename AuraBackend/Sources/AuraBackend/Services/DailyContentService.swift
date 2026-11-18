@@ -47,7 +47,7 @@ struct DailyContentService {
                 return try DailyContentDTOMapper.map(entry: entry)
             }
 
-            let text = try await generateText(kind: kind, user: user, req: req)
+            let text = try await generateText(kind: kind, user: user, today: today, req: req)
             let entry = DailyContent(userID: userID, kind: kind, text: text, generatedDate: today)
 
             try await entry.save(on: database)
@@ -55,12 +55,12 @@ struct DailyContentService {
         }
     }
 
-    private func generateText(kind: DailyContentKind, user: User, req: Request) async throws -> String {
+    private func generateText(kind: DailyContentKind, user: User, today: String, req: Request) async throws -> String {
         switch kind {
             case .insight:
-                return try await openAIService.makeDailyInsight(user: user, req: req)
+                return try await openAIService.makeDailyInsight(user: user, today: today, req: req)
             case .tip:
-                return try await openAIService.makeDailyTip(user: user, req: req)
+                return try await openAIService.makeDailyTip(user: user, today: today, req: req)
         }
     }
 

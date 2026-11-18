@@ -117,16 +117,16 @@ struct OpenAIService {
     }
 
     // MARK: - Daily Content
-    func makeDailyInsight(user: User, req: Request) async throws -> String {
+    func makeDailyInsight(user: User, today: String, req: Request) async throws -> String {
         try await makeDailyContent(systemPrompt: ContentPrompts.dailyInsightSystem,
-                                   userPrompt: ContentPrompts.dailyInsightUser(user: user, today: DailyDateHelper.todayString(timeZone: req.userTimeZone)),
+                                   userPrompt: ContentPrompts.dailyInsightUser(user: user, today: today),
                                    wordRange: 8...10,
                                    req: req)
     }
 
-    func makeDailyTip(user: User, req: Request) async throws -> String {
+    func makeDailyTip(user: User, today: String, req: Request) async throws -> String {
         try await makeDailyContent(systemPrompt: ContentPrompts.dailyTipSystem,
-                                   userPrompt: ContentPrompts.dailyTipUser(user: user, today: DailyDateHelper.todayString(timeZone: req.userTimeZone)),
+                                   userPrompt: ContentPrompts.dailyTipUser(user: user, today: today),
                                    wordRange: 15...20,
                                    req: req)
     }
