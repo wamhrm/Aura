@@ -79,11 +79,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         if case .signedIn(let user) = authService.authState {
             hasSession = true
             name = user.name.capitalized
-            birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
-            knowsBirthTime = user.birthTime != nil
-            birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
-            profileInfo = user.profileInfo
-            onboardingRoutes = [.nameAndBirth]
+            prepareIncompleteProfile(user)
         }
 
         setupSubscriptions()
@@ -514,13 +510,17 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         } else if user.hasCompletedProfileInfo {
             onboardingRoutes.append(.aiConsent)
         } else {
-            birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
-            knowsBirthTime = user.birthTime != nil
-            birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
-            profileInfo = user.profileInfo
-            onboardingRoutes = [.nameAndBirth]
+            prepareIncompleteProfile(user)
         }
         return false
+    }
+
+    private func prepareIncompleteProfile(_ user: UserModel) {
+        birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
+        knowsBirthTime = user.birthTime != nil
+        birthTime = user.birthTime.flatMap(BirthDateFormatter.time(string:)) ?? BirthDateFormatter.defaultTime
+        profileInfo = user.profileInfo
+        onboardingRoutes = [.nameAndBirth]
     }
 
     private func resetTextFields() {

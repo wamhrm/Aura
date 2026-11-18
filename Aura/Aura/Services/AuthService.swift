@@ -134,20 +134,14 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let updatedUser = try await self.request {
             try await networkService.updateProfileInfo(request)
         }
-        guard case .signedIn(let user) = authState, user.id == updatedUser.id else {
-            throw NetworkError.sessionExpired
-        }
-        authStateSubject.send(.signedIn(updatedUser))
+        try applyUpdatedUser(updatedUser)
     }
 
     func giveAIConsent() async throws {
         let user = try await request {
             try await networkService.giveAIConsent()
         }
-        guard case .signedIn(let currentUser) = authState, currentUser.id == user.id else {
-            throw NetworkError.sessionExpired
-        }
-        authStateSubject.send(.signedIn(user))
+        try applyUpdatedUser(user)
     }
 
     func sendEmailConfirmationCode() async throws {
@@ -160,10 +154,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let user = try await request {
             try await networkService.confirmEmail(code: code)
         }
-        guard case .signedIn(let currentUser) = authState, currentUser.id == user.id else {
-            throw NetworkError.sessionExpired
-        }
-        authStateSubject.send(.signedIn(user))
+        try applyUpdatedUser(user)
     }
 
     func signOut() async throws {
@@ -223,6 +214,13 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         sessionID = UUID()
         authStateSubject.send(.signedIn(response.user))
         restorationState = .loaded
+    }
+
+    private func applyUpdatedUser(_ user: UserModel) throws {
+        guard case .signedIn(let currentUser) = authState, currentUser.id == user.id else {
+            throw NetworkError.sessionExpired
+        }
+        authStateSubject.send(.signedIn(user))
     }
 
     private func openMainIfProfileIsComplete() {

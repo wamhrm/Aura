@@ -142,21 +142,29 @@ final class CompatibilityViewModelTests: AuraUnitTestCase {
         XCTAssertNotEqual(content.compatibilityRequestIDs.first, content.compatibilityRequestIDs.last)
     }
 
-    func test_sexualTest_appearsOnlyWhenBothAre18() async {
-        let minor = CompatibilityViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: "13.05.2010")),
-                                           contentService: MockContentService())
-        await waitUntil { minor.availableTests.count == CompatibilityTestTypes.allCases.count - 1 }
-        XCTAssertFalse(minor.availableTests.contains(.sexualCompatibility))
+    func test_sexualTest_appearsOnlyWhenBothAre18() async throws {
+        let calendar = Calendar(identifier: .gregorian)
+        let minorBirthDate = try XCTUnwrap(calendar.date(byAdding: .year, value: -17, to: Date()))
+        let adult = makeUser()
+        let minor = makeUser(id: adult.id, dateOfBirth: BirthDateFormatter.dateString(date: minorBirthDate))
+        let auth = MockAuthService(user: adult)
+        let viewModel = CompatibilityViewModel(authService: auth, contentService: MockContentService())
+        await waitUntil { viewModel.availableTests.contains(.sexualCompatibility) }
+        XCTAssertFalse(viewModel.selectedTests.contains(.sexualCompatibility))
 
-        let adult = CompatibilityViewModel(authService: MockAuthService(user: makeUser()),
-                                           contentService: MockContentService())
-        await waitUntil { adult.availableTests.contains(.sexualCompatibility) }
-        XCTAssertFalse(adult.selectedTests.contains(.sexualCompatibility))
+        viewModel.toggleTestSelection(.sexualCompatibility)
+        XCTAssertTrue(viewModel.selectedTests.contains(.sexualCompatibility))
+        auth.publishUser(minor)
+        await waitUntil { !viewModel.availableTests.contains(.sexualCompatibility) }
+        XCTAssertFalse(viewModel.selectedTests.contains(.sexualCompatibility))
 
-        adult.toggleTestSelection(.sexualCompatibility)
-        XCTAssertTrue(adult.selectedTests.contains(.sexualCompatibility))
+        auth.publishUser(adult)
+        await waitUntil { viewModel.availableTests.contains(.sexualCompatibility) }
+        viewModel.toggleTestSelection(.sexualCompatibility)
+        XCTAssertTrue(viewModel.selectedTests.contains(.sexualCompatibility))
 
-        adult.partnerInfo.birthDate = Calendar.current.date(byAdding: .year, value: -17, to: Date())!
-        XCTAssertFalse(adult.selectedTests.contains(.sexualCompatibility))
+        viewModel.partnerInfo.birthDate = minorBirthDate
+        XCTAssertFalse(viewModel.availableTests.contains(.sexualCompatibility))
+        XCTAssertFalse(viewModel.selectedTests.contains(.sexualCompatibility))
     }
 }
