@@ -25,15 +25,8 @@ struct SettingsSheetView: View {
                         headerText(AppLanguage.text("Оформление"))
 
                         HStack(spacing: 15) {
-                            themeButtonsView(type: .bright,
-                                             isSelected: selectedTheme == .light) {
-                                selectedTheme = .light
-                            }
-
-                            themeButtonsView(type: .dark,
-                                             isSelected: selectedTheme == .dark) {
-                                selectedTheme = .dark
-                            }
+                            themeButton(.light)
+                            themeButton(.dark)
                         }
                     }
 
@@ -215,14 +208,16 @@ extension SettingsSheetView {
         }
     }
     
-    private func themeButtonsView(type: ThemeButtonTypes,
-                                  isSelected: Bool,
-                                  onTapHandler: @escaping () -> Void) -> some View {
-        Button(action: onTapHandler) {
+    private func themeButton(_ theme: AppTheme) -> some View {
+        let isSelected = selectedTheme == theme
+
+        return Button {
+            selectedTheme = theme
+        } label: {
             HStack(spacing: 10) {
-                Image(systemName: type.icon)
+                Image(systemName: theme.icon)
                 
-                Text(type.title)
+                Text(theme.title)
             }
             .padding(.vertical, 13)
             .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
@@ -290,19 +285,17 @@ fileprivate enum ButtonTypes {
     }
 }
 
-fileprivate enum ThemeButtonTypes {
-    case bright, dark
-
+private extension AppTheme {
     var title: String {
         switch self {
-            case .bright: AppLanguage.text("Светлая")
+            case .light: AppLanguage.text("Светлая")
             case .dark: AppLanguage.text("Темная")
         }
     }
     
     var icon: String {
         switch self {
-            case .bright: "sun.max.fill"
+            case .light: "sun.max.fill"
             case .dark: "moon.fill"
         }
     }

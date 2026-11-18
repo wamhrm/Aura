@@ -27,14 +27,15 @@ struct ProfileDisplayModel: Equatable {
 }
 
 extension ProfileDisplayModel {
-    static let placeholder = ProfileDisplayModel(dailyTip: ProfileDisplayPlaceholder.dailyTip,
-                                                 overview: ProfileDisplayPlaceholder.overview,
-                                                 socialFilter: ProfileDisplayPlaceholder.socialFilter,
-                                                 emotionalDepth: ProfileDisplayPlaceholder.emotionalDepth,
-                                                 temperament: ProfileDisplayPlaceholder.temperament,
-                                                 thinking: ProfileDisplayPlaceholder.thinking,
-                                                 organization: ProfileDisplayPlaceholder.organization,
-                                                 relationships: ProfileDisplayPlaceholder.relationships)
+    static let placeholder = ProfileDisplayModel(
+        dailyTip: "Не пытайся быть продуктивным весь день. Сделай одну реально важную вещь без отвлечений — остальное шум и самообман.",
+        overview: "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню.",
+        socialFilter: "Обладает встроенным детектором на пустую болтовню.",
+        emotionalDepth: "Чувства раскрываются постепенно, но очень надолго.",
+        temperament: 6,
+        thinking: 2,
+        organization: 8,
+        relationships: 8)
 
     static func make(personalityResult: PersonalityResultModel?,
                      dailyTip: DailyContentModel?) -> ProfileDisplayModel {
@@ -58,15 +59,4 @@ extension ProfileDisplayModel {
                                  result: PersonalityResultModel?) -> Int? {
         result?.emotionalBar.first(where: { $0.key == key })?.value
     }
-}
-
-fileprivate enum ProfileDisplayPlaceholder {
-    static let dailyTip = "Не пытайся быть продуктивным весь день. Сделай одну реально важную вещь без отвлечений — остальное шум и самообман."
-    static let overview = "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню."
-    static let socialFilter = "Обладает встроенным детектором на пустую болтовню."
-    static let emotionalDepth = "Чувства раскрываются постепенно, но очень надолго."
-    static let temperament = 6
-    static let thinking = 2
-    static let organization = 8
-    static let relationships = 8
 }
