@@ -19,6 +19,10 @@ struct HoroscopeService {
 
         let week = DailyDateHelper.currentWeek(timeZone: req.userTimeZone)
 
+        if let entry = try await findHoroscope(sign: sign, weekStart: week.key, db: database) {
+            return try HoroscopeDTOMapper.map(horoscope: entry)
+        }
+
         return try await database.generationLock("horoscope:\(sign.rawValue):\(week.key)") { database in
             if let entry = try await findHoroscope(sign: sign, weekStart: week.key, db: database) {
                 return try HoroscopeDTOMapper.map(horoscope: entry)
@@ -35,16 +39,7 @@ struct HoroscopeService {
                                   description: generated.description,
                                   itemsJSON: try HoroscopeDTOMapper.encodeItems(items: generated.items))
 
-            do {
-                try await entry.save(on: database)
-            } catch {
-                guard (error as? any DatabaseError)?.isConstraintFailure == true,
-                      let existing = try await findHoroscope(sign: sign, weekStart: week.key, db: database) else {
-                    throw error
-                }
-                return try HoroscopeDTOMapper.map(horoscope: existing)
-            }
-
+            try await entry.save(on: database)
             return try HoroscopeDTOMapper.map(horoscope: entry)
         }
     }

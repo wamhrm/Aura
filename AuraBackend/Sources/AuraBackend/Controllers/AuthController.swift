@@ -54,13 +54,16 @@ struct AuthController: RouteCollection {
         let digest = try await req.password.async.hash(data.password)
         let user = User(name: name, email: email, passwordHash: digest)
 
-        do {
-            try await user.save(on: req.db)
-        } catch let error as any DatabaseError where error.isConstraintFailure {
-            throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
+        let response = try await req.db.transaction { db in
+            do {
+                try await user.save(on: db)
+            } catch let error as any DatabaseError where error.isConstraintFailure {
+                throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
+            }
+            return try await issueToken(user: user, database: db)
         }
 
-        return try await issueToken(user: user, database: req.db).encodeResponse(status: .created, for: req)
+        return try await response.encodeResponse(status: .created, for: req)
     }
 
     private func checkEmailAvailable(req: Request) async throws -> HTTPStatus {
