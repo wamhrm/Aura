@@ -119,15 +119,11 @@ enum HoroscopeDTOMapper {
             descriptions[item.key] = description
         }
 
-        let normalized = sphereKeys.compactMap { key -> HoroscopeItems? in
-            guard let description = descriptions[key] else { return nil }
+        return try sphereKeys.map { key in
+            guard let description = descriptions[key] else {
+                throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
+            }
             return HoroscopeItems(key: key, description: description)
         }
-
-        guard normalized.count == sphereKeys.count else {
-            throw Abort(.badGateway, reason: "OpenAI вернул ответ в неожиданном формате")
-        }
-
-        return normalized
     }
 }

@@ -32,8 +32,15 @@ struct OpenAIClient {
             throw Abort(.badGateway, reason: "OpenAI вернул ошибку")
         }
 
-        guard let chatResponse = try? response.content.decode(OpenAIChatResponse.self),
-              let choice = chatResponse.choices.first else {
+        let chatResponse: OpenAIChatResponse
+        do {
+            chatResponse = try response.content.decode(OpenAIChatResponse.self)
+        } catch {
+            req.logger.error("OpenAI \(operation): response decoding failed: \(errorLogCode(error))")
+            throw emptyAnswerError
+        }
+
+        guard let choice = chatResponse.choices.first else {
             req.logger.error("OpenAI \(operation): the answer has no choices")
             throw emptyAnswerError
         }
