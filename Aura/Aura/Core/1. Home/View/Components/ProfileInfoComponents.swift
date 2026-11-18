@@ -99,45 +99,45 @@ struct ProfileInfoOptionView: View {
 }
 
 struct FlowLayout: Layout {
+    private let spacing: CGFloat = 8
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews,
                       cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 0
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
-
-        for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
-
-            if x + size.width > width {
-                x = 0
-                y += rowHeight + 8
-                rowHeight = 0
-            }
-
-            x += size.width + 8
-            rowHeight = max(rowHeight, size.height)
-        }
-
-        return CGSize(width: width, height: y + rowHeight)
+        layout(subviews: subviews, width: proposal.width).size
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize,
                        subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
+        let frames = layout(subviews: subviews, width: bounds.width).frames
+        for (view, frame) in zip(subviews, frames) {
+            view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                       proposal: ProposedViewSize(frame.size))
+        }
+    }
 
+    private func layout(subviews: Subviews, width: CGFloat?) -> (size: CGSize, frames: [CGRect]) {
+        let availableWidth = width.flatMap { $0.isFinite ? $0 : nil }
+        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, contentWidth: CGFloat = 0
+        var frames: [CGRect] = []
         for view in subviews {
-            let size = view.sizeThatFits(.unspecified)
+            var size = view.sizeThatFits(.unspecified)
+            if let availableWidth, size.width > availableWidth {
+                size = view.sizeThatFits(ProposedViewSize(width: availableWidth, height: nil))
+            }
 
-            if x + size.width > bounds.maxX {
-                x = bounds.minX
-                y += rowHeight + 8
+            if let availableWidth, x > 0, x + size.width > availableWidth {
+                x = 0
+                y += rowHeight + spacing
                 rowHeight = 0
             }
 
-            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-
-            x += size.width + 8
+            frames.append(CGRect(origin: CGPoint(x: x, y: y), size: size))
+            contentWidth = max(contentWidth, x + size.width)
+            x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+
+        return (CGSize(width: availableWidth ?? contentWidth, height: y + rowHeight), frames)
     }
 }
 

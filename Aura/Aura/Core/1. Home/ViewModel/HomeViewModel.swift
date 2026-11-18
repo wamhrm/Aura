@@ -71,7 +71,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     private func setupSubscriptions() {
-        authService.authState
+        authService.authStatePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self else { return }
@@ -240,7 +240,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     private var signedInUser: UserModel? {
-        if case .signedIn(let user) = authService.authState.value { return user }
+        if case .signedIn(let user) = authService.authState { return user }
         return nil
     }
 

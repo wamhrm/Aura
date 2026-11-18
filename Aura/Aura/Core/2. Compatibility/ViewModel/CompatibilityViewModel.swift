@@ -44,7 +44,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     private func setupSubscriptions() {
-        authService.authState
+        authService.authStatePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self, case .signedIn(let user) = $0 else { return }
@@ -178,7 +178,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     }
 
     private var signedInUser: UserModel? {
-        if case .signedIn(let user) = authService.authState.value { return user }
+        if case .signedIn(let user) = authService.authState { return user }
         return nil
     }
 

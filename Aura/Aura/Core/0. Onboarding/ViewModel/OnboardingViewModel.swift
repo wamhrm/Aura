@@ -76,7 +76,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     init(authService: any AuthServiceProtocol) {
         self.authService = authService
 
-        if case .signedIn(let user) = authService.authState.value {
+        if case .signedIn(let user) = authService.authState {
             hasSession = true
             name = user.name.capitalized
             birthDate = user.dateOfBirth.flatMap(BirthDateFormatter.date(string:)) ?? BirthDateFormatter.defaultDate
@@ -94,7 +94,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     var isSignedIn: Bool {
-        if case .signedIn = authService.authState.value { return true }
+        if case .signedIn = authService.authState { return true }
         return false
     }
 
@@ -123,7 +123,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func setupSubscriptions() {
-        authService.authState
+        authService.authStatePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self else { return }
@@ -426,7 +426,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     func chooseAIConsent(_ allows: Bool) {
         guard !isLoading else { return }
 
-        if case .signedIn(let user) = authService.authState.value, user.hasCompletedProfileInfo {
+        if case .signedIn(let user) = authService.authState, user.hasCompletedProfileInfo {
             allows ? giveAIConsent() : authService.finishOnboarding()
         } else {
             prepareProfile(allowsAIAnalysis: allows)
@@ -499,7 +499,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     private func continueAfterSignIn() -> Bool {
-        guard case .signedIn(let user) = authService.authState.value else { return false }
+        guard case .signedIn(let user) = authService.authState else { return false }
 
         name = user.name.capitalized
         password = ""

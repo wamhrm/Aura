@@ -14,7 +14,8 @@ enum AuthState {
 }
 
 protocol AuthServiceProtocol {
-    var authState: CurrentValueSubject<AuthState, Never> { get }
+    var authState: AuthState { get }
+    var authStatePublisher: AnyPublisher<AuthState, Never> { get }
     var sessionID: UUID? { get }
 
     func finishOnboarding()
@@ -35,11 +36,11 @@ protocol AuthServiceProtocol {
 
 @MainActor
 final class AuthService: ObservableObject, AuthServiceProtocol {
-    private(set) var authState = CurrentValueSubject<AuthState, Never>(.signedOut)
     @Published private(set) var showsMainScreen = false
     @Published private(set) var restorationState = LoadState.loading
     private(set) var sessionID: UUID?
 
+    private let authStateSubject = CurrentValueSubject<AuthState, Never>(.signedOut)
     private let networkService: any NetworkServiceProtocol
     private let keychain: any KeychainHelperProtocol
     private var expiredSessionMessage: String?
@@ -51,6 +52,9 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         self.keychain = keychain
         userDefaults?.removeObject(forKey: Constants.userKey)
     }
+
+    var authState: AuthState { authStateSubject.value }
+    var authStatePublisher: AnyPublisher<AuthState, Never> { authStateSubject.eraseToAnyPublisher() }
 
     func restoreSession() async {
         guard restorationState != .loaded else { return }
@@ -66,7 +70,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
             self.sessionID = sessionID
             let user = try await networkService.fetchCurrentUser()
             guard sessionID == self.sessionID else { return }
-            authState.send(.signedIn(user))
+            authStateSubject.send(.signedIn(user))
             openMainIfProfileIsComplete()
             restorationState = .loaded
         } catch NetworkError.sessionExpired {
@@ -130,20 +134,20 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let updatedUser = try await self.request {
             try await networkService.updateProfileInfo(request)
         }
-        guard case .signedIn(let user) = authState.value, user.id == updatedUser.id else {
+        guard case .signedIn(let user) = authState, user.id == updatedUser.id else {
             throw NetworkError.sessionExpired
         }
-        authState.send(.signedIn(updatedUser))
+        authStateSubject.send(.signedIn(updatedUser))
     }
 
     func giveAIConsent() async throws {
         let user = try await request {
             try await networkService.giveAIConsent()
         }
-        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else {
+        guard case .signedIn(let currentUser) = authState, currentUser.id == user.id else {
             throw NetworkError.sessionExpired
         }
-        authState.send(.signedIn(user))
+        authStateSubject.send(.signedIn(user))
     }
 
     func sendEmailConfirmationCode() async throws {
@@ -156,10 +160,10 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         let user = try await request {
             try await networkService.confirmEmail(code: code)
         }
-        guard case .signedIn(let currentUser) = authState.value, currentUser.id == user.id else {
+        guard case .signedIn(let currentUser) = authState, currentUser.id == user.id else {
             throw NetworkError.sessionExpired
         }
-        authState.send(.signedIn(user))
+        authStateSubject.send(.signedIn(user))
     }
 
     func signOut() async throws {
@@ -210,19 +214,19 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
     private func clearSession() {
         sessionID = nil
         showsMainScreen = false
-        authState.send(.signedOut)
+        authStateSubject.send(.signedOut)
         restorationState = .loaded
     }
 
     private func startSession(response: AuthTokenResponse) throws {
         try keychain.saveAuthToken(response.token)
         sessionID = UUID()
-        authState.send(.signedIn(response.user))
+        authStateSubject.send(.signedIn(response.user))
         restorationState = .loaded
     }
 
     private func openMainIfProfileIsComplete() {
-        guard case .signedIn(let user) = authState.value, user.hasCompletedProfileInfo else { return }
+        guard case .signedIn(let user) = authState, user.hasCompletedProfileInfo else { return }
         showsMainScreen = true
     }
 

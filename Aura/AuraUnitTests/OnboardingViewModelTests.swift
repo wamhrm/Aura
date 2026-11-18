@@ -100,7 +100,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(viewModel.onboardingRoutes, [.aiConsent])
         XCTAssertTrue(viewModel.showAlert)
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
-        guard case .signedIn = auth.authState.value else { return XCTFail("Session was ended") }
+        guard case .signedIn = auth.authState else { return XCTFail("Session was ended") }
     }
 
     private func makeViewModel(auth: MockAuthService) -> OnboardingViewModel {

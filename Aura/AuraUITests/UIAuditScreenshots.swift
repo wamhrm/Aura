@@ -11,6 +11,8 @@ final class UIAuditScreenshots: AuraUITestCase {
     private var directory: URL?
 
     override func setUp() async throws {
+        try XCTSkipUnless(ProcessInfo.processInfo.environment["AURA_CAPTURE_SCREENSHOTS"] == "1",
+                          "Set TEST_RUNNER_AURA_CAPTURE_SCREENSHOTS=1 to capture screenshots.")
         try await super.setUp()
         continueAfterFailure = true
     }

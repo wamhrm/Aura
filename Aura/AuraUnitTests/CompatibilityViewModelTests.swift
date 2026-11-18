@@ -88,7 +88,7 @@ final class CompatibilityViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(content.compatibilityRequestIDs, [firstID, firstID])
 
         // When the signed-in user changes
-        auth.authState.send(.signedIn(makeUser(name: "Мария")))
+        auth.publishUser(makeUser(name: "Мария"))
         viewModel.makeCompatibilityTest()
         await waitUntil { content.compatibilityRequestIDs.count == 3 }
 

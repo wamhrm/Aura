@@ -139,7 +139,7 @@ final class ProfileViewModelTests: AuraUnitTestCase {
         XCTAssertTrue(viewModel.showSettings)
         XCTAssertTrue(viewModel.showAlert)
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
-        guard case .signedIn = auth.authState.value else { return XCTFail("Session was ended") }
+        guard case .signedIn = auth.authState else { return XCTFail("Session was ended") }
     }
 
     func test_emptyHistory_showsTheLockedProfile() async {

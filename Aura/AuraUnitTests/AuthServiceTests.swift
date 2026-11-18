@@ -135,7 +135,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         }
 
         // Then
-        guard case .signedOut = auth.authState.value else { return XCTFail("Unexpected signed-in session") }
+        guard case .signedOut = auth.authState else { return XCTFail("Unexpected signed-in session") }
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
     }
 
@@ -153,7 +153,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn(let user) = auth.authState.value else { return XCTFail("No session") }
+        guard case .signedIn(let user) = auth.authState else { return XCTFail("No session") }
         XCTAssertEqual(user, network.user)
     }
 
@@ -175,7 +175,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn = auth.authState.value else { return XCTFail("Failed sign-out ended the session") }
+        guard case .signedIn = auth.authState else { return XCTFail("Failed sign-out ended the session") }
     }
 
     func test_successfulSignOut_removesTokenAndUserFromMemory() async throws {
@@ -188,7 +188,7 @@ final class AuthServiceTests: AuraUnitTestCase {
 
         XCTAssertNil(try keychain.loadAuthToken())
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
+        guard case .signedOut = auth.authState else { return XCTFail("Session was not ended") }
     }
 
     func test_tokenAlone_restoresCurrentUserFromTheServer() async throws {
@@ -352,7 +352,7 @@ final class AuthServiceTests: AuraUnitTestCase {
     }
 
     private func currentUser(_ auth: AuthService) -> UserModel? {
-        if case .signedIn(let user) = auth.authState.value { return user }
+        if case .signedIn(let user) = auth.authState { return user }
         return nil
     }
 
@@ -399,7 +399,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(currentUser(auth), confirmed)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertEqual(auth.sessionID, sessionID)
-        guard case .signedIn(let user) = auth.authState.value else { return XCTFail("No session") }
+        guard case .signedIn(let user) = auth.authState else { return XCTFail("No session") }
         XCTAssertEqual(user, confirmed)
     }
 
@@ -422,7 +422,7 @@ final class AuthServiceTests: AuraUnitTestCase {
 
         XCTAssertNil(try keychain.loadAuthToken())
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedOut = auth.authState.value else { return XCTFail("Session was restored") }
+        guard case .signedOut = auth.authState else { return XCTFail("Session was restored") }
     }
 
     func test_contentResponse_afterSessionEnd_keepsContentCleared() async throws {
@@ -493,7 +493,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertNil(auth.sessionID)
         XCTAssertNil(try keychain.loadAuthToken())
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedOut = auth.authState.value else { return XCTFail("Session was restored") }
+        guard case .signedOut = auth.authState else { return XCTFail("Session was restored") }
     }
 
     func test_confirmationResponse_afterAnotherSignIn_doesNotOverwriteCurrentUser() async throws {
@@ -516,7 +516,7 @@ final class AuthServiceTests: AuraUnitTestCase {
 
             XCTAssertEqual(currentUser(auth), nextUser)
             XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-            guard case .signedIn(let user) = auth.authState.value else { return XCTFail("Current session was ended") }
+            guard case .signedIn(let user) = auth.authState else { return XCTFail("Current session was ended") }
             XCTAssertEqual(user, nextUser)
         }
     }
@@ -596,7 +596,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertNotEqual(auth.sessionID, previousSession)
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn = auth.authState.value else { return XCTFail("Current session was ended") }
+        guard case .signedIn = auth.authState else { return XCTFail("Current session was ended") }
     }
 
     func test_rejectedToken_endsTheLocalSessionWithoutLogout() async throws {
@@ -620,7 +620,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertNil(try keychain.loadAuthToken())
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertFalse(auth.showsMainScreen)
-        guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
+        guard case .signedOut = auth.authState else { return XCTFail("Session was not ended") }
         XCTAssertEqual(auth.takeExpiredSessionMessage(), "Сессия истекла. Войдите снова")
     }
 
@@ -682,7 +682,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn = auth.authState.value else { return XCTFail("A server error ended the session") }
+        guard case .signedIn = auth.authState else { return XCTFail("A server error ended the session") }
     }
 
     func test_contentRequest_withRejectedToken_endsTheLocalSession() async throws {
@@ -707,7 +707,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertNil(try keychain.loadAuthToken())
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertFalse(auth.showsMainScreen)
-        guard case .signedOut = auth.authState.value else { return XCTFail("Session was not ended") }
+        guard case .signedOut = auth.authState else { return XCTFail("Session was not ended") }
     }
 }
 

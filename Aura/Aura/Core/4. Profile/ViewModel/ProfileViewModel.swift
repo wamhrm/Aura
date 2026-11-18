@@ -65,7 +65,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     }
 
     private func setupSubscriptions() {
-        authService.authState
+        authService.authStatePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 guard let self else { return }

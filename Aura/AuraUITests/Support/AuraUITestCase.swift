@@ -30,8 +30,8 @@ class AuraUITestCase: XCTestCase {
     }
 
     override func tearDown() async throws {
-        app.terminate()
-        server.stop()
+        app?.terminate()
+        server?.stop()
     }
 
     // MARK: - Server answers

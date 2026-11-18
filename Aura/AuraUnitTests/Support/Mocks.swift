@@ -73,7 +73,7 @@ func todayText() -> String {
 
 @MainActor
 final class MockAuthService: AuthServiceProtocol {
-    let authState: CurrentValueSubject<AuthState, Never>
+    private let authStateSubject: CurrentValueSubject<AuthState, Never>
     private(set) var sessionID: UUID?
 
     var serverUser = UserModel.mock
@@ -96,14 +96,21 @@ final class MockAuthService: AuthServiceProtocol {
     init(user: UserModel? = nil) {
         if let user {
             sessionID = UUID()
-            authState = CurrentValueSubject(.signedIn(user))
+            authStateSubject = CurrentValueSubject(.signedIn(user))
         } else {
-            authState = CurrentValueSubject(.signedOut)
+            authStateSubject = CurrentValueSubject(.signedOut)
         }
     }
 
+    var authState: AuthState { authStateSubject.value }
+    var authStatePublisher: AnyPublisher<AuthState, Never> { authStateSubject.eraseToAnyPublisher() }
+
+    func publishUser(_ user: UserModel) {
+        authStateSubject.send(.signedIn(user))
+    }
+
     func finishOnboarding() {
-        guard case .signedIn(let user) = authState.value, user.hasCompletedProfileInfo else { return }
+        guard case .signedIn(let user) = authState, user.hasCompletedProfileInfo else { return }
         showsMainScreen = true
     }
 
@@ -138,7 +145,7 @@ final class MockAuthService: AuthServiceProtocol {
         try await Task.sleep(for: profileSaveDelay)
         guard sessionID == self.sessionID else { throw NetworkError.cancelled }
         if let errorToThrow { throw errorToThrow }
-        authState.send(.signedIn(serverUser))
+        authStateSubject.send(.signedIn(serverUser))
     }
 
     func giveAIConsent() async throws {
@@ -146,7 +153,7 @@ final class MockAuthService: AuthServiceProtocol {
         if let aiConsentError { throw aiConsentError }
         if let errorToThrow { throw errorToThrow }
         serverUser.hasAIConsent = true
-        authState.send(.signedIn(serverUser))
+        authStateSubject.send(.signedIn(serverUser))
     }
 
     func sendEmailConfirmationCode() async throws {
@@ -162,14 +169,14 @@ final class MockAuthService: AuthServiceProtocol {
         if let errorToThrow { throw errorToThrow }
         showsMainScreen = false
         sessionID = nil
-        authState.send(.signedOut)
+        authStateSubject.send(.signedOut)
     }
 
     func endExpiredSession() {
         expiredSessionMessage = "Сессия истекла. Войдите снова"
         showsMainScreen = false
         sessionID = nil
-        authState.send(.signedOut)
+        authStateSubject.send(.signedOut)
     }
 
     func takeExpiredSessionMessage() -> String? {
@@ -182,13 +189,13 @@ final class MockAuthService: AuthServiceProtocol {
         if let errorToThrow { throw errorToThrow }
         showsMainScreen = false
         sessionID = nil
-        authState.send(.signedOut)
+        authStateSubject.send(.signedOut)
     }
 
     private func startSession() throws {
         if let errorToThrow { throw errorToThrow }
         sessionID = UUID()
-        authState.send(.signedIn(serverUser))
+        authStateSubject.send(.signedIn(serverUser))
     }
 }
 

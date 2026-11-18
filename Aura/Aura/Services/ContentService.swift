@@ -37,7 +37,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
         self.networkService = networkService
         self.authService = authService
 
-        authService.authState
+        authService.authStatePublisher
             .sink { [weak self] in
                 guard let self else { return }
                 handleAuthState($0)

@@ -74,7 +74,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
         await waitUntil { viewModel.horoscopeState == .loaded }
         content.errorToThrow = serverError
 
-        auth.authState.send(.signedIn(makeUser()))
+        auth.publishUser(makeUser())
         await waitUntil { viewModel.horoscopeState == .failed("Ошибка сервера") }
 
         XCTAssertNil(viewModel.horoscope)
@@ -115,7 +115,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
                                        description: "Новый гороскоп",
                                        items: [])
         content.horoscopeResult = newResult
-        auth.authState.send(.signedIn(makeUser(hasAIConsent: false)))
+        auth.publishUser(makeUser(hasAIConsent: false))
         await waitUntil { viewModel.horoscope == newResult }
 
         release = true
@@ -189,7 +189,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
         await waitUntil { viewModel.horoscopeState == .loaded }
 
         // When
-        auth.authState.send(.signedIn(makeUser(hasAIConsent: true)))
+        auth.publishUser(makeUser(hasAIConsent: true))
         await waitUntil { viewModel.dailyInsight != nil }
 
         // Then
@@ -205,7 +205,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
         await waitUntil { viewModel.horoscopeState == .loaded && viewModel.insightState == .loaded }
 
         // When
-        auth.authState.send(.signedIn(makeUser(dateOfBirth: "20.01.1990")))
+        auth.publishUser(makeUser(dateOfBirth: "20.01.1990"))
         await waitUntil { content.horoscopeCount == 2 }
 
         // Then
@@ -276,7 +276,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(content.personalityRequestIDs, [firstID, firstID])
 
         // When the profile answer changes
-        auth.authState.send(.signedIn(makeUser(socialType: "extrovert")))
+        auth.publishUser(makeUser(socialType: "extrovert"))
         viewModel.makePersonalityTest()
         await waitUntil { content.personalityRequestIDs.count == 3 }
 
@@ -361,7 +361,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
         content.horoscopeDelay = .seconds(2)
 
         viewModel.makePersonalityTest()
-        auth.authState.send(.signedIn(makeUser(dateOfBirth: "20.01.1990")))
+        auth.publishUser(makeUser(dateOfBirth: "20.01.1990"))
         await waitUntil { content.horoscopeCount == 2 }
         await waitUntil { !viewModel.isLoading }
 
