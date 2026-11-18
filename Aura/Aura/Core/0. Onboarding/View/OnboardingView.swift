@@ -138,5 +138,5 @@ extension OnboardingView {
 }
 
 #Preview {
-    OnboardingView(authService: AuthService.preview)
+    OnboardingView(authService: AuthService.preview())
 }

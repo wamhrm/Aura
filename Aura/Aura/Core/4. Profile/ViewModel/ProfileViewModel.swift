@@ -88,16 +88,6 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
                 personalityState = state
             }
             .store(in: &cancellables)
-
-        contentService.dailyTip
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] tip in
-                guard let self else { return }
-                dailyTip = tip
-                if tip != nil { tipState = .loaded }
-                updateProfileDisplay()
-            }
-            .store(in: &cancellables)
     }
 
     private func handleAuthState(_ authState: AuthState) {
@@ -107,6 +97,8 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             case .signedOut:
                 guard currentUserId != nil else { return }
                 currentUserId = nil
+                dailyTip = nil
+                updateProfileDisplay()
                 cancellables.removeAll()
         }
     }
@@ -138,7 +130,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         }
 
         do {
-            _ = try await contentService.fetchHistory()
+            try await contentService.fetchHistory()
         } catch {
             guard sessionID == authService.sessionID else { return }
             if !hasPersonalityTests {

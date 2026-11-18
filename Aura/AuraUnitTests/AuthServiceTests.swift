@@ -13,6 +13,27 @@ import XCTest
 
 @MainActor
 final class AuthServiceTests: AuraUnitTestCase {
+    func test_previews_restoreAndLoadContentWithIndependentSessions() async throws {
+        let welcome = PreviewServices(signedIn: false)
+        let signedIn = PreviewServices()
+
+        await welcome.authService.restoreSession()
+
+        XCTAssertEqual(welcome.authService.restorationState, .loaded)
+        XCTAssertNil(currentUser(welcome.authService))
+        XCTAssertEqual(currentUser(signedIn.authService), .mock)
+
+        try await welcome.authService.signIn(email: "preview@example.test", password: "preview-password")
+        try await welcome.authService.signOut()
+        try await signedIn.contentService.fetchHistory()
+        let insight = try await signedIn.contentService.fetchDailyInsight()
+
+        XCTAssertNil(currentUser(welcome.authService))
+        XCTAssertEqual(currentUser(signedIn.authService), .mock)
+        XCTAssertEqual(signedIn.contentService.historyCells.value.first?.personalityResult, .mock)
+        XCTAssertTrue(insight.isFromToday)
+    }
+
     func test_networkRequest_propagatesAnUnreadableKeychain() async {
         let keychain = MockKeychainHelper()
         keychain.readFails = true
@@ -44,6 +65,57 @@ final class AuthServiceTests: AuraUnitTestCase {
 
         XCTAssertEqual(personality, .mock)
         XCTAssertEqual(compatibility, .mock)
+    }
+
+    func test_historyFetch_startedBeforeDeletion_doesNotRestoreTheDeletedEntry() async throws {
+        let network = MockNetworkService()
+        let content = ContentService(networkService: network, authService: MockAuthService(user: makeUser()))
+        let entry = HistoryCellModel.personalityPlaceholder
+        network.history = [entry]
+        try await content.fetchHistory()
+        XCTAssertEqual(content.historyCells.value, [entry])
+
+        var started = false
+        var release = false
+        network.beforeHistoryResponse = {
+            started = true
+            await waitUntil { release }
+        }
+        let oldFetch = Task { try await content.fetchHistory() }
+        await waitUntil { started }
+
+        network.beforeHistoryResponse = nil
+        try await content.deleteHistory(id: entry.id)
+        var shownEntries: [HistoryCellModel] = []
+        let subscription = content.historyCells.sink { shownEntries.append(contentsOf: $0) }
+        defer { subscription.cancel() }
+        release = true
+        try await oldFetch.value
+
+        XCTAssertTrue(shownEntries.isEmpty)
+        XCTAssertEqual(content.historyState.value, .loaded)
+    }
+
+    func test_historyFetchFailure_afterNewerSuccess_doesNotReplaceTheLoadedState() async throws {
+        let network = MockNetworkService()
+        let content = ContentService(networkService: network, authService: MockAuthService(user: makeUser()))
+        var started = false
+        var release = false
+        network.beforeHistoryResponse = {
+            started = true
+            await waitUntil { release }
+            throw serverError
+        }
+        let oldFetch = Task { try await content.fetchHistory() }
+        await waitUntil { started }
+
+        network.beforeHistoryResponse = nil
+        try await content.fetchHistory()
+        release = true
+        try await oldFetch.value
+
+        XCTAssertTrue(content.historyCells.value.isEmpty)
+        XCTAssertEqual(content.historyState.value, .loaded)
     }
 
     func test_failedTokenSave_doesNotSignInOrSaveUser() async {
@@ -364,7 +436,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         network.beforeHistoryResponse = { auth.endExpiredSession() }
 
         do {
-            _ = try await content.fetchHistory()
+            try await content.fetchHistory()
             XCTFail("An ended session must reject the response")
         } catch {
             guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
@@ -390,7 +462,7 @@ final class AuthServiceTests: AuraUnitTestCase {
             }
 
             do {
-                _ = try await content.fetchHistory()
+                try await content.fetchHistory()
                 XCTFail("A new sign-in must reject the old response")
             } catch {
                 guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
@@ -491,7 +563,7 @@ final class AuthServiceTests: AuraUnitTestCase {
             }
 
             do {
-                _ = try await content.fetchHistory()
+                try await content.fetchHistory()
                 XCTFail("The old request must be discarded")
             } catch {
                 guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
@@ -624,7 +696,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         network.errorToThrow = NetworkError.sessionExpired
 
         do {
-            _ = try await content.fetchHistory()
+            try await content.fetchHistory()
             XCTFail("The request must fail")
         } catch NetworkError.sessionExpired {
         } catch {

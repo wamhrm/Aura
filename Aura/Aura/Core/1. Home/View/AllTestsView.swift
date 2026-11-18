@@ -40,8 +40,9 @@ struct AllTestsView: View {
 }
 
 #Preview {
+    let services = PreviewServices()
     NavigationStack {
-        AllTestsView(vm: HomeViewModel(authService: AuthService.preview,
-                                       contentService: ContentService.preview))
+        AllTestsView(vm: HomeViewModel(authService: services.authService,
+                                       contentService: services.contentService))
     }
 }

@@ -248,8 +248,9 @@ extension HomeView {
 }
 
 #Preview {
-    HomeView(vm: HomeViewModel(authService: AuthService.preview,
-                               contentService: ContentService.preview)) {
+    let services = PreviewServices()
+    HomeView(vm: HomeViewModel(authService: services.authService,
+                               contentService: services.contentService)) {
 
     } aiConsentButton: {
 

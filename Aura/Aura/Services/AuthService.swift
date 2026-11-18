@@ -46,10 +46,10 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 
     init(networkService: any NetworkServiceProtocol,
          keychain: any KeychainHelperProtocol = KeychainHelper(),
-         userDefaults: UserDefaults = Constants.userDefaults) {
+         userDefaults: UserDefaults? = Constants.userDefaults) {
         self.networkService = networkService
         self.keychain = keychain
-        userDefaults.removeObject(forKey: Constants.userKey)
+        userDefaults?.removeObject(forKey: Constants.userKey)
     }
 
     func restoreSession() async {
@@ -232,5 +232,13 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
 }
 
 extension AuthService {
-    static let preview = AuthService(networkService: NetworkService())
+    static func preview(networkService: PreviewNetworkService = PreviewNetworkService(),
+                        signedIn: Bool = false) -> AuthService {
+        let service = AuthService(networkService: networkService, keychain: PreviewKeychain(), userDefaults: nil)
+        if signedIn {
+            try? service.startSession(response: networkService.session)
+            service.finishOnboarding()
+        }
+        return service
+    }
 }

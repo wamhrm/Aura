@@ -91,7 +91,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
         let sessionID = authService.sessionID
 
         do {
-            _ = try await contentService.fetchHistory()
+            try await contentService.fetchHistory()
         } catch {
             guard sessionID == authService.sessionID else { return }
             if !contentService.historyCells.value.isEmpty {

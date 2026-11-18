@@ -81,8 +81,9 @@ extension ProfileView {
 }
 
 #Preview {
-    ProfileView(vm: ProfileViewModel(authService: AuthService.preview,
-                                     contentService: ContentService.preview)) {
+    let services = PreviewServices()
+    ProfileView(vm: ProfileViewModel(authService: services.authService,
+                                     contentService: services.contentService)) {
 
     }
 }

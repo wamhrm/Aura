@@ -104,17 +104,19 @@ final class ProfileViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(viewModel.dailyTip?.isFromToday, true)
     }
 
-    func test_profileWithoutABirthDate_doesNotLoadTheTip() async {
-        let content = MockContentService()
-        let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: nil)),
-                                         contentService: content)
-        await waitUntil { viewModel.personalityState == .loaded }
+    func test_profileWithoutConsentOrABirthDate_doesNotLoadTheTip() async {
+        for user in [makeUser(dateOfBirth: nil), makeUser(hasAIConsent: false)] {
+            let content = MockContentService()
+            let viewModel = ProfileViewModel(authService: MockAuthService(user: user),
+                                             contentService: content)
+            await waitUntil { viewModel.personalityState == .loaded }
 
-        XCTAssertEqual(content.tipCount, 0)
-        XCTAssertNil(viewModel.dailyTip)
+            XCTAssertEqual(content.tipCount, 0)
+            XCTAssertNil(viewModel.dailyTip)
+        }
     }
 
-    func test_profileWithABirthDate_loadsTheTipWithoutAPersonalityResult() async {
+    func test_profileWithConsentAndABirthDate_loadsTheTipWithoutAPersonalityResult() async {
         let content = MockContentService()
         let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()),
                                          contentService: content)

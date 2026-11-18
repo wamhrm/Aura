@@ -115,6 +115,7 @@ extension HistoryView {
 }
 
 #Preview {
-    HistoryView(vm: HistoryViewModel(authService: AuthService.preview,
-                                     contentService: ContentService.preview))
+    let services = PreviewServices()
+    HistoryView(vm: HistoryViewModel(authService: services.authService,
+                                     contentService: services.contentService))
 }

@@ -38,6 +38,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
     private var currentUser: UserModel?
     private var lastRefreshDate: Date?
+    private var horoscopeRequestID: UUID?
     private var personalityRequestID: UUID?
     private var personalityRequestUser: UserModel?
     private var personalityRequestTests: [PersonalityTestTypes]?
@@ -77,24 +78,6 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 handleAuthState($0)
             }
             .store(in: &cancellables)
-
-        contentService.horoscope
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] horoscope in
-                guard let self else { return }
-                self.horoscope = horoscope
-                if horoscope != nil { horoscopeState = .loaded }
-            }
-            .store(in: &cancellables)
-
-        contentService.dailyInsight
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] insight in
-                guard let self else { return }
-                dailyInsight = insight
-                if insight != nil { insightState = .loaded }
-            }
-            .store(in: &cancellables)
     }
 
     private func handleAuthState(_ authState: AuthState) {
@@ -104,6 +87,9 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             case .signedOut:
                 guard currentUser != nil else { return }
                 currentUser = nil
+                horoscopeRequestID = nil
+                horoscope = nil
+                dailyInsight = nil
                 cancellables.removeAll()
         }
     }
@@ -123,6 +109,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
 
         if previousUser.dateOfBirth != user.dateOfBirth {
+            horoscopeRequestID = nil
             horoscope = nil
             horoscopeState = .loading
             if !isLoading { isLoadingScreen = true }
@@ -284,25 +271,33 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     private func loadHoroscope() async {
-        guard currentUser != nil else { return }
+        guard let user = currentUser else { return }
         let sessionID = authService.sessionID
+        let requestID = UUID()
+        horoscopeRequestID = requestID
         let deadline = ContinuousClock.now + .seconds(1)
         if horoscope == nil { horoscopeState = .loading }
 
+        func isCurrentRequest() -> Bool {
+            requestID == horoscopeRequestID &&
+            sessionID == authService.sessionID &&
+            user.dateOfBirth == signedInUser?.dateOfBirth
+        }
+
         do {
             let horoscope = try await contentService.fetchCurrentHoroscope()
-            guard sessionID == authService.sessionID else { return }
+            guard isCurrentRequest() else { return }
             self.horoscope = horoscope
             horoscopeState = .loaded
         } catch {
-            guard sessionID == authService.sessionID else { return }
+            guard isCurrentRequest() else { return }
             if horoscope == nil {
                 horoscopeState = .failed(error.userMessage)
             }
         }
         
         try? await Task.sleep(until: deadline, clock: .continuous)
-        guard sessionID == authService.sessionID else { return }
+        guard isCurrentRequest() else { return }
         await revealScreenIfReady()
     }
 
@@ -317,7 +312,9 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
 
         do {
-            dailyInsight = try await contentService.fetchDailyInsight()
+            let insight = try await contentService.fetchDailyInsight()
+            guard sessionID == authService.sessionID else { return }
+            dailyInsight = insight
             insightState = .loaded
         } catch {
             guard sessionID == authService.sessionID else { return }

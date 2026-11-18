@@ -54,5 +54,5 @@ struct SignInStepView: View {
 }
 
 #Preview {
-    SignInStepView(vm: OnboardingViewModel(authService: AuthService.preview))
+    SignInStepView(vm: OnboardingViewModel(authService: AuthService.preview()))
 }

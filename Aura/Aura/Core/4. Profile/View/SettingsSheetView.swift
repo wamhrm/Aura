@@ -309,6 +309,7 @@ fileprivate enum ThemeButtonTypes {
 }
 
 #Preview {
-    SettingsSheetView(vm: ProfileViewModel(authService: AuthService.preview,
-                                           contentService: ContentService.preview))
+    let services = PreviewServices()
+    SettingsSheetView(vm: ProfileViewModel(authService: services.authService,
+                                           contentService: services.contentService))
 }

@@ -92,6 +92,39 @@ final class HomeViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(viewModel.horoscopeState, .loaded)
     }
 
+    func test_lateHoroscope_afterBirthDateChange_doesNotReplaceTheNewResult() async {
+        let auth = MockAuthService(user: makeUser(dateOfBirth: "20.01.1990", hasAIConsent: false))
+        let content = MockContentService()
+        let viewModel = HomeViewModel(authService: auth, contentService: content)
+        await waitUntil { viewModel.horoscopeState == .loaded }
+
+        var started = false
+        var release = false
+        content.beforeHoroscopeResponse = {
+            started = true
+            await waitUntil { release }
+        }
+        let oldRefresh = Task { await viewModel.refresh() }
+        await waitUntil { started }
+
+        content.beforeHoroscopeResponse = nil
+        let newResult = HoroscopeModel(id: UUID(),
+                                       type: .taurus,
+                                       dateStart: "16 ноября",
+                                       dateEnd: "22 ноября",
+                                       description: "Новый гороскоп",
+                                       items: [])
+        content.horoscopeResult = newResult
+        auth.authState.send(.signedIn(makeUser(hasAIConsent: false)))
+        await waitUntil { viewModel.horoscope == newResult }
+
+        release = true
+        await oldRefresh.value
+
+        XCTAssertEqual(viewModel.horoscope, newResult)
+        XCTAssertEqual(viewModel.horoscopeState, .loaded)
+    }
+
     // MARK: - Daily insight
     func test_homeStaysHidden_untilTheHoroscopeArrives() async {
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),

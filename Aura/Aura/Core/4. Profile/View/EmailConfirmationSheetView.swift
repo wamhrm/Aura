@@ -81,6 +81,6 @@ extension EmailConfirmationSheetView {
 }
 
 #Preview {
-    EmailConfirmationSheetView(vm: EmailConfirmationViewModel(authService: AuthService.preview,
+    EmailConfirmationSheetView(vm: EmailConfirmationViewModel(authService: AuthService.preview(),
                                                               email: "test@test.com"))
 }

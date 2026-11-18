@@ -174,9 +174,10 @@ extension CompatibilityView {
 }
 
 #Preview {
+    let services = PreviewServices()
     NavigationStack {
-        CompatibilityView(vm: CompatibilityViewModel(authService: AuthService.preview,
-                                                     contentService: ContentService.preview)) {
+        CompatibilityView(vm: CompatibilityViewModel(authService: services.authService,
+                                                     contentService: services.contentService)) {
 
         }
     }

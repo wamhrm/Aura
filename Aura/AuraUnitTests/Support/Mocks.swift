@@ -196,14 +196,13 @@ final class MockAuthService: AuthServiceProtocol {
 final class MockContentService: ContentServiceProtocol {
     let historyCells = CurrentValueSubject<[HistoryCellModel], Never>([])
     let historyState = CurrentValueSubject<LoadState, Never>(.loaded)
-    let horoscope = CurrentValueSubject<HoroscopeModel?, Never>(nil)
-    let dailyInsight = CurrentValueSubject<DailyContentModel?, Never>(nil)
-    let dailyTip = CurrentValueSubject<DailyContentModel?, Never>(nil)
 
     var history: [HistoryCellModel] = []
     var errorToThrow: (any Error)?
     var dailyContentDate = todayText()
     var horoscopeDelay = Duration.zero
+    var horoscopeResult = HoroscopeModel.mock
+    var beforeHoroscopeResponse: (() async -> Void)?
     var beforeContentResponse: (() -> Void)?
     var beforeDetailsResponse: (() -> Void)?
     private(set) var detailsCount = 0
@@ -229,7 +228,7 @@ final class MockContentService: ContentServiceProtocol {
         return .mock
     }
 
-    func fetchHistory() async throws -> [HistoryCellModel] {
+    func fetchHistory() async throws {
         fetchHistoryCount += 1
         if historyCells.value.isEmpty { historyState.send(.loading) }
         beforeContentResponse?()
@@ -239,7 +238,6 @@ final class MockContentService: ContentServiceProtocol {
         }
         historyState.send(.loaded)
         historyCells.send(history)
-        return history
     }
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
@@ -260,26 +258,23 @@ final class MockContentService: ContentServiceProtocol {
         insightCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
-        let insight = DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: dailyContentDate)
-        dailyInsight.send(insight)
-        return insight
+        return DailyContentModel(id: UUID(), text: "Инсайт", dateCreated: dailyContentDate)
     }
 
     func fetchDailyTip() async throws -> DailyContentModel {
         tipCount += 1
         beforeContentResponse?()
         if let errorToThrow { throw errorToThrow }
-        let tip = DailyContentModel(id: UUID(), text: "Совет", dateCreated: dailyContentDate)
-        dailyTip.send(tip)
-        return tip
+        return DailyContentModel(id: UUID(), text: "Совет", dateCreated: dailyContentDate)
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
         horoscopeCount += 1
+        let response = horoscopeResult
+        await beforeHoroscopeResponse?()
         try await Task.sleep(for: horoscopeDelay)
         if let errorToThrow { throw errorToThrow }
-        horoscope.send(.mock)
-        return .mock
+        return response
     }
 
     private func historyDetails(id: UUID) -> HistoryCellModel {

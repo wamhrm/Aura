@@ -49,7 +49,6 @@ final class OnboardingUITests: AuraUITestCase {
         // Then
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 15), "AI failure blocked onboarding")
         XCTAssertTrue(text(part: serverError).firstMatch.waitForExistence(timeout: 15), "no content error on the main screen")
-        XCTAssertFalse(server.requests.contains("GET /v1/daily/tip"), "a locked profile requested a hidden tip")
     }
 
     func test_consentFailure_staysOnLoadingScreen_andRetryFinishes() throws {

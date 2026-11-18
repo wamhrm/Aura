@@ -90,6 +90,7 @@ fileprivate enum Tabs {
 }
 
 #Preview {
-    MainTabView(authService: AuthService.preview,
-                contentService: ContentService.preview)
+    let services = PreviewServices()
+    MainTabView(authService: services.authService,
+                contentService: services.contentService)
 }

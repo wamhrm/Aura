@@ -187,9 +187,10 @@ extension SignedInView {
 }
 
 #Preview {
+    let services = PreviewServices()
     NavigationStack {
-        SignedInView(vm: ProfileViewModel(authService: AuthService.preview,
-                                          contentService: ContentService.preview),
+        SignedInView(vm: ProfileViewModel(authService: services.authService,
+                                          contentService: services.contentService),
                      user: .mock) {
 
         }

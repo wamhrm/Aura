@@ -48,6 +48,7 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView(authService: AuthService.preview,
-             contentService: ContentService.preview)
+    let services = PreviewServices(signedIn: false)
+    RootView(authService: services.authService,
+             contentService: services.contentService)
 }
