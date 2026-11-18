@@ -118,7 +118,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
             do {
                 try await contentService.deleteHistory(id: item.id)
             } catch {
-                presentAlert("Не удалось удалить запись")
+                presentAlert(AppLanguage.text("Не удалось удалить запись"))
             }
         }
     }
@@ -145,7 +145,7 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
                 try await Task.sleep(for: .milliseconds(50))
             } catch {
                 guard sessionID == authService.sessionID else { return }
-                presentAlert("Не удалось открыть результат")
+                presentAlert(AppLanguage.text("Не удалось открыть результат"))
             }
 
             guard sessionID == authService.sessionID else { return }

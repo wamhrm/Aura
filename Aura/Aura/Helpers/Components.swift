@@ -113,7 +113,7 @@ struct AIConsentLock: View {
             CompleteProfileLock(title: title)
 
             Button(action: onAllow) {
-                Text("Разрешить")
+                Text(AppLanguage.text("Разрешить"))
                     .font(Adaptive.size(.system(size: 15), .callout, .callout))
                     .fontWeight(.semibold)
                     .foregroundStyle(.tint)
@@ -142,25 +142,25 @@ struct AIConsentContentView: View {
                                                    endPoint: .bottomTrailing))
                         .clipShape(.circle)
 
-                    Text("Анализ с помощью AI")
+                    Text(AppLanguage.text("Анализ с помощью AI"))
                         .font(Adaptive.size(.default, .system(size: 18), .title3))
                         .bold()
                 }
                 .frame(maxWidth: .infinity)
 
                 VStack(alignment: .leading, spacing: 25) {
-                    Text("Инсайт и совет дня, тесты личности и совместимости составляет сервис искусственного интеллекта OpenAI (США). Для этого Aura передаёт ему:")
+                    Text(AppLanguage.text("Инсайт и совет дня, тесты личности и совместимости составляет сервис искусственного интеллекта OpenAI (США). Для этого Aura передаёт ему:"))
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("• ваше имя, дату рождения, знак зодиака, пол, ответы анкеты и время рождения, если оно указано;")
-                        Text("• для контента дня — текущую дату, для тестов — выбранные темы;")
-                        Text("• для теста совместимости — имя, дату рождения и знак зодиака партнёра, время рождения (если указано) и рассчитанный по знакам процент совместимости.")
+                        Text(AppLanguage.text("• ваше имя, дату рождения, знак зодиака, пол, ответы анкеты и время рождения, если оно указано;"))
+                        Text(AppLanguage.text("• для контента дня — текущую дату, для тестов — выбранные темы;"))
+                        Text(AppLanguage.text("• для теста совместимости — имя, дату рождения и знак зодиака партнёра, время рождения (если указано) и рассчитанный по знакам процент совместимости."))
                     }
 
-                    Text("Адрес почты не передаётся. Гороскоп работает и без этого разрешения.")
+                    Text(AppLanguage.text("Адрес почты не передаётся. Гороскоп работает и без этого разрешения."))
 
                     if let url = Constants.privacyPolicyURL {
-                        Link("Политика конфиденциальности", destination: url)
+                        Link(AppLanguage.text("Политика конфиденциальности"), destination: url)
                             .fontWeight(.semibold)
                     }
                 }
@@ -181,22 +181,21 @@ struct BirthDateFieldsView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            DatePicker("Дата рождения",
+            DatePicker(AppLanguage.text("Дата рождения"),
                        selection: $birthDate,
                        in: dateRange,
                        displayedComponents: .date)
 
-            Toggle("Я знаю время рождения", isOn: $knowsBirthTime.animation())
+            Toggle(AppLanguage.text("Я знаю время рождения"), isOn: $knowsBirthTime.animation())
 
             if knowsBirthTime {
-                DatePicker("Время",
+                DatePicker(AppLanguage.text("Время"),
                            selection: $birthTime,
                            displayedComponents: .hourAndMinute)
             }
         }
         .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
         .fontWeight(.medium)
-        .environment(\.locale, Locale(identifier: "ru_RU"))
     }
 }
 
@@ -245,7 +244,7 @@ struct LoadFailedView: View {
                 .fontWeight(.medium)
                 .multilineTextAlignment(.center)
 
-            Button("Повторить", action: onRetry)
+            Button(AppLanguage.text("Повторить"), action: onRetry)
                 .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                 .fontWeight(.semibold)
         }
@@ -258,27 +257,27 @@ enum EmotionalProfileTypes: String, Codable, CaseIterable {
 
     fileprivate var leftSide: String {
         switch self {
-            case .temperament: "Интроверсия"
-            case .thinking: "Логика"
-            case .organization: "Хаос"
-            case .relationships: "Независимость"
-            case .emotionalResonance: "Дистанция"
-            case .innerOpenness: "Закрытость"
-            case .soulAlignment: "Недопонимание"
-            case .emotionalWarmth: "Холодная дистанция"
+            case .temperament: AppLanguage.text("Интроверсия")
+            case .thinking: AppLanguage.text("Логика")
+            case .organization: AppLanguage.text("Хаос")
+            case .relationships: AppLanguage.text("Независимость")
+            case .emotionalResonance: AppLanguage.text("Дистанция")
+            case .innerOpenness: AppLanguage.text("Закрытость")
+            case .soulAlignment: AppLanguage.text("Недопонимание")
+            case .emotionalWarmth: AppLanguage.text("Холодная дистанция")
         }
     }
 
     fileprivate var rightSide: String {
         switch self {
-            case .temperament: "Экстраверсия"
-            case .thinking: "Интуиция"
-            case .organization: "Контроль"
-            case .relationships: "Привязанность"
-            case .emotionalResonance: "Близость"
-            case .innerOpenness: "Душевная открытость"
-            case .soulAlignment: "Взаимопонимание"
-            case .emotionalWarmth: "Теплая привязанность"
+            case .temperament: AppLanguage.text("Экстраверсия")
+            case .thinking: AppLanguage.text("Интуиция")
+            case .organization: AppLanguage.text("Контроль")
+            case .relationships: AppLanguage.text("Привязанность")
+            case .emotionalResonance: AppLanguage.text("Близость")
+            case .innerOpenness: AppLanguage.text("Душевная открытость")
+            case .soulAlignment: AppLanguage.text("Взаимопонимание")
+            case .emotionalWarmth: AppLanguage.text("Теплая привязанность")
         }
     }
 
@@ -296,23 +295,23 @@ enum EmotionalProfileTypes: String, Codable, CaseIterable {
     VStack(spacing: 20) {
         LogoImage(size: 50)
 
-        HoroscopeDateView(dateStart: "27 окт.", dateEnd: "2 нояб.", isCellDetails: true)
+        HoroscopeDateView(dateStart: AppLanguage.text("27 окт."), dateEnd: AppLanguage.text("2 нояб."), isCellDetails: true)
 
         TestCellImage(icon: "sparkles", color: .systemPurple, iconSize: .title3, backgroundSize: 50, isResults: false)
 
         EmotionalProfileBar(type: .temperament, value: 7)
 
-        CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
+        CompleteProfileLock(title: AppLanguage.text("Пройдите тесты для получения результатов о себе"))
 
-        LoadFailedView(message: "Сервис временно недоступен. Попробуйте позже") {
-
-        }
-
-        AIConsentLock(title: "Разрешите анализ с помощью AI") {
+        LoadFailedView(message: AppLanguage.text("Сервис временно недоступен. Попробуйте позже")) {
 
         }
 
-        ClassicButton(title: "Готово") {
+        AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI")) {
+
+        }
+
+        ClassicButton(title: AppLanguage.text("Готово")) {
 
         }
     }

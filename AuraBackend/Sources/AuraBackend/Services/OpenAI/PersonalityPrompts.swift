@@ -22,7 +22,9 @@ enum PersonalityPrompts {
                                                                                ("description", .string)])))])))])
     }
 
-    static func user(user: User, selectedTests: [PersonalityTests]) -> String {
+    static func user(user: User,
+                     selectedTests: [PersonalityTests],
+                     language: ReplyLanguage) -> String {
         let selectedTestLines = selectedTests
             .map { "- " + $0.rawValue + " (" + $0.title + ")" }
             .joined(separator: "\n")
@@ -47,7 +49,7 @@ enum PersonalityPrompts {
           "archetypeTitle": "короткое название архетипа (1-2 слова)",
           "archetypeSubtitle": "1 предложение общего вывода (8-10 слов)",
           "overview": {
-            "title": "Основная характеристика",
+            "title": "\(language.personalityOverviewTitle)",
             "description": "общий персональный вывод (40-60 слов)"
           },
           "emotionalBar": [
@@ -72,11 +74,11 @@ enum PersonalityPrompts {
         """
     }
 
-    static var system: String {
+    static func system(language: ReplyLanguage) -> String {
         """
         Ты аналитик личности приложения Aura.
 
-        Пиши по-русски.
+        \(language.writingLine)
         Тон — прямой, психологически точный и реалистичный.
         Не пытайся нравиться пользователю.
         Не делай выводы мягче, чем они выглядят по данным.

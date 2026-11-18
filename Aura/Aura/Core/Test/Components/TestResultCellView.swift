@@ -40,18 +40,18 @@ enum PersonalityCellTypes: String, TestResultDisplayable, Codable {
 
     var title: String {
         switch self {
-            case .natalChart: "Черты вашего знака"
-            case .planetaryAspects: "Знак и ваш характер"
-            case .socialFilter: "Социальный фильтр"
-            case .energyDrain: "Источник истощения"
-            case .logicBalance: "Баланс логики"
-            case .intuitionFactor: "Фактор интуиции"
-            case .autonomyNeed: "Потребность в автономии"
-            case .securityBase: "База безопасности"
-            case .intellectualMatch: "Интеллектуальная схожесть"
-            case .emotionalDepth: "Глубина связи"
-            case .loveExpression: "Способы проявления чувств"
-            case .emotionalNeeds: "Эмоциональные потребности"
+            case .natalChart: AppLanguage.text("Черты вашего знака")
+            case .planetaryAspects: AppLanguage.text("Знак и ваш характер")
+            case .socialFilter: AppLanguage.text("Социальный фильтр")
+            case .energyDrain: AppLanguage.text("Источник истощения")
+            case .logicBalance: AppLanguage.text("Баланс логики")
+            case .intuitionFactor: AppLanguage.text("Фактор интуиции")
+            case .autonomyNeed: AppLanguage.text("Потребность в автономии")
+            case .securityBase: AppLanguage.text("База безопасности")
+            case .intellectualMatch: AppLanguage.text("Интеллектуальная схожесть")
+            case .emotionalDepth: AppLanguage.text("Глубина связи")
+            case .loveExpression: AppLanguage.text("Способы проявления чувств")
+            case .emotionalNeeds: AppLanguage.text("Эмоциональные потребности")
         }
     }
 
@@ -78,18 +78,18 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
     
     var title: String {
         switch self {
-            case .synastry: "Совместимость знаков"
-            case .karmicLesson: "Кармический урок"
-            case .dominanceDynamics: "Динамика лидерства"
-            case .emotionalResonance: "Эмоциональный резонанс"
-            case .attachmentBond: "Сцепка типов"
-            case .comfortDistance: "Дистанция комфорта"
-            case .languageMatch: "Совпадение языков"
-            case .translationNeeds: "Трудности перевода"
-            case .conflictMechanics: "Механика ссор"
-            case .peaceRecovery: "Скорость примирения"
-            case .sexualTemperament: "Сексуальный темперамент"
-            case .sexualChemistry: "Сексуальная химия"
+            case .synastry: AppLanguage.text("Совместимость знаков")
+            case .karmicLesson: AppLanguage.text("Кармический урок")
+            case .dominanceDynamics: AppLanguage.text("Динамика лидерства")
+            case .emotionalResonance: AppLanguage.text("Эмоциональный резонанс")
+            case .attachmentBond: AppLanguage.text("Сцепка типов")
+            case .comfortDistance: AppLanguage.text("Дистанция комфорта")
+            case .languageMatch: AppLanguage.text("Совпадение языков")
+            case .translationNeeds: AppLanguage.text("Трудности перевода")
+            case .conflictMechanics: AppLanguage.text("Механика ссор")
+            case .peaceRecovery: AppLanguage.text("Скорость примирения")
+            case .sexualTemperament: AppLanguage.text("Сексуальный темперамент")
+            case .sexualChemistry: AppLanguage.text("Сексуальная химия")
         }
     }
 
@@ -113,6 +113,6 @@ enum CompatibilityCellTypes: String, TestResultDisplayable, Codable {
 
 #Preview {
     TestResultCellView(test: CompatibilityCellTypes.comfortDistance,
-                       description: "Понятная работа настала")
+                       description: AppLanguage.text("Понятная работа настала"))
         .padding(.horizontal)
 }

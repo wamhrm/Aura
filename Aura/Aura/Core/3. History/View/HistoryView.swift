@@ -36,7 +36,7 @@ struct HistoryView: View {
                     }
                     .bottomAreaPadding(15)
                 }
-                .navigationTitle("История тестов")
+                .navigationTitle(AppLanguage.text("История тестов"))
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: HistoryRoutes.self) { route in
                     destinationView(route)
@@ -46,7 +46,7 @@ struct HistoryView: View {
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: vm.isLoading ? "Открываем результат" : "Загружаем историю",
+                LoadingView(title: vm.isLoading ? AppLanguage.text("Открываем результат") : AppLanguage.text("Загружаем историю"),
                             isPresented: vm.showsLoadingScreen)
             }
             .opacity(vm.showsLoadingScreen ? 1 : 0)
@@ -55,17 +55,17 @@ struct HistoryView: View {
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
             Button("OK", role: .cancel) {}
         }
-        .alert("Удалить результат?", isPresented: Binding {
+        .alert(AppLanguage.text("Удалить результат?"), isPresented: Binding {
             vm.showDeleteAlert
         } set: { newValue in
             if vm.showDeleteAlert != newValue { vm.showDeleteAlert = newValue }
         }) {
-            Button("Отмена", role: .cancel) {}
-            Button("Удалить", role: .destructive) {
+            Button(AppLanguage.text("Отмена"), role: .cancel) {}
+            Button(AppLanguage.text("Удалить"), role: .destructive) {
                 vm.deleteRequestedCell()
             }
         } message: {
-            Text("Результат теста нельзя будет восстановить")
+            Text(AppLanguage.text("Результат теста нельзя будет восстановить"))
         }
     }
 }
@@ -79,7 +79,7 @@ extension HistoryView {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .tint(.primaryText)
                 .contextMenu {
-                    Button("Удалить", role: .destructive) {
+                    Button(AppLanguage.text("Удалить"), role: .destructive) {
                         vm.requestDeletion(item: item)
                     }
                 }
@@ -93,7 +93,7 @@ extension HistoryView {
                 EmptyView()
             case .loaded:
                 ContentUnavailableView {
-                    Label("История пуста", systemImage: "")
+                    Label(AppLanguage.text("История пуста"), systemImage: "")
                 }
             case .failed(let message):
                 LoadFailedView(message: message) {

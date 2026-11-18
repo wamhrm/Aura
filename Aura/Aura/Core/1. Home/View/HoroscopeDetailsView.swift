@@ -43,7 +43,7 @@ struct HoroscopeDetailsView: View {
                     .addSparkles()
                     
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("На этой неделе")
+                        Text(AppLanguage.text("На этой неделе"))
                             .font(Adaptive.size(.callout, .default, .default))
                             .fontWeight(.semibold)
                         
@@ -60,13 +60,13 @@ struct HoroscopeDetailsView: View {
                     
                     VStack(spacing: 12) {
                         HStack {
-                            Text("Сферы жизни")
+                            Text(AppLanguage.text("Сферы жизни"))
                                 .padding(.leading, 4)
                                 .bold()
                             
                             Spacer()
                             
-                            Text("Эта неделя")
+                            Text(AppLanguage.text("Эта неделя"))
                                 .foregroundStyle(.deepGray)
                                 .fontWeight(.medium)
                         }
@@ -81,7 +81,7 @@ struct HoroscopeDetailsView: View {
                 .padding(.horizontal)
             }
         }
-        .navigationTitle("Мой гороскоп")
+        .navigationTitle(AppLanguage.text("Мой гороскоп"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -22,7 +22,7 @@ struct ProfileView: View {
                         SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
                     }
                 }
-                .navigationTitle("Профиль")
+                .navigationTitle(AppLanguage.text("Профиль"))
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: ProfileRoutes.self) { destination in
                     destinationView(destination)
@@ -38,7 +38,7 @@ struct ProfileView: View {
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: "Сохраняем...", isPresented: vm.isSavingProfile)
+                LoadingView(title: AppLanguage.text("Сохраняем..."), isPresented: vm.isSavingProfile)
             }
             .opacity(vm.isSavingProfile ? 1 : 0)
         }
@@ -76,7 +76,7 @@ extension ProfileView {
     
     private func sheetView() -> some View {
         SettingsSheetView(vm: vm)
-            .presentationDetents([.height(Adaptive.size(470, 482, 490))])
+            .presentationDetents([.height(Adaptive.size(620, 632, 640))])
     }
 }
 

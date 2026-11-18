@@ -64,7 +64,7 @@ struct PersonalityResultView: View {
                             .foregroundStyle(.deepGray)
                     }
                     
-                    ResultSectionView(title: "Внутренний мир") {
+                    ResultSectionView(title: AppLanguage.text("Внутренний мир")) {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
                                 EmotionalProfileBar(type: bar.key, value: bar.value)
@@ -97,7 +97,7 @@ struct PersonalityResultView: View {
                 .padding(.horizontal)
             }
         }
-        .navigationTitle("Результат персонального теста")
+        .navigationTitle(AppLanguage.text("Результат персонального теста"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

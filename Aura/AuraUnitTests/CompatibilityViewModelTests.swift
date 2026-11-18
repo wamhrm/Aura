@@ -10,7 +10,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class CompatibilityViewModelTests: XCTestCase {
+final class CompatibilityViewModelTests: AuraUnitTestCase {
     func test_partnerNameLongerThanTheLimit_sendsNothing() async {
         let content = MockContentService()
         let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)

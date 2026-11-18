@@ -26,8 +26,8 @@ struct ResultSectionView<Content: View>: View {
 }
 
 #Preview {
-    ResultSectionView(title: "Общее") {
-        Text("Описание результата теста")
+    ResultSectionView(title: AppLanguage.text("Общее")) {
+        Text(AppLanguage.text("Описание результата теста"))
             .foregroundStyle(.deepGray)
     }
     .padding(.horizontal)

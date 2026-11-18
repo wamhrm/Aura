@@ -31,7 +31,7 @@ struct CompatibilityView: View {
                                         .background(.capsuleBackground)
                                         .clipShape(.circle)
 
-                                    Text("Детали партнера")
+                                    Text(AppLanguage.text("Детали партнера"))
                                         .font(Adaptive.size(.system(size: 15), .callout, .default))
                                         .bold()
 
@@ -39,9 +39,9 @@ struct CompatibilityView: View {
                                 }
 
                                 VStack(alignment: .leading) {
-                                    headerText("Имя *")
+                                    headerText(AppLanguage.text("Имя *"))
 
-                                    CompatibilityTextFieldView(title: "Введите имя",
+                                    CompatibilityTextFieldView(title: AppLanguage.text("Введите имя"),
                                                                text: $vm.partnerInfo.name)
                                 }
 
@@ -55,7 +55,7 @@ struct CompatibilityView: View {
 
                             VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                                 HStack {
-                                    Text("Выберите тесты")
+                                    Text(AppLanguage.text("Выберите тесты"))
                                         .fontWeight(.semibold)
                                         .padding(.leading, 4)
 
@@ -64,7 +64,7 @@ struct CompatibilityView: View {
                                     Button {
                                         vm.selectAllTests()
                                     } label: {
-                                        Text("Выбрать все")
+                                        Text(AppLanguage.text("Выбрать все"))
                                             .foregroundStyle(.tint)
                                             .fontWeight(.medium)
                                     }
@@ -80,7 +80,7 @@ struct CompatibilityView: View {
                                                     }
                                 }
 
-                                ClassicButton(title: "Узнать совместимость") {
+                                ClassicButton(title: AppLanguage.text("Узнать совместимость")) {
                                     vm.makeCompatibilityTest()
                                 }
                                 .padding(.top, 10)
@@ -89,7 +89,7 @@ struct CompatibilityView: View {
                             .disabled(vm.needsAIConsent)
                             .overlay {
                                 if vm.needsAIConsent {
-                                    AIConsentLock(title: "Разрешите анализ с помощью AI для теста совместимости",
+                                    AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI для теста совместимости"),
                                                   onAllow: aiConsentButton)
                                 }
                             }
@@ -101,7 +101,7 @@ struct CompatibilityView: View {
                     .dismissKeyboardOnTap()
                     .scrollDismissesKeyboard(.interactively)
                 }
-                .navigationTitle("Узнать совместимость")
+                .navigationTitle(AppLanguage.text("Узнать совместимость"))
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: CompatibilityRoutes.self) { destination in
                     destinationView(destination)
@@ -111,7 +111,7 @@ struct CompatibilityView: View {
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: "Готовим результат...", isPresented: vm.isLoading)
+                LoadingView(title: AppLanguage.text("Готовим результат..."), isPresented: vm.isLoading)
             }
             .opacity(vm.isLoading ? 1 : 0)
         }
@@ -161,11 +161,11 @@ extension CompatibilityView {
                 .clipShape(.circle)
                 .padding(.vertical, 12)
 
-            Text("Анализ партнера")
+            Text(AppLanguage.text("Анализ партнера"))
                 .font(Adaptive.size(.default, .system(size: 18), .title3))
                 .bold()
 
-            Text("Введите информацию о партнере")
+            Text(AppLanguage.text("Введите информацию о партнере"))
                 .font(Adaptive.size(.system(size: 14), .system(size: 15), .callout))
                 .foregroundStyle(.deepGray)
                 .fontWeight(.medium)

@@ -12,16 +12,23 @@ struct OpenAIService {
     private let client = OpenAIClient()
     private let validator = OpenAIResultValidator()
 
+    private func replyLanguage(_ req: Request) -> ReplyLanguage {
+        let value = req.headers.first(name: .acceptLanguage)?.lowercased() ?? ""
+        return value.hasPrefix("en") ? .english : .russian
+    }
+
     // MARK: - Personality
     func makePersonalityTest(user: User,
                              selectedTests: [PersonalityTests],
                              req: Request) async throws -> PersonalityResultDTO {
         let userSign = try zodiacSign(user: user)
 
+        let language = replyLanguage(req)
         return try await client.generate(
-            messages: [OpenAIMessage(role: "system", content: PersonalityPrompts.system),
+            messages: [OpenAIMessage(role: "system", content: PersonalityPrompts.system(language: language)),
                        OpenAIMessage(role: "user", content: PersonalityPrompts.user(user: user,
-                                                                                    selectedTests: selectedTests))],
+                                                                                    selectedTests: selectedTests,
+                                                                                    language: language))],
             responseFormat: OpenAIResponseFormat(name: "personality_result",
                                                  schema: PersonalityPrompts.schema(selectedTests: selectedTests)),
             req: req) { data in
@@ -53,12 +60,14 @@ struct OpenAIService {
         let partnerSign = try zodiacSign(partner: partner)
         let score = CompatibilityScore.calculate(userSign: userSign, partnerSign: partnerSign)
 
+        let language = replyLanguage(req)
         return try await client.generate(
-            messages: [OpenAIMessage(role: "system", content: CompatibilityPrompts.system),
+            messages: [OpenAIMessage(role: "system", content: CompatibilityPrompts.system(language: language)),
                        OpenAIMessage(role: "user", content: CompatibilityPrompts.user(user: user,
                                                                                       partner: partner,
                                                                                       score: score,
-                                                                                      selectedTests: selectedTests))],
+                                                                                      selectedTests: selectedTests,
+                                                                                      language: language))],
             responseFormat: OpenAIResponseFormat(name: "compatibility_result",
                                                  schema: CompatibilityPrompts.schema(selectedTests: selectedTests)),
             req: req) { data in

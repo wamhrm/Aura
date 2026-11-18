@@ -15,14 +15,14 @@ struct PasswordStepView: View {
             BackgroundView()
             
             VStack(alignment: .leading, spacing: 35) {
-                OnboardingHeader(title: "Придумайте пароль",
-                                 subtitle: "Не меньше \(InputLimits.minPasswordLength) символов")
+                OnboardingHeader(title: AppLanguage.text("Придумайте пароль"),
+                                 subtitle: AppLanguage.text("Не меньше \(InputLimits.minPasswordLength) символов"))
 
                 OnboardingTextField(text: $vm.password, type: .password)
             
                 Spacer()
 
-                ClassicButton(title: "Далее") {
+                ClassicButton(title: AppLanguage.text("Далее")) {
                     vm.continueFromPassword()
                 }
 

@@ -215,6 +215,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         urlRequest.timeoutInterval = timeout
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Time-Zone")
+        urlRequest.setValue(AppLanguage.requestCode, forHTTPHeaderField: "Accept-Language")
         urlRequest.httpBody = body
 
         if let idempotencyKey {
@@ -357,20 +358,20 @@ nonisolated enum NetworkError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidURL: "Некорректный URL"
-            case .invalidResponse: "Некорректный ответ от сервера"
-            case .decodingError: "Не удалось обработать ответ сервера"
-            case .unauthorized: "Неправильная почта или пароль"
-            case .sessionExpired: "Сессия истекла. Войдите снова"
-            case .userExists: "Пользователь уже зарегистрирован"
-            case .notFound: "Данные не найдены"
-            case .tooManyRequests: "Слишком много запросов. Попробуйте позже"
-            case .serverUnavailable: "Сервис временно недоступен. Попробуйте позже"
+            case .invalidURL: AppLanguage.text("Некорректный URL")
+            case .invalidResponse: AppLanguage.text("Некорректный ответ от сервера")
+            case .decodingError: AppLanguage.text("Не удалось обработать ответ сервера")
+            case .unauthorized: AppLanguage.text("Неправильная почта или пароль")
+            case .sessionExpired: AppLanguage.text("Сессия истекла. Войдите снова")
+            case .userExists: AppLanguage.text("Пользователь уже зарегистрирован")
+            case .notFound: AppLanguage.text("Данные не найдены")
+            case .tooManyRequests: AppLanguage.text("Слишком много запросов. Попробуйте позже")
+            case .serverUnavailable: AppLanguage.text("Сервис временно недоступен. Попробуйте позже")
             case .server(let message), .limited(let message): message
-            case .timedOut: "Сервер не ответил вовремя. Попробуйте ещё раз"
-            case .noConnection: "Нет подключения к интернету"
-            case .cannotReachServer: "Не удалось связаться с сервером. Попробуйте позже"
-            case .cancelled: "Запрос отменён"
+            case .timedOut: AppLanguage.text("Сервер не ответил вовремя. Попробуйте ещё раз")
+            case .noConnection: AppLanguage.text("Нет подключения к интернету")
+            case .cannotReachServer: AppLanguage.text("Не удалось связаться с сервером. Попробуйте позже")
+            case .cancelled: AppLanguage.text("Запрос отменён")
         }
     }
 }

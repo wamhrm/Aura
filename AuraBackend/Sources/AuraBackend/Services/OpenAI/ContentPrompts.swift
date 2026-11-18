@@ -7,6 +7,33 @@
 
 import Foundation
 
+enum ReplyLanguage {
+    case russian, english
+
+    var writingLine: String {
+        switch self {
+            case .russian:
+                "Пиши по-русски."
+            case .english:
+                "Write every JSON text value in English. Address the reader as you. Do not translate JSON keys."
+        }
+    }
+
+    var personalityOverviewTitle: String {
+        switch self {
+            case .russian: "Основная характеристика"
+            case .english: "Main characteristic"
+        }
+    }
+
+    var compatibilityOverviewTitle: String {
+        switch self {
+            case .russian: "Основная динамика"
+            case .english: "Main dynamic"
+        }
+    }
+}
+
 enum ContentPrompts {
     static func userProfile(user: User) -> String {
         """

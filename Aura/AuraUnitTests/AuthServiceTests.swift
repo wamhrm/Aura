@@ -12,7 +12,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class AuthServiceTests: XCTestCase {
+final class AuthServiceTests: AuraUnitTestCase {
     func test_networkRequest_propagatesAnUnreadableKeychain() async {
         let keychain = MockKeychainHelper()
         keychain.readFails = true

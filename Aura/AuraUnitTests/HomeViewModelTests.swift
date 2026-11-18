@@ -10,7 +10,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class HomeViewModelTests: XCTestCase {
+final class HomeViewModelTests: AuraUnitTestCase {
     func test_refreshIfNeeded_doesNotRepeatTodaysInitialRequests() async {
         let content = MockContentService()
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)

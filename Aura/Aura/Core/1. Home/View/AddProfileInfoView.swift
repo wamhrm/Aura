@@ -17,12 +17,12 @@ struct AddProfileInfoView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    ProfileInfoSection(title: "Ваше имя") {
-                        CompatibilityTextFieldView(title: "Введите имя",
+                    ProfileInfoSection(title: AppLanguage.text("Ваше имя")) {
+                        CompatibilityTextFieldView(title: AppLanguage.text("Введите имя"),
                                                    text: $vm.name)
                     }
 
-                    ProfileInfoSection(title: "Ваш пол") {
+                    ProfileInfoSection(title: AppLanguage.text("Ваш пол")) {
                         HStack {
                             ProfileInfoOptionView(type: .man,
                                                   selection: $vm.profileInfo.gender)
@@ -31,7 +31,7 @@ struct AddProfileInfoView: View {
                         }
                     }
 
-                    ProfileInfoSection(title: "Дата рождения") {
+                    ProfileInfoSection(title: AppLanguage.text("Дата рождения")) {
                         BirthDateFieldsView(birthDate: $vm.birthDate,
                                             knowsBirthTime: $vm.knowsBirthTime,
                                             birthTime: $vm.birthTime,
@@ -40,7 +40,7 @@ struct AddProfileInfoView: View {
 
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)
 
-                    ClassicButton(title: "Готово") {
+                    ClassicButton(title: AppLanguage.text("Готово")) {
                         onSave()
                     }
                     .padding(.top, 5)
@@ -51,10 +51,10 @@ struct AddProfileInfoView: View {
             .dismissKeyboardOnTap()
             .scrollDismissesKeyboard(.interactively)
         }
-        .navigationTitle("О вас")
+        .navigationTitle(AppLanguage.text("О вас"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
-            Button("ОК", role: .cancel) { }
+            Button(AppLanguage.text("ОК"), role: .cancel) { }
         }
     }
 }
@@ -64,22 +64,22 @@ enum ProfileInfoOption: String, CaseIterable {
 
     var title: String {
         switch self {
-            case .man: "Мужской"
-            case .woman: "Женский"
-            case .introvert: "Интроверт"
-            case .ambivert: "Амбиверт"
-            case .extrovert: "Экстраверт"
-            case .mediator: "Миротворец"
-            case .direct: "Прямой"
-            case .avoider: "Избегающий"
-            case .logic: "Рациональный"
-            case .intuitive: "Интуитивный"
-            case .planner: "Планируете"
-            case .spontaneous: "По ситуации"
-            case .procrastinator: "Откладываете"
-            case .stability: "Стабильность"
-            case .growth: "Рост"
-            case .peace: "Спокойствие"
+            case .man: AppLanguage.text("Мужской")
+            case .woman: AppLanguage.text("Женский")
+            case .introvert: AppLanguage.text("Интроверт")
+            case .ambivert: AppLanguage.text("Амбиверт")
+            case .extrovert: AppLanguage.text("Экстраверт")
+            case .mediator: AppLanguage.text("Миротворец")
+            case .direct: AppLanguage.text("Прямой")
+            case .avoider: AppLanguage.text("Избегающий")
+            case .logic: AppLanguage.text("Рациональный")
+            case .intuitive: AppLanguage.text("Интуитивный")
+            case .planner: AppLanguage.text("Планируете")
+            case .spontaneous: AppLanguage.text("По ситуации")
+            case .procrastinator: AppLanguage.text("Откладываете")
+            case .stability: AppLanguage.text("Стабильность")
+            case .growth: AppLanguage.text("Рост")
+            case .peace: AppLanguage.text("Спокойствие")
         }
     }
 

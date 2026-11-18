@@ -52,18 +52,18 @@ enum HoroscopeTypes: String, CaseIterable, Codable {
 
     var title: String {
         switch self {
-            case .aries: "Овен"
-            case .taurus: "Телец"
-            case .gemini: "Близнецы"
-            case .cancer: "Рак"
-            case .leo: "Лев"
-            case .virgo: "Дева"
-            case .libra: "Весы"
-            case .scorpio: "Скорпион"
-            case .sagittarius: "Стрелец"
-            case .capricorn: "Козерог"
-            case .aquarius: "Водолей"
-            case .pisces: "Рыбы"
+            case .aries: AppLanguage.text("Овен")
+            case .taurus: AppLanguage.text("Телец")
+            case .gemini: AppLanguage.text("Близнецы")
+            case .cancer: AppLanguage.text("Рак")
+            case .leo: AppLanguage.text("Лев")
+            case .virgo: AppLanguage.text("Дева")
+            case .libra: AppLanguage.text("Весы")
+            case .scorpio: AppLanguage.text("Скорпион")
+            case .sagittarius: AppLanguage.text("Стрелец")
+            case .capricorn: AppLanguage.text("Козерог")
+            case .aquarius: AppLanguage.text("Водолей")
+            case .pisces: AppLanguage.text("Рыбы")
         }
     }
     

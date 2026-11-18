@@ -30,6 +30,6 @@ extension AlertPresentable {
 
 extension Error {
     var userMessage: String {
-        (self as? LocalizedError)?.errorDescription ?? "Что-то пошло не так. Попробуйте ещё раз"
+        (self as? LocalizedError)?.errorDescription ?? AppLanguage.text("Что-то пошло не так. Попробуйте ещё раз")
     }
 }

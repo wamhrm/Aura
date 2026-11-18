@@ -25,7 +25,7 @@ struct AllTestsView: View {
                         }
                     }
                     
-                    ClassicButton(title: "Проверить себя") {
+                    ClassicButton(title: AppLanguage.text("Проверить себя")) {
                         vm.makePersonalityTest()
                     }
                     .padding(.top, 10)
@@ -34,7 +34,7 @@ struct AllTestsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Проверить себя")
+        .navigationTitle(AppLanguage.text("Проверить себя"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

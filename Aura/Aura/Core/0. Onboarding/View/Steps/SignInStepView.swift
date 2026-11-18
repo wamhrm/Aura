@@ -15,19 +15,19 @@ struct SignInStepView: View {
             BackgroundView()
             
             VStack(alignment: .leading, spacing: 35) {
-                OnboardingHeader(title: "С возвращением",
-                                 subtitle: "Войдите в свой аккаунт")
+                OnboardingHeader(title: AppLanguage.text("С возвращением"),
+                                 subtitle: AppLanguage.text("Войдите в свой аккаунт"))
 
                 VStack(alignment: .trailing, spacing: 10) {
                     OnboardingTextField(text: $vm.email, type: .email)
                     OnboardingTextField(text: $vm.password, type: .password)
 
-                    OnboardingTextButton(title: "Забыли пароль?") {
+                    OnboardingTextButton(title: AppLanguage.text("Забыли пароль?")) {
                         vm.showPasswordReset()
                     }
                 }
 
-                ClassicButton(title: "Войти") {
+                ClassicButton(title: AppLanguage.text("Войти")) {
                     vm.signIn()
                 }
 
@@ -37,11 +37,11 @@ struct SignInStepView: View {
                     OnboardingLegalText()
 
                     HStack(spacing: 4) {
-                        Text("Нет аккаунта?")
+                        Text(AppLanguage.text("Нет аккаунта?"))
                             .font(Adaptive.size(.footnote, .system(size: 14), .callout))
                             .foregroundStyle(.deepGray)
 
-                        OnboardingTextButton(title: "Создать") {
+                        OnboardingTextButton(title: AppLanguage.text("Создать")) {
                             vm.showSignUp()
                         }
                     }

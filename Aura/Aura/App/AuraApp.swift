@@ -14,9 +14,10 @@ struct AuraApp: App {
 
     @AppStorage(Constants.selectedThemeKey,
                 store: Constants.userDefaults) private var selectedTheme = AppTheme.light
-
     @AppStorage(Constants.accentColorKey,
                 store: Constants.userDefaults) private var accentColor = AccentColorOption.blue.rawValue
+    @AppStorage(Constants.appLanguage,
+                store: Constants.userDefaults) private var appLanguage = AppLanguage.system
 
     init() {
         let networkService = NetworkService()
@@ -33,6 +34,7 @@ struct AuraApp: App {
                      contentService: contentService)
                 .preferredColorScheme(selectedTheme.colorScheme)
                 .tint(AccentColorOption.color(accentColor))
+                .environment(\.locale, appLanguage.locale)
         }
     }
 }

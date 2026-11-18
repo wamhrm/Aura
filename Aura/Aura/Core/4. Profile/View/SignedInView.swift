@@ -55,12 +55,12 @@ struct SignedInView: View {
 
                     VStack(alignment: .leading, spacing: 15) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("СОВЕТ ДНЯ")
+                            Text(AppLanguage.text("СОВЕТ ДНЯ"))
                                 .font(Adaptive.size(.callout, .default, .default))
                                 .fontWeight(.heavy)
 
                             if vm.needsAIConsent {
-                                AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать совет дня",
+                                AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI, чтобы получать совет дня"),
                                               onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
                             } else if let dailyTip = vm.profileDisplayHandler.dailyTip {
@@ -85,7 +85,7 @@ struct SignedInView: View {
                         .clipShape(.rect(cornerRadius: 12))
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("О вас")
+                            Text(AppLanguage.text("О вас"))
                                 .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
@@ -119,7 +119,7 @@ struct SignedInView: View {
                         .backgroundWithShape(12, .cardBackground, true)
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Ваш психотип")
+                            Text(AppLanguage.text("Ваш психотип"))
                                 .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
@@ -162,7 +162,7 @@ struct SignedInView: View {
                 await vm.refresh()
             }
         }
-        .navigationTitle("Профиль")
+        .navigationTitle(AppLanguage.text("Профиль"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -174,7 +174,7 @@ extension SignedInView {
             case .loading:
                 ProgressView()
             case .loaded:
-                CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
+                CompleteProfileLock(title: AppLanguage.text("Пройдите тесты для получения результатов о себе"))
             case .failed(let message):
                 LoadFailedView(message: message) {
                     vm.retryPersonality()

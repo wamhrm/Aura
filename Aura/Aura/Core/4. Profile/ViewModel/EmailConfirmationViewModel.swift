@@ -27,16 +27,16 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     }
 
     var subtitle: String {
-        isCodeSent ? "Мы отправили код на \(email). Введите его, чтобы проходить тесты"
-                   : "Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код."
+        isCodeSent ? AppLanguage.text("Мы отправили код на \(email). Введите его, чтобы проходить тесты")
+                   : AppLanguage.text("Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код.")
     }
 
     var sendCodeButtonTitle: String {
-        isLoading ? "Отправляем..." : "Подтвердить"
+        isLoading ? AppLanguage.text("Отправляем...") : AppLanguage.text("Подтвердить")
     }
 
     var confirmButtonTitle: String {
-        isLoading ? "Проверяем..." : "Проверить код"
+        isLoading ? AppLanguage.text("Проверяем...") : AppLanguage.text("Проверить код")
     }
     
     var sheetHeight: CGFloat {
@@ -47,7 +47,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         guard !isLoading else { return }
 
         isLoading = true
-        loadingTitle = "Отправляем..."
+        loadingTitle = AppLanguage.text("Отправляем...")
 
         Task {
             do {
@@ -70,12 +70,12 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         let code = code.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard code.count == InputLimits.resetCodeLength, code.allSatisfy(\.isNumber) else {
-            presentAlert("Код состоит из \(InputLimits.resetCodeLength) цифр")
+            presentAlert(AppLanguage.text("Код состоит из \(InputLimits.resetCodeLength) цифр"))
             return
         }
 
         isLoading = true
-        loadingTitle = "Проверяем..."
+        loadingTitle = AppLanguage.text("Проверяем...")
 
         Task {
             do {

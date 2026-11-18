@@ -68,7 +68,7 @@ struct CompatibilityResultView: View {
                             .foregroundStyle(.deepGray)
                     }
 
-                    ResultSectionView(title: "Эмоциональная совместимость") {
+                    ResultSectionView(title: AppLanguage.text("Эмоциональная совместимость")) {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
                                 EmotionalProfileBar(type: bar.key, value: bar.value)
@@ -97,7 +97,7 @@ struct CompatibilityResultView: View {
                         }
                     }
 
-                    ResultSectionView(title: "Прогноз будущего") {
+                    ResultSectionView(title: AppLanguage.text("Прогноз будущего")) {
                         VStack(spacing: 12) {
                             resultsWithNumbersSection(.spark,
                                                       result.forecast.recognitionTitle,
@@ -114,7 +114,7 @@ struct CompatibilityResultView: View {
                 .bottomAreaPadding(15)
             }
         }
-        .navigationTitle("Результат теста на совместимость")
+        .navigationTitle(AppLanguage.text("Результат теста на совместимость"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -142,8 +142,8 @@ extension CompatibilityResultView {
                    height: Adaptive.size(150, 158, 168))
 
             VStack(spacing: 2) {
-                Text("Совместимость солнечных знаков")
-                Text("Не зависит от выбранных разделов")
+                Text(AppLanguage.text("Совместимость солнечных знаков"))
+                Text(AppLanguage.text("Не зависит от выбранных разделов"))
             }
             .font(Adaptive.size(.caption2, .caption, .caption))
             .foregroundStyle(Color.deepGray)
@@ -165,7 +165,7 @@ extension CompatibilityResultView {
                 .frame(width: Adaptive.size(35, 37, 38), alignment: .leading)
 
             VStack(alignment: .leading, spacing: 7) {
-                Text(type.rawValue.uppercased())
+                Text(type.title.uppercased())
                     .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                     .fontWeight(.medium)
                     .foregroundStyle(.gray)
@@ -191,9 +191,15 @@ extension CompatibilityResultView {
     }
 }
 
-fileprivate enum LoveLanguageTypes: String {
-    case spark = "Искра"
-    case potential = "Потенциал"
+fileprivate enum LoveLanguageTypes {
+    case spark, potential
+
+    var title: String {
+        switch self {
+            case .spark: AppLanguage.text("Искра")
+            case .potential: AppLanguage.text("Потенциал")
+        }
+    }
 
     var number: String {
         switch self {

@@ -12,6 +12,7 @@ struct SettingsSheetView: View {
     
     @AppStorage(Constants.selectedThemeKey, store: Constants.userDefaults) private var selectedTheme = AppTheme.light
     @AppStorage(Constants.accentColorKey, store: Constants.userDefaults) private var accentColor = AccentColorOption.blue.rawValue
+    @AppStorage(Constants.appLanguage, store: Constants.userDefaults) private var appLanguage = AppLanguage.system
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -21,7 +22,7 @@ struct SettingsSheetView: View {
                 
                 VStack(alignment: .leading, spacing: 30) {
                     VStack(alignment: .leading, spacing: 15) {
-                        headerText("Оформление")
+                        headerText(AppLanguage.text("Оформление"))
 
                         HStack(spacing: 15) {
                             themeButtonsView(type: .bright,
@@ -37,7 +38,7 @@ struct SettingsSheetView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 15) {
-                        headerText("Акцентный цвет")
+                        headerText(AppLanguage.text("Акцентный цвет"))
 
                         HStack {
                             ForEach(AccentColorOption.allCases) { option in
@@ -48,6 +49,11 @@ struct SettingsSheetView: View {
                                 .frame(maxWidth: .infinity)
                             }
                         }
+                    }
+
+                    VStack(alignment: .leading, spacing: 15) {
+                        headerText(AppLanguage.text("Язык"))
+                        languageMenu()
                     }
 
                     VStack(spacing: 15) {
@@ -62,14 +68,14 @@ struct SettingsSheetView: View {
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
                             vm.requestAccountDeletion()
                         }
-                        .alert("Удалить аккаунт?", isPresented: Binding {
+                        .alert(AppLanguage.text("Удалить аккаунт?"), isPresented: Binding {
                             vm.showDeleteAccountAlert
                         } set: { newValue in
                             if vm.showDeleteAccountAlert != newValue { vm.showDeleteAccountAlert = newValue }
                         }) {
                             deleteAccountAlertView()
                         } message: {
-                            Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
+                            Text(AppLanguage.text("Профиль, история тестов и все результаты будут удалены без возможности восстановления."))
                         }
                     }
                     .disabled(vm.isDeletingAccount)
@@ -77,12 +83,12 @@ struct SettingsSheetView: View {
                     legalLinksView()
                 }
                 .padding(.horizontal)
-                .navigationTitle("Настройки")
+                .navigationTitle(AppLanguage.text("Настройки"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     toolbarItem()
                 }
-                .alert("Выйти из аккаунта?", isPresented: Binding {
+                .alert(AppLanguage.text("Выйти из аккаунта?"), isPresented: Binding {
                     vm.showSignOutAlert
                 } set: { newValue in
                     if vm.showSignOutAlert != newValue { vm.showSignOutAlert = newValue }
@@ -93,9 +99,9 @@ struct SettingsSheetView: View {
         }
         .interactiveDismissDisabled(vm.isDeletingAccount)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
-            Button("ОК", role: .cancel) {}
+            Button(AppLanguage.text("ОК"), role: .cancel) {}
         }
-        .alert("Не удалось удалить аккаунт", isPresented: Binding {
+        .alert(AppLanguage.text("Не удалось удалить аккаунт"), isPresented: Binding {
             vm.showDeleteAccountError
         } set: { newValue in
             if vm.showDeleteAccountError != newValue { vm.showDeleteAccountError = newValue }
@@ -122,16 +128,16 @@ extension SettingsSheetView {
     
     @ViewBuilder
     private func alertView() -> some View {
-        Button("Отмена", role: .cancel) {}
-        Button("Выйти", role: .destructive) {
+        Button(AppLanguage.text("Отмена"), role: .cancel) {}
+        Button(AppLanguage.text("Выйти"), role: .destructive) {
             vm.signOut()
         }
     }
 
     @ViewBuilder
     private func deleteAccountAlertView() -> some View {
-        Button("Отмена", role: .cancel) {}
-        Button("Удалить", role: .destructive) {
+        Button(AppLanguage.text("Отмена"), role: .cancel) {}
+        Button(AppLanguage.text("Удалить"), role: .destructive) {
             vm.deleteAccount()
         }
     }
@@ -139,11 +145,11 @@ extension SettingsSheetView {
     private func legalLinksView() -> some View {
         HStack(spacing: 20) {
             if let url = Constants.privacyPolicyURL {
-                Link("Политика конфиденциальности", destination: url)
+                Link(AppLanguage.text("Политика конфиденциальности"), destination: url)
             }
 
             if let url = Constants.termsOfUseURL {
-                Link("Условия использования", destination: url)
+                Link(AppLanguage.text("Условия использования"), destination: url)
             }
         }
         .font(Adaptive.size(.caption, .footnote, .footnote))
@@ -151,6 +157,33 @@ extension SettingsSheetView {
         .frame(maxWidth: .infinity)
     }
     
+    private func languageMenu() -> some View {
+        Menu {
+            Picker(AppLanguage.text("Язык"), selection: $appLanguage) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.title).tag(language)
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Text(appLanguage.title)
+
+                Spacer()
+
+                Image(systemName: "chevron.up.chevron.down")
+            }
+            .padding(.vertical, 13)
+            .padding(.horizontal, 14)
+            .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(.primary)
+            .clipShape(.rect(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.gray.opacity(0.25), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
     private func headerText(_ title: String) -> some View {
         Text(title)
             .font(Adaptive.size(.system(size: 15), .callout, .default))
@@ -161,7 +194,7 @@ extension SettingsSheetView {
                               isLoading: Bool = false,
                               _ completion: @escaping () -> Void) -> some View {
         Button(action: completion) {
-            Text(type.rawValue)
+            Text(type.title)
                 .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                 .bold()
                 .foregroundStyle(type.foregroundColor)
@@ -189,7 +222,7 @@ extension SettingsSheetView {
             HStack(spacing: 10) {
                 Image(systemName: type.icon)
                 
-                Text(type.rawValue)
+                Text(type.title)
             }
             .padding(.vertical, 13)
             .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
@@ -216,10 +249,16 @@ extension SettingsSheetView {
     }
 }
 
-fileprivate enum ButtonTypes: String {
-    case updateInfo = "Обновить информацию о себе"
-    case signOut = "Выйти"
-    case deleteAccount = "Удалить аккаунт"
+fileprivate enum ButtonTypes {
+    case updateInfo, signOut, deleteAccount
+
+    var title: String {
+        switch self {
+            case .updateInfo: AppLanguage.text("Обновить информацию о себе")
+            case .signOut: AppLanguage.text("Выйти")
+            case .deleteAccount: AppLanguage.text("Удалить аккаунт")
+        }
+    }
 
     var backgroundColor: Color {
         switch self {
@@ -251,9 +290,15 @@ fileprivate enum ButtonTypes: String {
     }
 }
 
-fileprivate enum ThemeButtonTypes: String {
-    case bright = "Светлая"
-    case dark = "Темная"
+fileprivate enum ThemeButtonTypes {
+    case bright, dark
+
+    var title: String {
+        switch self {
+            case .bright: AppLanguage.text("Светлая")
+            case .dark: AppLanguage.text("Темная")
+        }
+    }
     
     var icon: String {
         switch self {

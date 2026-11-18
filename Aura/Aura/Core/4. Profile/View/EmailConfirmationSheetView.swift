@@ -27,7 +27,7 @@ struct EmailConfirmationSheetView: View {
                                 vm.confirm()
                             }
 
-                            OnboardingTextButton(title: "Отправить код ещё раз") {
+                            OnboardingTextButton(title: AppLanguage.text("Отправить код ещё раз")) {
                                 vm.sendCode()
                             }
                             .frame(maxWidth: .infinity)
@@ -53,7 +53,7 @@ struct EmailConfirmationSheetView: View {
             }
             .animation(.easeInOut(duration: 0.35), value: vm.isCodeSent && vm.isLoading)
             .padding(.horizontal)
-            .navigationTitle("Подтвердите почту")
+            .navigationTitle(AppLanguage.text("Подтвердите почту"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 toolbarItem()

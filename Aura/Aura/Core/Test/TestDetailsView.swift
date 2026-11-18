@@ -29,7 +29,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                     .fontWeight(.medium)
                 
                 VStack(alignment: .leading, spacing: 15) {
-                    Text("Что включено")
+                    Text(AppLanguage.text("Что включено"))
                         .font(Adaptive.size(.system(size: 15), .callout, .default))
                         .bold()
                         .padding(.bottom, 5)
@@ -55,7 +55,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 .padding(20)
                 .backgroundWithShape(12, .cardBackground, true)
                 
-                ClassicButton(title: isSelected ? "Убрать" : "Выбрать") {
+                ClassicButton(title: isSelected ? AppLanguage.text("Убрать") : AppLanguage.text("Выбрать")) {
                     onTapHandler()
                 }
                 

@@ -32,5 +32,5 @@ struct CompatibilityTextFieldView: View {
 }
 
 #Preview {
-    CompatibilityTextFieldView(title: "Введите имя", text: .constant(""))
+    CompatibilityTextFieldView(title: AppLanguage.text("Введите имя"), text: .constant(""))
 }

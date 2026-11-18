@@ -13,7 +13,6 @@ final class UIAuditScreenshots: AuraUITestCase {
     override func setUp() async throws {
         try await super.setUp()
         continueAfterFailure = true
-        app.launchArguments += ["-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
     }
 
     func test_onboarding() throws {

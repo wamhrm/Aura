@@ -19,14 +19,14 @@ struct AIConsentView: View {
                 AIConsentContentView()
 
                 VStack(spacing: 5) {
-                    ClassicButton(title: "Разрешить") {
+                    ClassicButton(title: AppLanguage.text("Разрешить")) {
                         allow()
                     }
 
                     Button {
                         decline()
                     } label: {
-                        Text("Не сейчас")
+                        Text(AppLanguage.text("Не сейчас"))
                             .font(.system(size: Adaptive.size(14, 15, 15)))
                             .foregroundStyle(.deepGray)
                             .bold()

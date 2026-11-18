@@ -22,7 +22,7 @@ struct RootView: View {
             if case .loading = authService.restorationState {
                 ZStack {
                     BackgroundView()
-                    LoadingView(title: "Входим...")
+                    LoadingView(title: AppLanguage.text("Входим..."))
                 }
             } else if case .failed(let message) = authService.restorationState {
                 ZStack {

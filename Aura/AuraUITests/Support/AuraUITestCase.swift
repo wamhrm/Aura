@@ -24,6 +24,7 @@ class AuraUITestCase: XCTestCase {
         try setDefaultResponses()
 
         app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(ru)"]
         app.launchEnvironment["AURA_BASE_URL"] = server.baseURL
         app.launchEnvironment["AURA_UI_TEST_ID"] = UUID().uuidString
     }

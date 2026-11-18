@@ -52,7 +52,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     }
 
     var greetingText: String {
-        "Здравствуйте, \(userName.capitalized)"
+        AppLanguage.text("Здравствуйте, \(userName.capitalized)")
     }
 
     var showsLoadingScreen: Bool {
@@ -154,7 +154,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     func allowAIConsent() {
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = "Обновляем информацию"
+        loadingTitle = AppLanguage.text("Обновляем информацию")
 
         let sessionID = authService.sessionID
 
@@ -186,7 +186,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     func toggleTestSelection(_ test: PersonalityTestTypes) {
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > InputLimits.minPersonalityTests else {
-                presentAlert("Нельзя выбрать меньше \(InputLimits.minPersonalityTests) тестов")
+                presentAlert(AppLanguage.text("Нельзя выбрать меньше \(InputLimits.minPersonalityTests) тестов"))
                 return
             }
             selectedTests.remove(at: index)
@@ -207,7 +207,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         let tests = selectedTests
         let requestID = currentPersonalityRequestID()
         isLoading = true
-        loadingTitle = "Готовим результат..."
+        loadingTitle = AppLanguage.text("Готовим результат...")
 
         let sessionID = authService.sessionID
 

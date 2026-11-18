@@ -43,9 +43,9 @@ enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
 
     fileprivate var title: String {
         switch self {
-            case .love: "Любовь"
-            case .health: "Здоровье"
-            case .work: "Работа"
+            case .love: AppLanguage.text("Любовь")
+            case .health: AppLanguage.text("Здоровье")
+            case .work: AppLanguage.text("Работа")
         }
     }
     
@@ -67,5 +67,5 @@ enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
 }
 
 #Preview {
-    HoroscopeDetailsCellView(type: .love, description: "Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения и принесет давно ожидаемое понимание.")
+    HoroscopeDetailsCellView(type: .love, description: AppLanguage.text("Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения и принесет давно ожидаемое понимание."))
 }

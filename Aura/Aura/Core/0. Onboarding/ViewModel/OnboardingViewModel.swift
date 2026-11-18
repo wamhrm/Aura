@@ -27,19 +27,19 @@ enum IntroPages: Int, CaseIterable {
 
     var title: String {
         switch self {
-            case .welcome: "Добро пожаловать"
-            case .horoscope: "Гороскоп на неделю"
-            case .daily: "Инсайт и совет дня"
-            case .tests: "Тесты о вас и совместимость"
+            case .welcome: AppLanguage.text("Добро пожаловать")
+            case .horoscope: AppLanguage.text("Гороскоп на неделю")
+            case .daily: AppLanguage.text("Инсайт и совет дня")
+            case .tests: AppLanguage.text("Тесты о вас и совместимость")
         }
     }
 
     var subtitle: String {
         switch self {
-            case .welcome: "Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других"
-            case .horoscope: "Прогноз о любви, здоровье и работе для вашего знака зодиака"
-            case .daily: "Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание"
-            case .tests: "Узнайте свой психотип и проверьте совместимость с партнёром"
+            case .welcome: AppLanguage.text("Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других")
+            case .horoscope: AppLanguage.text("Прогноз о любви, здоровье и работе для вашего знака зодиака")
+            case .daily: AppLanguage.text("Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание")
+            case .tests: AppLanguage.text("Узнайте свой психотип и проверьте совместимость с партнёром")
         }
     }
 }
@@ -103,15 +103,15 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     var introButtonTitle: String {
-        isLastIntroPage ? "Начать" : "Далее"
+        isLastIntroPage ? AppLanguage.text("Начать") : AppLanguage.text("Далее")
     }
 
     var nameAndBirthTitle: String {
-        isSignedIn ? "Когда вы родились?" : "Как вас зовут и когда вы родились?"
+        isSignedIn ? AppLanguage.text("Когда вы родились?") : AppLanguage.text("Как вас зовут и когда вы родились?")
     }
 
     var emailButtonTitle: String {
-        isCheckingEmail ? "Проверяем..." : "Далее"
+        isCheckingEmail ? AppLanguage.text("Проверяем...") : AppLanguage.text("Далее")
     }
 
     private var isLastIntroPage: Bool {
@@ -144,7 +144,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         hasSession = false
         isLoading = false
         onboardingRoutes = []
-        presentAlert(authService.takeExpiredSessionMessage() ?? "Сессия истекла. Войдите снова")
+        presentAlert(authService.takeExpiredSessionMessage() ?? AppLanguage.text("Сессия истекла. Войдите снова"))
     }
 
     func goBack() {
@@ -254,7 +254,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = "Входим..."
+        loadingTitle = AppLanguage.text("Входим...")
         
         var sessionID = authService.sessionID
 
@@ -293,7 +293,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
 
         isLoading = true
-        loadingTitle = "Создаём аккаунт..."
+        loadingTitle = AppLanguage.text("Создаём аккаунт...")
         
         var sessionID = authService.sessionID
         
@@ -332,7 +332,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = "Отправляем..."
+        loadingTitle = AppLanguage.text("Отправляем...")
 
         let sessionID = authService.sessionID
 
@@ -364,7 +364,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         let code = resetCode.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard code.count == InputLimits.resetCodeLength, code.allSatisfy(\.isNumber) else {
-            presentAlert("Введите 6-значный код из письма")
+            presentAlert(AppLanguage.text("Введите 6-значный код из письма"))
             return
         }
 
@@ -375,7 +375,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = "Сохраняем..."
+        loadingTitle = AppLanguage.text("Сохраняем...")
 
         var sessionID = authService.sessionID
 
@@ -411,7 +411,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         guard !isLoading else { return }
 
         guard profileInfo.hasAllAnswers else {
-            presentAlert("Ответьте на все вопросы")
+            presentAlert(AppLanguage.text("Ответьте на все вопросы"))
             return
         }
 
@@ -435,7 +435,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     private func giveAIConsent() {
         isLoading = true
-        loadingTitle = "Сохраняем..."
+        loadingTitle = AppLanguage.text("Сохраняем...")
 
         let sessionID = authService.sessionID
 
@@ -468,7 +468,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         let preparedRequest = request
 
         isLoading = true
-        loadingTitle = "Сохраняем профиль и настройки"
+        loadingTitle = AppLanguage.text("Сохраняем профиль и настройки")
 
         let sessionID = authService.sessionID
 
@@ -536,40 +536,40 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     private func validateSignIn(email: String, password: String) -> String? {
         guard !email.isEmpty, !password.isEmpty else {
-            return "Заполните почту и пароль"
+            return AppLanguage.text("Заполните почту и пароль")
         }
         return emailError(email)
     }
 
     private func nameError(_ name: String) -> String? {
         if name.isEmpty {
-            return "Укажите имя"
+            return AppLanguage.text("Укажите имя")
         }
         if name.count < InputLimits.minNameLength {
-            return "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
+            return AppLanguage.text("Имя должно содержать минимум \(InputLimits.minNameLength) символа")
         }
         if name.count > InputLimits.maxNameLength {
-            return "Имя должно быть не длиннее \(InputLimits.maxNameLength) символов"
+            return AppLanguage.text("Имя должно быть не длиннее \(InputLimits.maxNameLength) символов")
         }
         return nil
     }
 
     private func emailError(_ email: String) -> String? {
         if email.isEmpty {
-            return "Укажите почту"
+            return AppLanguage.text("Укажите почту")
         }
         if !Self.isValidEmail(email) {
-            return "Укажите корректный e-mail"
+            return AppLanguage.text("Укажите корректный e-mail")
         }
         return nil
     }
 
     private func passwordError(_ password: String) -> String? {
         if password.isEmpty {
-            return "Укажите пароль"
+            return AppLanguage.text("Укажите пароль")
         }
         if password.count < InputLimits.minPasswordLength {
-            return "Пароль должен быть не короче \(InputLimits.minPasswordLength) символов"
+            return AppLanguage.text("Пароль должен быть не короче \(InputLimits.minPasswordLength) символов")
         }
         return nil
     }

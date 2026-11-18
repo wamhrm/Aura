@@ -58,9 +58,9 @@ fileprivate enum ProfileInfoError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidName: "Имя должно содержать минимум \(InputLimits.minNameLength) символа"
-            case .nameTooLong: "Имя должно быть не длиннее \(InputLimits.maxNameLength) символов"
-            case .incompleteProfileInfo: "Заполните все обязательные поля профиля"
+            case .invalidName: AppLanguage.text("Имя должно содержать минимум \(InputLimits.minNameLength) символа")
+            case .nameTooLong: AppLanguage.text("Имя должно быть не длиннее \(InputLimits.maxNameLength) символов")
+            case .incompleteProfileInfo: AppLanguage.text("Заполните все обязательные поля профиля")
         }
     }
 }

@@ -1,0 +1,3326 @@
+{
+  "sourceLanguage": "ru",
+  "strings": {
+    "Разрешить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        }
+      }
+    },
+    "Не сейчас": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        }
+      }
+    },
+    "О вас": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About you"
+          }
+        }
+      }
+    },
+    "Ваше имя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your name"
+          }
+        }
+      }
+    },
+    "Ваш пол": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your gender"
+          }
+        }
+      }
+    },
+    "Дата рождения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date of birth"
+          }
+        }
+      }
+    },
+    "Готово": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "Введите имя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a name"
+          }
+        }
+      }
+    },
+    "ОК": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Мужской": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Male"
+          }
+        }
+      }
+    },
+    "Женский": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Female"
+          }
+        }
+      }
+    },
+    "Интроверт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introvert"
+          }
+        }
+      }
+    },
+    "Амбиверт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ambivert"
+          }
+        }
+      }
+    },
+    "Экстраверт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extrovert"
+          }
+        }
+      }
+    },
+    "Миротворец": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peacemaker"
+          }
+        }
+      }
+    },
+    "Прямой": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direct"
+          }
+        }
+      }
+    },
+    "Избегающий": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avoidant"
+          }
+        }
+      }
+    },
+    "Рациональный": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rational"
+          }
+        }
+      }
+    },
+    "Интуитивный": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intuitive"
+          }
+        }
+      }
+    },
+    "Планируете": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You plan"
+          }
+        }
+      }
+    },
+    "По ситуации": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the moment"
+          }
+        }
+      }
+    },
+    "Откладываете": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You put it off"
+          }
+        }
+      }
+    },
+    "Стабильность": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stability"
+          }
+        }
+      }
+    },
+    "Рост": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Growth"
+          }
+        }
+      }
+    },
+    "Спокойствие": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calm"
+          }
+        }
+      }
+    },
+    "Что-то пошло не так. Попробуйте ещё раз": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong. Try again"
+          }
+        }
+      }
+    },
+    "Проверить себя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test yourself"
+          }
+        }
+      }
+    },
+    "Как в iPhone": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Same as iPhone"
+          }
+        }
+      }
+    },
+    "Результат теста на совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibility result"
+          }
+        }
+      }
+    },
+    "Эмоциональная совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotional compatibility"
+          }
+        }
+      }
+    },
+    "Прогноз будущего": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking ahead"
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%"
+          }
+        }
+      }
+    },
+    "Совместимость солнечных знаков": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sun-sign compatibility"
+          }
+        }
+      }
+    },
+    "Не зависит от выбранных разделов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Independent of the sections you chose"
+          }
+        }
+      }
+    },
+    "Искра": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spark"
+          }
+        }
+      }
+    },
+    "Потенциал": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Potential"
+          }
+        }
+      }
+    },
+    "Узнать совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check compatibility"
+          }
+        }
+      }
+    },
+    "Детали партнера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partner details"
+          }
+        }
+      }
+    },
+    "Имя *": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name *"
+          }
+        }
+      }
+    },
+    "Выберите тесты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the tests"
+          }
+        }
+      }
+    },
+    "Выбрать все": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select all"
+          }
+        }
+      }
+    },
+    "Разрешите анализ с помощью AI для теста совместимости": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow AI analysis for the compatibility test"
+          }
+        }
+      }
+    },
+    "Готовим результат...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing your result..."
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "Анализ партнера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partner analysis"
+          }
+        }
+      }
+    },
+    "Введите информацию о партнере": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your partner's details"
+          }
+        }
+      }
+    },
+    "Нельзя выбрать меньше %lld тестов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep at least %lld tests"
+          }
+        }
+      }
+    },
+    "Имя партнёра должно содержать минимум %lld символа": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partner's name must be at least %lld characters"
+          }
+        }
+      }
+    },
+    "Имя партнёра должно быть не длиннее %lld символов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partner's name can't be longer than %lld characters"
+          }
+        }
+      }
+    },
+    "Анализ с помощью AI": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI analysis"
+          }
+        }
+      }
+    },
+    "Инсайт и совет дня, тесты личности и совместимости составляет сервис искусственного интеллекта OpenAI (США). Для этого Aura передаёт ему:": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The daily insight, daily tip, personality tests, and compatibility test are written by OpenAI, an artificial intelligence service in the United States. To do that, Aura sends it:"
+          }
+        }
+      }
+    },
+    "Адрес почты не передаётся. Гороскоп работает и без этого разрешения.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your email address is not shared. The horoscope works without this permission."
+          }
+        }
+      }
+    },
+    "Политика конфиденциальности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy Policy"
+          }
+        }
+      }
+    },
+    "• ваше имя, дату рождения, знак зодиака, пол, ответы анкеты и время рождения, если оно указано;": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• your name, date of birth, zodiac sign, gender, questionnaire answers, and birth time if you provided it;"
+          }
+        }
+      }
+    },
+    "• для контента дня — текущую дату, для тестов — выбранные темы;": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• for the daily content, today's date; for the tests, the topics you chose;"
+          }
+        }
+      }
+    },
+    "• для теста совместимости — имя, дату рождения и знак зодиака партнёра, время рождения (если указано) и рассчитанный по знакам процент совместимости.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "• for the compatibility test, your partner's name, date of birth, and zodiac sign, birth time if provided, and the compatibility percentage calculated from the signs."
+          }
+        }
+      }
+    },
+    "Я знаю время рождения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I know my birth time"
+          }
+        }
+      }
+    },
+    "Время": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        }
+      }
+    },
+    "Интроверсия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introversion"
+          }
+        }
+      }
+    },
+    "Логика": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logic"
+          }
+        }
+      }
+    },
+    "Хаос": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaos"
+          }
+        }
+      }
+    },
+    "Независимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Independence"
+          }
+        }
+      }
+    },
+    "Дистанция": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Distance"
+          }
+        }
+      }
+    },
+    "Закрытость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reserve"
+          }
+        }
+      }
+    },
+    "Недопонимание": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Misunderstanding"
+          }
+        }
+      }
+    },
+    "Холодная дистанция": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cool distance"
+          }
+        }
+      }
+    },
+    "Экстраверсия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extraversion"
+          }
+        }
+      }
+    },
+    "Интуиция": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intuition"
+          }
+        }
+      }
+    },
+    "Контроль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control"
+          }
+        }
+      }
+    },
+    "Привязанность": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attachment"
+          }
+        }
+      }
+    },
+    "Близость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Closeness"
+          }
+        }
+      }
+    },
+    "Душевная открытость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotional openness"
+          }
+        }
+      }
+    },
+    "Взаимопонимание": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understanding"
+          }
+        }
+      }
+    },
+    "Теплая привязанность": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm attachment"
+          }
+        }
+      }
+    },
+    "Повторить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "27 окт.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "27 Oct."
+          }
+        }
+      }
+    },
+    "2 нояб.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 Nov."
+          }
+        }
+      }
+    },
+    "Пройдите тесты для получения результатов о себе": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take the tests to see your results"
+          }
+        }
+      }
+    },
+    "Сервис временно недоступен. Попробуйте позже": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service is temporarily unavailable. Try again later"
+          }
+        }
+      }
+    },
+    "Разрешите анализ с помощью AI": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow AI analysis"
+          }
+        }
+      }
+    },
+    "Подтвердите почту": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm your email"
+          }
+        }
+      }
+    },
+    "Отправить код ещё раз": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the code again"
+          }
+        }
+      }
+    },
+    "Мы отправили код на %@. Введите его, чтобы проходить тесты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We sent a code to %@. Enter it to take the tests"
+          }
+        }
+      }
+    },
+    "Чтобы проходить тесты, подтвердите почту %@. Мы отправим на неё код.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To take the tests, confirm %@. We'll send a code there."
+          }
+        }
+      }
+    },
+    "Отправляем...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending..."
+          }
+        }
+      }
+    },
+    "Подтвердить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm"
+          }
+        }
+      }
+    },
+    "Проверяем...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking..."
+          }
+        }
+      }
+    },
+    "Проверить код": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the code"
+          }
+        }
+      }
+    },
+    "Код состоит из %lld цифр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The code must be %lld digits"
+          }
+        }
+      }
+    },
+    "Какой у вас адрес электронной почты, %@?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's your email address, %@?"
+          }
+        }
+      }
+    },
+    "На неё придёт код, если вы забудете пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll send a code there if you forget your password"
+          }
+        }
+      }
+    },
+    "Удалить результат?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this result?"
+          }
+        }
+      }
+    },
+    "История тестов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test history"
+          }
+        }
+      }
+    },
+    "Открываем результат": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opening the result"
+          }
+        }
+      }
+    },
+    "Загружаем историю": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading history"
+          }
+        }
+      }
+    },
+    "Отмена": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Удалить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "Результат теста нельзя будет восстановить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This test result can't be restored"
+          }
+        }
+      }
+    },
+    "История пуста": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History is empty"
+          }
+        }
+      }
+    },
+    "Не удалось удалить запись": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't delete the entry"
+          }
+        }
+      }
+    },
+    "Не удалось открыть результат": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the result"
+          }
+        }
+      }
+    },
+    "Главная": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home"
+          }
+        }
+      }
+    },
+    "ИНСАЙТ ДНЯ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INSIGHT OF THE DAY"
+          }
+        }
+      }
+    },
+    "Разрешите анализ с помощью AI, чтобы получать инсайт дня": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow AI analysis to get the daily insight"
+          }
+        }
+      }
+    },
+    "Гороскоп на неделю": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly horoscope"
+          }
+        }
+      }
+    },
+    "Читать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read"
+          }
+        }
+      }
+    },
+    "Проверить совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check compatibility"
+          }
+        }
+      }
+    },
+    "Проверьте себя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test yourself"
+          }
+        }
+      }
+    },
+    "Все тесты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All tests"
+          }
+        }
+      }
+    },
+    "Разрешите анализ с помощью AI для прохождения тестов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow AI analysis to take the tests"
+          }
+        }
+      }
+    },
+    "Загружаем информацию": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        }
+      }
+    },
+    "Здравствуйте, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hello, %@"
+          }
+        }
+      }
+    },
+    "Обновляем информацию": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updating your information"
+          }
+        }
+      }
+    },
+    "Овен": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aries"
+          }
+        }
+      }
+    },
+    "Телец": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taurus"
+          }
+        }
+      }
+    },
+    "Близнецы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemini"
+          }
+        }
+      }
+    },
+    "Рак": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancer"
+          }
+        }
+      }
+    },
+    "Лев": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leo"
+          }
+        }
+      }
+    },
+    "Дева": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Virgo"
+          }
+        }
+      }
+    },
+    "Весы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Libra"
+          }
+        }
+      }
+    },
+    "Скорпион": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scorpio"
+          }
+        }
+      }
+    },
+    "Стрелец": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sagittarius"
+          }
+        }
+      }
+    },
+    "Козерог": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capricorn"
+          }
+        }
+      }
+    },
+    "Водолей": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aquarius"
+          }
+        }
+      }
+    },
+    "Рыбы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pisces"
+          }
+        }
+      }
+    },
+    "Любовь": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Love"
+          }
+        }
+      }
+    },
+    "Здоровье": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Health"
+          }
+        }
+      }
+    },
+    "Работа": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work"
+          }
+        }
+      }
+    },
+    "Эта неделя может стать особенно тяжелой для вашего сердца. Откровенный разговор с близким человеком укрепит ваши отношения и принесет давно ожидаемое понимание.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week may be especially hard on your heart. An honest conversation with someone close to you can strengthen the relationship and bring the understanding you've been waiting for."
+          }
+        }
+      }
+    },
+    "Мой гороскоп": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My horoscope"
+          }
+        }
+      }
+    },
+    "На этой неделе": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week"
+          }
+        }
+      }
+    },
+    "Сферы жизни": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Areas of life"
+          }
+        }
+      }
+    },
+    "Эта неделя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This week"
+          }
+        }
+      }
+    },
+    "Данные входа недоступны. Разблокируйте устройство и попробуйте ещё раз": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your sign-in data is unavailable. Unlock the device and try again"
+          }
+        }
+      }
+    },
+    "Не удалось получить доступ к данным входа. Попробуйте ещё раз": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't access your sign-in data. Try again"
+          }
+        }
+      }
+    },
+    "Ещё немного": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little longer"
+          }
+        }
+      }
+    },
+    "Почти готово": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Almost done"
+          }
+        }
+      }
+    },
+    "Сохраняем профиль и настройки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving your profile and settings"
+          }
+        }
+      }
+    },
+    "По дате рождения мы определим ваш знак зодиака": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We'll use your date of birth to find your zodiac sign"
+          }
+        }
+      }
+    },
+    "Далее": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        }
+      }
+    },
+    "Время рождения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birth time"
+          }
+        }
+      }
+    },
+    "Некорректный URL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid URL"
+          }
+        }
+      }
+    },
+    "Некорректный ответ от сервера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid response from the server"
+          }
+        }
+      }
+    },
+    "Не удалось обработать ответ сервера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't process the server response"
+          }
+        }
+      }
+    },
+    "Неправильная почта или пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incorrect email or password"
+          }
+        }
+      }
+    },
+    "Сессия истекла. Войдите снова": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session expired. Sign in again"
+          }
+        }
+      }
+    },
+    "Пользователь уже зарегистрирован": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This user is already registered"
+          }
+        }
+      }
+    },
+    "Данные не найдены": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data not found"
+          }
+        }
+      }
+    },
+    "Слишком много запросов. Попробуйте позже": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many requests. Try again later"
+          }
+        }
+      }
+    },
+    "Сервер не ответил вовремя. Попробуйте ещё раз": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server didn't respond in time. Try again"
+          }
+        }
+      }
+    },
+    "Нет подключения к интернету": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No internet connection"
+          }
+        }
+      }
+    },
+    "Не удалось связаться с сервером. Попробуйте позже": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't reach the server. Try again later"
+          }
+        }
+      }
+    },
+    "Запрос отменён": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request cancelled"
+          }
+        }
+      }
+    },
+    "Имя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "Электронная почта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email"
+          }
+        }
+      }
+    },
+    "Пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password"
+          }
+        }
+      }
+    },
+    "Новый пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New password"
+          }
+        }
+      }
+    },
+    "Код из 6 цифр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "6-digit code"
+          }
+        }
+      }
+    },
+    "Продолжая, вы принимаете [Условия использования](%@) и [Политику конфиденциальности](%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By continuing, you accept the [Terms of Use](%@) and [Privacy Policy](%@)"
+          }
+        }
+      }
+    },
+    "Придумайте пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a password"
+          }
+        }
+      }
+    },
+    "Не меньше 8 символов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At least 8 characters"
+          }
+        }
+      }
+    },
+    "Забыли пароль?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forgot your password?"
+          }
+        }
+      }
+    },
+    "Выйти из аккаунта?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out?"
+          }
+        }
+      }
+    },
+    "У меня уже есть аккаунт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already have an account"
+          }
+        }
+      }
+    },
+    "Выйти": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out"
+          }
+        }
+      }
+    },
+    "Добро пожаловать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome"
+          }
+        }
+      }
+    },
+    "Инсайт и совет дня": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily insight and tip"
+          }
+        }
+      }
+    },
+    "Тесты о вас и совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tests about you and compatibility"
+          }
+        }
+      }
+    },
+    "Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A horoscope, insights, and psychological tests that help you understand yourself and other people"
+          }
+        }
+      }
+    },
+    "Прогноз о любви, здоровье и работе для вашего знака зодиака": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A forecast about love, health, and work for your zodiac sign"
+          }
+        }
+      }
+    },
+    "Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each day, a short personal note about how you are and what to pay attention to"
+          }
+        }
+      }
+    },
+    "Узнайте свой психотип и проверьте совместимость с партнёром": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn your personality type and check your compatibility with a partner"
+          }
+        }
+      }
+    },
+    "Начать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get started"
+          }
+        }
+      }
+    },
+    "Когда вы родились?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When were you born?"
+          }
+        }
+      }
+    },
+    "Как вас зовут и когда вы родились?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's your name, and when were you born?"
+          }
+        }
+      }
+    },
+    "Укажите имя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your name"
+          }
+        }
+      }
+    },
+    "Имя должно содержать минимум %lld символа": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name must be at least %lld characters"
+          }
+        }
+      }
+    },
+    "Имя должно быть не длиннее %lld символов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name can't be longer than %lld characters"
+          }
+        }
+      }
+    },
+    "Укажите почту": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your email"
+          }
+        }
+      }
+    },
+    "Укажите корректный e-mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a valid email"
+          }
+        }
+      }
+    },
+    "Укажите пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your password"
+          }
+        }
+      }
+    },
+    "Пароль должен быть не короче %lld символов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password must be at least %lld characters"
+          }
+        }
+      }
+    },
+    "Входим...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signing in..."
+          }
+        }
+      }
+    },
+    "Заполните почту и пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your email and password"
+          }
+        }
+      }
+    },
+    "Создаём аккаунт...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creating your account..."
+          }
+        }
+      }
+    },
+    "Сохраняем...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving..."
+          }
+        }
+      }
+    },
+    "Введите 6-значный код из письма": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the 6-digit code from the email"
+          }
+        }
+      }
+    },
+    "Ответьте на все вопросы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer every question"
+          }
+        }
+      }
+    },
+    "Не меньше %lld символов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At least %lld characters"
+          }
+        }
+      }
+    },
+    "Результат персонального теста": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personality result"
+          }
+        }
+      }
+    },
+    "Внутренний мир": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inner world"
+          }
+        }
+      }
+    },
+    "Заполните все обязательные поля профиля": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill in every required profile field"
+          }
+        }
+      }
+    },
+    "Темперамент": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temperament"
+          }
+        }
+      }
+    },
+    "Стиль в конфликте": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflict style"
+          }
+        }
+      }
+    },
+    "Эмоциональная основа": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotional core"
+          }
+        }
+      }
+    },
+    "Вы чаще": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You tend to"
+          }
+        }
+      }
+    },
+    "Приоритет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Priority"
+          }
+        }
+      }
+    },
+    "Профиль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        }
+      }
+    },
+    "Расскажите о себе": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell us about yourself"
+          }
+        }
+      }
+    },
+    "Ответы помогут точнее составить ваш психологический профиль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your answers help us build a more accurate psychological profile"
+          }
+        }
+      }
+    },
+    "Введите код из письма": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the code from the email"
+          }
+        }
+      }
+    },
+    "Если аккаунт с почтой %@ есть, мы отправили на неё код. Он действует 15 минут.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If an account exists for %@, we sent a code to that address. It is valid for 15 minutes."
+          }
+        }
+      }
+    },
+    "Сохранить пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save password"
+          }
+        }
+      }
+    },
+    "Сброс пароля": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset password"
+          }
+        }
+      }
+    },
+    "Введите почту аккаунта, и мы отправим на неё код для сброса пароля": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the account email and we'll send a code to reset the password"
+          }
+        }
+      }
+    },
+    "Отправить код": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send code"
+          }
+        }
+      }
+    },
+    "Общее": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overview"
+          }
+        }
+      }
+    },
+    "Описание результата теста": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test result description"
+          }
+        }
+      }
+    },
+    "Не удалось удалить аккаунт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't delete the account"
+          }
+        }
+      }
+    },
+    "Настройки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "Оформление": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Акцентный цвет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accent color"
+          }
+        }
+      }
+    },
+    "Язык": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
+    "Удалить аккаунт?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account?"
+          }
+        }
+      }
+    },
+    "Профиль, история тестов и все результаты будут удалены без возможности восстановления.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your profile, test history, and all results will be deleted and can't be restored."
+          }
+        }
+      }
+    },
+    "Условия использования": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terms of Use"
+          }
+        }
+      }
+    },
+    "Обновить информацию о себе": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update your information"
+          }
+        }
+      }
+    },
+    "Удалить аккаунт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        }
+      }
+    },
+    "Светлая": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        }
+      }
+    },
+    "Темная": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark"
+          }
+        }
+      }
+    },
+    "С возвращением": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome back"
+          }
+        }
+      }
+    },
+    "Войдите в свой аккаунт": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in to your account"
+          }
+        }
+      }
+    },
+    "Войти": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in"
+          }
+        }
+      }
+    },
+    "Нет аккаунта?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account?"
+          }
+        }
+      }
+    },
+    "Создать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create one"
+          }
+        }
+      }
+    },
+    "·": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·"
+          }
+        }
+      }
+    },
+    "СОВЕТ ДНЯ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TIP OF THE DAY"
+          }
+        }
+      }
+    },
+    "Разрешите анализ с помощью AI, чтобы получать совет дня": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow AI analysis to get the daily tip"
+          }
+        }
+      }
+    },
+    "Ваш психотип": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your personality"
+          }
+        }
+      }
+    },
+    "Убрать %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@"
+          }
+        }
+      }
+    },
+    "Выбрать %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose %@"
+          }
+        }
+      }
+    },
+    "Астрологический портрет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Astrological portrait"
+          }
+        }
+      }
+    },
+    "Поведенческие паттерны": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behavioral patterns"
+          }
+        }
+      }
+    },
+    "Стиль принятия решений": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decision-making style"
+          }
+        }
+      }
+    },
+    "Стиль привязанности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attachment style"
+          }
+        }
+      }
+    },
+    "Идеальный партнер": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ideal partner"
+          }
+        }
+      }
+    },
+    "Язык любви": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Love language"
+          }
+        }
+      }
+    },
+    "Что говорит ваш знак": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What your sign says"
+          }
+        }
+      }
+    },
+    "Разберите свои реакции": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at your reactions"
+          }
+        }
+      }
+    },
+    "Поймите, как вы выбираете": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand how you choose"
+          }
+        }
+      }
+    },
+    "Определите ваш стиль отношений": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find your relationship style"
+          }
+        }
+      }
+    },
+    "Соберите портрет партнера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build a picture of a partner"
+          }
+        }
+      }
+    },
+    "Как вы выражаете любовь?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How do you express love?"
+          }
+        }
+      }
+    },
+    "Получите разбор по вашему знаку зодиака: сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get a reading of your zodiac sign: personality strengths, inner conflicts, and natural tendencies. You'll see what shapes your decisions and behavior."
+          }
+        }
+      }
+    },
+    "Разберите повторяющиеся сценарии поведения: как вы реагируете на стресс, близость, неопределенность и эмоциональное напряжение.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at the patterns you repeat: how you react to stress, closeness, uncertainty, and emotional tension."
+          }
+        }
+      }
+    },
+    "Поймите, что сильнее влияет на ваши решения: эмоции, логика, интуиция или потребность в стабильности. Это поможет выбирать спокойнее и увереннее.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand what influences your decisions more: emotion, logic, intuition, or a need for stability. It can help you choose more calmly."
+          }
+        }
+      }
+    },
+    "Определите свой стиль привязанности и разберите модели поведения в отношениях. Узнаете, почему вы реагируете определённым образом и какие сценарии повторяются чаще всего.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find your attachment style and look at how you behave in relationships. You'll see why you react the way you do and which patterns come back most often."
+          }
+        }
+      }
+    },
+    "Соберите понятный портрет партнера, который подходит вашему темпераменту, эмоциональным потребностям и ожиданиям от близости.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build a clear picture of a partner who fits your temperament, emotional needs, and what you expect from closeness."
+          }
+        }
+      }
+    },
+    "Поймите, как вы выражаете любовь и что делает вас эмоционально удовлетворённым в отношениях. Это поможет лучше понимать себя и избегать типичных недопониманий.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand how you express love and what makes you feel emotionally satisfied in a relationship. It can help you understand yourself and avoid the usual misunderstandings."
+          }
+        }
+      }
+    },
+    "Черты вашего знака": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traits of your sign"
+          }
+        }
+      }
+    },
+    "Знак и ваш характер": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your sign and your character"
+          }
+        }
+      }
+    },
+    "Сильные и слабые стороны": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strengths and weaknesses"
+          }
+        }
+      }
+    },
+    "Личностные особенности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personality traits"
+          }
+        }
+      }
+    },
+    "Повторяющиеся реакции": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeated reactions"
+          }
+        }
+      }
+    },
+    "Поведение в стрессе": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behavior under stress"
+          }
+        }
+      }
+    },
+    "Социальные сценарии": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Social patterns"
+          }
+        }
+      }
+    },
+    "Зоны личного роста": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Areas for personal growth"
+          }
+        }
+      }
+    },
+    "Стиль выбора": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you choose"
+          }
+        }
+      }
+    },
+    "Роль эмоций и логики": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The role of emotion and logic"
+          }
+        }
+      }
+    },
+    "Реакция на неопределенность": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reaction to uncertainty"
+          }
+        }
+      }
+    },
+    "Риски импульсивности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Risk of acting on impulse"
+          }
+        }
+      }
+    },
+    "Тип привязанности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attachment type"
+          }
+        }
+      }
+    },
+    "Поведение в отношениях": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behavior in relationships"
+          }
+        }
+      }
+    },
+    "Триггеры и страхи": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triggers and fears"
+          }
+        }
+      }
+    },
+    "Эмоциональные потребности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotional needs"
+          }
+        }
+      }
+    },
+    "Подходящий темперамент": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A fitting temperament"
+          }
+        }
+      }
+    },
+    "Важные границы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Important boundaries"
+          }
+        }
+      }
+    },
+    "Портрет партнера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Picture of a partner"
+          }
+        }
+      }
+    },
+    "Ваш язык любви": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your love language"
+          }
+        }
+      }
+    },
+    "Способы проявления чувств": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ways of showing feelings"
+          }
+        }
+      }
+    },
+    "Ошибки в коммуникации": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Communication mistakes"
+          }
+        }
+      }
+    },
+    "Астрология пары": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couple astrology"
+          }
+        }
+      }
+    },
+    "Стили привязанности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attachment styles"
+          }
+        }
+      }
+    },
+    "Языки любви": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Love languages"
+          }
+        }
+      }
+    },
+    "Конфликты и примирение": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conflict and repair"
+          }
+        }
+      }
+    },
+    "Сексуальная совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sexual compatibility"
+          }
+        }
+      }
+    },
+    "Сочетание солнечных знаков, точки гармонии и возможные противоречия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How your sun signs fit together, where you harmonize, and where you may clash"
+          }
+        }
+      }
+    },
+    "Ваши особенности поведения и возможные сценарии взаимодействия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your behavioral traits and possible ways of interacting"
+          }
+        }
+      }
+    },
+    "Возможные сценарии близости, доверия и личных границ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible patterns of closeness, trust, and personal boundaries"
+          }
+        }
+      }
+    },
+    "Способы выражения заботы и возможные различия в ожиданиях": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ways of showing care and where your expectations may differ"
+          }
+        }
+      }
+    },
+    "Ваш подход к разногласиям и возможные пути примирения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you approach disagreements and possible ways to make up"
+          }
+        }
+      }
+    },
+    "Возможная динамика влечения и близости": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible dynamics of attraction and closeness"
+          }
+        }
+      }
+    },
+    "Сочетание солнечных знаков, точки гармонии и возможные противоречия. Это не натальная карта и не расчёт планет.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How your sun signs fit together, where you harmonize, and where you may clash. This is not a birth chart and not a calculation of the planets."
+          }
+        }
+      }
+    },
+    "Ваши особенности поведения и возможные сценарии взаимодействия. Привычки партнёра по этим данным неизвестны.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your behavioral traits and possible ways of interacting. Your partner's habits can't be known from this data."
+          }
+        }
+      }
+    },
+    "Возможные сценарии близости, доверия и личных границ. Стиль привязанности партнёра по этим данным не определяется.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible patterns of closeness, trust, and personal boundaries. Your partner's attachment style can't be determined from this data."
+          }
+        }
+      }
+    },
+    "Способы выражения заботы и возможные различия в ожиданиях. Язык любви партнёра по этим данным неизвестен.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ways of showing care and where your expectations may differ. Your partner's love language can't be known from this data."
+          }
+        }
+      }
+    },
+    "Ваш подход к разногласиям и возможные пути примирения. Реакции партнёра в ссоре по этим данным неизвестны.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you approach disagreements and possible ways to make up. How your partner reacts in an argument can't be known from this data."
+          }
+        }
+      }
+    },
+    "Возможная динамика влечения, темпа сближения и интимной гармонии.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible dynamics of attraction, the pace of getting closer, and intimate harmony."
+          }
+        }
+      }
+    },
+    "Совместимость знаков": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign compatibility"
+          }
+        }
+      }
+    },
+    "Сильные и слабые стороны пары": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The couple's strengths and weaknesses"
+          }
+        }
+      }
+    },
+    "Точки притяжения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Points of attraction"
+          }
+        }
+      }
+    },
+    "Потенциал отношений": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relationship potential"
+          }
+        }
+      }
+    },
+    "Реакции в близости": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reactions to closeness"
+          }
+        }
+      }
+    },
+    "Роли в отношениях": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roles in the relationship"
+          }
+        }
+      }
+    },
+    "Повторяющиеся сценарии": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeated patterns"
+          }
+        }
+      }
+    },
+    "Потребность в дистанции": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Need for distance"
+          }
+        }
+      }
+    },
+    "Тревожные триггеры": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anxious triggers"
+          }
+        }
+      }
+    },
+    "Чувство безопасности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sense of safety"
+          }
+        }
+      }
+    },
+    "Языки любви пары": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The couple's love languages"
+          }
+        }
+      }
+    },
+    "Способы заботы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ways of showing care"
+          }
+        }
+      }
+    },
+    "Ожидания от партнера": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expectations of a partner"
+          }
+        }
+      }
+    },
+    "Эмоциональная связь": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotional bond"
+          }
+        }
+      }
+    },
+    "Типичные конфликты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typical conflicts"
+          }
+        }
+      }
+    },
+    "Триггеры напряжения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tension triggers"
+          }
+        }
+      }
+    },
+    "Стратегии примирения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ways of making up"
+          }
+        }
+      }
+    },
+    "Зоны договоренностей": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where you can agree"
+          }
+        }
+      }
+    },
+    "Сексуальный темперамент": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sexual temperament"
+          }
+        }
+      }
+    },
+    "Сексуальная химия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sexual chemistry"
+          }
+        }
+      }
+    },
+    "Темп сближения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pace of getting closer"
+          }
+        }
+      }
+    },
+    "Возможные различия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible differences"
+          }
+        }
+      }
+    },
+    "Убрать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "Выбрать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose"
+          }
+        }
+      }
+    },
+    "Что включено": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's included"
+          }
+        }
+      }
+    },
+    "Социальный фильтр": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Social filter"
+          }
+        }
+      }
+    },
+    "Источник истощения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source of exhaustion"
+          }
+        }
+      }
+    },
+    "Баланс логики": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balance of logic"
+          }
+        }
+      }
+    },
+    "Фактор интуиции": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intuition factor"
+          }
+        }
+      }
+    },
+    "Потребность в автономии": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Need for autonomy"
+          }
+        }
+      }
+    },
+    "База безопасности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base of security"
+          }
+        }
+      }
+    },
+    "Интеллектуальная схожесть": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intellectual similarity"
+          }
+        }
+      }
+    },
+    "Глубина связи": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depth of connection"
+          }
+        }
+      }
+    },
+    "Кармический урок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Karmic lesson"
+          }
+        }
+      }
+    },
+    "Динамика лидерства": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leadership dynamic"
+          }
+        }
+      }
+    },
+    "Эмоциональный резонанс": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotional resonance"
+          }
+        }
+      }
+    },
+    "Сцепка типов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attachment match"
+          }
+        }
+      }
+    },
+    "Дистанция комфорта": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comfortable distance"
+          }
+        }
+      }
+    },
+    "Совпадение языков": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Love language match"
+          }
+        }
+      }
+    },
+    "Трудности перевода": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Communication gaps"
+          }
+        }
+      }
+    },
+    "Механика ссор": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How arguments start"
+          }
+        }
+      }
+    },
+    "Скорость примирения": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How quickly you make up"
+          }
+        }
+      }
+    },
+    "Понятная работа настала": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The work ahead is clear"
+          }
+        }
+      }
+    },
+    "Дата рождения не указана": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date of birth not set"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -48,7 +48,7 @@ extension HistoryCellModel {
     var dateText: String {
         guard let date = try? Date(createdAt, strategy: .iso8601) else { return "" }
 
-        return date.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "ru_RU")))
+        return date.formatted(.dateTime.day().month(.wide).year().locale(AppLanguage.resolvedLocale))
     }
 
     var compatibilityScoreText: String {

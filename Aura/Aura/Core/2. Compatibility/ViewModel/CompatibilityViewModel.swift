@@ -103,7 +103,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
 
         if let index = selectedTests.firstIndex(of: test) {
             guard selectedTests.count > InputLimits.minCompatibilityTests else {
-                presentAlert("Нельзя выбрать меньше \(InputLimits.minCompatibilityTests) тестов")
+                presentAlert(AppLanguage.text("Нельзя выбрать меньше \(InputLimits.minCompatibilityTests) тестов"))
                 return
             }
 
@@ -203,8 +203,8 @@ fileprivate enum PartnerInfoError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-            case .invalidName: "Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа"
-            case .nameTooLong: "Имя партнёра должно быть не длиннее \(InputLimits.maxNameLength) символов"
+            case .invalidName: AppLanguage.text("Имя партнёра должно содержать минимум \(InputLimits.minNameLength) символа")
+            case .nameTooLong: AppLanguage.text("Имя партнёра должно быть не длиннее \(InputLimits.maxNameLength) символов")
         }
     }
 }

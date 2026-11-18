@@ -29,7 +29,8 @@ enum CompatibilityPrompts {
     static func user(user: User,
                      partner: CompatibilityTestRequest,
                      score: Int,
-                     selectedTests: [CompatibilityTests]) -> String {
+                     selectedTests: [CompatibilityTests],
+                     language: ReplyLanguage) -> String {
         let selectedTestLines = selectedTests
             .map { "- " + $0.rawValue + " (" + $0.title + ")" }
             .joined(separator: "\n")
@@ -62,7 +63,7 @@ enum CompatibilityPrompts {
           "title": "короткий вывод о паре (2-3 слова)",
           "subtitle": "1 предложение о динамике пары (8-10 слов)",
           "overview": {
-            "title": "Основная динамика",
+            "title": "\(language.compatibilityOverviewTitle)",
             "description": "общий вывод о паре без упоминания процента и числа (40-60 слов)"
           },
           "emotionalBar": [
@@ -93,11 +94,11 @@ enum CompatibilityPrompts {
         """
     }
 
-    static var system: String {
+    static func system(language: ReplyLanguage) -> String {
         """
         Ты аналитик совместимости приложения Aura.
 
-        Пиши по-русски.
+        \(language.writingLine)
         Тон — прямой, реалистичный, психологически точный.
         Не романтизируй отношения.
         Не пытайся «поддержать» пользователя.

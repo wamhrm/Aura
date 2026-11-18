@@ -31,7 +31,7 @@ struct UserModel: Codable, Equatable, Identifiable {
     }
 
     var dateOfBirthHandler: String {
-        dateOfBirth ?? "Дата рождения не указана"
+        dateOfBirth ?? AppLanguage.text("Дата рождения не указана")
     }
 
     var zodiacSign: HoroscopeTypes? {

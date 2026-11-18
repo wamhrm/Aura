@@ -17,14 +17,14 @@ struct NameAndBirthStepView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 35) {
                     OnboardingHeader(title: vm.nameAndBirthTitle,
-                                     subtitle: "По дате рождения мы определим ваш знак зодиака")
+                                     subtitle: AppLanguage.text("По дате рождения мы определим ваш знак зодиака"))
 
                     if !vm.isSignedIn {
                         OnboardingTextField(text: $vm.name, type: .name)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Дата рождения")
+                        Text(AppLanguage.text("Дата рождения"))
                             .font(Adaptive.size(.footnote, .system(size: 14), .callout))
                             .foregroundStyle(.deepGray)
                             .fontWeight(.semibold)
@@ -41,13 +41,13 @@ struct NameAndBirthStepView: View {
                     }
 
                     VStack(spacing: 15) {
-                        Toggle("Я знаю время рождения", isOn: $vm.knowsBirthTime.animation())
+                        Toggle(AppLanguage.text("Я знаю время рождения"), isOn: $vm.knowsBirthTime.animation())
                             .fontWeight(.semibold)
 
                         if vm.knowsBirthTime {
                             Divider()
 
-                            DatePicker("Время рождения",
+                            DatePicker(AppLanguage.text("Время рождения"),
                                        selection: $vm.birthTime,
                                        displayedComponents: .hourAndMinute)
                         }
@@ -57,7 +57,7 @@ struct NameAndBirthStepView: View {
                     .background(Color.cardBackground)
                     .clipShape(.rect(cornerRadius: 10))
 
-                    ClassicButton(title: "Далее") {
+                    ClassicButton(title: AppLanguage.text("Далее")) {
                         vm.continueFromNameAndBirth()
                     }
                 }

@@ -21,7 +21,7 @@ struct LoadingView: View {
     @State private var textOpacity = 1.0
 
     private var phrases: [String] {
-        [title, "Ещё немного", "Почти готово"]
+        [title, AppLanguage.text("Ещё немного"), AppLanguage.text("Почти готово")]
     }
 
     private var phrase: String {
@@ -96,6 +96,6 @@ struct LoadingView: View {
 #Preview("Loading") {
     ZStack {
         BackgroundView()
-        LoadingView(title: "Сохраняем профиль и настройки")
+        LoadingView(title: AppLanguage.text("Сохраняем профиль и настройки"))
     }
 }

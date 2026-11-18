@@ -34,9 +34,9 @@ struct OnboardingTextField: View {
         HStack {
             Group {
                 if type.isSecure && !isTextVisible {
-                    SecureField(type.rawValue, text: $text)
+                    SecureField(type.title, text: $text)
                 } else {
-                    TextField(type.rawValue, text: $text)
+                    TextField(type.title, text: $text)
                         .keyboardType(type.keyboardType)
                 }
             }
@@ -84,15 +84,12 @@ struct OnboardingTextButton: View {
 }
 
 struct OnboardingLegalText: View {
-    private var legalText: LocalizedStringKey {
+    var body: some View {
         let terms = Constants.termsOfUseURL?.absoluteString ?? ""
         let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""
-        let text = "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))"
-        return LocalizedStringKey(text)
-    }
 
-    var body: some View {
-        Text(legalText)
+        Text(LocalizedStringResource("Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))",
+                                     locale: AppLanguage.current.locale))
             .font(Adaptive.size(.caption2, .caption, .caption))
             .foregroundStyle(.deepGray)
             .multilineTextAlignment(.center)
@@ -117,12 +114,18 @@ struct OnboardingIcon: View {
     }
 }
 
-enum OnboardingTextFieldTypes: String {
-    case name = "Имя"
-    case email = "Электронная почта"
-    case password = "Пароль"
-    case newPassword = "Новый пароль"
-    case code = "Код из 6 цифр"
+enum OnboardingTextFieldTypes {
+    case name, email, password, newPassword, code
+
+    var title: String {
+        switch self {
+            case .name: AppLanguage.text("Имя")
+            case .email: AppLanguage.text("Электронная почта")
+            case .password: AppLanguage.text("Пароль")
+            case .newPassword: AppLanguage.text("Новый пароль")
+            case .code: AppLanguage.text("Код из 6 цифр")
+        }
+    }
 
     fileprivate var isSecure: Bool {
         switch self {
@@ -154,11 +157,11 @@ enum OnboardingTextFieldTypes: String {
 #Preview {
     ScrollView {
         VStack(spacing: 20) {
-            OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 8 символов")
+            OnboardingHeader(title: AppLanguage.text("Придумайте пароль"), subtitle: AppLanguage.text("Не меньше 8 символов"))
 
             OnboardingTextField(text: .constant(""), type: .password)
 
-            OnboardingTextButton(title: "Забыли пароль?") {
+            OnboardingTextButton(title: AppLanguage.text("Забыли пароль?")) {
 
             }
 

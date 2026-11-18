@@ -93,8 +93,8 @@ nonisolated struct KeychainError: LocalizedError {
 
     var errorDescription: String? {
         if status == errSecInteractionNotAllowed {
-            return "Данные входа недоступны. Разблокируйте устройство и попробуйте ещё раз"
+            return AppLanguage.text("Данные входа недоступны. Разблокируйте устройство и попробуйте ещё раз")
         }
-        return "Не удалось получить доступ к данным входа. Попробуйте ещё раз"
+        return AppLanguage.text("Не удалось получить доступ к данным входа. Попробуйте ещё раз")
     }
 }
