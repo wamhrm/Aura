@@ -781,7 +781,7 @@ private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unc
 }
 
 @MainActor
-final class MockNetworkService: NetworkServiceProtocol {
+private final class MockNetworkService: NetworkServiceProtocol {
     var user = makeUser()
     var history: [HistoryCellModel] = []
     var errorToThrow: (any Error)?

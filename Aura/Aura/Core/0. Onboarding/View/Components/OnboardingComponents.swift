@@ -117,7 +117,7 @@ struct OnboardingIcon: View {
 enum OnboardingTextFieldTypes {
     case name, email, password, newPassword, code
 
-    var title: String {
+    fileprivate var title: String {
         switch self {
             case .name: AppLanguage.text("Имя")
             case .email: AppLanguage.text("Электронная почта")

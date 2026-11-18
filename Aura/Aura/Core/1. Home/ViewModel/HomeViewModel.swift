@@ -17,7 +17,7 @@ enum HomeRoutes: Hashable {
 final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published var homeRoutes: [HomeRoutes] = []
 
-    @Published private(set) var userName = ""
+    @Published private var userName = ""
     @Published private(set) var horoscope: HoroscopeModel?
     @Published private(set) var horoscopeState = LoadState.loading
     @Published private(set) var dailyInsight: DailyContentModel?
@@ -29,7 +29,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published var alertMessage = ""
     @Published private(set) var allowsAIAnalysis = false
     @Published private(set) var isLoading = false
-    @Published private(set) var isLoadingScreen = true
+    @Published private var isLoadingScreen = true
     @Published private(set) var loadingTitle = ""
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
