@@ -28,7 +28,7 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
 
     private let networkService: any NetworkServiceProtocol
     private let authService: any AuthServiceProtocol
-    private var currentUser: UserModel?
+    private var currentUserID: UUID?
     private var historyRequestID: UUID?
     private var cancellables = Set<AnyCancellable>()
 
@@ -48,13 +48,13 @@ final class ContentService: ObservableObject, ContentServiceProtocol {
     private func handleAuthState(_ authState: AuthState) {
         switch authState {
             case .signedIn(let user):
-                if currentUser?.id != user.id {
+                if currentUserID != user.id {
                     clearHistory()
                 }
-                currentUser = user
+                currentUserID = user.id
             case .signedOut:
                 clearHistory()
-                currentUser = nil
+                currentUserID = nil
         }
     }
 

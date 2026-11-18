@@ -129,7 +129,9 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             return
         }
 
-        let request = partnerInfo.compatibilityTestRequest(selectedTests: selectedTests.filter { availableTests.contains($0) })
+        let available = availableTests
+        let tests = selectedTests.filter { available.contains($0) }
+        let request = partnerInfo.compatibilityTestRequest(selectedTests: tests)
         let requestID = currentCompatibilityRequestID(for: request)
 
         isLoading = true
@@ -151,7 +153,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
                 TestCompletionSound.play()
                 try await Task.sleep(for: .milliseconds(50))
                 guard sessionID == authService.sessionID else { return }
-                clearFields()
+                partnerInfo = PartnerInfoModel()
             } catch {
                 guard sessionID == authService.sessionID else { return }
                 presentAlert(error.userMessage)
@@ -192,13 +194,6 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
         guard name.count <= InputLimits.maxNameLength else {
             throw PartnerInfoError.nameTooLong
         }
-    }
-    
-    private func clearFields() {
-        partnerInfo.name = ""
-        partnerInfo.birthDate = BirthDateFormatter.defaultDate
-        partnerInfo.knowsBirthTime = false
-        partnerInfo.birthTime = BirthDateFormatter.defaultTime
     }
 }
 
