@@ -12,17 +12,7 @@ struct DailyContentService {
     private let openAIService = OpenAIService()
     private let cacheLifetime: TimeInterval = 3 * 24 * 60 * 60
 
-    func fetchDailyInsight(user: User, req: Request) async throws -> DailyContentDTO {
-        try await getOrGenerate(kind: .insight, user: user, req: req)
-    }
-
-    func fetchDailyTip(user: User, req: Request) async throws -> DailyContentDTO {
-        try await getOrGenerate(kind: .tip, user: user, req: req)
-    }
-
-    private func getOrGenerate(kind: DailyContentKind,
-                               user: User,
-                               req: Request) async throws -> DailyContentDTO {
+    func fetch(kind: DailyContentKind, user: User, req: Request) async throws -> DailyContentDTO {
         guard user.hasCompletedProfileInfo else {
             throw Abort(.badRequest, reason: "Заполните профиль перед получением контента дня")
         }

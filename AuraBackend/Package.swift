@@ -11,7 +11,5 @@ let package = Package(
                                 dependencies: [.product(name: "Vapor", package: "vapor"),
                                                .product(name: "Fluent", package: "fluent"),
                                                .product(name: "FluentPostgresDriver", package: "fluent-postgres-driver")],
-                                swiftSettings: swiftSettings)]
+                                swiftSettings: [.enableUpcomingFeature("ExistentialAny")])]
 )
-
-var swiftSettings: [SwiftSetting] { [.enableUpcomingFeature("ExistentialAny")] }
