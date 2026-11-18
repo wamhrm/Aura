@@ -11,13 +11,14 @@ import Vapor
 struct HoroscopeService {
     private let openAIService = OpenAIService()
 
-    func fetchCurrentHoroscope(user: User, req: Request, database: any Database) async throws -> HoroscopeDTO {
+    func fetchCurrentHoroscope(user: User, req: Request) async throws -> HoroscopeDTO {
         guard let dateOfBirth = user.dateOfBirth,
               let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
             throw Abort(.notFound, reason: "Гороскоп не найден")
         }
 
         let week = DailyDateHelper.currentWeek(timeZone: req.userTimeZone)
+        let database = req.db
 
         if let entry = try await findHoroscope(sign: sign, weekStart: week.key, db: database) {
             return try HoroscopeDTOMapper.map(horoscope: entry)

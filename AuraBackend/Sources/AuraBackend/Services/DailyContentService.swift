@@ -12,18 +12,17 @@ struct DailyContentService {
     private let openAIService = OpenAIService()
     private let cacheLifetime: TimeInterval = 3 * 24 * 60 * 60
 
-    func fetchDailyInsight(user: User, req: Request, database: any Database) async throws -> DailyContentDTO {
-        try await getOrGenerate(kind: .insight, user: user, req: req, database: database)
+    func fetchDailyInsight(user: User, req: Request) async throws -> DailyContentDTO {
+        try await getOrGenerate(kind: .insight, user: user, req: req)
     }
 
-    func fetchDailyTip(user: User, req: Request, database: any Database) async throws -> DailyContentDTO {
-        try await getOrGenerate(kind: .tip, user: user, req: req, database: database)
+    func fetchDailyTip(user: User, req: Request) async throws -> DailyContentDTO {
+        try await getOrGenerate(kind: .tip, user: user, req: req)
     }
 
     private func getOrGenerate(kind: DailyContentKind,
                                user: User,
-                               req: Request,
-                               database: any Database) async throws -> DailyContentDTO {
+                               req: Request) async throws -> DailyContentDTO {
         guard user.hasCompletedProfileInfo else {
             throw Abort(.badRequest, reason: "Заполните профиль перед получением контента дня")
         }
@@ -32,6 +31,7 @@ struct DailyContentService {
         let today = DailyDateHelper.todayString(timeZone: req.userTimeZone)
         let oldestDailyDate = DailyDateHelper.todayString(timeZone: .gmt,
                                                           now: Date().addingTimeInterval(-cacheLifetime))
+        let database = req.db
 
         try await DailyContent.query(on: database)
             .filter(\.$user.$id == userID)

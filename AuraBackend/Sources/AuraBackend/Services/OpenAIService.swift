@@ -65,6 +65,7 @@ struct OpenAIService {
             messages: [OpenAIMessage(role: "system", content: CompatibilityPrompts.system(language: language)),
                        OpenAIMessage(role: "user", content: CompatibilityPrompts.user(user: user,
                                                                                       partner: partner,
+                                                                                      partnerSign: partnerSign,
                                                                                       score: score,
                                                                                       selectedTests: selectedTests,
                                                                                       language: language))],

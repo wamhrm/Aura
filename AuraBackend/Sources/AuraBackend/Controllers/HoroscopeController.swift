@@ -19,6 +19,6 @@ struct HoroscopeController: RouteCollection {
 
     private func fetchCurrentHoroscope(req: Request) async throws -> HoroscopeDTO {
         let user = try req.auth.require(User.self)
-        return try await horoscopeService.fetchCurrentHoroscope(user: user, req: req, database: req.db)
+        return try await horoscopeService.fetchCurrentHoroscope(user: user, req: req)
     }
 }

@@ -28,6 +28,7 @@ enum CompatibilityPrompts {
 
     static func user(user: User,
                      partner: CompatibilityTestRequest,
+                     partnerSign: HoroscopeSign,
                      score: Int,
                      selectedTests: [CompatibilityTests],
                      language: ReplyLanguage) -> String {
@@ -51,7 +52,7 @@ enum CompatibilityPrompts {
         - имя: \(partner.partnerName.capitalized)
         - дата рождения: \(partner.partnerDateOfBirth)
         - время рождения: \(partner.partnerBirthTime ?? "не указано")
-        - знак зодиака: \(UserDateFormatter.date(string: partner.partnerDateOfBirth).flatMap(HoroscopeSign.from)?.title ?? "не указан")
+        - знак зодиака: \(partnerSign.title)
 
         Совместимость солнечных знаков: \(score)%. Число уже посчитано только по расстоянию между знаками. Не меняй его и не упоминай его в тексте. Сразу описывай динамику пары.
 

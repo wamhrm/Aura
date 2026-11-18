@@ -62,7 +62,7 @@ struct UpdateProfileInfoResponse: Content {
 }
 
 struct UpdateProfileInfoRequest: Content {
-    var name: String? = nil
+    let name: String?
     let dateOfBirth: String
     let birthTime: String?
     let gender: String
