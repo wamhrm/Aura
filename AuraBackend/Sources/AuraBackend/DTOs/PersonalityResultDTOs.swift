@@ -41,7 +41,7 @@ struct PersonalitySectionItems: Content {
     let description: String
 }
 
-struct PersonalityTestContent: Codable {
+struct PersonalityTestContent: Decodable {
     let archetypeTitle: String
     let archetypeSubtitle: String
     let overview: PersonalityOverview

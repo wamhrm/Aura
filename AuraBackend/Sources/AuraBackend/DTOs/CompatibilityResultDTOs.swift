@@ -59,7 +59,7 @@ struct CompatibilityForecast: Content {
     let potentialDescription: String
 }
 
-struct CompatibilityTestContent: Codable {
+struct CompatibilityTestContent: Decodable {
     let title: String
     let subtitle: String
     let overview: CompatibilityOverview

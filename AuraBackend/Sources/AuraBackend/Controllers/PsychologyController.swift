@@ -88,7 +88,7 @@ struct PsychologyController: RouteCollection {
             if let saved = try await findEntry(kind: kind, requestID: requestID, userID: userID, database: db) {
                 return saved
             }
-            try await psychologyService.takeTestSlot(userID: userID, database: db)
+            try await psychologyService.recordTestUsageIfAllowed(userID: userID, database: db)
             try await entry.save(on: db)
             return entry
         }

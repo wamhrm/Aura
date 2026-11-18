@@ -5,8 +5,6 @@
 //  Created by wamhrm on 13.05.2026.
 //
 
-import Vapor
-
 struct OpenAIChatDTO: Encodable {
     let model: String
     let messages: [OpenAIMessage]
@@ -21,7 +19,7 @@ struct OpenAIChatDTO: Encodable {
     }
 }
 
-struct OpenAIMessage: Content {
+struct OpenAIMessage: Encodable {
     let role: String
     let content: String
 }
@@ -107,12 +105,12 @@ indirect enum JSONSchema: Encodable, Sendable {
     }
 }
 
-struct OpenAIChatResponse: Content {
+struct OpenAIChatResponse: Decodable {
     let choices: [OpenAIChoice]
     let usage: OpenAIUsage?
 }
 
-struct OpenAIUsage: Content {
+struct OpenAIUsage: Decodable {
     let promptTokens: Int
     let completionTokens: Int
 
@@ -122,7 +120,7 @@ struct OpenAIUsage: Content {
     }
 }
 
-struct OpenAIChoice: Content {
+struct OpenAIChoice: Decodable {
     let message: OpenAIResponseMessage
     let finishReason: String?
 
@@ -132,7 +130,7 @@ struct OpenAIChoice: Content {
     }
 }
 
-struct OpenAIResponseMessage: Content {
+struct OpenAIResponseMessage: Decodable {
     let content: String?
     let refusal: String?
 }
