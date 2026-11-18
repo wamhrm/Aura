@@ -8,9 +8,9 @@
 import Foundation
 
 enum UserDateFormatter {
-    static let maxAgeInYears = 100
-    static let minAgeInYears = 16
-    static let adultAgeInYears = 18
+    private static let maxAgeInYears = 100
+    private static let minAgeInYears = 16
+    private static let adultAgeInYears = 18
 
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)

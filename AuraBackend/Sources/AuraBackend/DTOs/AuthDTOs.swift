@@ -80,12 +80,3 @@ enum InputLimits {
     static let minPasswordLength = 8
     static let maxPasswordBytes = 72
 }
-
-enum ProfileInfoOptions {
-    static let genders: Set<String> = ["man", "woman"]
-    static let socialTypes: Set<String> = ["introvert", "ambivert", "extrovert"]
-    static let conflictStyles: Set<String> = ["mediator", "direct", "avoider"]
-    static let emotionalCores: Set<String> = ["logic", "intuitive"]
-    static let decisionStyles: Set<String> = ["planner", "spontaneous", "procrastinator"]
-    static let coreFocuses: Set<String> = ["stability", "growth", "peace"]
-}
