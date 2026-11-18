@@ -13,7 +13,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_lateProfileResponse_doesNotEndLoadingOfANewSignIn() async {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.profileSaveDelay = .milliseconds(100)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.chooseAIConsent(true)
         await waitUntil { auth.savedProfile != nil }
         auth.endExpiredSession()
@@ -33,7 +33,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_signIn_discardsTheAbandonedRegistrationDraft() async {
         let auth = MockAuthService()
         auth.serverUser = makeUser(dateOfBirth: nil, socialType: nil)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.birthDate = BirthDateFormatter.date(string: "01.01.1990")!
         viewModel.knowsBirthTime = true
         viewModel.profileInfo.gender = "man"
@@ -51,7 +51,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
 
     func test_emailResponse_afterGoingBack_doesNotOpenPassword() async {
         let auth = MockAuthService()
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.email = "anna@mail.ru"
         viewModel.onboardingRoutes = [.nameAndBirth, .email]
         auth.beforeEmailResponse = { viewModel.goBack() }
@@ -65,7 +65,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
 
     func test_emailResponse_afterEditingTheAddress_doesNotOpenPassword() async {
         let auth = MockAuthService()
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.email = "anna@mail.ru"
         viewModel.onboardingRoutes = [.email]
         auth.beforeEmailResponse = { viewModel.email = "other@mail.ru" }
@@ -78,7 +78,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     }
 
     func test_nameLongerThanTheLimit_doesNotOpenTheEmailStep() {
-        let viewModel = makeViewModel(auth: MockAuthService())
+        let viewModel = OnboardingViewModel(authService: MockAuthService())
         viewModel.name = String(repeating: "A", count: InputLimits.maxNameLength + 1)
 
         viewModel.continueFromNameAndBirth()
@@ -89,7 +89,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
 
     func test_failedSignOut_showsError_andKeepsCurrentStep() async {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.onboardingRoutes = [.aiConsent]
         auth.errorToThrow = serverError
 
@@ -102,10 +102,6 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         guard case .signedIn = auth.authState else { return XCTFail("Session was ended") }
     }
 
-    private func makeViewModel(auth: MockAuthService) -> OnboardingViewModel {
-        OnboardingViewModel(authService: auth)
-    }
-
     private func signIn(_ viewModel: OnboardingViewModel, auth: MockAuthService) async {
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
@@ -116,7 +112,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_takenEmail_staysOnEmailStep() async {
         let auth = MockAuthService()
         auth.emailTaken = true
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.email = "anna@mail.ru"
 
         viewModel.continueFromEmail()
@@ -127,23 +123,11 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         XCTAssertFalse(viewModel.isLoading)
     }
 
-    func test_availableEmail_opensPasswordStep() async {
-        let auth = MockAuthService()
-        let viewModel = makeViewModel(auth: auth)
-        viewModel.email = "anna@mail.ru"
-
-        viewModel.continueFromEmail()
-        await waitUntil { viewModel.onboardingRoutes == [.password] }
-
-        XCTAssertFalse(viewModel.showAlert)
-        XCTAssertEqual(auth.emailCheckCount, 1)
-    }
-
     // MARK: - Forms
     func test_password_ofSevenCharacters_isRejected_andOfEightIsAccepted() {
         // Given
         let auth = MockAuthService()
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.email = "anna@mail.ru"
 
         // When
@@ -161,7 +145,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
 
     func test_showSignIn_clearsTheRegistrationFields() {
         // Given
-        let viewModel = makeViewModel(auth: MockAuthService())
+        let viewModel = OnboardingViewModel(authService: MockAuthService())
         viewModel.name = "Анна"
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
@@ -179,7 +163,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_resetCode_withLetters_showsAlert_andSendsNothing() {
         // Given
         let auth = MockAuthService()
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.resetCode = "12a456"
         viewModel.newPassword = "12345678"
 
@@ -194,7 +178,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_requestPasswordReset_whenCodeIsAlreadySent_opensTheCodeForm() async {
         let auth = MockAuthService()
         auth.errorToThrow = NetworkError.emailCodeRecentlyRequested("Код уже отправлен")
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.email = "anna@mail.ru"
 
         viewModel.requestPasswordReset()
@@ -209,7 +193,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_requestPasswordReset_whenServerFails_keepsTheCodeFormClosed() async {
         let auth = MockAuthService()
         auth.errorToThrow = serverError
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.email = "anna@mail.ru"
 
         viewModel.requestPasswordReset()
@@ -225,7 +209,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         // Given
         let auth = MockAuthService()
         auth.serverUser = makeUser()
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         // When
         await signIn(viewModel, auth: auth)
@@ -239,7 +223,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         // Given
         let auth = MockAuthService()
         auth.serverUser = makeUser(hasAIConsent: false)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         // When
         await signIn(viewModel, auth: auth)
@@ -252,7 +236,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         // Given
         let auth = MockAuthService()
         auth.serverUser = makeUser(dateOfBirth: nil)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         // When
         await signIn(viewModel, auth: auth)
@@ -265,7 +249,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_registration_createsTheAccount_onlyAfterThePsychotypeStep() async {
         let auth = MockAuthService()
         auth.serverUser = makeUser(dateOfBirth: nil)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.name = "Анна"
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
@@ -273,6 +257,8 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         viewModel.continueFromNameAndBirth()
         viewModel.continueFromEmail()
         await waitUntil { viewModel.onboardingRoutes == [.email, .password] }
+        XCTAssertEqual(auth.emailCheckCount, 1)
+        XCTAssertFalse(viewModel.showAlert)
         viewModel.continueFromPassword()
 
         XCTAssertEqual(viewModel.onboardingRoutes, [.email, .password, .psychotype])
@@ -282,12 +268,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(viewModel.alertMessage, "Ответьте на все вопросы")
         XCTAssertEqual(auth.createAccountCount, 0)
 
-        viewModel.profileInfo.gender = "man"
-        viewModel.profileInfo.socialType = "introvert"
-        viewModel.profileInfo.conflictStyle = "mediator"
-        viewModel.profileInfo.emotionalCore = "logic"
-        viewModel.profileInfo.decisionStyle = "planner"
-        viewModel.profileInfo.coreFocus = "stability"
+        viewModel.profileInfo = makeUser(dateOfBirth: nil).profileInfo
         viewModel.continueFromPsychotype()
         await waitUntil { !viewModel.isLoading }
 
@@ -300,14 +281,9 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
 
     func test_signedInUser_continuesFromPsychotype_withoutCreatingAnAccount() {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.onboardingRoutes = [.psychotype]
-        viewModel.profileInfo.gender = "man"
-        viewModel.profileInfo.socialType = "introvert"
-        viewModel.profileInfo.conflictStyle = "mediator"
-        viewModel.profileInfo.emotionalCore = "logic"
-        viewModel.profileInfo.decisionStyle = "planner"
-        viewModel.profileInfo.coreFocus = "stability"
+        viewModel.profileInfo = makeUser(dateOfBirth: nil).profileInfo
 
         viewModel.continueFromPsychotype()
 
@@ -318,17 +294,12 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_failedAccountCreation_staysOnThePsychotypeStep() async {
         let auth = MockAuthService()
         auth.errorToThrow = serverError
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.name = "Анна"
         viewModel.email = "anna@mail.ru"
         viewModel.password = "12345678"
         viewModel.onboardingRoutes = [.psychotype]
-        viewModel.profileInfo.gender = "man"
-        viewModel.profileInfo.socialType = "introvert"
-        viewModel.profileInfo.conflictStyle = "mediator"
-        viewModel.profileInfo.emotionalCore = "logic"
-        viewModel.profileInfo.decisionStyle = "planner"
-        viewModel.profileInfo.coreFocus = "stability"
+        viewModel.profileInfo = makeUser(dateOfBirth: nil).profileInfo
 
         viewModel.continueFromPsychotype()
         await waitUntil { viewModel.showAlert }
@@ -343,7 +314,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.serverUser = makeUser(hasAIConsent: false)
         auth.aiConsentError = serverError
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         viewModel.chooseAIConsent(true)
         await waitUntil { viewModel.showAlert || auth.showsMainScreen }
@@ -362,7 +333,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_returningUser_decliningConsent_finishesWithoutARequest() {
         // Given
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         // When
         viewModel.chooseAIConsent(false)
@@ -375,7 +346,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_returningUser_allowingConsent_savesIt_andFinishes() async {
         // Given
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         // When
         viewModel.chooseAIConsent(true)
@@ -389,7 +360,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         // Given
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.serverUser = makeUser(hasAIConsent: false)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         // When
         viewModel.chooseAIConsent(false)
@@ -403,7 +374,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
     func test_sessionExpiration_duringProfileSave_doesNotContinueOnboarding() async {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.profileSaveDelay = .milliseconds(100)
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
         viewModel.chooseAIConsent(true)
         await waitUntil { auth.savedProfile != nil }
 
@@ -421,7 +392,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         let auth = MockAuthService(user: makeUser())
         auth.endExpiredSession()
 
-        let viewModel = makeViewModel(auth: auth)
+        let viewModel = OnboardingViewModel(authService: auth)
 
         XCTAssertTrue(viewModel.showAlert)
         XCTAssertEqual(viewModel.alertMessage, "Сессия истекла. Войдите снова")

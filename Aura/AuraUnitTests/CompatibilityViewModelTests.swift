@@ -11,18 +11,18 @@ import XCTest
 
 @MainActor
 final class CompatibilityViewModelTests: AuraUnitTestCase {
-    func test_partnerNameLongerThanTheLimit_sendsNothing() async {
+    func test_partnerNameLongerThanTheLimit_sendsNothing() {
         let content = MockContentService()
         let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
         viewModel.partnerInfo.name = String(repeating: "A", count: InputLimits.maxNameLength + 1)
 
         viewModel.makeCompatibilityTest()
-        await waitUntil { viewModel.showAlert }
 
+        XCTAssertTrue(viewModel.showAlert)
         XCTAssertTrue(content.compatibilityRequests.isEmpty)
     }
 
-    func test_partnerName_ofSpacesAndOneLetter_showsAlert_andSendsNothing() async {
+    func test_partnerName_ofSpacesAndOneLetter_showsAlert_andSendsNothing() {
         // Given
         let content = MockContentService()
         let viewModel = CompatibilityViewModel(authService: MockAuthService(), contentService: content)
@@ -30,9 +30,9 @@ final class CompatibilityViewModelTests: AuraUnitTestCase {
 
         // When
         viewModel.makeCompatibilityTest()
-        await waitUntil { viewModel.showAlert }
 
         // Then
+        XCTAssertTrue(viewModel.showAlert)
         XCTAssertEqual(viewModel.alertMessage, "Имя партнёра должно содержать минимум 2 символа")
         XCTAssertTrue(content.compatibilityRequests.isEmpty)
     }
@@ -56,17 +56,20 @@ final class CompatibilityViewModelTests: AuraUnitTestCase {
 
     func test_unconfirmedEmail_opensTheSheet_insteadOfTheTest() async {
         // Given
-        let auth = MockAuthService(user: makeUser(hasAIConsent: false, isEmailConfirmed: false))
-        let viewModel = CompatibilityViewModel(authService: auth, contentService: MockContentService())
-        await waitUntil { viewModel.needsAIConsent }
+        let auth = MockAuthService(user: makeUser(isEmailConfirmed: false))
+        let content = MockContentService()
+        let viewModel = CompatibilityViewModel(authService: auth, contentService: content)
+        await waitUntil { viewModel.availableTests.contains(.sexualCompatibility) }
         viewModel.partnerInfo.name = "Анна"
 
         // When
         viewModel.makeCompatibilityTest()
 
         // Then
+        XCTAssertFalse(viewModel.needsAIConsent)
         XCTAssertNotNil(viewModel.emailConfirmation)
         XCTAssertFalse(viewModel.isLoading)
+        XCTAssertTrue(content.compatibilityRequests.isEmpty)
     }
 
     func test_retry_reusesTheRequestID_untilTheUserOrPartnerChanges() async throws {

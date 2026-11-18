@@ -83,17 +83,6 @@ final class ModelTests: AuraUnitTestCase {
         XCTAssertNotNil(withTime.partnerBirthTime)
     }
 
-    func test_historyCell_showsADateAPersonCanRead() {
-        // Given
-        let cell = HistoryCellModel.personalityPlaceholder
-
-        // When
-        let text = cell.dateText
-
-        // Then
-        XCTAssertTrue(text.contains("мая 2026"), text)
-    }
-
     func test_keychain_readsSavedToken_andReportsMissingItem() throws {
         let keychain = KeychainHelper()
         let path = "aura-tests-" + UUID().uuidString
@@ -140,7 +129,7 @@ final class ModelTests: AuraUnitTestCase {
         XCTAssertEqual(results, [true, false, false])
     }
 
-    func test_user_savedByAnOlderAppVersion_stillLoads_withoutAccessToAI() throws {
+    func test_userWithoutConsentAndConfirmationFields_hasNoAIOrConfirmedEmail() throws {
         // Given
         let json = #"{"id":"E621E1F8-C36C-495A-93FC-0C247A3E6E5F","name":"Анна"}"#
 

@@ -45,25 +45,6 @@ func makeUser(id: UUID = UserModel.mock.id,
               isEmailConfirmed: isEmailConfirmed)
 }
 
-final class TestDefaults {
-    let defaults: UserDefaults
-    private let suite: String
-
-    init() {
-        suite = "aura-tests." + UUID().uuidString
-        defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-    }
-
-    deinit {
-        defaults.removePersistentDomain(forName: suite)
-    }
-}
-
-func makeStorage() -> TestDefaults {
-    TestDefaults()
-}
-
 func todayText() -> String {
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -207,7 +188,6 @@ final class MockContentService: ContentServiceProtocol {
     var history: [HistoryCellModel] = []
     var errorToThrow: (any Error)?
     var dailyContentDate = todayText()
-    var horoscopeDelay = Duration.zero
     var horoscopeResult = HoroscopeModel.mock
     var beforeHoroscopeResponse: (() async -> Void)?
     var beforeContentResponse: (() -> Void)?
@@ -249,7 +229,7 @@ final class MockContentService: ContentServiceProtocol {
 
     func fetchHistoryDetails(id: UUID) async throws -> HistoryCellModel {
         detailsCount += 1
-        let details = historyDetails(id: id)
+        let details = try historyDetails(id: id)
         beforeDetailsResponse?()
         if let errorToThrow { throw errorToThrow }
         return details
@@ -279,13 +259,12 @@ final class MockContentService: ContentServiceProtocol {
         horoscopeCount += 1
         let response = horoscopeResult
         await beforeHoroscopeResponse?()
-        try await Task.sleep(for: horoscopeDelay)
         if let errorToThrow { throw errorToThrow }
         return response
     }
 
-    private func historyDetails(id: UUID) -> HistoryCellModel {
-        let cell = history.first { $0.id == id } ?? .personalityPlaceholder
+    private func historyDetails(id: UUID) throws -> HistoryCellModel {
+        guard let cell = history.first(where: { $0.id == id }) else { throw NetworkError.notFound }
         return HistoryCellModel(id: cell.id,
                                 kind: cell.kind,
                                 createdAt: cell.createdAt,

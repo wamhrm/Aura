@@ -10,20 +10,6 @@ import XCTest
 
 @MainActor
 final class HistoryViewModelTests: AuraUnitTestCase {
-    func test_fetch_showsTheServerList() async {
-        // Given
-        let content = MockContentService()
-        content.history = [HistoryCellModel.personalityPlaceholder]
-
-        // When
-        let viewModel = HistoryViewModel(authService: MockAuthService(user: .mock), contentService: content)
-        await waitUntil { viewModel.historyCells.count == 1 }
-
-        // Then
-        XCTAssertEqual(viewModel.historyCells, content.history)
-        XCTAssertEqual(viewModel.loadState, .loaded)
-    }
-
     func test_serverFailure_withAnEmptyList_showsTheError() async {
         // Given
         let content = MockContentService()

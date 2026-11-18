@@ -9,24 +9,21 @@ import Foundation
 import XCTest
 
 enum SampleResponses {
-    static let auth = Data(#"""
+    static let user = Data(#"""
         {
-          "token": "c2FtcGxlLXRva2Vu",
-          "user": {
-            "id": "6F9619FF-8B86-4D01-B42D-00CF4FC964FF",
-            "name": "Анна",
-            "email": "anna@example.test",
-            "dateOfBirth": "13.05.2000",
-            "birthTime": "08:15",
-            "gender": "woman",
-            "socialType": "extrovert",
-            "conflictStyle": "direct",
-            "emotionalCore": "intuitive",
-            "decisionStyle": "spontaneous",
-            "coreFocus": "growth",
-            "hasAIConsent": true,
-            "isEmailConfirmed": true
-          }
+          "id": "6F9619FF-8B86-4D01-B42D-00CF4FC964FF",
+          "name": "Анна",
+          "email": "anna@example.test",
+          "dateOfBirth": "13.05.2000",
+          "birthTime": "08:15",
+          "gender": "woman",
+          "socialType": "extrovert",
+          "conflictStyle": "direct",
+          "emotionalCore": "intuitive",
+          "decisionStyle": "spontaneous",
+          "coreFocus": "growth",
+          "hasAIConsent": true,
+          "isEmailConfirmed": true
         }
         """#.utf8)
 

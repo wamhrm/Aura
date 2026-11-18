@@ -94,7 +94,7 @@ final class MockServer: @unchecked Sendable {
     }
 
     private func answer(_ connection: NWConnection, requestLine: String, idempotencyKey: String?) {
-        let route = route(requestLine: requestLine)
+        let route = requestLine.split(separator: " ", maxSplits: 2).prefix(2).joined(separator: " ")
         let (status, body, headers) = lock.withLock {
             self.receivedRequests.append(route)
             if let idempotencyKey {
@@ -110,18 +110,6 @@ final class MockServer: @unchecked Sendable {
         connection.send(content: response, completion: .contentProcessed { _ in
             connection.cancel()
         })
-    }
-
-    private func route(requestLine: String) -> String {
-        let parts = requestLine.split(separator: " ")
-        guard parts.count >= 2 else { return requestLine }
-
-        let path = parts[1]
-            .split(separator: "/")
-            .map { UUID(uuidString: String($0)) == nil ? String($0) : ":historyID" }
-            .joined(separator: "/")
-
-        return "\(parts[0]) /\(path)"
     }
 }
 

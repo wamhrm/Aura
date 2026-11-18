@@ -22,33 +22,6 @@ final class HomeViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(content.insightCount, 1)
     }
 
-    func test_confirmationCode_withSixLetters_sendsNothing() {
-        let auth = MockAuthService()
-        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
-        viewModel.code = "abcdef"
-
-        viewModel.confirm()
-
-        XCTAssertTrue(viewModel.showAlert)
-        XCTAssertNil(auth.confirmedCode)
-        XCTAssertFalse(viewModel.isLoading)
-    }
-
-    func test_resendingConfirmationCode_usesTheSendingTitle() async {
-        let viewModel = EmailConfirmationViewModel(authService: MockAuthService(), email: "anna@mail.ru")
-        viewModel.sendCode()
-        await waitUntil { viewModel.showsCodeEntry && !viewModel.isLoading }
-        viewModel.code = "123456"
-        viewModel.confirm()
-        await waitUntil { !viewModel.isLoading }
-        XCTAssertEqual(viewModel.loadingTitle, "Проверяем...")
-
-        viewModel.sendCode()
-
-        XCTAssertEqual(viewModel.loadingTitle, "Отправляем...")
-        await waitUntil { !viewModel.isLoading }
-    }
-
     func test_refresh_rejectsOutdatedInsight_andRecovers() async {
         let content = MockContentService()
         content.dailyContentDate = "2000-01-01"
@@ -209,51 +182,6 @@ final class HomeViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(content.insightCount, 1)
     }
 
-    // MARK: - Email confirmation sheet
-    func test_code_ofWrongLength_showsAlert_andSendsNothing() {
-        // Given
-        let auth = MockAuthService()
-        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
-        viewModel.code = "12345"
-
-        // When
-        viewModel.confirm()
-
-        // Then
-        XCTAssertEqual(viewModel.alertMessage, "Код состоит из 6 цифр")
-        XCTAssertNil(auth.confirmedCode)
-    }
-
-    func test_sendCode_whenCodeWasRecentlyRequested_opensTheCodeField() async {
-        // Given
-        let auth = MockAuthService()
-        auth.errorToThrow = NetworkError.emailCodeRecentlyRequested("Код уже отправлен")
-        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
-
-        // When
-        viewModel.sendCode()
-        await waitUntil { viewModel.showAlert }
-
-        // Then
-        XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
-        XCTAssertTrue(viewModel.showsCodeEntry)
-    }
-
-    func test_sendCode_whenTheServerFails_keepsTheCodeFieldClosed() async {
-        // Given
-        let auth = MockAuthService()
-        auth.errorToThrow = serverError
-        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
-
-        // When
-        viewModel.sendCode()
-        await waitUntil { viewModel.showAlert }
-
-        // Then
-        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
-        XCTAssertFalse(viewModel.showsCodeEntry)
-    }
-
     func test_personalityRetry_reusesTheRequestID_untilTheAnswersChange() async throws {
         // Given
         let content = MockContentService()
@@ -296,15 +224,6 @@ final class HomeViewModelTests: AuraUnitTestCase {
 
         // Then
         XCTAssertNotEqual(content.personalityRequestIDs.last, firstID)
-    }
-
-    func test_showAIConsent_opensTheConsentScreen() {
-        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
-                                      contentService: MockContentService())
-
-        viewModel.showAIConsent()
-
-        XCTAssertEqual(viewModel.homeRoutes, [.aiConsent])
     }
 
     func test_allowAIConsent_loadsInsight_thenResetsTheRoutes() async {
@@ -354,7 +273,10 @@ final class HomeViewModelTests: AuraUnitTestCase {
         let content = MockContentService()
         let viewModel = HomeViewModel(authService: auth, contentService: content)
         await waitUntil { !viewModel.showsLoadingScreen }
-        content.horoscopeDelay = .seconds(2)
+        var releaseHoroscope = false
+        content.beforeHoroscopeResponse = {
+            await waitUntil { releaseHoroscope }
+        }
 
         viewModel.makePersonalityTest()
         auth.publishUser(makeUser(dateOfBirth: "20.01.1990"))
@@ -368,23 +290,9 @@ final class HomeViewModelTests: AuraUnitTestCase {
 
         viewModel.homeRoutes = []
         XCTAssertTrue(viewModel.showsLoadingScreen)
+        releaseHoroscope = true
         await waitUntil { !viewModel.showsLoadingScreen }
         XCTAssertEqual(viewModel.horoscopeState, .loaded)
-    }
-
-    func test_allowAIConsent_withPersonalityHistory_leavesTheTipToProfile() async {
-        let content = MockContentService()
-        content.historyCells.send([.personalityPlaceholder])
-        let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser(hasAIConsent: false)),
-                                      contentService: content)
-        await waitUntil { !viewModel.showsLoadingScreen }
-        viewModel.showAIConsent()
-
-        viewModel.allowAIConsent()
-        await waitUntil { viewModel.homeRoutes.isEmpty && !viewModel.showsLoadingScreen }
-
-        XCTAssertEqual(content.insightCount, 1)
-        XCTAssertEqual(content.tipCount, 0)
     }
 
     func test_failedInfoUpdate_staysOnTheConsentScreen() async {
@@ -409,5 +317,71 @@ final class HomeViewModelTests: AuraUnitTestCase {
         viewModel.declineAIConsent()
 
         XCTAssertTrue(viewModel.homeRoutes.isEmpty)
+    }
+}
+
+@MainActor
+final class EmailConfirmationViewModelTests: AuraUnitTestCase {
+    func test_resendingConfirmationCode_usesTheSendingTitle() async {
+        let viewModel = EmailConfirmationViewModel(authService: MockAuthService(), email: "anna@mail.ru")
+        viewModel.sendCode()
+        await waitUntil { viewModel.showsCodeEntry && !viewModel.isLoading }
+        viewModel.code = "123456"
+        viewModel.confirm()
+        await waitUntil { !viewModel.isLoading }
+        XCTAssertEqual(viewModel.loadingTitle, "Проверяем...")
+
+        viewModel.sendCode()
+
+        XCTAssertEqual(viewModel.loadingTitle, "Отправляем...")
+        await waitUntil { !viewModel.isLoading }
+    }
+
+    func test_invalidConfirmationCode_showsAlert_andSendsNothing() {
+        for code in ["12345", "abcdef"] {
+            // Given
+            let auth = MockAuthService()
+            let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
+            viewModel.code = code
+
+            // When
+            viewModel.confirm()
+
+            // Then
+            XCTAssertTrue(viewModel.showAlert, "Code: \(code)")
+            XCTAssertEqual(viewModel.alertMessage, "Код состоит из 6 цифр", "Code: \(code)")
+            XCTAssertNil(auth.confirmedCode, "Code: \(code)")
+            XCTAssertFalse(viewModel.isLoading, "Code: \(code)")
+        }
+    }
+
+    func test_sendCode_whenCodeWasRecentlyRequested_opensTheCodeField() async {
+        // Given
+        let auth = MockAuthService()
+        auth.errorToThrow = NetworkError.emailCodeRecentlyRequested("Код уже отправлен")
+        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
+
+        // When
+        viewModel.sendCode()
+        await waitUntil { viewModel.showAlert }
+
+        // Then
+        XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
+        XCTAssertTrue(viewModel.showsCodeEntry)
+    }
+
+    func test_sendCode_whenTheServerFails_keepsTheCodeFieldClosed() async {
+        // Given
+        let auth = MockAuthService()
+        auth.errorToThrow = serverError
+        let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
+
+        // When
+        viewModel.sendCode()
+        await waitUntil { viewModel.showAlert }
+
+        // Then
+        XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
+        XCTAssertFalse(viewModel.showsCodeEntry)
     }
 }

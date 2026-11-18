@@ -65,7 +65,7 @@ class AuraUITestCase: XCTestCase {
     }
 
     func sampleUser(_ changes: [String: Any] = [:]) throws -> [String: Any] {
-        let user = try XCTUnwrap(try SampleResponses.object(SampleResponses.auth)["user"] as? [String: Any])
+        let user = try SampleResponses.object(SampleResponses.user)
         return user.merging(changes) { _, new in new }
     }
 
@@ -82,16 +82,20 @@ class AuraUITestCase: XCTestCase {
         try json(["user": user])
     }
 
-    func setHistory(kind: String, resultKey: String, result: Data, historyList: [[String: Any]]? = nil) throws {
+    @discardableResult
+    func setHistory(kind: String, resultKey: String, result: Data, historyList: [[String: Any]]? = nil) throws -> String {
         let list = try historyList ?? XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
         var entry = try XCTUnwrap(list.first { $0["kind"] as? String == kind })
+        let id = try XCTUnwrap((entry["id"] as? String).flatMap(UUID.init(uuidString:)))
+        let path = "/v1/history/\(id.uuidString)"
 
         server.respond(route: "GET /v1/history", body: try json(historyList ?? [entry]))
 
         entry[resultKey] = try SampleResponses.object(result)
 
-        server.respond(route: "GET /v1/history/:historyID", body: try json(entry))
-        server.respond(route: "DELETE /v1/history/:historyID", status: 204)
+        server.respond(route: "GET \(path)", body: try json(entry))
+        server.respond(route: "DELETE \(path)", status: 204)
+        return path
     }
 
     // MARK: - Launch
@@ -158,16 +162,16 @@ class AuraUITestCase: XCTestCase {
         }
     }
 
-    func goBack() {
+    func goBack(to destination: XCUIElement) {
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        sleep(1)
+        XCTAssertTrue(destination.waitForExistence(timeout: 5), "the previous screen did not open")
     }
 
     func confirmAlert(_ button: String) {
         let confirm = app.alerts.buttons[button].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: 5), "no alert with \(button)")
         confirm.tap()
-        sleep(1)
+        XCTAssertTrue(confirm.waitForNonExistence(timeout: 5), "the confirmation alert did not close")
     }
 
     func alertText() -> String {
@@ -177,21 +181,17 @@ class AuraUITestCase: XCTestCase {
     }
 
     func closeAlert() {
-        app.alerts.firstMatch.buttons.firstMatch.tap()
-        sleep(1)
+        let alert = app.alerts.firstMatch
+        alert.buttons.firstMatch.tap()
+        XCTAssertTrue(alert.waitForNonExistence(timeout: 5), "the alert did not close")
     }
 
     // MARK: - Tabs
     private func openTab(_ index: Int, title: String) {
-        let bar = app.navigationBars[title]
-        var taps = 0
-
-        repeat {
-            taps += 1
-            app.tabBars.firstMatch.buttons.element(boundBy: index).tap()
-        } while !bar.waitForExistence(timeout: 3) && taps < 5
-
-        XCTAssertTrue(bar.exists, "tab \(title) did not open")
+        let tab = app.tabBars.firstMatch.buttons.element(boundBy: index)
+        XCTAssertTrue(tab.wait(for: \.isHittable, toEqual: true, timeout: 5), "tab \(title) is not available")
+        tab.tap()
+        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5), "tab \(title) did not open")
     }
 
     func openCompatibility() {

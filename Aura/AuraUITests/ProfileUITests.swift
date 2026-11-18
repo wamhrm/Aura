@@ -8,17 +8,6 @@
 import XCTest
 
 final class ProfileUITests: AuraUITestCase {
-    func test_withoutResults_profileAsksToTakeTests() throws {
-        // Given
-        try launchSignedIn()
-
-        // When
-        openProfile()
-
-        // Then
-        XCTAssertTrue(text(part: "Пройдите тесты").waitForExistence(timeout: 10), "no prompt to take tests")
-    }
-
     func test_withResults_profileShowsCurrentSign_andSavedResult() throws {
         // Given
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
@@ -49,27 +38,13 @@ final class ProfileUITests: AuraUITestCase {
         XCTAssertTrue(text(part: "Пройдите тесты").waitForExistence(timeout: 10), "the profile did not recover")
     }
 
-    func test_editForm_savesAndCloses() throws {
-        // Given
+    func test_editForm_whenSavingFails_keepsInput_andAllowsRetry() throws {
+        let saveProfile = "PATCH /v1/auth/profileInfo"
+        server.respond(route: saveProfile, status: 500, body: try failingBody(serverError))
         try launchSignedIn()
         openSettings()
         tapButton("Обновить информацию о себе")
         XCTAssertTrue(app.navigationBars["О вас"].waitForExistence(timeout: 5), "the form did not open")
-
-        // When
-        fillField(app.textFields["Введите имя"].firstMatch, text: "-Мария")
-        tapButton("Готово")
-
-        // Then
-        XCTAssertTrue(app.navigationBars["Профиль"].waitForExistence(timeout: 10), "the form did not close")
-        XCTAssertTrue(server.requests.contains("PATCH /v1/auth/profileInfo"))
-    }
-
-    func test_editForm_whenSavingFails_keepsInput_andAllowsRetry() throws {
-        server.respond(route: "PATCH /v1/auth/profileInfo", status: 500, body: try failingBody(serverError))
-        try launchSignedIn()
-        openSettings()
-        tapButton("Обновить информацию о себе")
         let name = app.textFields["Введите имя"].firstMatch
         fillField(name, text: "-Мария")
         let enteredName = name.value as? String
@@ -81,26 +56,14 @@ final class ProfileUITests: AuraUITestCase {
         XCTAssertTrue(app.navigationBars["О вас"].exists)
         XCTAssertEqual(name.value as? String, enteredName)
 
-        server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: sampleUser()))
+        server.respond(route: saveProfile, body: try profileBody(user: sampleUser()))
         tapButton("Готово")
 
         XCTAssertTrue(app.navigationBars["Профиль"].waitForExistence(timeout: 10), "the form did not close after retry")
+        XCTAssertEqual(server.requests.filter { $0 == saveProfile }.count, 2)
     }
 
-    func test_settings_closeWithTheCross() throws {
-        // Given
-        try launchSignedIn()
-        openSettings()
-        XCTAssertTrue(app.navigationBars["Настройки"].waitForExistence(timeout: 5), "the settings did not open")
-
-        // When
-        app.navigationBars["Настройки"].buttons.firstMatch.tap()
-
-        // Then
-        XCTAssertTrue(app.navigationBars["Настройки"].waitForNonExistence(timeout: 5), "the settings did not close")
-    }
-
-    func test_settings_showLegalLinks() throws {
+    func test_settings_showLegalLinks_andCloseWithTheCross() throws {
         // Given
         try launchSignedIn()
 
@@ -108,8 +71,16 @@ final class ProfileUITests: AuraUITestCase {
         openSettings()
 
         // Then
+        let settings = app.navigationBars["Настройки"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5), "the settings did not open")
         XCTAssertTrue(app.links["Политика конфиденциальности"].firstMatch.waitForExistence(timeout: 5), "no link to the policy")
         XCTAssertTrue(app.links["Условия использования"].firstMatch.exists, "no link to the terms")
+
+        // When
+        settings.buttons.firstMatch.tap()
+
+        // Then
+        XCTAssertTrue(settings.waitForNonExistence(timeout: 5), "the settings did not close")
     }
 
     func test_signOut_asksFirst_andReturnsToWelcome() throws {
@@ -134,6 +105,7 @@ final class ProfileUITests: AuraUITestCase {
 
     func test_deleteAccount_asksFirst_andReturnsToWelcome() throws {
         // Given
+        let deleteAccount = "DELETE /v1/auth/account"
         try launchSignedIn()
         openSettings()
 
@@ -142,7 +114,7 @@ final class ProfileUITests: AuraUITestCase {
         confirmAlert("Отмена")
 
         // Then
-        XCTAssertFalse(server.requests.contains("DELETE /v1/auth/account"))
+        XCTAssertFalse(server.requests.contains(deleteAccount))
 
         // When it is confirmed
         tapButton("Удалить аккаунт")
@@ -150,6 +122,7 @@ final class ProfileUITests: AuraUITestCase {
 
         // Then
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 15), "did not return to the welcome screen")
+        XCTAssertEqual(server.requests.filter { $0 == deleteAccount }.count, 1)
     }
 
     func test_deleteAccount_whenServerFails_showsAlert() throws {

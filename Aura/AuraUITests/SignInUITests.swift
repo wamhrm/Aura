@@ -22,23 +22,6 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertEqual(server.requests.filter { $0 == "GET /v1/auth/me" }.count, 1)
     }
 
-    func test_relaunch_withIncompleteProfile_continuesOnboarding() throws {
-        let user = try newUser()
-        server.respond(route: "POST /v1/auth/signIn", body: try authBody(user: user))
-        server.respond(route: "GET /v1/auth/me", body: try json(user))
-        launchOnWelcome()
-        signIn()
-        XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15))
-        app.terminate()
-
-        app.launch()
-
-        XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15))
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
-        XCTAssertEqual(server.requests.filter { $0 == "POST /v1/auth/signIn" }.count, 1)
-        XCTAssertEqual(server.requests.filter { $0 == "GET /v1/auth/me" }.count, 1)
-    }
-
     func test_relaunch_whenUserRequestFails_keepsTokenAndAllowsRetry() throws {
         try launchSignedIn()
         assertOnMainScreen()
@@ -192,13 +175,17 @@ final class SignInUITests: AuraUITestCase {
 
     func test_whenTheServerEndsTheSession_appReturnsToWelcome() throws {
         // Given
-        server.respond(route: "GET /v1/history", status: 401, body: try failingBody("Неверный токен"))
+        let fetchHistory = "GET /v1/history"
+        server.respond(route: fetchHistory, status: 401, body: try failingBody("Неверный токен"))
         launchOnWelcome()
 
         // When
         signIn()
 
         // Then
+        XCTAssertEqual(alertText(), "Сессия истекла. Войдите снова")
+        XCTAssertTrue(server.requests.contains(fetchHistory))
+        closeAlert()
         XCTAssertTrue(welcomeButton.waitForExistence(timeout: 20), "did not return to the welcome screen")
     }
 }

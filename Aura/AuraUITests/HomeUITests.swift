@@ -70,7 +70,7 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertTrue(app.buttons["Выбрать"].firstMatch.waitForExistence(timeout: 5), "the test was not removed")
 
         // When one of the last two tests is removed
-        goBack()
+        goBack(to: app.navigationBars["Главная"])
         text("Астрологический портрет").tap()
         tapButton("Убрать")
 
@@ -78,19 +78,6 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertEqual(alertText(), "Нельзя выбрать меньше 2 тестов")
         closeAlert()
         XCTAssertTrue(app.buttons["Убрать"].firstMatch.exists, "the test was removed below the minimum")
-    }
-
-    func test_personalityTest_showsTheResult() throws {
-        // Given
-        try launchSignedIn()
-
-        // When
-        tapButton("Проверить себя")
-
-        // Then
-        XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the result did not open")
-        XCTAssertTrue(text("Тихий стратег").exists)
-        XCTAssertTrue(text("Черты вашего знака").exists)
     }
 
     func test_personalityTest_whenAIFails_showsAlert_andRepeatWorks() throws {
@@ -112,6 +99,8 @@ final class HomeUITests: AuraUITestCase {
 
         // Then
         XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the result did not open")
+        XCTAssertTrue(text("Тихий стратег").exists)
+        XCTAssertTrue(text("Черты вашего знака").exists)
         XCTAssertEqual(server.idempotencyKeys, [firstKey, firstKey])
 
         app.navigationBars["Результат персонального теста"].buttons.firstMatch.tap()
@@ -121,7 +110,7 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertNotEqual(server.idempotencyKeys.last, firstKey)
     }
 
-    func test_personalityTest_withoutConfirmedEmail_asksForTheCode_andThenWorks() throws {
+    func test_personalityTest_withoutConfirmedEmail_worksAfterConfirmationRetry() throws {
         // Given
         let sendCode = "POST /v1/auth/email/sendCode"
         let codeField = app.textFields["Код из 6 цифр"].firstMatch
@@ -151,7 +140,7 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertEqual(alertText(), "Неверный код")
         closeAlert()
 
-        // When the right code is entered
+        // When confirmation is retried after the error
         server.respond(route: "POST /v1/auth/email/confirm", body: try json(try sampleUser()))
         tapButton("Проверить код")
 

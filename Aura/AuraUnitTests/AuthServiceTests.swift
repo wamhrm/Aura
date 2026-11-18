@@ -13,6 +13,7 @@ import XCTest
 
 @MainActor
 final class AuthServiceTests: AuraUnitTestCase {
+    // MARK: - Preview services
     func test_previews_restoreAndLoadContentWithIndependentSessions() async throws {
         let welcome = PreviewServices(signedIn: false)
         let signedIn = PreviewServices()
@@ -34,6 +35,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertTrue(insight.isFromToday)
     }
 
+    // MARK: - Network service
     func test_networkRequest_propagatesAnUnreadableKeychain() async {
         let keychain = MockKeychainHelper()
         keychain.readFails = true
@@ -70,6 +72,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         }
     }
 
+    // MARK: - Content service
     func test_generatedResults_doNotWaitForTheHistoryRefresh() async throws {
         let network = MockNetworkService()
         let auth = MockAuthService(user: makeUser())
@@ -141,11 +144,109 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(content.historyState.value, .loaded)
     }
 
+    func test_contentResponse_afterSessionEnd_keepsContentCleared() async throws {
+        let keychain = MockKeychainHelper()
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: nil)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        let content = ContentService(networkService: network, authService: auth)
+        network.history = [.personalityPlaceholder]
+        network.beforeHistoryResponse = { auth.endExpiredSession() }
+
+        do {
+            try await content.fetchHistory()
+            XCTFail("An ended session must reject the response")
+        } catch {
+            guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
+        }
+
+        XCTAssertTrue(content.historyCells.value.isEmpty)
+        XCTAssertNil(auth.sessionID)
+    }
+
+    func test_contentResponse_afterAnotherSignIn_doesNotPublishOldHistory() async throws {
+        for nextUser in [makeUser(), makeUser(id: UUID(), name: "Мария")] {
+            let network = MockNetworkService()
+            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: nil)
+            try await auth.signIn(email: "test@test.com", password: "password")
+            let content = ContentService(networkService: network, authService: auth)
+            let previousSession = auth.sessionID
+            network.history = [.personalityPlaceholder]
+            network.beforeHistoryResponse = {
+                network.user = nextUser
+                try await auth.signIn(email: "next@test.com", password: "password")
+            }
+
+            do {
+                try await content.fetchHistory()
+                XCTFail("A new sign-in must reject the old response")
+            } catch {
+                guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+
+            XCTAssertNotEqual(auth.sessionID, previousSession)
+            XCTAssertEqual(currentUser(auth), nextUser)
+            XCTAssertTrue(content.historyCells.value.isEmpty)
+        }
+    }
+
+    func test_oldContentUnauthorizedResponse_doesNotEndNewSession() async throws {
+        for nextUser in [makeUser(), makeUser(id: UUID(), name: "Мария")] {
+            let network = MockNetworkService()
+            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: nil)
+            try await auth.signIn(email: "test@test.com", password: "password")
+            let content = ContentService(networkService: network, authService: auth)
+            network.beforeHistoryResponse = {
+                network.user = nextUser
+                try await auth.signIn(email: "next@test.com", password: "password")
+                auth.finishOnboarding()
+                throw NetworkError.sessionExpired
+            }
+
+            do {
+                try await content.fetchHistory()
+                XCTFail("The old request must be discarded")
+            } catch {
+                guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+
+            XCTAssertTrue(auth.showsMainScreen)
+            XCTAssertEqual(currentUser(auth), nextUser)
+            XCTAssertNil(auth.takeExpiredSessionMessage())
+        }
+    }
+
+    func test_contentRequest_withRejectedToken_endsTheLocalSession() async throws {
+        let keychain = MockKeychainHelper()
+        let storage = TestDefaults()
+        let network = MockNetworkService()
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        try await auth.signIn(email: "test@test.com", password: "password")
+        auth.finishOnboarding()
+        let content = ContentService(networkService: network, authService: auth)
+        network.errorToThrow = NetworkError.sessionExpired
+
+        do {
+            try await content.fetchHistory()
+            XCTFail("The request must fail")
+        } catch NetworkError.sessionExpired {
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertEqual(network.logoutCount, 0)
+        XCTAssertNil(try keychain.loadAuthToken())
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
+        XCTAssertFalse(auth.showsMainScreen)
+        guard case .signedOut = auth.authState else { return XCTFail("Session was not ended") }
+    }
+
+    // MARK: - Auth service
     func test_failedTokenSave_doesNotSignInOrSaveUser() async {
         // Given
         let keychain = MockKeychainHelper()
         keychain.saveFails = true
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
 
         // When
@@ -165,7 +266,7 @@ final class AuthServiceTests: AuraUnitTestCase {
     func test_successfulSignIn_savesOnlyToken_andKeepsUserInMemory() async throws {
         // Given
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
@@ -176,13 +277,11 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn(let user) = auth.authState else { return XCTFail("No session") }
-        XCTAssertEqual(user, network.user)
     }
 
     func test_failedTokenDeletion_keepsSessionAndToken() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -198,12 +297,11 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn = auth.authState else { return XCTFail("Failed sign-out ended the session") }
     }
 
     func test_successfulSignOut_removesTokenAndUserFromMemory() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
 
@@ -217,7 +315,7 @@ final class AuthServiceTests: AuraUnitTestCase {
     func test_tokenAlone_restoresCurrentUserFromTheServer() async throws {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
@@ -235,7 +333,7 @@ final class AuthServiceTests: AuraUnitTestCase {
     }
 
     func test_launch_removesOldProfile_andPreservesAppearance() async throws {
-        let storage = makeStorage()
+        let storage = TestDefaults()
         storage.defaults.set(try JSONEncoder().encode(makeUser(name: "Старое имя")), forKey: Constants.userKey)
         storage.defaults.set("dark", forKey: Constants.selectedThemeKey)
         storage.defaults.set("blue", forKey: Constants.accentColorKey)
@@ -257,7 +355,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         keychain.readFails = true
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
@@ -275,7 +373,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         try keychain.saveAuthToken("saved-token")
         let network = MockNetworkService()
         network.errorToThrow = serverError
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
         await auth.restoreSession()
@@ -298,7 +396,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         try keychain.saveAuthToken("saved-token")
         let network = MockNetworkService()
         network.errorToThrow = NetworkError.sessionExpired
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
         await auth.restoreSession()
@@ -316,7 +414,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         keychain.deleteFails = true
         let network = MockNetworkService()
         network.errorToThrow = NetworkError.sessionExpired
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
 
         await auth.restoreSession()
@@ -332,8 +430,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         let keychain = MockKeychainHelper()
         try keychain.saveAuthToken("saved-token")
         let network = MockNetworkService()
-        let storage = makeStorage()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: nil)
         network.beforeCurrentUserResponse = { auth.endExpiredSession() }
 
         await auth.restoreSession()
@@ -374,30 +471,10 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertFalse(auth.showsMainScreen)
     }
 
-    private func currentUser(_ auth: AuthService) -> UserModel? {
-        if case .signedIn(let user) = auth.authState { return user }
-        return nil
-    }
-
-    private func makeStoredAuth(user: UserModel?) async throws -> AuthService {
-        let keychain = MockKeychainHelper()
-        let storage = makeStorage()
-        let network = MockNetworkService()
-
-        if let user {
-            try keychain.saveAuthToken("saved-token")
-            network.user = user
-        }
-
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
-        await auth.restoreSession()
-        return auth
-    }
-
     func test_profileConsentAndConfirmation_updateUserOnlyInMemory() async throws {
         // Given
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -412,25 +489,30 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(currentUser(auth), saved)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
 
-        // When consent and confirmation return the next user
-        let confirmed = makeUser(dateOfBirth: "01.01.2001", hasAIConsent: true, isEmailConfirmed: true)
-        network.user = confirmed
+        // When the user gives consent
+        let consented = makeUser(dateOfBirth: "20.01.1990", hasAIConsent: true, isEmailConfirmed: false)
+        network.user = consented
         try await auth.giveAIConsent()
+
+        // Then
+        XCTAssertEqual(currentUser(auth), consented)
+        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
+
+        // When the user confirms their email
+        let confirmed = makeUser(dateOfBirth: "20.01.1990", hasAIConsent: true, isEmailConfirmed: true)
+        network.user = confirmed
         try await auth.confirmEmail(code: "123456")
 
         // Then
         XCTAssertEqual(currentUser(auth), confirmed)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         XCTAssertEqual(auth.sessionID, sessionID)
-        guard case .signedIn(let user) = auth.authState else { return XCTFail("No session") }
-        XCTAssertEqual(user, confirmed)
     }
 
     func test_profileResponse_afterSessionEnd_doesNotRestoreUser() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
         let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: nil)
         try await auth.signIn(email: "test@test.com", password: "password")
         network.beforeProfileResponse = { auth.endExpiredSession() }
 
@@ -444,65 +526,13 @@ final class AuthServiceTests: AuraUnitTestCase {
         }
 
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedOut = auth.authState else { return XCTFail("Session was restored") }
-    }
-
-    func test_contentResponse_afterSessionEnd_keepsContentCleared() async throws {
-        let keychain = MockKeychainHelper()
-        let storage = makeStorage()
-        let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
-        try await auth.signIn(email: "test@test.com", password: "password")
-        let content = ContentService(networkService: network, authService: auth)
-        network.history = [.personalityPlaceholder]
-        network.beforeHistoryResponse = { auth.endExpiredSession() }
-
-        do {
-            try await content.fetchHistory()
-            XCTFail("An ended session must reject the response")
-        } catch {
-            guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
-        }
-
-        XCTAssertTrue(content.historyCells.value.isEmpty)
-        XCTAssertNil(auth.sessionID)
-        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-    }
-
-    func test_contentResponse_afterAnotherSignIn_doesNotPublishOldHistory() async throws {
-        for nextUser in [makeUser(), makeUser(id: UUID(), name: "Мария")] {
-            let storage = makeStorage()
-            let network = MockNetworkService()
-            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: storage.defaults)
-            try await auth.signIn(email: "test@test.com", password: "password")
-            let content = ContentService(networkService: network, authService: auth)
-            let previousSession = auth.sessionID
-            network.history = [.personalityPlaceholder]
-            network.beforeHistoryResponse = {
-                network.user = nextUser
-                try await auth.signIn(email: "next@test.com", password: "password")
-            }
-
-            do {
-                try await content.fetchHistory()
-                XCTFail("A new sign-in must reject the old response")
-            } catch {
-                guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
-            }
-
-            XCTAssertNotEqual(auth.sessionID, previousSession)
-            XCTAssertEqual(currentUser(auth), nextUser)
-            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-            XCTAssertTrue(content.historyCells.value.isEmpty)
-        }
     }
 
     func test_confirmationResponse_afterSessionEnd_doesNotRestoreUser() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
         let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: nil)
         try await auth.signIn(email: "test@test.com", password: "password")
         network.beforeConfirmationResponse = { auth.endExpiredSession() }
 
@@ -515,15 +545,13 @@ final class AuthServiceTests: AuraUnitTestCase {
 
         XCTAssertNil(auth.sessionID)
         XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
         guard case .signedOut = auth.authState else { return XCTFail("Session was restored") }
     }
 
     func test_confirmationResponse_afterAnotherSignIn_doesNotOverwriteCurrentUser() async throws {
         for nextUser in [makeUser(isEmailConfirmed: false), makeUser(id: UUID(), name: "Мария", isEmailConfirmed: false)] {
-            let storage = makeStorage()
             let network = MockNetworkService()
-            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: storage.defaults)
+            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: nil)
             try await auth.signIn(email: "test@test.com", password: "password")
             network.beforeConfirmationResponse = {
                 network.user = nextUser
@@ -538,17 +566,13 @@ final class AuthServiceTests: AuraUnitTestCase {
             }
 
             XCTAssertEqual(currentUser(auth), nextUser)
-            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-            guard case .signedIn(let user) = auth.authState else { return XCTFail("Current session was ended") }
-            XCTAssertEqual(user, nextUser)
         }
     }
 
     func test_oldProfileUnauthorizedResponse_doesNotEndNewSession() async throws {
         for nextUser in [makeUser(), makeUser(id: UUID(), name: "Мария")] {
-            let storage = makeStorage()
             let network = MockNetworkService()
-            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: storage.defaults)
+            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: nil)
             try await auth.signIn(email: "test@test.com", password: "password")
             network.beforeProfileResponse = {
                 network.user = nextUser
@@ -566,43 +590,13 @@ final class AuthServiceTests: AuraUnitTestCase {
 
             XCTAssertTrue(auth.showsMainScreen)
             XCTAssertEqual(currentUser(auth), nextUser)
-            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-            XCTAssertNil(auth.takeExpiredSessionMessage())
-        }
-    }
-
-    func test_oldContentUnauthorizedResponse_doesNotEndNewSession() async throws {
-        for nextUser in [makeUser(), makeUser(id: UUID(), name: "Мария")] {
-            let storage = makeStorage()
-            let network = MockNetworkService()
-            let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: storage.defaults)
-            try await auth.signIn(email: "test@test.com", password: "password")
-            let content = ContentService(networkService: network, authService: auth)
-            network.beforeHistoryResponse = {
-                network.user = nextUser
-                try await auth.signIn(email: "next@test.com", password: "password")
-                auth.finishOnboarding()
-                throw NetworkError.sessionExpired
-            }
-
-            do {
-                try await content.fetchHistory()
-                XCTFail("The old request must be discarded")
-            } catch {
-                guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
-            }
-
-            XCTAssertTrue(auth.showsMainScreen)
-            XCTAssertEqual(currentUser(auth), nextUser)
-            XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
             XCTAssertNil(auth.takeExpiredSessionMessage())
         }
     }
 
     func test_oldSignOutResponse_doesNotEndNewSession() async throws {
-        let storage = makeStorage()
         let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: storage.defaults)
+        let auth = AuthService(networkService: network, keychain: MockKeychainHelper(), userDefaults: nil)
         try await auth.signIn(email: "test@test.com", password: "password")
         let previousSession = auth.sessionID
         network.beforeLogoutResponse = {
@@ -618,13 +612,11 @@ final class AuthServiceTests: AuraUnitTestCase {
 
         XCTAssertNotEqual(auth.sessionID, previousSession)
         XCTAssertEqual(currentUser(auth), network.user)
-        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn = auth.authState else { return XCTFail("Current session was ended") }
     }
 
     func test_rejectedToken_endsTheLocalSessionWithoutLogout() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -649,7 +641,7 @@ final class AuthServiceTests: AuraUnitTestCase {
 
     func test_rejectedToken_endsTheLocalSession_whenTokenDeletionFails() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -671,7 +663,7 @@ final class AuthServiceTests: AuraUnitTestCase {
 
     func test_successfulAccountDeletion_endsTheLocalSession_whenTokenDeletionFails() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let auth = AuthService(networkService: MockNetworkService(), keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
         auth.finishOnboarding()
@@ -687,7 +679,7 @@ final class AuthServiceTests: AuraUnitTestCase {
 
     func test_serverError_keepsTheLocalSession() async throws {
         let keychain = MockKeychainHelper()
-        let storage = makeStorage()
+        let storage = TestDefaults()
         let network = MockNetworkService()
         let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
         try await auth.signIn(email: "test@test.com", password: "password")
@@ -705,32 +697,42 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertEqual(try keychain.loadAuthToken(), "new-token")
         XCTAssertEqual(currentUser(auth), network.user)
         XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        guard case .signedIn = auth.authState else { return XCTFail("A server error ended the session") }
     }
 
-    func test_contentRequest_withRejectedToken_endsTheLocalSession() async throws {
-        let keychain = MockKeychainHelper()
-        let storage = makeStorage()
-        let network = MockNetworkService()
-        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
-        try await auth.signIn(email: "test@test.com", password: "password")
-        auth.finishOnboarding()
-        let content = ContentService(networkService: network, authService: auth)
-        network.errorToThrow = NetworkError.sessionExpired
+    // MARK: - Helpers
+    private func currentUser(_ auth: AuthService) -> UserModel? {
+        if case .signedIn(let user) = auth.authState { return user }
+        return nil
+    }
 
-        do {
-            try await content.fetchHistory()
-            XCTFail("The request must fail")
-        } catch NetworkError.sessionExpired {
-        } catch {
-            XCTFail("Unexpected error: \(error)")
+    private func makeStoredAuth(user: UserModel?) async throws -> AuthService {
+        let keychain = MockKeychainHelper()
+        let storage = TestDefaults()
+        let network = MockNetworkService()
+
+        if let user {
+            try keychain.saveAuthToken("saved-token")
+            network.user = user
         }
 
-        XCTAssertEqual(network.logoutCount, 0)
-        XCTAssertNil(try keychain.loadAuthToken())
-        XCTAssertNil(storage.defaults.object(forKey: Constants.userKey))
-        XCTAssertFalse(auth.showsMainScreen)
-        guard case .signedOut = auth.authState else { return XCTFail("Session was not ended") }
+        let auth = AuthService(networkService: network, keychain: keychain, userDefaults: storage.defaults)
+        await auth.restoreSession()
+        return auth
+    }
+}
+
+private final class TestDefaults {
+    let defaults: UserDefaults
+    private let suite: String
+
+    init() {
+        suite = "aura-tests." + UUID().uuidString
+        defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+    }
+
+    deinit {
+        defaults.removePersistentDomain(forName: suite)
     }
 }
 
@@ -759,7 +761,7 @@ private nonisolated final class UnauthorizedResponse: URLProtocol, @unchecked Se
 }
 
 private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unchecked Sendable {
-    var data: Data?
+    private var data: Data?
     var saveFails = false
     var readFails = false
     var deleteFails = false

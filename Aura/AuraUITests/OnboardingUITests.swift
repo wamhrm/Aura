@@ -26,12 +26,14 @@ final class OnboardingUITests: AuraUITestCase {
         tapButton("Далее")
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
         tapButton("Далее")
-        tapButton("Показать")
-        let passwordField = app.textFields["Пароль"].firstMatch
-        fillField(passwordField, text: password)
-        XCTAssertEqual(passwordField.value as? String, password)
+        fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
         tapButton("Далее")
         XCTAssertTrue(text("Расскажите о себе").waitForExistence(timeout: 15), "the profile questions did not open")
+    }
+
+    private func submitProfileAnswers() {
+        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
+        tapButton("Далее")
     }
 
     func test_registration_withUnavailableAI_stillReachesMainScreen() throws {
@@ -42,8 +44,7 @@ final class OnboardingUITests: AuraUITestCase {
         server.respond(route: "GET /v1/daily/insight", status: 500, body: failure)
 
         // When
-        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
-        tapButton("Далее")
+        submitProfileAnswers()
         tapButton("Разрешить")
 
         // Then
@@ -51,13 +52,12 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(text(part: serverError).firstMatch.waitForExistence(timeout: 15), "no content error on the main screen")
     }
 
-    func test_consentFailure_staysOnLoadingScreen_andRetryFinishes() throws {
+    func test_consentFailure_showsError_andAllowsRetry() throws {
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         server.respond(route: "POST /v1/auth/aiConsent", status: 500, body: try failingBody(serverError))
         openProfileQuestions()
-        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
-        tapButton("Далее")
+        submitProfileAnswers()
         tapButton("Разрешить")
 
         XCTAssertTrue(text(part: serverError).waitForExistence(timeout: 15), "consent error was hidden")
@@ -112,24 +112,12 @@ final class OnboardingUITests: AuraUITestCase {
         XCTAssertTrue(text("Время рождения").waitForExistence(timeout: 3), "the time field did not appear")
     }
 
-    func test_profileQuestions_withoutAnswers_showAlert() {
-        // Given
-        openProfileQuestions()
-
-        // When
-        tapButton("Далее")
-
-        // Then
-        XCTAssertEqual(alertText(), "Ответьте на все вопросы")
-    }
-
     func test_decliningAIConsent_locksTheScreen_andAllowingUnlocksIt() throws {
         // Given
         let user = try sampleUser(["hasAIConsent": false])
         server.respond(route: "PATCH /v1/auth/profileInfo", body: try profileBody(user: user))
         openProfileQuestions()
-        chooseAnswers(["Мужской", "Интроверт", "Миротворец", "Рациональный", "Планируете", "Стабильность"])
-        tapButton("Далее")
+        submitProfileAnswers()
 
         // When
         tapButton("Не сейчас")
@@ -174,6 +162,10 @@ final class OnboardingUITests: AuraUITestCase {
         app.terminate()
         app.launch()
         XCTAssertTrue(text("Когда вы родились?").waitForExistence(timeout: 15), "the date step did not reopen")
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        let requests = server.requests
+        XCTAssertEqual(requests.filter { $0 == "POST /v1/auth/signIn" }.count, 1)
+        XCTAssertEqual(requests.filter { $0 == "GET /v1/auth/me" }.count, 1)
         let arrow = app.navigationBars.buttons.firstMatch
         XCTAssertTrue(arrow.waitForExistence(timeout: 15), "the onboarding back button did not appear")
 

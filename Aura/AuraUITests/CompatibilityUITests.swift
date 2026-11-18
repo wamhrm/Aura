@@ -8,7 +8,7 @@
 import XCTest
 
 final class CompatibilityUITests: AuraUITestCase {
-    func test_form_checksTheFields_andShowsTheResult() throws {
+    func test_form_checksTheFields_showsTheResult_andResetsAfterReturning() throws {
         // Given
         try launchSignedIn()
         openCompatibility()
@@ -21,14 +21,22 @@ final class CompatibilityUITests: AuraUITestCase {
         closeAlert()
 
         // When the name is filled in
-        scrollUp(element: app.textFields["Введите имя"].firstMatch)
-        fillField(app.textFields["Введите имя"].firstMatch, text: "O’Connor")
-        XCTAssertEqual(app.textFields["Введите имя"].firstMatch.value as? String, "O’connor")
+        let name = app.textFields["Введите имя"].firstMatch
+        scrollUp(element: name)
+        fillField(name, text: "O’Connor")
+        XCTAssertEqual(name.value as? String, "O’connor")
         tapButton("Узнать совместимость")
 
         // Then
         XCTAssertTrue(app.navigationBars["Результат теста на совместимость"].waitForExistence(timeout: 15), "the result did not open")
         XCTAssertTrue(text("Спокойный союз").exists)
+
+        // When
+        goBack(to: app.navigationBars["Узнать совместимость"])
+
+        // Then
+        scrollUp(element: name)
+        XCTAssertEqual(name.value as? String, "", "the partner name was not cleared")
     }
 
     func test_serverRefusal_showsItsReason() throws {
@@ -44,22 +52,6 @@ final class CompatibilityUITests: AuraUITestCase {
 
         // Then
         XCTAssertEqual(alertText(), refusal)
-    }
-
-    func test_afterTheResult_theFormIsEmpty() throws {
-        // Given
-        try launchSignedIn()
-        openCompatibility()
-        fillField(app.textFields["Введите имя"].firstMatch, text: "Иван")
-        tapButton("Узнать совместимость")
-        XCTAssertTrue(app.navigationBars["Результат теста на совместимость"].waitForExistence(timeout: 15), "the result did not open")
-
-        // When
-        goBack()
-
-        // Then
-        scrollUp(element: app.textFields["Введите имя"].firstMatch)
-        XCTAssertEqual(app.textFields["Введите имя"].firstMatch.value as? String, "")
     }
 
     func test_birthTimeSwitch_showsTheTimeField() throws {

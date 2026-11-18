@@ -10,7 +10,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class FlowLayoutTests: AuraUnitTestCase {
+final class FlowLayoutTests: XCTestCase {
     func test_unspecifiedWidth_fitsTheChildrenOnOneRow() {
         let host = UIHostingController(rootView: flow.fixedSize())
 

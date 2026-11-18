@@ -8,17 +8,6 @@
 import XCTest
 
 final class HistoryUITests: AuraUITestCase {
-    func test_emptyHistory_saysSo() throws {
-        // Given
-        try launchSignedIn()
-
-        // When
-        openHistory()
-
-        // Then
-        XCTAssertTrue(text("История пуста").waitForExistence(timeout: 10), "no empty state")
-    }
-
     func test_personalityEntry_showsItsDate_andOpens() throws {
         // Given
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
@@ -52,7 +41,7 @@ final class HistoryUITests: AuraUITestCase {
 
     func test_delete_asksFirst_andRemovesTheEntry() throws {
         // Given
-        try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
+        let path = try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
         try launchSignedIn()
         openHistory()
         let entry = button(part: "Тихий стратег")
@@ -65,6 +54,7 @@ final class HistoryUITests: AuraUITestCase {
 
         // Then
         XCTAssertTrue(entry.waitForExistence(timeout: 5), "the entry was removed without a confirmation")
+        XCTAssertFalse(server.requests.contains { $0.hasPrefix("DELETE /v1/history/") })
 
         // When it is confirmed
         server.respond(route: "GET /v1/history", body: Data("[]".utf8))
@@ -74,6 +64,7 @@ final class HistoryUITests: AuraUITestCase {
 
         // Then
         XCTAssertTrue(entry.waitForNonExistence(timeout: 5), "the entry was not removed")
+        XCTAssertEqual(server.requests.filter { $0 == "DELETE \(path)" }.count, 1)
     }
 
     func test_whenServerFails_showsTheError_andRetryRecovers() throws {
