@@ -47,7 +47,7 @@ struct HoroscopeCellView: View {
     }
 }
 
-enum HoroscopeTypes: String, CaseIterable, Codable {
+enum HoroscopeTypes: String, Codable {
     case aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius, pisces
 
     var title: String {

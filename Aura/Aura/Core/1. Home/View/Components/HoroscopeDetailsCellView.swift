@@ -38,7 +38,7 @@ struct HoroscopeDetailsCellView: View {
     }
 }
 
-enum HoroscopeDetailsCellTypes: String, CaseIterable, Codable {
+enum HoroscopeDetailsCellTypes: String, Codable {
     case love, health, work
 
     fileprivate var title: String {

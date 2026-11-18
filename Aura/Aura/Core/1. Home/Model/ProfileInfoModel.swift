@@ -5,8 +5,6 @@
 //  Created by wamhrm on 05.05.2026.
 //
 
-import Foundation
-
 struct ProfileInfoModel: Codable, Equatable {
     var name: String?
     var dateOfBirth = ""

@@ -252,7 +252,7 @@ struct LoadFailedView: View {
     }
 }
 
-enum EmotionalProfileTypes: String, Codable, CaseIterable {
+enum EmotionalProfileTypes: String, Codable {
     case temperament, thinking, organization, relationships, emotionalResonance, innerOpenness, soulAlignment, emotionalWarmth
 
     fileprivate var leftSide: String {

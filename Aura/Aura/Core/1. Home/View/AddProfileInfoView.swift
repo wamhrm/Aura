@@ -59,7 +59,7 @@ struct AddProfileInfoView: View {
     }
 }
 
-enum ProfileInfoOption: String, CaseIterable {
+enum ProfileInfoOption: String {
     case man, woman, introvert, ambivert, extrovert, mediator, direct, avoider, logic, intuitive, planner, spontaneous, procrastinator, stability, growth, peace
 
     var title: String {

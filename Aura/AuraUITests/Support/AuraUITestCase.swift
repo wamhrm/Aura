@@ -194,10 +194,6 @@ class AuraUITestCase: XCTestCase {
         XCTAssertTrue(bar.exists, "tab \(title) did not open")
     }
 
-    func openHome() {
-        openTab(0, title: "Главная")
-    }
-
     func openCompatibility() {
         openTab(1, title: "Узнать совместимость")
     }
