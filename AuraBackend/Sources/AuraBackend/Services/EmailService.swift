@@ -30,13 +30,12 @@ struct EmailService {
                                                        text: text))
             }
         } catch {
-            req.logger.error("Resend request failed: \(error)")
+            req.logger.error("Resend request failed: \(errorLogCode(error))")
             throw Abort(.badGateway, reason: "Не удалось отправить письмо. Попробуйте позже")
         }
 
         guard (200..<300).contains(response.status.code) else {
-            let body = response.body.map { String(buffer: $0) } ?? ""
-            req.logger.error("Resend failed with status \(response.status.code): \(body)")
+            req.logger.error("Resend failed with status \(response.status.code)")
             throw Abort(.badGateway, reason: "Не удалось отправить письмо. Попробуйте позже")
         }
     }

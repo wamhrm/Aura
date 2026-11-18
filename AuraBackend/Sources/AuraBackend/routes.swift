@@ -10,7 +10,7 @@ func routes(app: Application) throws {
             try await req.db.sql().raw("SELECT 1").run()
             return .ok
         } catch {
-            req.logger.error("Database check failed: \(error)")
+            req.logger.error("Database check failed: \(errorLogCode(error))")
             return .serviceUnavailable
         }
     }

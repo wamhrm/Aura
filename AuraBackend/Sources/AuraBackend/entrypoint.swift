@@ -17,9 +17,9 @@ enum Entrypoint {
 
             try await app.execute()
         } catch {
-            app.logger.report(error: error)
+            app.logger.error("AuraBackend failed to run: \(errorLogCode(error))")
             try? await app.asyncShutdown()
-            throw error
+            throw Abort(.internalServerError, reason: "AuraBackend failed to run")
         }
         try await app.asyncShutdown()
     }

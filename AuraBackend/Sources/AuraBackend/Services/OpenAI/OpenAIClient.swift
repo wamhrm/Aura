@@ -24,38 +24,43 @@ struct OpenAIClient {
                                     responseFormat: responseFormat,
                                     maxCompletionTokens: maxCompletionTokens)
 
+        let operation = responseFormat.jsonSchema.name
         let response = try await send(request: request, apiKey: apiKey, req: req)
 
         guard response.status == .ok else {
-            let error = try? response.content.decode(OpenAIErrorResponse.self)
-            req.logger.error("OpenAI request failed with status \(response.status.code): \(error?.error.message ?? "no error message")")
+            req.logger.error("OpenAI \(operation) failed with status \(response.status.code)")
             throw Abort(.badGateway, reason: "OpenAI вернул ошибку")
         }
 
         guard let chatResponse = try? response.content.decode(OpenAIChatResponse.self),
               let choice = chatResponse.choices.first else {
-            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): the answer has no choices")
+            req.logger.error("OpenAI \(operation): the answer has no choices")
             throw emptyAnswerError
         }
 
         if let usage = chatResponse.usage {
-            req.logger.info("OpenAI \(request.responseFormat.jsonSchema.name) used \(usage.promptTokens) prompt and \(usage.completionTokens) completion tokens")
+            req.logger.info("OpenAI \(operation) used \(usage.promptTokens) prompt and \(usage.completionTokens) completion tokens")
         }
 
-        if let refusal = choice.message.refusal {
-            req.logger.warning("OpenAI refused to answer: \(refusal)")
+        if choice.message.refusal != nil {
+            req.logger.warning("OpenAI \(operation) refused to answer")
             throw emptyAnswerError
         }
 
-        guard choice.finishReason != "length", let content = choice.message.content else {
-            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): missing or incomplete content, finish reason: \(choice.finishReason ?? "none")")
+        if choice.finishReason == "length" {
+            req.logger.error("OpenAI \(operation): the answer reached the completion limit")
+            throw emptyAnswerError
+        }
+
+        guard let content = choice.message.content else {
+            req.logger.error("OpenAI \(operation): the answer has no content")
             throw emptyAnswerError
         }
 
         do {
             return try parse(Data(content.utf8))
         } catch {
-            req.logger.error("OpenAI \(responseFormat.jsonSchema.name): unexpected answer: \(error)")
+            req.logger.error("OpenAI \(operation): unexpected answer: \(errorLogCode(error))")
             throw error as? Abort ?? OpenAIResultValidator.unexpectedFormatError
         }
     }

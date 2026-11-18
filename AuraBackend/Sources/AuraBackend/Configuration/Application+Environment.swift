@@ -17,7 +17,9 @@ extension Application {
         }
 
         guard missing.isEmpty else {
-            throw Abort(.internalServerError, reason: "Set these environment variables: \(missing.joined(separator: ", "))")
+            let reason = "Set these environment variables: \(missing.joined(separator: ", "))"
+            logger.error("\(reason)")
+            throw Abort(.internalServerError, reason: reason)
         }
     }
 

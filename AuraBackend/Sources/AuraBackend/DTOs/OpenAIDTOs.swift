@@ -127,11 +127,3 @@ struct OpenAIResponseMessage: Content {
     let content: String?
     let refusal: String?
 }
-
-struct OpenAIErrorResponse: Content {
-    let error: OpenAIError
-}
-
-struct OpenAIError: Content {
-    let message: String
-}

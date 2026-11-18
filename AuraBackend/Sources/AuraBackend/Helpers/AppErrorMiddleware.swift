@@ -5,6 +5,8 @@
 //  Created by wamhrm on 03.11.2026.
 //
 
+import AsyncHTTPClient
+import PostgresNIO
 import Vapor
 
 struct AppErrorMiddleware: AsyncMiddleware {
@@ -26,7 +28,8 @@ struct AppErrorMiddleware: AsyncMiddleware {
         let status = abort?.status ?? .internalServerError
 
         if status.code >= 500 {
-            req.logger.error("Request failed with status \(status.code): \(String(reflecting: error))")
+            let route = req.route?.description ?? "unmatched route"
+            req.logger.error("\(route) failed with status \(status.code): \(errorLogCode(error))")
         }
 
         let body = ErrorBody(error: true, reason: reason(abort: abort, status: status))
@@ -61,4 +64,20 @@ struct AppErrorMiddleware: AsyncMiddleware {
                 return "Не удалось выполнить запрос"
         }
     }
+}
+
+func errorLogCode(_ error: any Error) -> String {
+    if let error = error as? PSQLError {
+        if let sqlState = error.serverInfo?[.sqlState] {
+            return "PostgreSQL \(error.code) (SQLSTATE \(sqlState))"
+        }
+        return "PostgreSQL \(error.code)"
+    }
+    if let error = error as? HTTPClientError {
+        return error.shortDescription
+    }
+    if let error = error as? URLError {
+        return "URLError \(error.errorCode)"
+    }
+    return String(describing: type(of: error))
 }

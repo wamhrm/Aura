@@ -57,7 +57,7 @@ struct HistoryController: RouteCollection {
         do {
             return try HistoryDTOMapper.getHistoryItemDetails(history: entry)
         } catch {
-            req.logger.error("Failed to decode history entry \(historyID): \(error)")
+            req.logger.error("Failed to decode history entry: \(errorLogCode(error))")
             throw Abort(.internalServerError, reason: "Не удалось открыть запись истории")
         }
     }
