@@ -193,7 +193,10 @@ struct AuthController: RouteCollection {
     }
 
     private func emailExists(_ email: String, database: any Database) async throws -> Bool {
-        try await User.query(on: database).filter(\.$email == email).first() != nil
+        try await User.query(on: database)
+            .filter(\.$email == email)
+            .field(\.$id)
+            .first() != nil
     }
 
     private func normalizedEmail(email: String) -> String {

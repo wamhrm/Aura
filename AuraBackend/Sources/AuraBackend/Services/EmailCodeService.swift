@@ -123,12 +123,12 @@ struct EmailCodeService {
             .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
             .delete()
 
-        let recentCodes = try await EmailConfirmation.query(on: database)
+        let sentDates = try await EmailConfirmation.query(on: database)
             .filter(\.$user.$id == userID)
             .sort(\.$createdAt, .descending)
-            .all()
+            .all(\.$createdAt)
 
-        try checkSendLimit(createdAt: recentCodes.compactMap(\.createdAt))
+        try checkSendLimit(createdAt: sentDates.compactMap { $0 })
 
         let confirmation = EmailConfirmation(userID: userID,
                                              codeHash: hash(code: code, userID: userID),
@@ -143,12 +143,12 @@ struct EmailCodeService {
             .filter(\.$createdAt < Date().addingTimeInterval(-limitWindow))
             .delete()
 
-        let recentResets = try await PasswordReset.query(on: database)
+        let sentDates = try await PasswordReset.query(on: database)
             .filter(\.$user.$id == userID)
             .sort(\.$createdAt, .descending)
-            .all()
+            .all(\.$createdAt)
 
-        try checkSendLimit(createdAt: recentResets.compactMap(\.createdAt))
+        try checkSendLimit(createdAt: sentDates.compactMap { $0 })
 
         let reset = PasswordReset(userID: userID,
                                   codeHash: hash(code: code, userID: userID),
