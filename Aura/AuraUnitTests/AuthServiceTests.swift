@@ -47,6 +47,29 @@ final class AuthServiceTests: AuraUnitTestCase {
         }
     }
 
+    func test_storedToken_isOnlyUsedForProtectedRequests() async throws {
+        let keychain = MockKeychainHelper()
+        try keychain.saveAuthToken("stale-token")
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [UnauthorizedResponse.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        let network = NetworkService(baseURL: "https://aura.example.test", session: session, keychain: keychain)
+
+        do {
+            _ = try await network.signIn(email: "anna@example.test", password: "wrong-password")
+            XCTFail("Expected the sign-in error")
+        } catch NetworkError.server(let reason) {
+            XCTAssertEqual(reason, "Неверная почта или пароль")
+        }
+
+        do {
+            _ = try await network.fetchCurrentUser()
+            XCTFail("Expected the session expiration error")
+        } catch NetworkError.sessionExpired {
+        }
+    }
+
     func test_generatedResults_doNotWaitForTheHistoryRefresh() async throws {
         let network = MockNetworkService()
         let auth = MockAuthService(user: makeUser())
@@ -709,6 +732,30 @@ final class AuthServiceTests: AuraUnitTestCase {
         XCTAssertFalse(auth.showsMainScreen)
         guard case .signedOut = auth.authState else { return XCTFail("Session was not ended") }
     }
+}
+
+private nonisolated final class UnauthorizedResponse: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        guard let url = request.url else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badURL))
+            return
+        }
+
+        let expectedAuthorization = url.path.hasSuffix("/auth/me") ? "Bearer stale-token" : nil
+        let status = request.value(forHTTPHeaderField: "Authorization") == expectedAuthorization ? 401 : 500
+        guard let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil) else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
+            return
+        }
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data(#"{"reason":"Неверная почта или пароль"}"#.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
 }
 
 private nonisolated final class MockKeychainHelper: KeychainHelperProtocol, @unchecked Sendable {

@@ -142,16 +142,6 @@ final class HomeUITests: AuraUITestCase {
         tapButton("Подтвердить")
         XCTAssertEqual(alertText(), dailyLimit)
         closeAlert()
-        XCTAssertFalse(codeField.exists)
-
-        // When a code was recently requested
-        let recent = "Код уже отправлен. Запросить новый можно через минуту"
-        server.respond(route: sendCode, status: 429,
-                       body: try failingBody(recent),
-                       headers: ["X-Aura-Error-Code": "email_code_recently_requested"])
-        tapButton("Подтвердить")
-        XCTAssertEqual(alertText(), recent)
-        closeAlert()
 
         // When a wrong code is entered
         fillField(codeField, text: "000000")
@@ -169,6 +159,7 @@ final class HomeUITests: AuraUITestCase {
         XCTAssertTrue(app.navigationBars["Подтвердите почту"].waitForNonExistence(timeout: 10), "the sheet did not close")
         tapButton("Проверить себя")
         XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the result did not open")
+        XCTAssertEqual(server.requests.filter { $0 == sendCode }.count, 1)
     }
 
     func test_whenServerFails_showsRetry_andRetryRecovers() throws {

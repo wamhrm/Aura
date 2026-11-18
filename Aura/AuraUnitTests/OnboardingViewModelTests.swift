@@ -201,7 +201,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         viewModel.requestPasswordReset()
         await waitUntil { !viewModel.isLoading }
 
-        XCTAssertTrue(viewModel.isResetCodeSent)
+        XCTAssertTrue(viewModel.showsResetCodeEntry)
         XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
         XCTAssertTrue(viewModel.showAlert)
         XCTAssertFalse(auth.showsMainScreen)
@@ -216,7 +216,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
         viewModel.requestPasswordReset()
         await waitUntil { !viewModel.isLoading }
 
-        XCTAssertFalse(viewModel.isResetCodeSent)
+        XCTAssertFalse(viewModel.showsResetCodeEntry)
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
         XCTAssertTrue(viewModel.showAlert)
     }

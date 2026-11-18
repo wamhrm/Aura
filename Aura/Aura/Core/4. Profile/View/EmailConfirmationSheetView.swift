@@ -19,7 +19,7 @@ struct EmailConfirmationSheetView: View {
                         .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))
                         .foregroundStyle(.secondary)
 
-                    if vm.isCodeSent {
+                    if vm.showsCodeEntry {
                         VStack(spacing: 25) {
                             OnboardingTextField(text: $vm.code, type: .code)
 
@@ -41,17 +41,17 @@ struct EmailConfirmationSheetView: View {
 
                     Spacer()
                 }
-                .animation(nil, value: vm.isCodeSent)
-                .opacity(vm.isCodeSent && vm.isLoading ? 0 : 1)
+                .animation(nil, value: vm.showsCodeEntry)
+                .opacity(vm.showsCodeEntry && vm.isLoading ? 0 : 1)
 
                 ZStack {
                     BackgroundView()
                     LoadingView(title: vm.loadingTitle,
-                                isPresented: vm.isCodeSent && vm.isLoading)
+                                isPresented: vm.showsCodeEntry && vm.isLoading)
                 }
-                .opacity(vm.isCodeSent && vm.isLoading ? 1 : 0)
+                .opacity(vm.showsCodeEntry && vm.isLoading ? 1 : 0)
             }
-            .animation(.easeInOut(duration: 0.35), value: vm.isCodeSent && vm.isLoading)
+            .animation(.easeInOut(duration: 0.35), value: vm.showsCodeEntry && vm.isLoading)
             .padding(.horizontal)
             .navigationTitle(AppLanguage.text("Подтвердите почту"))
             .navigationBarTitleDisplayMode(.inline)
@@ -63,7 +63,7 @@ struct EmailConfirmationSheetView: View {
             }
         }
         .presentationDetents([.height(vm.sheetHeight)])
-        .animation(.easeInOut(duration: 0.25), value: vm.isCodeSent)
+        .animation(.easeInOut(duration: 0.25), value: vm.showsCodeEntry)
     }
 }
 

@@ -59,7 +59,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     @Published var resetCode = ""
     @Published var newPassword = ""
-    @Published private(set) var isResetCodeSent = false
+    @Published private(set) var showsResetCodeEntry = false
 
     @Published var showAlert = false
     @Published var alertMessage = ""
@@ -185,7 +185,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     }
 
     func showPasswordReset() {
-        isResetCodeSent = false
+        showsResetCodeEntry = false
         resetCode = ""
         newPassword = ""
         onboardingRoutes.append(.resetPassword)
@@ -344,12 +344,15 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 try await authService.requestPasswordReset(email: email)
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
-                isResetCodeSent = true
+                showsResetCodeEntry = true
                 try await Task.sleep(for: .milliseconds(50))
             } catch {
                 guard sessionID == authService.sessionID else { return }
-                if case NetworkError.emailCodeRecentlyRequested = error {
-                    isResetCodeSent = true
+                switch error as? NetworkError {
+                    case .emailCodeRecentlyRequested, .emailCodeDailyLimit:
+                        showsResetCodeEntry = true
+                    default:
+                        break
                 }
                 presentAlert(error.userMessage)
             }
@@ -524,7 +527,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         password = ""
         resetCode = ""
         newPassword = ""
-        isResetCodeSent = false
+        showsResetCodeEntry = false
     }
 
     private func resetRegistrationFields() {

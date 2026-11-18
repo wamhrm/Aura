@@ -84,14 +84,16 @@ final class ProfileViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(try form.profileInfoRequest().name, "O’connor")
     }
 
-    func test_refresh_hidesOutdatedTip_beforeLoadingHistory() async {
+    func test_refresh_rejectsOutdatedTip_andRecovers() async {
         let result = HistoryCellModel.personalityPlaceholder
         let content = MockContentService()
         content.history = [result]
         content.historyCells.send([result])
         content.dailyContentDate = "2000-01-01"
         let viewModel = ProfileViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
-        await waitUntil { viewModel.tipState == .loaded && viewModel.hasPersonalityTests }
+        await waitUntil { viewModel.tipState == .failed(NetworkError.invalidResponse.userMessage) && viewModel.hasPersonalityTests }
+        XCTAssertNil(viewModel.dailyTip)
+        XCTAssertNil(viewModel.profileDisplayHandler.dailyTip)
         content.dailyContentDate = todayText()
         content.beforeContentResponse = {
             XCTAssertNil(viewModel.dailyTip)
@@ -101,6 +103,7 @@ final class ProfileViewModelTests: AuraUnitTestCase {
         await viewModel.refresh()
         content.beforeContentResponse = nil
 
+        XCTAssertEqual(viewModel.tipState, .loaded)
         XCTAssertEqual(viewModel.dailyTip?.isFromToday, true)
     }
 

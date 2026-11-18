@@ -135,12 +135,13 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertTrue(text(part: "Как вас зовут").waitForExistence(timeout: 5), "the registration did not open")
     }
 
-    func test_passwordReset_reachesMainScreen() throws {
+    func test_passwordReset_atDailySendLimit_acceptsTheExistingCode() throws {
         // Given
-        let recent = "Код уже отправлен. Запросить новый можно через минуту"
-        server.respond(route: "POST /v1/auth/password/forgot", status: 429,
-                       body: try failingBody(recent),
-                       headers: ["X-Aura-Error-Code": "email_code_recently_requested"])
+        let sendCode = "POST /v1/auth/password/forgot"
+        let dailyLimit = "Слишком много запросов. Попробуйте завтра"
+        server.respond(route: sendCode, status: 429,
+                       body: try failingBody(dailyLimit),
+                       headers: ["X-Aura-Error-Code": "email_code_daily_limit"])
         try launchOnWelcome()
         welcomeButton.tap()
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
@@ -148,7 +149,7 @@ final class SignInUITests: AuraUITestCase {
 
         // When
         tapButton("Отправить код")
-        XCTAssertEqual(alertText(), recent)
+        XCTAssertEqual(alertText(), dailyLimit)
         closeAlert()
         fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "123456")
         tapButton("eye")
@@ -159,6 +160,7 @@ final class SignInUITests: AuraUITestCase {
 
         // Then
         assertOnMainScreen()
+        XCTAssertEqual(server.requests.filter { $0 == sendCode }.count, 1)
     }
 
     func test_passwordReset_showsAlertsForWrongCode() throws {

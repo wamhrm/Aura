@@ -148,6 +148,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
                 compatibilityRoutes.append(.compatibilityResults)
+                TestCompletionSound.play()
                 try await Task.sleep(for: .milliseconds(50))
                 guard sessionID == authService.sessionID else { return }
                 clearFields()

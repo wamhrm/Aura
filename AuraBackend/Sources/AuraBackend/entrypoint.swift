@@ -1,3 +1,4 @@
+import Fluent
 import Logging
 import Vapor
 
@@ -12,7 +13,7 @@ enum Entrypoint {
             try await configure(app: app)
 
             if (env.commandInput.arguments.first ?? "serve") == "serve" {
-                try await app.autoMigrate()
+                try await migrateOnStartup(app: app)
             }
 
             try await app.execute()
@@ -22,5 +23,15 @@ enum Entrypoint {
             throw Abort(.internalServerError, reason: "AuraBackend failed to run")
         }
         try await app.asyncShutdown()
+    }
+
+    private static func migrateOnStartup(app: Application) async throws {
+        app.logger.info("Preparing database migrations")
+        let migrator = Migrator(databases: app.databases,
+                                migrations: app.migrations,
+                                logger: Logger(label: "AuraBackend.Migrations", factory: { _ in SwiftLogNoOpLogHandler() }),
+                                on: app.eventLoopGroup.any())
+        try await migrator.setupIfNeeded().get()
+        try await migrator.prepareBatch().get()
     }
 }

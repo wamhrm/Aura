@@ -67,17 +67,17 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func createAccount(name: String, email: String, password: String) async throws -> AuthTokenResponse {
         let body = try JSONEncoder().encode(AuthSignUpBody(name: name, email: email, password: password))
-        return try await fetch(endpoint: "/auth/createAccount", method: .post, body: body)
+        return try await fetch(endpoint: "/auth/createAccount", method: .post, body: body, requiresAuth: false)
     }
 
     func ensureEmailAvailable(email: String) async throws {
         let body = try JSONEncoder().encode(EmailBody(email: email))
-        _ = try await send(endpoint: "/auth/email/available", method: .post, body: body)
+        _ = try await send(endpoint: "/auth/email/available", method: .post, body: body, requiresAuth: false)
     }
 
     func signIn(email: String, password: String) async throws -> AuthTokenResponse {
         let body = try JSONEncoder().encode(AuthSignInBody(email: email, password: password))
-        return try await fetch(endpoint: "/auth/signIn", method: .post, body: body)
+        return try await fetch(endpoint: "/auth/signIn", method: .post, body: body, requiresAuth: false)
     }
 
     func logout() async throws {
@@ -86,12 +86,12 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
     func requestPasswordReset(email: String) async throws {
         let body = try JSONEncoder().encode(EmailBody(email: email))
-        _ = try await send(endpoint: "/auth/password/forgot", method: .post, body: body)
+        _ = try await send(endpoint: "/auth/password/forgot", method: .post, body: body, requiresAuth: false)
     }
 
     func resetPassword(email: String, code: String, password: String) async throws -> AuthTokenResponse {
         let body = try JSONEncoder().encode(PasswordResetBody(email: email, code: code, password: password))
-        return try await fetch(endpoint: "/auth/password/reset", method: .post, body: body)
+        return try await fetch(endpoint: "/auth/password/reset", method: .post, body: body, requiresAuth: false)
     }
 
     func deleteAccount() async throws {
@@ -162,12 +162,14 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private func fetch<T: Decodable>(endpoint: String,
                                      method: HTTPMethod,
                                      body: Data? = nil,
+                                     requiresAuth: Bool = true,
                                      idempotencyKey: UUID? = nil,
                                      timeout: TimeInterval = NetworkService.defaultTimeout,
                                      retries: Bool = true) async throws -> T {
         let data = try await send(endpoint: endpoint,
                                   method: method,
                                   body: body,
+                                  requiresAuth: requiresAuth,
                                   idempotencyKey: idempotencyKey,
                                   timeout: timeout,
                                   retries: retries)
@@ -177,6 +179,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private func send(endpoint: String,
                       method: HTTPMethod,
                       body: Data? = nil,
+                      requiresAuth: Bool = true,
                       idempotencyKey: UUID? = nil,
                       timeout: TimeInterval = NetworkService.defaultTimeout,
                       retries: Bool = true,
@@ -185,6 +188,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             return try await performRequest(endpoint: endpoint,
                                             method: method,
                                             body: body,
+                                            requiresAuth: requiresAuth,
                                             idempotencyKey: idempotencyKey,
                                             timeout: timeout)
         } catch let urlError as URLError where retries && method == .get && Self.isRetryable(urlError, timeout: timeout) && attempt < 2 {
@@ -192,6 +196,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             return try await send(endpoint: endpoint,
                                   method: method,
                                   body: body,
+                                  requiresAuth: requiresAuth,
                                   idempotencyKey: idempotencyKey,
                                   timeout: timeout,
                                   retries: retries,
@@ -204,6 +209,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
     private func performRequest(endpoint: String,
                                 method: HTTPMethod,
                                 body: Data?,
+                                requiresAuth: Bool,
                                 idempotencyKey: UUID?,
                                 timeout: TimeInterval) async throws -> Data {
         guard let baseURL = URL(string: baseURL),
@@ -223,7 +229,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
             urlRequest.setValue(idempotencyKey.uuidString, forHTTPHeaderField: "Idempotency-Key")
         }
 
-        let token = try keychain.loadAuthToken()
+        let token = requiresAuth ? try keychain.loadAuthToken() : nil
         if let token {
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }

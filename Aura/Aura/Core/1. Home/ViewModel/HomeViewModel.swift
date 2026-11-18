@@ -39,6 +39,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private var currentUser: UserModel?
     private var lastRefreshDate: Date?
     private var horoscopeRequestID: UUID?
+    private var insightRequestID: UUID?
     private var personalityRequestID: UUID?
     private var personalityRequestUser: UserModel?
     private var personalityRequestTests: [PersonalityTestTypes]?
@@ -88,6 +89,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 guard currentUser != nil else { return }
                 currentUser = nil
                 horoscopeRequestID = nil
+                insightRequestID = nil
                 horoscope = nil
                 dailyInsight = nil
                 cancellables.removeAll()
@@ -211,6 +213,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
                 homeRoutes.append(.testResults)
+                TestCompletionSound.play()
                 try await Task.sleep(for: .milliseconds(50))
             } catch {
                 guard sessionID == authService.sessionID else { return }
@@ -304,6 +307,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private func loadDailyInsight() async {
         guard signedInUser?.allowsAIAnalysis == true else { return }
         let sessionID = authService.sessionID
+        let requestID = UUID()
+        insightRequestID = requestID
         let deadline = ContinuousClock.now + .seconds(1)
 
         if dailyInsight?.isFromToday != true {
@@ -311,13 +316,18 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             insightState = .loading
         }
 
+        func isCurrentRequest() -> Bool {
+            requestID == insightRequestID && sessionID == authService.sessionID
+        }
+
         do {
             let insight = try await contentService.fetchDailyInsight()
-            guard sessionID == authService.sessionID else { return }
+            guard isCurrentRequest() else { return }
+            guard insight.isFromToday else { throw NetworkError.invalidResponse }
             dailyInsight = insight
             insightState = .loaded
         } catch {
-            guard sessionID == authService.sessionID else { return }
+            guard isCurrentRequest() else { return }
             if dailyInsight?.isFromToday != true {
                 dailyInsight = nil
                 insightState = .failed(error.userMessage)
@@ -325,7 +335,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
 
         try? await Task.sleep(until: deadline, clock: .continuous)
-        guard sessionID == authService.sessionID else { return }
+        guard isCurrentRequest() else { return }
         await revealScreenIfReady()
     }
 

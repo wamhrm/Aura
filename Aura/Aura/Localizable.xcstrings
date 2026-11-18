@@ -821,12 +821,12 @@
         }
       }
     },
-    "Мы отправили код на %@. Введите его, чтобы проходить тесты": {
+    "Введите код из письма на %@, чтобы подтвердить почту.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "We sent a code to %@. Enter it to take the tests"
+            "value": "Enter the code from the email to %@ to confirm your address."
           }
         }
       }
@@ -2011,12 +2011,12 @@
         }
       }
     },
-    "Если аккаунт с почтой %@ есть, мы отправили на неё код. Он действует 15 минут.": {
+    "Код для %@ действует 15 минут после отправки.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "If an account exists for %@, we sent a code to that address. It is valid for 15 minutes."
+            "value": "The code for %@ is valid for 15 minutes after it was sent."
           }
         }
       }

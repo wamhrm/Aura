@@ -14,7 +14,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
     @Published var showAlert = false
     @Published var alertMessage = ""
-    @Published private(set) var isCodeSent = false
+    @Published private(set) var showsCodeEntry = false
     @Published private(set) var isLoading = false
     @Published private(set) var loadingTitle = ""
 
@@ -27,8 +27,8 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     }
 
     var subtitle: String {
-        isCodeSent ? AppLanguage.text("Мы отправили код на \(email). Введите его, чтобы проходить тесты")
-                   : AppLanguage.text("Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код.")
+        showsCodeEntry ? AppLanguage.text("Введите код из письма на \(email), чтобы подтвердить почту.")
+                       : AppLanguage.text("Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код.")
     }
 
     var sendCodeButtonTitle: String {
@@ -40,7 +40,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     }
     
     var sheetHeight: CGFloat {
-        isCodeSent ? Adaptive.size(340, 352, 360) : Adaptive.size(200, 212, 220)
+        showsCodeEntry ? Adaptive.size(340, 352, 360) : Adaptive.size(200, 212, 220)
     }
     
     func sendCode() {
@@ -52,10 +52,13 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         Task {
             do {
                 try await authService.sendEmailConfirmationCode()
-                isCodeSent = true
+                showsCodeEntry = true
             } catch {
-                if case NetworkError.emailCodeRecentlyRequested = error {
-                    isCodeSent = true
+                switch error as? NetworkError {
+                    case .emailCodeRecentlyRequested, .emailCodeDailyLimit:
+                        showsCodeEntry = true
+                    default:
+                        break
                 }
                 presentAlert(error.userMessage)
             }

@@ -15,9 +15,9 @@ struct ResetPasswordStepView: View {
             BackgroundView()
             
             VStack(alignment: .leading, spacing: 35) {
-                if vm.isResetCodeSent {
+                if vm.showsResetCodeEntry {
                     OnboardingHeader(title: AppLanguage.text("Введите код из письма"),
-                                     subtitle: AppLanguage.text("Если аккаунт с почтой \(vm.email) есть, мы отправили на неё код. Он действует 15 минут."))
+                                     subtitle: AppLanguage.text("Код для \(vm.email) действует 15 минут после отправки."))
 
                     OnboardingTextField(text: $vm.resetCode, type: .code)
                     OnboardingTextField(text: $vm.newPassword, type: .newPassword)

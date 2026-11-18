@@ -9,7 +9,7 @@ func configure(app: Application) async throws {
     app.http.server.configuration.port = Int(Environment.get("PORT") ?? "8080") ?? 8080
 
     app.middleware = Middlewares()
-    app.middleware.use(RouteLoggingMiddleware(logLevel: .info))
+    app.middleware.use(AppRouteLoggingMiddleware())
     app.middleware.use(AppErrorMiddleware())
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
@@ -17,4 +17,11 @@ func configure(app: Application) async throws {
     app.configureMigrations()
 
     try routes(app: app)
+}
+
+private struct AppRouteLoggingMiddleware: AsyncMiddleware {
+    func respond(to req: Request, chainingTo next: any AsyncResponder) async throws -> Response {
+        req.logger.info("\(req.route?.description ?? "unmatched route")")
+        return try await next.respond(to: req)
+    }
 }

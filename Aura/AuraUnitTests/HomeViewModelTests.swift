@@ -37,7 +37,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
     func test_resendingConfirmationCode_usesTheSendingTitle() async {
         let viewModel = EmailConfirmationViewModel(authService: MockAuthService(), email: "anna@mail.ru")
         viewModel.sendCode()
-        await waitUntil { viewModel.isCodeSent && !viewModel.isLoading }
+        await waitUntil { viewModel.showsCodeEntry && !viewModel.isLoading }
         viewModel.code = "123456"
         viewModel.confirm()
         await waitUntil { !viewModel.isLoading }
@@ -49,21 +49,17 @@ final class HomeViewModelTests: AuraUnitTestCase {
         await waitUntil { !viewModel.isLoading }
     }
 
-    func test_refresh_hidesOutdatedInsight_beforeRequestingNewContent() async {
+    func test_refresh_rejectsOutdatedInsight_andRecovers() async {
         let content = MockContentService()
         content.dailyContentDate = "2000-01-01"
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
-        await waitUntil { viewModel.insightState == .loaded }
+        await waitUntil { viewModel.insightState == .failed(NetworkError.invalidResponse.userMessage) }
+        XCTAssertNil(viewModel.dailyInsight)
         content.dailyContentDate = todayText()
-        var didClearInsight = false
-        content.beforeContentResponse = {
-            if viewModel.dailyInsight == nil { didClearInsight = true }
-        }
 
         await viewModel.refresh()
-        content.beforeContentResponse = nil
 
-        XCTAssertTrue(didClearInsight)
+        XCTAssertEqual(viewModel.insightState, .loaded)
         XCTAssertEqual(viewModel.dailyInsight?.isFromToday, true)
     }
 
@@ -240,7 +236,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
 
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Код уже отправлен")
-        XCTAssertTrue(viewModel.isCodeSent)
+        XCTAssertTrue(viewModel.showsCodeEntry)
     }
 
     func test_sendCode_whenTheServerFails_keepsTheCodeFieldClosed() async {
@@ -255,7 +251,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
 
         // Then
         XCTAssertEqual(viewModel.alertMessage, "Ошибка сервера")
-        XCTAssertFalse(viewModel.isCodeSent)
+        XCTAssertFalse(viewModel.showsCodeEntry)
     }
 
     func test_personalityRetry_reusesTheRequestID_untilTheAnswersChange() async throws {

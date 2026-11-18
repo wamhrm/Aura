@@ -34,6 +34,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
 
     @Published private var personalityResult: PersonalityResultModel?
     private var personalityHistoryID: UUID?
+    private var tipRequestID: UUID?
     private var currentUserId: UUID?
     private var openProfileFormAfterSettings = false
 
@@ -97,6 +98,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             case .signedOut:
                 guard currentUserId != nil else { return }
                 currentUserId = nil
+                tipRequestID = nil
                 dailyTip = nil
                 updateProfileDisplay()
                 cancellables.removeAll()
@@ -154,19 +156,26 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         guard user?.allowsAIAnalysis == true, user?.dateOfBirth != nil else { return }
         if dailyTip?.isFromToday == true { return }
         let sessionID = authService.sessionID
+        let requestID = UUID()
+        tipRequestID = requestID
 
         dailyTip = nil
         tipState = .loading
         updateProfileDisplay()
 
+        func isCurrentRequest() -> Bool {
+            requestID == tipRequestID && sessionID == authService.sessionID
+        }
+
         do {
             let tip = try await contentService.fetchDailyTip()
-            guard sessionID == authService.sessionID else { return }
+            guard isCurrentRequest() else { return }
+            guard tip.isFromToday else { throw NetworkError.invalidResponse }
             dailyTip = tip
             tipState = .loaded
             updateProfileDisplay()
         } catch {
-            guard sessionID == authService.sessionID else { return }
+            guard isCurrentRequest() else { return }
             if dailyTip?.isFromToday != true {
                 dailyTip = nil
                 tipState = .failed(error.userMessage)
