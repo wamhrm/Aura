@@ -5,8 +5,6 @@
 //  Created by wamhrm on 03.11.2026.
 //
 
-import Foundation
-
 enum PersonalityPrompts {
     static func schema(selectedTests: [PersonalityTests]) -> JSONSchema {
         let itemKeys = selectedTests.flatMap(PersonalityItems.allowed).map(\.rawValue)

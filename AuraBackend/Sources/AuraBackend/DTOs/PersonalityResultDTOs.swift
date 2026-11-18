@@ -49,7 +49,7 @@ struct PersonalityTestContent: Codable {
     let sections: [PersonalitySection]
 }
 
-enum PersonalityTests: String, CaseIterable {
+enum PersonalityTests: String {
     static let minSelected = 2
 
     case astrology, behavioralPatterns, decisionMaking, attachmentStyle, idealPartner, loveLanguage
@@ -77,7 +77,7 @@ enum PersonalityTests: String, CaseIterable {
     }
 }
 
-enum PersonalityItems: String, CaseIterable {
+enum PersonalityItems: String {
     case natalChart, planetaryAspects, socialFilter, energyDrain, logicBalance, intuitionFactor, autonomyNeed, securityBase, intellectualMatch, emotionalDepth, loveExpression, emotionalNeeds
 
     var title: String {

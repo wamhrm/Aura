@@ -8,7 +8,7 @@
 import Fluent
 import Foundation
 
-enum DailyContentKind: String, Codable {
+enum DailyContentKind: String {
     case insight, tip
 }
 

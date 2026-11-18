@@ -1,4 +1,3 @@
-import Fluent
 import Vapor
 
 func configure(app: Application) async throws {

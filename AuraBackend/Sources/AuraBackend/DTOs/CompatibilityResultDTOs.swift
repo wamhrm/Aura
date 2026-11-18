@@ -68,7 +68,7 @@ struct CompatibilityTestContent: Codable {
     let forecast: CompatibilityForecast
 }
 
-enum CompatibilityTests: String, CaseIterable {
+enum CompatibilityTests: String {
     static let minSelected = 3
 
     case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution, sexualCompatibility
@@ -96,7 +96,7 @@ enum CompatibilityTests: String, CaseIterable {
     }
 }
 
-enum CompatibilityItems: String, CaseIterable {
+enum CompatibilityItems: String {
     case synastry, karmicLesson, dominanceDynamics, emotionalResonance, attachmentBond, comfortDistance, languageMatch, translationNeeds, conflictMechanics, peaceRecovery, sexualTemperament, sexualChemistry
 
     var title: String {
