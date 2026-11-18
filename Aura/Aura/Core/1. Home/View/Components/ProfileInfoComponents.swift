@@ -67,7 +67,7 @@ struct ProfileInfoSection<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .backgroundWithShape(12, .cardBackground, false)
+        .backgroundWithShape(12, .cardBackground, showsStroke: false)
     }
 }
 

@@ -82,11 +82,11 @@ class AuraUITestCase: XCTestCase {
         try json(["user": user])
     }
 
-    func setHistory(kind: String, resultKey: String, result: Data) throws {
-        let list = try XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
+    func setHistory(kind: String, resultKey: String, result: Data, historyList: [[String: Any]]? = nil) throws {
+        let list = try historyList ?? XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
         var entry = try XCTUnwrap(list.first { $0["kind"] as? String == kind })
 
-        server.respond(route: "GET /v1/history", body: try json([entry]))
+        server.respond(route: "GET /v1/history", body: try json(historyList ?? [entry]))
 
         entry[resultKey] = try SampleResponses.object(result)
 

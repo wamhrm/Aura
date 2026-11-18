@@ -31,7 +31,7 @@ struct CompatibilityResultView: View {
                         .frame(width: Adaptive.size(150, 156, 164), alignment: .trailing)
 
                         VStack {
-                            Text(result.partnerZodiacSignHandler)
+                            Text(result.partnerZodiacIcon)
                                 .compatibilityResultZodiacsModifier()
 
                             Text(result.partnerNameCapitalized)

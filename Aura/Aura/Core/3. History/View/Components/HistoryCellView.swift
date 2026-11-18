@@ -12,7 +12,7 @@ struct HistoryCellView: View {
 
     var body: some View {
         HStack(spacing: 15) {
-            Text(cell.iconHandler)
+            Text(cell.displayIcon)
                 .zodiacSignModifier()
 
             VStack(alignment: .leading, spacing: 7) {
@@ -50,7 +50,7 @@ struct HistoryCellView: View {
         .padding(.horizontal)
         .frame(height: Adaptive.size(112, 118, 118))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, .cardBackground, true)
+        .backgroundWithShape(12, .cardBackground, showsStroke: true)
     }
 }
 

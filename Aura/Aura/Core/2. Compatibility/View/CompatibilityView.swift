@@ -51,7 +51,7 @@ struct CompatibilityView: View {
                                                     dateRange: BirthDateFormatter.dateRange)
                             }
                             .padding(20)
-                            .backgroundWithShape(12, .cardBackground, true)
+                            .backgroundWithShape(12, .cardBackground, showsStroke: true)
 
                             VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
                                 HStack {

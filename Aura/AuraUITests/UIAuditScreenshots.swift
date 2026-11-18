@@ -101,16 +101,18 @@ final class UIAuditScreenshots: AuraUITestCase {
 
     func test_mainAndSheets() throws {
         let longName = "Александра-Мария Константиновна"
-        var compatibility = String(decoding: SampleResponses.compatibilityResult, as: UTF8.self)
-        compatibility = compatibility.replacingOccurrences(of: "\"userName\": \"Анна\"", with: "\"userName\": \"\(longName)\"")
-        compatibility = compatibility.replacingOccurrences(of: "\"partnerName\": \"Иван\"", with: "\"partnerName\": \"\(longName)\"")
-        server.respond(route: "POST /v1/history/compatibility", body: Data(compatibility.utf8))
+        var compatibility = try SampleResponses.object(SampleResponses.compatibilityResult)
+        compatibility["userName"] = longName
+        compatibility["partnerName"] = longName
+        server.respond(route: "POST /v1/history/compatibility", body: try json(compatibility))
 
-        var history = String(decoding: SampleResponses.historyList, as: UTF8.self)
-        history = history.replacingOccurrences(of: "\"partnerName\": \"Иван\"", with: "\"partnerName\": \"\(longName)\"")
-        server.respond(route: "GET /v1/history", body: Data(history.utf8))
-        try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
-        server.respond(route: "GET /v1/history", body: Data(history.utf8))
+        var history = try XCTUnwrap(JSONSerialization.jsonObject(with: SampleResponses.historyList) as? [[String: Any]])
+        let compatibilityIndex = try XCTUnwrap(history.firstIndex { $0["kind"] as? String == "compatibility" })
+        history[compatibilityIndex]["partnerName"] = longName
+        try setHistory(kind: "personality",
+                       resultKey: "personalityResult",
+                       result: SampleResponses.personalityResult,
+                       historyList: history)
 
         try launchSignedIn(user: try sampleUser(["name": longName]))
         useWindowDirectory()

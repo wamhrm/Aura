@@ -89,7 +89,7 @@ struct HomeView: View {
                                         vm.retryHoroscope()
                                     }
                                     .padding(20)
-                                    .backgroundWithShape(12, .cardBackground, true)
+                                    .backgroundWithShape(12, .cardBackground, showsStroke: true)
                                 }
                                 .padding(.top, 15)
                             } else {

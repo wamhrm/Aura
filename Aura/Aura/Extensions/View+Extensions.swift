@@ -14,10 +14,10 @@ extension View {
             .safeAreaInset(edge: .bottom) { Color.clear.frame(height: value) }
     }
     
-    func backgroundWithShape(_ amount: CGFloat, _ color: Color, _ stroke: Bool) -> some View {
+    func backgroundWithShape(_ amount: CGFloat, _ color: Color, showsStroke: Bool) -> some View {
         self
             .background(color, in: .rect(cornerRadius: amount))
-            .overlay(RoundedRectangle(cornerRadius: amount).stroke(.cardStroke, lineWidth: stroke ? 0.2 : 0))
+            .overlay(RoundedRectangle(cornerRadius: amount).stroke(.cardStroke, lineWidth: showsStroke ? 0.2 : 0))
             .clipShape(.rect(cornerRadius: amount))
             .shadow(color: .gray.opacity(0.1), radius: 3)
     }

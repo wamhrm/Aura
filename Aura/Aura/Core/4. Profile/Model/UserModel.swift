@@ -30,7 +30,7 @@ struct UserModel: Codable, Equatable, Identifiable {
         name.prefix(2).uppercased()
     }
 
-    var dateOfBirthHandler: String {
+    var birthDateText: String {
         dateOfBirth ?? AppLanguage.text("Дата рождения не указана")
     }
 

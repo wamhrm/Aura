@@ -56,7 +56,7 @@ struct HoroscopeDetailsView: View {
                     .padding(23)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(.appBackground)
-                    .backgroundWithShape(12, .cardBackground, true)
+                    .backgroundWithShape(12, .cardBackground, showsStroke: true)
                     
                     VStack(spacing: 12) {
                         HStack {

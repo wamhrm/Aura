@@ -36,7 +36,7 @@ struct CompatibilityResultModel: Codable, Hashable {
         partnerName.capitalized
     }
 
-    var partnerZodiacSignHandler: String {
+    var partnerZodiacIcon: String {
         partnerZodiacSign?.icon ?? "👤"
     }
 }

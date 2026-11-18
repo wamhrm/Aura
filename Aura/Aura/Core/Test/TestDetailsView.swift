@@ -53,7 +53,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .backgroundWithShape(12, .cardBackground, true)
+                .backgroundWithShape(12, .cardBackground, showsStroke: true)
                 
                 ClassicButton(title: isSelected ? AppLanguage.text("Убрать") : AppLanguage.text("Выбрать")) {
                     onTapHandler()

@@ -21,7 +21,7 @@ struct ResultSectionView<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .backgroundWithShape(12, .cardBackground, true)
+        .backgroundWithShape(12, .cardBackground, showsStroke: true)
     }
 }
 

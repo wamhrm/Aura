@@ -27,7 +27,7 @@ enum HistoryTestKind: String, Codable, Hashable {
 }
 
 extension HistoryCellModel {
-    var iconHandler: String {
+    var displayIcon: String {
         switch kind {
             case .personality:
                 zodiacSign.icon

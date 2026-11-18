@@ -64,7 +64,7 @@ struct TestCellView<Test: TestCellDisplayable>: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, .cardBackground, true)
+        .backgroundWithShape(12, .cardBackground, showsStroke: true)
         .foregroundStyle(.primaryText)
     }
 }

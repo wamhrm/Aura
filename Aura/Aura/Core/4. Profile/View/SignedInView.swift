@@ -37,7 +37,7 @@ struct SignedInView: View {
                             .fontWeight(.bold)
 
                         HStack(alignment: .center, spacing: 5) {
-                            Text(user.dateOfBirthHandler)
+                            Text(user.birthDateText)
 
                             if let zodiacSign = user.zodiacSign {
                                 Text("·")
@@ -53,7 +53,7 @@ struct SignedInView: View {
                     }
                     .padding(22)
                     .frame(maxWidth: .infinity)
-                    .backgroundWithShape(12, .cardBackground, true)
+                    .backgroundWithShape(12, .cardBackground, showsStroke: true)
 
                     VStack(alignment: .leading, spacing: 15) {
                         VStack(alignment: .leading, spacing: 10) {
@@ -118,7 +118,7 @@ struct SignedInView: View {
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .backgroundWithShape(12, .cardBackground, true)
+                        .backgroundWithShape(12, .cardBackground, showsStroke: true)
 
                         VStack(alignment: .leading, spacing: 10) {
                             Text(AppLanguage.text("Ваш психотип"))
@@ -146,7 +146,7 @@ struct SignedInView: View {
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .backgroundWithShape(12, .cardBackground, true)
+                        .backgroundWithShape(12, .cardBackground, showsStroke: true)
                     }
                     .blur(radius: !vm.hasPersonalityTests ? 5 : 0)
                     .overlay {
@@ -182,7 +182,7 @@ extension SignedInView {
                     vm.retryPersonality()
                 }
                 .padding(20)
-                .backgroundWithShape(12, .cardBackground, true)
+                .backgroundWithShape(12, .cardBackground, showsStroke: true)
                 .padding(.horizontal)
         }
     }

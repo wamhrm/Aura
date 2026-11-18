@@ -33,7 +33,7 @@ struct HoroscopeDetailsCellView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .backgroundWithShape(12, .cardBackground, true)
+        .backgroundWithShape(12, .cardBackground, showsStroke: true)
         .shadow(color: Color(type.color).opacity(0.15), radius: 2)
     }
 }
