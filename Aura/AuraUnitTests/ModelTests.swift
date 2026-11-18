@@ -110,7 +110,7 @@ final class ModelTests: AuraUnitTestCase {
 
     // MARK: - Birth date
     func test_birthDateRange_allowsOnlyAgesFrom16To100() {
-        let calendar = Calendar.current
+        let calendar = Calendar(identifier: .gregorian)
         let today = calendar.startOfDay(for: Date())
         let range = BirthDateFormatter.dateRange
         let age16 = calendar.date(byAdding: .year, value: -16, to: today)!
@@ -226,6 +226,15 @@ final class ModelTests: AuraUnitTestCase {
         // Then
         guard case .limited(let message) = error else { return XCTFail("expected a limit, got \(error)") }
         XCTAssertEqual(message, "Код уже отправлен")
+    }
+
+    func test_emailCodeRateLimits_areDistinguishedByCode() {
+        let body = Data(#"{"reason":"Too many requests"}"#.utf8)
+        let recent = NetworkError(statusCode: 429, data: body, code: "email_code_recently_requested")
+        let daily = NetworkError(statusCode: 429, data: body, code: "email_code_daily_limit")
+
+        guard case .emailCodeRecentlyRequested = recent else { return XCTFail("Expected the resend interval") }
+        guard case .emailCodeDailyLimit = daily else { return XCTFail("Expected the daily limit") }
     }
 
     func test_serverError_withoutAReason_dependsOnTheStatus() {

@@ -348,7 +348,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
                 try await Task.sleep(for: .milliseconds(50))
             } catch {
                 guard sessionID == authService.sessionID else { return }
-                if case NetworkError.limited = error {
+                if case NetworkError.emailCodeRecentlyRequested = error {
                     isResetCodeSent = true
                 }
                 presentAlert(error.userMessage)
@@ -477,7 +477,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
             let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                _ = try await authService.updateProfileInfo(preparedRequest)
+                try await authService.updateProfileInfo(preparedRequest)
                 guard sessionID == authService.sessionID else { return }
 
                 if allowsAIAnalysis {

@@ -140,8 +140,11 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
             let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                compatibilityResult = try await contentService.makeCompatibilityTest(request: request,
-                                                                                     requestID: requestID)
+                let result = try await contentService.makeCompatibilityTest(request: request,
+                                                                            requestID: requestID)
+                guard sessionID == authService.sessionID else { return }
+                compatibilityResult = result
+                compatibilityRequestID = nil
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
                 compatibilityRoutes.append(.compatibilityResults)

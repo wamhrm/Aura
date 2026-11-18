@@ -12,7 +12,7 @@ final class MockServer: @unchecked Sendable {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "aura.mock-server")
     private let lock = NSLock()
-    private var responses: [String: (status: Int, body: Data)] = [:]
+    private var responses: [String: (status: Int, body: Data, headers: [String: String])] = [:]
     private var receivedRequests: [String] = []
     private var receivedIdempotencyKeys: [String] = []
 
@@ -54,8 +54,8 @@ final class MockServer: @unchecked Sendable {
         lock.withLock { receivedIdempotencyKeys }
     }
 
-    func respond(route: String, status: Int = 200, body: Data = Data()) {
-        lock.withLock { responses[route] = (status, body) }
+    func respond(route: String, status: Int = 200, body: Data = Data(), headers: [String: String] = [:]) {
+        lock.withLock { responses[route] = (status, body, headers) }
     }
 
     func stop() {
@@ -95,15 +95,16 @@ final class MockServer: @unchecked Sendable {
 
     private func answer(_ connection: NWConnection, requestLine: String, idempotencyKey: String?) {
         let route = route(requestLine: requestLine)
-        let (status, body) = lock.withLock { () -> (Int, Data) in
+        let (status, body, headers) = lock.withLock {
             self.receivedRequests.append(route)
             if let idempotencyKey {
                 self.receivedIdempotencyKeys.append(idempotencyKey)
             }
-            return self.responses[route] ?? (404, Data(#"{"error":true,"reason":"Не найдено"}"#.utf8))
+            return self.responses[route] ?? (404, Data(#"{"error":true,"reason":"Не найдено"}"#.utf8), [:])
         }
 
-        var response = Data("HTTP/1.1 \(status) OK\r\nContent-Type: application/json\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\r\n".utf8)
+        let extraHeaders = headers.map { "\($0.key): \($0.value)\r\n" }.joined()
+        var response = Data("HTTP/1.1 \(status) OK\r\nContent-Type: application/json\r\nContent-Length: \(body.count)\r\nConnection: close\r\n\(extraHeaders)\r\n".utf8)
         response.append(body)
 
         connection.send(content: response, completion: .contentProcessed { _ in

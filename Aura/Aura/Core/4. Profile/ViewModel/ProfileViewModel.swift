@@ -255,7 +255,7 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
             let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                _ = try await authService.updateProfileInfo(request)
+                try await authService.updateProfileInfo(request)
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
                 profileRoutes = []

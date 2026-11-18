@@ -14,7 +14,7 @@ enum UserDateFormatter {
 
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        calendar.timeZone = .gmt
         return calendar
     }()
 
@@ -32,30 +32,36 @@ enum UserDateFormatter {
         return date
     }
 
-    static func birthDate(date: String) -> Date? {
+    static func today(timeZone: TimeZone) -> Date {
+        let now = Date()
+        var localCalendar = calendar
+        localCalendar.timeZone = timeZone
+        let components = localCalendar.dateComponents([.year, .month, .day], from: now)
+        return calendar.date(from: components) ?? calendar.startOfDay(for: now)
+    }
+
+    static func birthDate(date: String, today: Date) -> Date? {
         guard let parsedDate = Self.date(string: date) else { return nil }
 
-        let now = Date()
-
-        guard let earliestDate = calendar.date(byAdding: .year, value: -maxAgeInYears, to: now),
+        guard let earliestDate = calendar.date(byAdding: DateComponents(year: -maxAgeInYears - 1, day: 1), to: today),
               parsedDate >= earliestDate,
-              parsedDate <= now else {
+              parsedDate <= today else {
             return nil
         }
 
         return parsedDate
     }
 
-    static func isOldEnough(birthDate: Date) -> Bool {
-        guard let latestDate = calendar.date(byAdding: .year, value: -minAgeInYears, to: Date()) else {
+    static func isOldEnough(birthDate: Date, today: Date) -> Bool {
+        guard let latestDate = calendar.date(byAdding: .year, value: -minAgeInYears, to: today) else {
             return false
         }
 
         return birthDate <= latestDate
     }
 
-    static func isAdult(birthDate: Date) -> Bool {
-        guard let latestDate = calendar.date(byAdding: .year, value: -adultAgeInYears, to: Date()) else {
+    static func isAdult(birthDate: Date, today: Date) -> Bool {
+        guard let latestDate = calendar.date(byAdding: .year, value: -adultAgeInYears, to: today) else {
             return false
         }
 

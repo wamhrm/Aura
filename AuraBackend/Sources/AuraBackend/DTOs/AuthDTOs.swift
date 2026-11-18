@@ -59,7 +59,6 @@ struct AuthDTO: Content {
 
 struct UpdateProfileInfoResponse: Content {
     let user: UserDTO
-    let horoscope: HoroscopeDTO?
 }
 
 struct UpdateProfileInfoRequest: Content {

@@ -9,8 +9,6 @@ import Fluent
 import Vapor
 
 struct ProfileController: RouteCollection {
-    private let horoscopeService = HoroscopeService()
-
     func boot(routes: any RoutesBuilder) throws {
         let auth = routes.grouped("auth")
             .grouped(UserAuthMiddleware())
@@ -33,12 +31,13 @@ struct ProfileController: RouteCollection {
     private func updateProfileInfo(req: Request) async throws -> UpdateProfileInfoResponse {
         let user = try req.auth.require(User.self)
         let profileInfo = try req.content.decode(UpdateProfileInfoRequest.self)
+        let today = UserDateFormatter.today(timeZone: req.userTimeZone)
 
-        guard let dateOfBirth = UserDateFormatter.birthDate(date: profileInfo.dateOfBirth) else {
+        guard let dateOfBirth = UserDateFormatter.birthDate(date: profileInfo.dateOfBirth, today: today) else {
             throw Abort(.badRequest, reason: "Укажите корректную дату рождения в формате ДД.ММ.ГГГГ")
         }
 
-        guard UserDateFormatter.isOldEnough(birthDate: dateOfBirth) else {
+        guard UserDateFormatter.isOldEnough(birthDate: dateOfBirth, today: today) else {
             throw Abort(.badRequest, reason: "Aura доступна с 16 лет")
         }
 
@@ -79,9 +78,7 @@ struct ProfileController: RouteCollection {
 
         try await user.save(on: req.db)
 
-        let horoscope = try? await horoscopeService.findCurrentHoroscope(user: user, timeZone: req.userTimeZone, database: req.db)
-
-        return UpdateProfileInfoResponse(user: try user.toDTO(), horoscope: horoscope)
+        return UpdateProfileInfoResponse(user: try user.toDTO())
     }
 
     private func emptyStringToNil(string: String?) -> String? {

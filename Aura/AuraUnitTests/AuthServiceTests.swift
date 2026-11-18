@@ -311,7 +311,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         // When the profile is saved
         let saved = makeUser(dateOfBirth: "20.01.1990", hasAIConsent: false, isEmailConfirmed: false)
         network.user = saved
-        _ = try await auth.updateProfileInfo(ProfileInfoModel())
+        try await auth.updateProfileInfo(ProfileInfoModel())
 
         // Then
         XCTAssertEqual(currentUser(auth), saved)
@@ -340,7 +340,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         network.beforeProfileResponse = { auth.endExpiredSession() }
 
         do {
-            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            try await auth.updateProfileInfo(ProfileInfoModel())
             XCTFail("An ended session must reject the response")
         } catch {
             guard case NetworkError.cancelled = error else {
@@ -463,7 +463,7 @@ final class AuthServiceTests: AuraUnitTestCase {
             }
 
             do {
-                _ = try await auth.updateProfileInfo(ProfileInfoModel())
+                try await auth.updateProfileInfo(ProfileInfoModel())
                 XCTFail("The old request must be discarded")
             } catch {
                 guard case NetworkError.cancelled = error else { return XCTFail("Unexpected error: \(error)") }
@@ -537,7 +537,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         network.errorToThrow = NetworkError.sessionExpired
 
         do {
-            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            try await auth.updateProfileInfo(ProfileInfoModel())
             XCTFail("The request must fail")
         } catch NetworkError.sessionExpired {
         } catch {
@@ -563,7 +563,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         network.errorToThrow = NetworkError.sessionExpired
 
         do {
-            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            try await auth.updateProfileInfo(ProfileInfoModel())
             XCTFail("The request must fail")
         } catch NetworkError.sessionExpired {
         }
@@ -599,7 +599,7 @@ final class AuthServiceTests: AuraUnitTestCase {
         network.errorToThrow = NetworkError.server("Ошибка сервера")
 
         do {
-            _ = try await auth.updateProfileInfo(ProfileInfoModel())
+            try await auth.updateProfileInfo(ProfileInfoModel())
             XCTFail("The request must fail")
         } catch let error as NetworkError {
             guard case .server = error else { return XCTFail("Unexpected error: \(error)") }
@@ -686,9 +686,9 @@ final class MockNetworkService: NetworkServiceProtocol {
         AuthTokenResponse(token: "new-token", user: user)
     }
 
-    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UserModel {
         if let errorToThrow { throw errorToThrow }
-        let response = UpdateProfileInfoResponse(user: user, horoscope: nil)
+        let response = user
         try await beforeProfileResponse?()
         return response
     }

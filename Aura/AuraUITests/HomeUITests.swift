@@ -113,11 +113,22 @@ final class HomeUITests: AuraUITestCase {
         // Then
         XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the result did not open")
         XCTAssertEqual(server.idempotencyKeys, [firstKey, firstKey])
+
+        app.navigationBars["Результат персонального теста"].buttons.firstMatch.tap()
+        tapButton("Проверить себя")
+        XCTAssertTrue(app.navigationBars["Результат персонального теста"].waitForExistence(timeout: 15), "the new result did not open")
+        XCTAssertEqual(server.idempotencyKeys.count, 3)
+        XCTAssertNotEqual(server.idempotencyKeys.last, firstKey)
     }
 
     func test_personalityTest_withoutConfirmedEmail_asksForTheCode_andThenWorks() throws {
         // Given
-        server.respond(route: "POST /v1/auth/email/sendCode", status: 204)
+        let sendCode = "POST /v1/auth/email/sendCode"
+        let codeField = app.textFields["Код из 6 цифр"].firstMatch
+        let dailyLimit = "Слишком много запросов. Попробуйте завтра"
+        server.respond(route: sendCode, status: 429,
+                       body: try failingBody(dailyLimit),
+                       headers: ["X-Aura-Error-Code": "email_code_daily_limit"])
         server.respond(route: "POST /v1/auth/email/confirm", status: 400, body: try failingBody("Неверный код"))
         try launchSignedIn(user: try sampleUser(["isEmailConfirmed": false]))
 
@@ -127,9 +138,23 @@ final class HomeUITests: AuraUITestCase {
         // Then
         XCTAssertTrue(app.navigationBars["Подтвердите почту"].waitForExistence(timeout: 5), "the sheet did not open")
 
-        // When a wrong code is entered
+        // When the daily limit is reached
         tapButton("Подтвердить")
-        fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "000000")
+        XCTAssertEqual(alertText(), dailyLimit)
+        closeAlert()
+        XCTAssertFalse(codeField.exists)
+
+        // When a code was recently requested
+        let recent = "Код уже отправлен. Запросить новый можно через минуту"
+        server.respond(route: sendCode, status: 429,
+                       body: try failingBody(recent),
+                       headers: ["X-Aura-Error-Code": "email_code_recently_requested"])
+        tapButton("Подтвердить")
+        XCTAssertEqual(alertText(), recent)
+        closeAlert()
+
+        // When a wrong code is entered
+        fillField(codeField, text: "000000")
         tapButton("Проверить код")
 
         // Then

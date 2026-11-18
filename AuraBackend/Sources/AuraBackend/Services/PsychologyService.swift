@@ -48,11 +48,12 @@ struct PsychologyService {
             throw Abort(.badRequest, reason: "Имя партнёра должно быть не длиннее 50 символов")
         }
 
-        guard let dateOfBirth = UserDateFormatter.birthDate(date: request.partnerDateOfBirth) else {
+        let today = UserDateFormatter.today(timeZone: req.userTimeZone)
+        guard let dateOfBirth = UserDateFormatter.birthDate(date: request.partnerDateOfBirth, today: today) else {
             throw Abort(.badRequest, reason: "Укажите дату рождения партнёра в формате ДД.ММ.ГГГГ")
         }
 
-        guard UserDateFormatter.isOldEnough(birthDate: dateOfBirth) else {
+        guard UserDateFormatter.isOldEnough(birthDate: dateOfBirth, today: today) else {
             throw Abort(.badRequest, reason: "Партнёру должно быть не меньше 16 лет")
         }
 
@@ -72,8 +73,8 @@ struct PsychologyService {
 
         if uniqueSelectedTests.contains(.sexualCompatibility) {
             guard let userBirthDate = user.dateOfBirth,
-                  UserDateFormatter.isAdult(birthDate: userBirthDate),
-                  UserDateFormatter.isAdult(birthDate: dateOfBirth) else {
+                  UserDateFormatter.isAdult(birthDate: userBirthDate, today: today),
+                  UserDateFormatter.isAdult(birthDate: dateOfBirth, today: today) else {
                 throw Abort(.badRequest, reason: "Сексуальная совместимость доступна, только если вам и партнёру уже есть 18 лет")
             }
         }

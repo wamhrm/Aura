@@ -8,11 +8,17 @@
 import Foundation
 
 enum BirthDateFormatter {
-    static let defaultDate = Calendar.current.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
-    static let defaultTime = Calendar.current.date(from: DateComponents(hour: 12, minute: 0)) ?? Date()
+    private static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar
+    }
+
+    static let defaultDate = calendar.date(from: DateComponents(year: 2000, month: 1, day: 1)) ?? Date()
+    static let defaultTime = calendar.date(from: DateComponents(hour: 12, minute: 0)) ?? Date()
 
     static var dateRange: ClosedRange<Date> {
-        let calendar = Calendar.current
+        let calendar = Self.calendar
         let today = calendar.startOfDay(for: Date())
         let earliest = calendar.date(byAdding: DateComponents(year: -InputLimits.maxUserAge - 1, day: 1), to: today) ?? today
         let latest = calendar.date(byAdding: .year, value: -InputLimits.minUserAge, to: today) ?? today
@@ -20,7 +26,7 @@ enum BirthDateFormatter {
     }
 
     static func isAdult(date: Date) -> Bool {
-        let calendar = Calendar.current
+        let calendar = Self.calendar
         let today = calendar.startOfDay(for: Date())
         guard let latest = calendar.date(byAdding: .year, value: -InputLimits.adultAge, to: today) else {
             return false
@@ -47,6 +53,8 @@ enum BirthDateFormatter {
     private static func formatter(_ dateFormat: String) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
         formatter.dateFormat = dateFormat
         return formatter
     }

@@ -131,7 +131,7 @@ final class MockAuthService: AuthServiceProtocol {
         try startSession()
     }
 
-    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws {
         let sessionID = sessionID
         savedProfile = request
         defer { profileSaveFinished = true }
@@ -139,7 +139,6 @@ final class MockAuthService: AuthServiceProtocol {
         guard sessionID == self.sessionID else { throw NetworkError.cancelled }
         if let errorToThrow { throw errorToThrow }
         authState.send(.signedIn(serverUser))
-        return UpdateProfileInfoResponse(user: serverUser, horoscope: .mock)
     }
 
     func giveAIConsent() async throws {

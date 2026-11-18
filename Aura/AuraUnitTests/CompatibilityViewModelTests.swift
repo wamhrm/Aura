@@ -124,6 +124,24 @@ final class CompatibilityViewModelTests: AuraUnitTestCase {
         XCTAssertEqual(loadingWhenNavigating, [true])
     }
 
+    func test_newTest_afterSuccess_usesANewRequestIDForTheSamePartner() async {
+        let content = MockContentService()
+        let viewModel = CompatibilityViewModel(authService: MockAuthService(user: makeUser()),
+                                               contentService: content)
+        viewModel.partnerInfo.name = "Анна"
+        viewModel.makeCompatibilityTest()
+        await waitUntil { !viewModel.isLoading }
+
+        viewModel.compatibilityRoutes = []
+        viewModel.partnerInfo.name = "Анна"
+        viewModel.makeCompatibilityTest()
+        await waitUntil { !viewModel.isLoading }
+
+        XCTAssertEqual(content.compatibilityRequests.count, 2)
+        XCTAssertEqual(content.compatibilityRequests.first, content.compatibilityRequests.last)
+        XCTAssertNotEqual(content.compatibilityRequestIDs.first, content.compatibilityRequestIDs.last)
+    }
+
     func test_sexualTest_appearsOnlyWhenBothAre18() async {
         let minor = CompatibilityViewModel(authService: MockAuthService(user: makeUser(dateOfBirth: "13.05.2010")),
                                            contentService: MockContentService())

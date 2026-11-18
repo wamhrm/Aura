@@ -137,6 +137,10 @@ final class SignInUITests: AuraUITestCase {
 
     func test_passwordReset_reachesMainScreen() throws {
         // Given
+        let recent = "Код уже отправлен. Запросить новый можно через минуту"
+        server.respond(route: "POST /v1/auth/password/forgot", status: 429,
+                       body: try failingBody(recent),
+                       headers: ["X-Aura-Error-Code": "email_code_recently_requested"])
         try launchOnWelcome()
         welcomeButton.tap()
         fillField(app.textFields["Электронная почта"].firstMatch, text: email)
@@ -144,8 +148,13 @@ final class SignInUITests: AuraUITestCase {
 
         // When
         tapButton("Отправить код")
+        XCTAssertEqual(alertText(), recent)
+        closeAlert()
         fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "123456")
-        fillField(app.secureTextFields["Новый пароль"].firstMatch, text: "new-password-1")
+        tapButton("eye")
+        let newPassword = app.textFields["Новый пароль"].firstMatch
+        fillField(newPassword, text: "new-password-1")
+        XCTAssertEqual(newPassword.value as? String, "new-password-1")
         tapButton("Сохранить пароль")
 
         // Then

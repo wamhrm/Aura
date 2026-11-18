@@ -26,7 +26,7 @@ protocol NetworkServiceProtocol: Sendable {
     func giveAIConsent() async throws -> UserModel
     func sendEmailConfirmationCode() async throws
     func confirmEmail(code: String) async throws -> UserModel
-    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
+    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UserModel
     func fetchCurrentHoroscope() async throws -> HoroscopeModel
     func fetchDailyInsight() async throws -> DailyContentModel
     func fetchDailyTip() async throws -> DailyContentModel
@@ -111,9 +111,10 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         return try await fetch(endpoint: "/auth/email/confirm", method: .post, body: body)
     }
 
-    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
+    func updateProfileInfo(_ profileInfo: ProfileInfoModel) async throws -> UserModel {
         let body = try JSONEncoder().encode(profileInfo)
-        return try await fetch(endpoint: "/auth/profileInfo", method: .patch, body: body)
+        let response: UpdateProfileInfoResponse = try await fetch(endpoint: "/auth/profileInfo", method: .patch, body: body)
+        return response.user
     }
 
     func fetchCurrentHoroscope() async throws -> HoroscopeModel {
@@ -243,7 +244,8 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
 
                 throw NetworkError(statusCode: httpResponse.statusCode, data: data)
             default:
-                throw NetworkError(statusCode: httpResponse.statusCode, data: data)
+                throw NetworkError(statusCode: httpResponse.statusCode, data: data,
+                                   code: httpResponse.value(forHTTPHeaderField: "X-Aura-Error-Code"))
         }
     }
 
@@ -280,9 +282,8 @@ struct AuthTokenResponse: Decodable {
     let user: UserModel
 }
 
-struct UpdateProfileInfoResponse: Decodable {
+private struct UpdateProfileInfoResponse: Decodable {
     let user: UserModel
-    let horoscope: HoroscopeModel?
 }
 
 private struct AuthSignUpBody: Encodable {
@@ -317,15 +318,24 @@ nonisolated private struct ServerErrorResponse: Decodable {
 nonisolated enum NetworkError: LocalizedError {
     case invalidURL, invalidResponse, decodingError, unauthorized, sessionExpired, userExists, notFound, tooManyRequests, serverUnavailable, timedOut, noConnection, cannotReachServer, cancelled
     case server(String), limited(String)
+    case emailCodeRecentlyRequested(String), emailCodeDailyLimit(String)
 
-    init(statusCode: Int, data: Data) {
+    init(statusCode: Int, data: Data, code: String? = nil) {
         if (500...599).contains(statusCode) {
             self = .serverUnavailable
             return
         }
 
         if let reason = try? JSONDecoder().decode(ServerErrorResponse.self, from: data).reason, !reason.isEmpty {
-            self = statusCode == 429 ? .limited(reason) : .server(reason)
+            if statusCode == 429 {
+                switch code {
+                    case "email_code_recently_requested": self = .emailCodeRecentlyRequested(reason)
+                    case "email_code_daily_limit": self = .emailCodeDailyLimit(reason)
+                    default: self = .limited(reason)
+                }
+            } else {
+                self = .server(reason)
+            }
             return
         }
 
@@ -367,7 +377,8 @@ nonisolated enum NetworkError: LocalizedError {
             case .notFound: AppLanguage.text("Данные не найдены")
             case .tooManyRequests: AppLanguage.text("Слишком много запросов. Попробуйте позже")
             case .serverUnavailable: AppLanguage.text("Сервис временно недоступен. Попробуйте позже")
-            case .server(let message), .limited(let message): message
+            case .server(let message), .limited(let message),
+                 .emailCodeRecentlyRequested(let message), .emailCodeDailyLimit(let message): message
             case .timedOut: AppLanguage.text("Сервер не ответил вовремя. Попробуйте ещё раз")
             case .noConnection: AppLanguage.text("Нет подключения к интернету")
             case .cannotReachServer: AppLanguage.text("Не удалось связаться с сервером. Попробуйте позже")

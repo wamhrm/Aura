@@ -216,8 +216,11 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
             let deadline = ContinuousClock.now + .milliseconds(350)
 
             do {
-                personalityResult = try await contentService.makePersonalityTest(selectedTests: tests,
-                                                                                 requestID: requestID)
+                let result = try await contentService.makePersonalityTest(selectedTests: tests,
+                                                                          requestID: requestID)
+                guard sessionID == authService.sessionID else { return }
+                personalityResult = result
+                personalityRequestID = nil
                 try await Task.sleep(until: deadline, clock: .continuous)
                 guard sessionID == authService.sessionID else { return }
                 homeRoutes.append(.testResults)

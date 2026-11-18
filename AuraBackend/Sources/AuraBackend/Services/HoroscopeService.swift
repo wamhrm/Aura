@@ -44,19 +44,6 @@ struct HoroscopeService {
         }
     }
 
-    func findCurrentHoroscope(user: User,
-                              timeZone: TimeZone,
-                              database: any Database) async throws -> HoroscopeDTO? {
-        guard let dateOfBirth = user.dateOfBirth,
-              let sign = HoroscopeSign.from(dateOfBirth: dateOfBirth) else {
-            return nil
-        }
-
-        let week = DailyDateHelper.currentWeek(timeZone: timeZone)
-        let entry = try await findHoroscope(sign: sign, weekStart: week.key, db: database)
-        return try entry.map(HoroscopeDTOMapper.map)
-    }
-
     private func findHoroscope(sign: HoroscopeSign,
                                weekStart: String,
                                db: any Database) async throws -> Horoscope? {

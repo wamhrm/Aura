@@ -159,11 +159,15 @@ struct EmailCodeService {
 
     private func checkSendLimit(createdAt: [Date]) throws {
         if let lastSentAt = createdAt.first, Date().timeIntervalSince(lastSentAt) < resendInterval {
-            throw Abort(.tooManyRequests, reason: "Код уже отправлен. Запросить новый можно через минуту")
+            throw Abort(.tooManyRequests,
+                        headers: ["X-Aura-Error-Code": "email_code_recently_requested"],
+                        reason: "Код уже отправлен. Запросить новый можно через минуту")
         }
 
         guard createdAt.count < dailyLimit else {
-            throw Abort(.tooManyRequests, reason: "Слишком много запросов. Попробуйте завтра")
+            throw Abort(.tooManyRequests,
+                        headers: ["X-Aura-Error-Code": "email_code_daily_limit"],
+                        reason: "Слишком много запросов. Попробуйте завтра")
         }
     }
 

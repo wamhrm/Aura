@@ -23,7 +23,7 @@ protocol AuthServiceProtocol {
     func signIn(email: String, password: String) async throws
     func requestPasswordReset(email: String) async throws
     func resetPassword(email: String, code: String, newPassword: String) async throws
-    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws
     func giveAIConsent() async throws
     func sendEmailConfirmationCode() async throws
     func confirmEmail(code: String) async throws
@@ -126,15 +126,14 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         try startSession(response: response)
     }
 
-    func updateProfileInfo(_ request: ProfileInfoModel) async throws -> UpdateProfileInfoResponse {
-        let response = try await self.request {
+    func updateProfileInfo(_ request: ProfileInfoModel) async throws {
+        let updatedUser = try await self.request {
             try await networkService.updateProfileInfo(request)
         }
-        guard case .signedIn(let user) = authState.value, user.id == response.user.id else {
+        guard case .signedIn(let user) = authState.value, user.id == updatedUser.id else {
             throw NetworkError.sessionExpired
         }
-        authState.send(.signedIn(response.user))
-        return response
+        authState.send(.signedIn(updatedUser))
     }
 
     func giveAIConsent() async throws {

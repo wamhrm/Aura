@@ -79,7 +79,7 @@ class AuraUITestCase: XCTestCase {
     }
 
     func profileBody(user: [String: Any]) throws -> Data {
-        try json(["user": user, "horoscope": try SampleResponses.object(SampleResponses.horoscope)])
+        try json(["user": user])
     }
 
     func setHistory(kind: String, resultKey: String, result: Data) throws {

@@ -195,10 +195,10 @@ final class HomeViewModelTests: AuraUnitTestCase {
         XCTAssertNil(auth.confirmedCode)
     }
 
-    func test_sendCode_whenTheLimitIsReached_stillOpensTheCodeField() async {
+    func test_sendCode_whenCodeWasRecentlyRequested_opensTheCodeField() async {
         // Given
         let auth = MockAuthService()
-        auth.errorToThrow = NetworkError.limited("Код уже отправлен")
+        auth.errorToThrow = NetworkError.emailCodeRecentlyRequested("Код уже отправлен")
         let viewModel = EmailConfirmationViewModel(authService: auth, email: "anna@mail.ru")
 
         // When

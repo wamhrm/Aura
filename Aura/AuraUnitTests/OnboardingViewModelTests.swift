@@ -194,7 +194,7 @@ final class OnboardingViewModelTests: AuraUnitTestCase {
 
     func test_requestPasswordReset_whenCodeIsAlreadySent_opensTheCodeForm() async {
         let auth = MockAuthService()
-        auth.errorToThrow = NetworkError.limited("Код уже отправлен")
+        auth.errorToThrow = NetworkError.emailCodeRecentlyRequested("Код уже отправлен")
         let viewModel = makeViewModel(auth: auth)
         viewModel.email = "anna@mail.ru"
 

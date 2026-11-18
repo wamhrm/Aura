@@ -54,7 +54,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
                 try await authService.sendEmailConfirmationCode()
                 isCodeSent = true
             } catch {
-                if case NetworkError.limited = error {
+                if case NetworkError.emailCodeRecentlyRequested = error {
                     isCodeSent = true
                 }
                 presentAlert(error.userMessage)
