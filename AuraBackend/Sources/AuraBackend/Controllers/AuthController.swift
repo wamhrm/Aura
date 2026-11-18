@@ -42,9 +42,7 @@ struct AuthController: RouteCollection {
         guard name.count <= InputLimits.maxNameLength else {
             throw Abort(.badRequest, reason: "Имя должно быть не длиннее 50 символов")
         }
-        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
-            throw Abort(.badRequest, reason: "Укажите корректный e-mail")
-        }
+        try validateEmail(email: email)
         try validatePassword(password: data.password)
 
         if try await emailExists(email, database: req.db) {
@@ -70,9 +68,7 @@ struct AuthController: RouteCollection {
         let data = try req.content.decode(EmailAvailabilityRequest.self)
         let email = normalizedEmail(email: data.email)
 
-        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
-            throw Abort(.badRequest, reason: "Укажите корректный e-mail")
-        }
+        try validateEmail(email: email)
 
         if try await emailExists(email, database: req.db) {
             throw Abort(.conflict, reason: "Пользователь уже зарегистрирован")
@@ -108,9 +104,7 @@ struct AuthController: RouteCollection {
         let data = try req.content.decode(ForgotPasswordRequest.self)
         let email = normalizedEmail(email: data.email)
 
-        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
-            throw Abort(.badRequest, reason: "Укажите корректный e-mail")
-        }
+        try validateEmail(email: email)
 
         guard let user = try await User.query(on: req.db).filter(\.$email == email).first(),
               user.passwordHash != nil else {
@@ -204,6 +198,12 @@ struct AuthController: RouteCollection {
 
     private func normalizedEmail(email: String) -> String {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func validateEmail(email: String) throws {
+        guard email.count <= InputLimits.maxEmailLength, isValidEmail(email: email) else {
+            throw Abort(.badRequest, reason: "Укажите корректный e-mail")
+        }
     }
 
     private func isValidEmail(email: String) -> Bool {

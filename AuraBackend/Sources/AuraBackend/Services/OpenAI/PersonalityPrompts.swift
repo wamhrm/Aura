@@ -14,10 +14,7 @@ enum PersonalityPrompts {
                         ("overview", .titledText),
                         ("emotionalBar", .array(.object([("key", .stringEnum(PersonalityEmotionalBar.keys)),
                                                          ("value", .integer)]))),
-                        ("sections", .array(.object([("selectedTest", .stringEnum(selectedTests.map(\.rawValue))),
-                                                     ("description", .string),
-                                                     ("items", .array(.object([("key", .stringEnum(itemKeys)),
-                                                                               ("description", .string)])))])))])
+                        ("sections", .sections(testKeys: selectedTests.map(\.rawValue), itemKeys: itemKeys))])
     }
 
     static func user(user: User,

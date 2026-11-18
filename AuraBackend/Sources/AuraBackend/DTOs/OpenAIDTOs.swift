@@ -55,6 +55,15 @@ indirect enum JSONSchema: Encodable, Sendable {
 
     static let titledText = JSONSchema.object([("title", .string), ("description", .string)])
 
+    static func sections(testKeys: [String], itemKeys: [String]) -> JSONSchema {
+        let item = JSONSchema.object([("key", .stringEnum(itemKeys)),
+                                      ("description", .string)])
+
+        return .array(.object([("selectedTest", .stringEnum(testKeys)),
+                               ("description", .string),
+                               ("items", .array(item))]))
+    }
+
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: SchemaKey.self)
 

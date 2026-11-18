@@ -40,19 +40,7 @@ struct HistoryController: RouteCollection {
     }
 
     private func fetchHistoryDetails(req: Request) async throws -> HistoryItemDTO {
-        let userID = try req.auth.require(User.self).requireID()
-
-        guard let historyID = req.parameters.get("historyID", as: UUID.self) else {
-            throw Abort(.badRequest, reason: "Некорректный идентификатор записи")
-        }
-
-        guard let entry = try await History.query(on: req.db)
-            .filter(\.$id == historyID)
-            .filter(\.$user.$id == userID)
-            .first()
-        else {
-            throw Abort(.notFound, reason: "Запись не найдена")
-        }
+        let entry = try await requireHistoryEntry(req: req)
 
         do {
             return try HistoryDTOMapper.getHistoryItemDetails(history: entry)
@@ -63,6 +51,12 @@ struct HistoryController: RouteCollection {
     }
 
     private func deleteHistory(req: Request) async throws -> HTTPStatus {
+        let entry = try await requireHistoryEntry(req: req)
+        try await entry.delete(on: req.db)
+        return .noContent
+    }
+
+    private func requireHistoryEntry(req: Request) async throws -> History {
         let userID = try req.auth.require(User.self).requireID()
 
         guard let historyID = req.parameters.get("historyID", as: UUID.self) else {
@@ -72,13 +66,10 @@ struct HistoryController: RouteCollection {
         guard let entry = try await History.query(on: req.db)
             .filter(\.$id == historyID)
             .filter(\.$user.$id == userID)
-            .first()
-        else {
+            .first() else {
             throw Abort(.notFound, reason: "Запись не найдена")
         }
 
-        try await entry.delete(on: req.db)
-        
-        return .noContent
+        return entry
     }
 }
