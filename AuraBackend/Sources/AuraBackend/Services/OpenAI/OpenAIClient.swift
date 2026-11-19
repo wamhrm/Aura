@@ -10,7 +10,7 @@ import NIOCore
 import Vapor
 
 struct OpenAIClient {
-    private let model = Environment.get("OPENAI_MODEL") ?? "gpt-5.4"
+    private let model = Environment.get("OPENAI_MODEL") ?? "gpt-6.1-terra"
     private let maxCompletionTokens = 8_000
     private let requestTimeout: TimeAmount = .seconds(60)
 

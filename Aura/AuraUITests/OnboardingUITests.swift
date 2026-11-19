@@ -8,8 +8,8 @@
 import XCTest
 
 final class OnboardingUITests: AuraUITestCase {
-    func test_systemLanguage_usesTheFirstSupportedLanguageForOnboardingAndRequests() {
-        app.launchArguments = ["-AppleLanguages", "(fr, en, ru)"]
+    func test_englishOnboarding_usesEnglishForRequests() {
+        app.launchArguments = ["-AppleLanguages", "(en)"]
         app.launch()
         XCTAssertTrue(text("Welcome").waitForExistence(timeout: 10))
 

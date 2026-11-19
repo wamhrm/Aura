@@ -122,9 +122,9 @@ struct CompatibilityResultView: View {
 
 extension CompatibilityResultView {
     private func compatibilityScaleBar(_ value: Int) -> some View {
-        let fraction = Double(min(max(value, 0), 100)) / 100
+        VStack(spacing: 12) {
+            let fraction = Double(min(max(value, 0), 100)) / 100
 
-        return VStack(spacing: 12) {
             ZStack {
                 Circle()
                     .stroke(.tint.opacity(0.18), lineWidth: 8)

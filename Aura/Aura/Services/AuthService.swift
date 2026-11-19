@@ -182,6 +182,13 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         expiredSessionMessage = nil
         return message
     }
+    
+    func startSession(response: AuthTokenResponse) throws {
+        try keychain.saveAuthToken(response.token)
+        sessionID = UUID()
+        authStateSubject.send(.signedIn(response.user))
+        restorationState = .loaded
+    }
 
     private func request<T>(_ operation: () async throws -> T) async throws -> T {
         let sessionID = sessionID
@@ -206,13 +213,6 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         sessionID = nil
         showsMainScreen = false
         authStateSubject.send(.signedOut)
-        restorationState = .loaded
-    }
-
-    func startSession(response: AuthTokenResponse) throws {
-        try keychain.saveAuthToken(response.token)
-        sessionID = UUID()
-        authStateSubject.send(.signedIn(response.user))
         restorationState = .loaded
     }
 
