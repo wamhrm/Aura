@@ -96,10 +96,10 @@ struct OnboardingView: View {
                 .opacity(vm.isLoading ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
-        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }
-        .alert("Выйти из аккаунта?", isPresented: vm.binding(\.showSignOutAlert)) {
+        .alert("Выйти из аккаунта?", isPresented: $vm.showSignOutAlert) {
             Button("Отмена", role: .cancel) {}
             Button("Выйти", role: .destructive) {
                 vm.signOut()

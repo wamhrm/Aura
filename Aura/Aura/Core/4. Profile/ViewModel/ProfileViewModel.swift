@@ -23,12 +23,12 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var profileForm: ProfileFormViewModel?
     @Published private(set) var isSavingProfile = false
     
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
     @Published var showSettings = false
-    @Published var showSignOutAlert = false
-    @Published var showDeleteAccountAlert = false
-    @Published var showDeleteAccountError = false
+    @Published private var signOutAlertPresented = false
+    @Published private var deleteAccountAlertPresented = false
+    @Published private var deleteAccountErrorPresented = false
     @Published private(set) var isDeletingAccount = false
 
     @Published private var personalityResult: PersonalityResultModel?
@@ -41,6 +41,38 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
     private let contentService: any ContentServiceProtocol
 
     private var cancellables = Set<AnyCancellable>()
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
+
+    var showSignOutAlert: Bool {
+        get { signOutAlertPresented }
+        set {
+            guard signOutAlertPresented != newValue else { return }
+            signOutAlertPresented = newValue
+        }
+    }
+
+    var showDeleteAccountAlert: Bool {
+        get { deleteAccountAlertPresented }
+        set {
+            guard deleteAccountAlertPresented != newValue else { return }
+            deleteAccountAlertPresented = newValue
+        }
+    }
+
+    var showDeleteAccountError: Bool {
+        get { deleteAccountErrorPresented }
+        set {
+            guard deleteAccountErrorPresented != newValue else { return }
+            deleteAccountErrorPresented = newValue
+        }
+    }
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {

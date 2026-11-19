@@ -5,7 +5,7 @@
 //  Created by wamhrm on 31.10.2026.
 //
 
-import SwiftUI
+import Foundation
 
 @MainActor
 protocol AlertPresentable: AnyObject {
@@ -14,20 +14,6 @@ protocol AlertPresentable: AnyObject {
 }
 
 extension AlertPresentable {
-    var alertBinding: Binding<Bool> {
-        binding(\.showAlert)
-    }
-
-    func binding(_ keyPath: ReferenceWritableKeyPath<Self, Bool>) -> Binding<Bool> {
-        Binding {
-            self[keyPath: keyPath]
-        } set: { newValue in
-            if self[keyPath: keyPath] != newValue {
-                self[keyPath: keyPath] = newValue
-            }
-        }
-    }
-
     func presentAlert(_ message: String) {
         alertMessage = message
         showAlert = true

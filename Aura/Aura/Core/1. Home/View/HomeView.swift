@@ -176,7 +176,7 @@ struct HomeView: View {
                 Task { await vm.refreshIfNeeded() }
             }
         }
-        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }
         .sheet(item: $vm.emailConfirmation) { confirmation in

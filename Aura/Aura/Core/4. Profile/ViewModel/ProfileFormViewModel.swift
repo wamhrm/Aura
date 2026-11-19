@@ -16,8 +16,16 @@ final class ProfileFormViewModel: ObservableObject, AlertPresentable {
     @Published var knowsBirthTime: Bool
     @Published var birthTime: Date
 
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
 
     init(user: UserModel) {
         profileInfo = user.profileInfo

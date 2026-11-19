@@ -20,7 +20,7 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     @Published var partnerInfo = PartnerInfoModel()
     @Published private(set) var compatibilityResult: CompatibilityResultModel?
 
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
     @Published private(set) var isLoading = false
     @Published private(set) var needsAIConsent = false
@@ -34,6 +34,14 @@ final class CompatibilityViewModel: ObservableObject, AlertPresentable {
     private var compatibilityRequestUser: UserModel?
     private var compatibilityRequest: CompatibilityTestRequest?
     private var cancellables = Set<AnyCancellable>()
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {

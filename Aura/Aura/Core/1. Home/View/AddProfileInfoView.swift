@@ -53,7 +53,7 @@ struct AddProfileInfoView: View {
         }
         .localizedNavigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
-        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("ОК", role: .cancel) { }
         }
     }

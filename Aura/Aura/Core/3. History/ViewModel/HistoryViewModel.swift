@@ -20,9 +20,9 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var historyCells: [HistoryCellModel] = []
     @Published private(set) var loadState = LoadState.loading
 
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
-    @Published var showDeleteAlert = false
+    @Published private var deleteAlertPresented = false
     @Published private(set) var isLoading = false
 
     private let authService: any AuthServiceProtocol
@@ -31,6 +31,22 @@ final class HistoryViewModel: ObservableObject, AlertPresentable {
     private var currentUserId: UUID?
     private var cellToDelete: HistoryCellModel?
     private var cancellables = Set<AnyCancellable>()
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
+
+    var showDeleteAlert: Bool {
+        get { deleteAlertPresented }
+        set {
+            guard deleteAlertPresented != newValue else { return }
+            deleteAlertPresented = newValue
+        }
+    }
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {

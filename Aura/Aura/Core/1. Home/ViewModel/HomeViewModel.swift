@@ -25,7 +25,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var personalityResult: PersonalityResultModel?
     @Published private(set) var selectedTests: [PersonalityTestTypes] = [.astrology, .behavioralPatterns]
 
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
     @Published private(set) var allowsAIAnalysis = false
     @Published private(set) var isLoading = false
@@ -44,6 +44,14 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     private var personalityRequestUser: UserModel?
     private var personalityRequestTests: [PersonalityTestTypes]?
     private var cancellables = Set<AnyCancellable>()
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
 
     init(authService: any AuthServiceProtocol,
          contentService: any ContentServiceProtocol) {

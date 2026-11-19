@@ -55,7 +55,7 @@ struct EmailConfirmationSheetView: View {
             .toolbar {
                 toolbarItem()
             }
-            .alert(vm.alertMessage, isPresented: vm.alertBinding) {
+            .alert(vm.alertMessage, isPresented: $vm.showAlert) {
                 Button("OK", role: .cancel) {}
             }
         }

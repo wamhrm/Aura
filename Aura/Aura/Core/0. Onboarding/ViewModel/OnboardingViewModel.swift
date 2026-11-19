@@ -61,9 +61,9 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var newPassword = ""
     @Published private(set) var showsResetCodeEntry = false
 
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
-    @Published var showSignOutAlert = false
+    @Published private var signOutAlertPresented = false
     @Published private(set) var isCheckingEmail = false
     @Published private(set) var isLoading = false
     @Published private(set) var loadingTitle: LocalizedStringResource = "Входим..."
@@ -72,6 +72,22 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     private var cancellables = Set<AnyCancellable>()
 
     private let authService: any AuthServiceProtocol
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
+
+    var showSignOutAlert: Bool {
+        get { signOutAlertPresented }
+        set {
+            guard signOutAlertPresented != newValue else { return }
+            signOutAlertPresented = newValue
+        }
+    }
 
     init(authService: any AuthServiceProtocol) {
         self.authService = authService

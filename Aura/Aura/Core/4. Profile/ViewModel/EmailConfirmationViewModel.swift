@@ -12,7 +12,7 @@ import Foundation
 final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Identifiable {
     @Published var code = ""
 
-    @Published var showAlert = false
+    @Published private var alertPresented = false
     @Published var alertMessage = ""
     @Published private(set) var showsCodeEntry = false
     @Published private(set) var isLoading = false
@@ -20,6 +20,14 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
 
     private let authService: any AuthServiceProtocol
     private let email: String
+
+    var showAlert: Bool {
+        get { alertPresented }
+        set {
+            guard alertPresented != newValue else { return }
+            alertPresented = newValue
+        }
+    }
 
     init(authService: any AuthServiceProtocol, email: String) {
         self.authService = authService

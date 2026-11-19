@@ -49,10 +49,10 @@ struct HistoryView: View {
                 .opacity(vm.showsLoadingScreen ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
-        .alert(vm.alertMessage, isPresented: vm.alertBinding) {
+        .alert(vm.alertMessage, isPresented: $vm.showAlert) {
             Button("OK", role: .cancel) {}
         }
-        .alert("Удалить результат?", isPresented: vm.binding(\.showDeleteAlert)) {
+        .alert("Удалить результат?", isPresented: $vm.showDeleteAlert) {
             Button("Отмена", role: .cancel) {}
             Button("Удалить", role: .destructive) {
                 vm.deleteRequestedCell()
