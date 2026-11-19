@@ -224,7 +224,7 @@ nonisolated final class NetworkService: NetworkServiceProtocol {
         urlRequest.timeoutInterval = timeout
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Time-Zone")
-        urlRequest.setValue(AppLanguage.requestCode, forHTTPHeaderField: "Accept-Language")
+        urlRequest.setValue(AppLanguage.current.languageCode, forHTTPHeaderField: "Accept-Language")
         urlRequest.httpBody = body
 
         if let idempotencyKey {

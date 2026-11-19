@@ -60,10 +60,6 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable {
         return AppLanguage(rawValue: raw) ?? .system
     }
 
-    static var resolvedLocale: Locale { current.locale }
-
-    static var requestCode: String { current.languageCode }
-
     var languageCode: String {
         switch self {
             case .system: Bundle.main.preferredLocalizations.first ?? Self.russian.rawValue
@@ -73,15 +69,12 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable {
 
     static func text(_ resource: LocalizedStringResource) -> String {
         var resource = resource
-        resource.locale = resolvedLocale
+        resource.locale = current.locale
         return String(localized: resource)
     }
 
     var locale: Locale {
-        let region = Locale.autoupdatingCurrent.region
-        var components = Locale.Components(languageCode: Locale.LanguageCode(languageCode),
-                                           languageRegion: region)
-        components.region = region
-        return Locale(components: components)
+        Locale(languageCode: Locale.LanguageCode(languageCode),
+               languageRegion: Locale.autoupdatingCurrent.region)
     }
 }

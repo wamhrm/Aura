@@ -193,14 +193,14 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         let sessionID = authService.sessionID
         let requestID = UUID()
         tipRequestID = requestID
-        let languageCode = AppLanguage.requestCode
+        let languageCode = AppLanguage.current.languageCode
 
         dailyTip = nil
         tipState = .loading
 
         func isCurrentRequest() -> Bool {
             requestID == tipRequestID &&
-            languageCode == AppLanguage.requestCode &&
+            languageCode == AppLanguage.current.languageCode &&
             sessionID == authService.sessionID
         }
 

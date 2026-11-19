@@ -48,7 +48,7 @@ extension HistoryCellModel {
     var dateText: String {
         guard let date = try? Date(createdAt, strategy: .iso8601) else { return "" }
 
-        return date.formatted(.dateTime.day().month(.wide).year().locale(AppLanguage.resolvedLocale))
+        return date.formatted(.dateTime.day().month(.wide).year().locale(AppLanguage.current.locale))
     }
 
     static let personalityPlaceholder = HistoryCellModel(

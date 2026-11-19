@@ -297,13 +297,13 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         let sessionID = authService.sessionID
         let requestID = UUID()
         horoscopeRequestID = requestID
-        let languageCode = AppLanguage.requestCode
+        let languageCode = AppLanguage.current.languageCode
         let deadline = ContinuousClock.now + .seconds(1)
         if horoscope == nil { horoscopeState = .loading }
 
         func isCurrentRequest() -> Bool {
             requestID == horoscopeRequestID &&
-            languageCode == AppLanguage.requestCode &&
+            languageCode == AppLanguage.current.languageCode &&
             sessionID == authService.sessionID &&
             user.dateOfBirth == signedInUser?.dateOfBirth
         }
@@ -330,7 +330,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         let sessionID = authService.sessionID
         let requestID = UUID()
         insightRequestID = requestID
-        let languageCode = AppLanguage.requestCode
+        let languageCode = AppLanguage.current.languageCode
         let deadline = ContinuousClock.now + .seconds(1)
 
         if dailyInsight?.isFromToday != true {
@@ -340,7 +340,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
 
         func isCurrentRequest() -> Bool {
             requestID == insightRequestID &&
-            languageCode == AppLanguage.requestCode &&
+            languageCode == AppLanguage.current.languageCode &&
             sessionID == authService.sessionID
         }
 
