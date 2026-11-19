@@ -19,26 +19,19 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if case .loading = authService.restorationState {
-                ZStack {
-                    BackgroundView()
+            switch authService.restorationState {
+                case .loading:
                     LoadingView(title: "Входим...")
-                }
-            } else if case .failed(let message) = authService.restorationState {
-                ZStack {
-                    BackgroundView()
-                    LoadFailedView(message: message) {
+                case .failed(let message):
+                    LoadFailedView(message: message, isFullScreen: true) {
                         authService.retryRestoreSession()
                     }
-                    .padding()
-                }
-            } else if authService.showsMainScreen {
-                MainTabView(authService: authService,
-                            contentService: contentService)
-                    .transition(.opacity)
-            } else {
-                OnboardingView(authService: authService)
-                    .transition(.opacity)
+                case .loaded where authService.showsMainScreen:
+                    MainTabView(authService: authService, contentService: contentService)
+                        .transition(.opacity)
+                case .loaded:
+                    OnboardingView(authService: authService)
+                        .transition(.opacity)
             }
         }
         .task { await authService.restoreSession() }

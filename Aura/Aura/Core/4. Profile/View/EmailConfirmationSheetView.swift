@@ -44,12 +44,9 @@ struct EmailConfirmationSheetView: View {
                 .animation(nil, value: vm.showsCodeEntry)
                 .opacity(vm.showsCodeEntry && vm.isLoading ? 0 : 1)
 
-                ZStack {
-                    BackgroundView()
-                    LoadingView(title: vm.loadingTitle,
-                                isPresented: vm.showsCodeEntry && vm.isLoading)
-                }
-                .opacity(vm.showsCodeEntry && vm.isLoading ? 1 : 0)
+                LoadingView(title: vm.loadingTitle,
+                            isPresented: vm.showsCodeEntry && vm.isLoading)
+                    .opacity(vm.showsCodeEntry && vm.isLoading ? 1 : 0)
             }
             .animation(.easeInOut(duration: 0.35), value: vm.showsCodeEntry && vm.isLoading)
             .padding(.horizontal)

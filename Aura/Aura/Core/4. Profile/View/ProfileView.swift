@@ -36,11 +36,8 @@ struct ProfileView: View {
             }
             .opacity(vm.isSavingProfile ? 0 : 1)
 
-            ZStack {
-                BackgroundView()
-                LoadingView(title: "Сохраняем...", isPresented: vm.isSavingProfile)
-            }
-            .opacity(vm.isSavingProfile ? 1 : 0)
+            LoadingView(title: "Сохраняем...", isPresented: vm.isSavingProfile)
+                .opacity(vm.isSavingProfile ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isSavingProfile)
         .onAppear {

@@ -109,11 +109,8 @@ struct CompatibilityView: View {
             }
             .opacity(vm.isLoading ? 0 : 1)
 
-            ZStack {
-                BackgroundView()
-                LoadingView(title: "Готовим результат...", isPresented: vm.isLoading)
-            }
-            .opacity(vm.isLoading ? 1 : 0)
+            LoadingView(title: "Готовим результат...", isPresented: vm.isLoading)
+                .opacity(vm.isLoading ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {

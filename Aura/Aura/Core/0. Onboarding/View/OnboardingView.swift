@@ -92,11 +92,8 @@ struct OnboardingView: View {
             }
             .opacity(vm.isLoading ? 0 : 1)
 
-            ZStack {
-                BackgroundView()
-                LoadingView(title: vm.loadingTitle, isPresented: vm.isLoading)
-            }
-            .opacity(vm.isLoading ? 1 : 0)
+            LoadingView(title: vm.loadingTitle, isPresented: vm.isLoading)
+                .opacity(vm.isLoading ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {

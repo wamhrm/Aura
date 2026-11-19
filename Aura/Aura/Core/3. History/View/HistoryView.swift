@@ -44,12 +44,9 @@ struct HistoryView: View {
             }
             .opacity(vm.showsLoadingScreen ? 0 : 1)
 
-            ZStack {
-                BackgroundView()
-                LoadingView(title: vm.isLoading ? "Открываем результат" : "Загружаем историю",
-                            isPresented: vm.showsLoadingScreen)
-            }
-            .opacity(vm.showsLoadingScreen ? 1 : 0)
+            LoadingView(title: vm.isLoading ? "Открываем результат" : "Загружаем историю",
+                        isPresented: vm.showsLoadingScreen)
+                .opacity(vm.showsLoadingScreen ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {

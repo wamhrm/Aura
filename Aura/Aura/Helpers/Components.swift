@@ -235,9 +235,22 @@ struct EmotionalProfileBar: View {
 
 struct LoadFailedView: View {
     let message: String
+    var isFullScreen = false
     let onRetry: () -> Void
 
     var body: some View {
+        if isFullScreen {
+            ZStack {
+                BackgroundView()
+                content
+                    .padding()
+            }
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 10) {
             Text(message)
                 .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 15)))

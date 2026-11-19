@@ -163,12 +163,9 @@ struct HomeView: View {
             }
             .opacity(vm.showsLoadingScreen ? 0 : 1)
 
-            ZStack {
-                BackgroundView()
-                LoadingView(title: vm.isLoading ? vm.loadingTitle : "Загружаем информацию",
-                            isPresented: vm.showsLoadingScreen)
-            }
-            .opacity(vm.showsLoadingScreen ? 1 : 0)
+            LoadingView(title: vm.isLoading ? vm.loadingTitle : "Загружаем информацию",
+                        isPresented: vm.showsLoadingScreen)
+                .opacity(vm.showsLoadingScreen ? 1 : 0)
         }
         .animation(.easeInOut(duration: 0.35), value: vm.showsLoadingScreen)
         .onAppear {

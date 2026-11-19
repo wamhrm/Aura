@@ -29,46 +29,50 @@ struct LoadingView: View {
     }
 
     var body: some View {
-        VStack(spacing: 30) {
-            Spacer()
+        ZStack {
+            BackgroundView()
 
-            ZStack {
-                Circle()
-                    .stroke(Color.fieldBorder, lineWidth: 4)
+            VStack(spacing: 30) {
+                Spacer()
 
-                Circle()
-                    .trim(from: 0, to: 0.3)
-                    .stroke(.tint, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .rotationEffect(.degrees(isRotating ? 360 : 0))
-                    .animation(.linear(duration: 1).repeatForever(autoreverses: false),
-                               value: isRotating)
+                ZStack {
+                    Circle()
+                        .stroke(Color.fieldBorder, lineWidth: 4)
 
-                Image(systemName: "sparkles")
-                    .font(.system(size: 17))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.tint)
+                    Circle()
+                        .trim(from: 0, to: 0.3)
+                        .stroke(.tint, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .rotationEffect(.degrees(isRotating ? 360 : 0))
+                        .animation(.linear(duration: 1).repeatForever(autoreverses: false),
+                                   value: isRotating)
+
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 17))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.tint)
+                }
+                .frame(width: 35, height: 35)
+
+                Text(phrase)
+                    .font(Adaptive.size(.callout, .default, .default))
+                    .bold()
+                    .multilineTextAlignment(.center)
+                    .opacity(textOpacity)
+
+                Spacer()
             }
-            .frame(width: 35, height: 35)
+            .padding(.horizontal)
+            .onAppear {
+                isRotating = true
+            }
+            .task(id: "\(isPresented)-\(title.key)") {
+                phraseIndex = 0
+                textOpacity = 1
+                guard isPresented else { return }
 
-            Text(phrase)
-                .font(Adaptive.size(.callout, .default, .default))
-                .bold()
-                .multilineTextAlignment(.center)
-                .opacity(textOpacity)
-
-            Spacer()
-        }
-        .padding(.horizontal)
-        .onAppear {
-            isRotating = true
-        }
-        .task(id: "\(isPresented)-\(title.key)") {
-            phraseIndex = 0
-            textOpacity = 1
-            guard isPresented else { return }
-
-            while !Task.isCancelled {
-                await showNextPhrase()
+                while !Task.isCancelled {
+                    await showNextPhrase()
+                }
             }
         }
     }
@@ -94,8 +98,5 @@ struct LoadingView: View {
 
 
 #Preview("Loading") {
-    ZStack {
-        BackgroundView()
-        LoadingView(title: "Сохраняем профиль и настройки")
-    }
+    LoadingView(title: "Сохраняем профиль и настройки")
 }
