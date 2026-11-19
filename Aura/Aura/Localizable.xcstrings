@@ -196,7 +196,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You plan"
+            "value": "Plan ahead"
           }
         }
       }
@@ -206,7 +206,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "In the moment"
+            "value": "Decide on the spot"
           }
         }
       }
@@ -216,7 +216,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You put it off"
+            "value": "Put things off"
           }
         }
       }
@@ -307,16 +307,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Looking ahead"
-          }
-        }
-      }
-    },
-    "%lld%%": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld%%"
           }
         }
       }
@@ -566,7 +556,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I know my birth time"
+            "value": "I know the time of birth"
           }
         }
       }
@@ -826,7 +816,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enter the code from the email to %@ to confirm your address."
+            "value": "Enter the code we sent to %@ to confirm your email address."
           }
         }
       }
@@ -836,7 +826,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "To take the tests, confirm %@. We'll send a code there."
+            "value": "To take the tests, confirm your email address. We’ll send a code to %@."
           }
         }
       }
@@ -1676,7 +1666,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tests about you and compatibility"
+            "value": "Personality and compatibility tests"
           }
         }
       }
@@ -1706,7 +1696,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each day, a short personal note about how you are and what to pay attention to"
+            "value": "A short, personal note each day about how you’re feeling and what to pay attention to"
           }
         }
       }
@@ -2016,7 +2006,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The code for %@ is valid for 15 minutes after it was sent."
+            "value": "The code sent to %@ expires 15 minutes after we send it."
           }
         }
       }
@@ -2251,16 +2241,6 @@
         }
       }
     },
-    "·": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "·"
-          }
-        }
-      }
-    },
     "СОВЕТ ДНЯ": {
       "localizations": {
         "en": {
@@ -2416,7 +2396,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Build a picture of a partner"
+            "value": "Picture your ideal partner"
           }
         }
       }
@@ -2456,7 +2436,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Understand what influences your decisions more: emotion, logic, intuition, or a need for stability. It can help you choose more calmly."
+            "value": "Find out what influences your decisions most: emotion, logic, intuition, or a need for stability. It can help you make choices more calmly and confidently."
           }
         }
       }
@@ -2676,7 +2656,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Picture of a partner"
+            "value": "Partner profile"
           }
         }
       }
@@ -2716,7 +2696,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couple astrology"
+            "value": "Astrology for couples"
           }
         }
       }
@@ -2826,7 +2806,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How your sun signs fit together, where you harmonize, and where you may clash. This is not a birth chart and not a calculation of the planets."
+            "value": "How your sun signs fit together, where you harmonize, and where you may clash. This reading does not include a birth chart or planetary positions."
           }
         }
       }
@@ -2876,7 +2856,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Possible dynamics of attraction, the pace of getting closer, and intimate harmony."
+            "value": "How attraction may develop, how quickly you may grow closer, and how well you may connect intimately."
           }
         }
       }
@@ -2966,7 +2946,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anxious triggers"
+            "value": "Anxiety triggers"
           }
         }
       }
@@ -3156,7 +3136,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balance of logic"
+            "value": "The role of logic"
           }
         }
       }
@@ -3186,7 +3166,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Base of security"
+            "value": "What makes you feel secure"
           }
         }
       }
@@ -3256,7 +3236,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Comfortable distance"
+            "value": "How much space feels right"
           }
         }
       }
@@ -3286,7 +3266,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "How arguments start"
+            "value": "How you argue"
           }
         }
       }
@@ -3317,6 +3297,136 @@
           "stringUnit": {
             "state": "translated",
             "value": "Date of birth not set"
+          }
+        }
+      }
+    },
+    "Совместимость": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatibility"
+          }
+        }
+      }
+    },
+    "История": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
+          }
+        }
+      }
+    },
+    "Показать пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show password"
+          }
+        }
+      }
+    },
+    "Скрыть пароль": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide password"
+          }
+        }
+      }
+    },
+    "Синий": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue"
+          }
+        }
+      }
+    },
+    "Фиолетовый": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purple"
+          }
+        }
+      }
+    },
+    "Красный": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red"
+          }
+        }
+      }
+    },
+    "Бирюзовый": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teal"
+          }
+        }
+      }
+    },
+    "Оранжевый": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        }
+      }
+    },
+    "Не пытайся быть продуктивным весь день. Сделай одну реально важную вещь без отвлечений — остальное шум и самообман.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don’t try to be productive all day. Pick one thing that really matters and do it without distractions. The rest is just noise and a way to fool yourself."
+          }
+        }
+      }
+    },
+    "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An intuitive creator. A deeply introverted person with strong instincts who craves genuine connection more than small talk."
+          }
+        }
+      }
+    },
+    "Обладает встроенным детектором на пустую болтовню.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can spot empty chatter a mile away."
+          }
+        }
+      }
+    },
+    "Чувства раскрываются постепенно, но очень надолго.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your feelings build slowly and last a long time."
           }
         }
       }

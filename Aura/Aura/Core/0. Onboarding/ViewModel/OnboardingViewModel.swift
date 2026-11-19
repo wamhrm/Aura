@@ -25,21 +25,21 @@ enum IntroPages: Int, CaseIterable {
         }
     }
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .welcome: AppLanguage.text("Добро пожаловать")
-            case .horoscope: AppLanguage.text("Гороскоп на неделю")
-            case .daily: AppLanguage.text("Инсайт и совет дня")
-            case .tests: AppLanguage.text("Тесты о вас и совместимость")
+            case .welcome: "Добро пожаловать"
+            case .horoscope: "Гороскоп на неделю"
+            case .daily: "Инсайт и совет дня"
+            case .tests: "Тесты о вас и совместимость"
         }
     }
 
-    var subtitle: String {
+    var subtitle: LocalizedStringResource {
         switch self {
-            case .welcome: AppLanguage.text("Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других")
-            case .horoscope: AppLanguage.text("Прогноз о любви, здоровье и работе для вашего знака зодиака")
-            case .daily: AppLanguage.text("Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание")
-            case .tests: AppLanguage.text("Узнайте свой психотип и проверьте совместимость с партнёром")
+            case .welcome: "Гороскоп, инсайты и психологические тесты, которые помогают лучше понять себя и других"
+            case .horoscope: "Прогноз о любви, здоровье и работе для вашего знака зодиака"
+            case .daily: "Каждый день — короткая персональная подсказка о вашем состоянии и том, на что обратить внимание"
+            case .tests: "Узнайте свой психотип и проверьте совместимость с партнёром"
         }
     }
 }
@@ -66,7 +66,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
     @Published var showSignOutAlert = false
     @Published private(set) var isCheckingEmail = false
     @Published private(set) var isLoading = false
-    @Published private(set) var loadingTitle = ""
+    @Published private(set) var loadingTitle: LocalizedStringResource = "Входим..."
 
     private var hasSession = false
     private var cancellables = Set<AnyCancellable>()
@@ -98,16 +98,16 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         name.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
     }
 
-    var introButtonTitle: String {
-        isLastIntroPage ? AppLanguage.text("Начать") : AppLanguage.text("Далее")
+    var introButtonTitle: LocalizedStringResource {
+        isLastIntroPage ? "Начать" : "Далее"
     }
 
-    var nameAndBirthTitle: String {
-        isSignedIn ? AppLanguage.text("Когда вы родились?") : AppLanguage.text("Как вас зовут и когда вы родились?")
+    var nameAndBirthTitle: LocalizedStringResource {
+        isSignedIn ? "Когда вы родились?" : "Как вас зовут и когда вы родились?"
     }
 
-    var emailButtonTitle: String {
-        isCheckingEmail ? AppLanguage.text("Проверяем...") : AppLanguage.text("Далее")
+    var emailButtonTitle: LocalizedStringResource {
+        isCheckingEmail ? "Проверяем..." : "Далее"
     }
 
     private var isLastIntroPage: Bool {
@@ -252,7 +252,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = AppLanguage.text("Входим...")
+        loadingTitle = "Входим..."
         
         var sessionID = authService.sessionID
 
@@ -291,7 +291,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         }
 
         isLoading = true
-        loadingTitle = AppLanguage.text("Создаём аккаунт...")
+        loadingTitle = "Создаём аккаунт..."
         
         var sessionID = authService.sessionID
         
@@ -330,7 +330,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = AppLanguage.text("Отправляем...")
+        loadingTitle = "Отправляем..."
 
         let sessionID = authService.sessionID
 
@@ -376,7 +376,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = AppLanguage.text("Сохраняем...")
+        loadingTitle = "Сохраняем..."
 
         var sessionID = authService.sessionID
 
@@ -436,7 +436,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
 
     private func giveAIConsent() {
         isLoading = true
-        loadingTitle = AppLanguage.text("Сохраняем...")
+        loadingTitle = "Сохраняем..."
 
         let sessionID = authService.sessionID
 
@@ -469,7 +469,7 @@ final class OnboardingViewModel: ObservableObject, AlertPresentable {
         let preparedRequest = request
 
         isLoading = true
-        loadingTitle = AppLanguage.text("Сохраняем профиль и настройки")
+        loadingTitle = "Сохраняем профиль и настройки"
 
         let sessionID = authService.sessionID
 

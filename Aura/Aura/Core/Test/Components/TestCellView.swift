@@ -8,12 +8,12 @@
 import SwiftUI
 
 protocol TestCellDisplayable: Hashable, CaseIterable {
-    var title: String { get }
-    var description: String { get }
+    var title: LocalizedStringResource { get }
+    var description: LocalizedStringResource { get }
     var icon: String { get }
     var color: UIColor { get }
-    var deepDescription: String { get }
-    var includedItems: [String] { get }
+    var deepDescription: LocalizedStringResource { get }
+    var includedItems: [LocalizedStringResource] { get }
 }
 
 struct TestCellView<Test: TestCellDisplayable>: View {
@@ -59,8 +59,8 @@ struct TestCellView<Test: TestCellDisplayable>: View {
                     .padding(.trailing, 5)
             }
             .accessibilityLabel(hasChosenTest
-                                ? AppLanguage.text("Убрать \(type.title)")
-                                : AppLanguage.text("Выбрать \(type.title)"))
+                                ? Text("Убрать \(type.title)")
+                                : Text("Выбрать \(type.title)"))
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -72,25 +72,25 @@ struct TestCellView<Test: TestCellDisplayable>: View {
 enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
     case astrology, behavioralPatterns, decisionMaking, attachmentStyle, idealPartner, loveLanguage
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .astrology: AppLanguage.text("Астрологический портрет")
-            case .behavioralPatterns: AppLanguage.text("Поведенческие паттерны")
-            case .decisionMaking: AppLanguage.text("Стиль принятия решений")
-            case .attachmentStyle: AppLanguage.text("Стиль привязанности")
-            case .idealPartner: AppLanguage.text("Идеальный партнер")
-            case .loveLanguage: AppLanguage.text("Язык любви")
+            case .astrology: "Астрологический портрет"
+            case .behavioralPatterns: "Поведенческие паттерны"
+            case .decisionMaking: "Стиль принятия решений"
+            case .attachmentStyle: "Стиль привязанности"
+            case .idealPartner: "Идеальный партнер"
+            case .loveLanguage: "Язык любви"
         }
     }
 
-    var description: String {
+    var description: LocalizedStringResource {
         switch self {
-            case .astrology: AppLanguage.text("Что говорит ваш знак")
-            case .behavioralPatterns: AppLanguage.text("Разберите свои реакции")
-            case .decisionMaking: AppLanguage.text("Поймите, как вы выбираете")
-            case .attachmentStyle: AppLanguage.text("Определите ваш стиль отношений")
-            case .idealPartner: AppLanguage.text("Соберите портрет партнера")
-            case .loveLanguage: AppLanguage.text("Как вы выражаете любовь?")
+            case .astrology: "Что говорит ваш знак"
+            case .behavioralPatterns: "Разберите свои реакции"
+            case .decisionMaking: "Поймите, как вы выбираете"
+            case .attachmentStyle: "Определите ваш стиль отношений"
+            case .idealPartner: "Соберите портрет партнера"
+            case .loveLanguage: "Как вы выражаете любовь?"
         }
     }
 
@@ -116,43 +116,43 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
         }
     }
 
-    var deepDescription: String {
+    var deepDescription: LocalizedStringResource {
         switch self {
-            case .astrology: AppLanguage.text("Получите разбор по вашему знаку зодиака: сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение.")
-            case .behavioralPatterns: AppLanguage.text("Разберите повторяющиеся сценарии поведения: как вы реагируете на стресс, близость, неопределенность и эмоциональное напряжение.")
-            case .decisionMaking: AppLanguage.text("Поймите, что сильнее влияет на ваши решения: эмоции, логика, интуиция или потребность в стабильности. Это поможет выбирать спокойнее и увереннее.")
-            case .attachmentStyle: AppLanguage.text("Определите свой стиль привязанности и разберите модели поведения в отношениях. Узнаете, почему вы реагируете определённым образом и какие сценарии повторяются чаще всего.")
-            case .idealPartner: AppLanguage.text("Соберите понятный портрет партнера, который подходит вашему темпераменту, эмоциональным потребностям и ожиданиям от близости.")
-            case .loveLanguage: AppLanguage.text("Поймите, как вы выражаете любовь и что делает вас эмоционально удовлетворённым в отношениях. Это поможет лучше понимать себя и избегать типичных недопониманий.")
+            case .astrology: "Получите разбор по вашему знаку зодиака: сильные стороны личности, внутренние конфликты и природные склонности. Поймёте, что влияет на ваши решения и поведение."
+            case .behavioralPatterns: "Разберите повторяющиеся сценарии поведения: как вы реагируете на стресс, близость, неопределенность и эмоциональное напряжение."
+            case .decisionMaking: "Поймите, что сильнее влияет на ваши решения: эмоции, логика, интуиция или потребность в стабильности. Это поможет выбирать спокойнее и увереннее."
+            case .attachmentStyle: "Определите свой стиль привязанности и разберите модели поведения в отношениях. Узнаете, почему вы реагируете определённым образом и какие сценарии повторяются чаще всего."
+            case .idealPartner: "Соберите понятный портрет партнера, который подходит вашему темпераменту, эмоциональным потребностям и ожиданиям от близости."
+            case .loveLanguage: "Поймите, как вы выражаете любовь и что делает вас эмоционально удовлетворённым в отношениях. Это поможет лучше понимать себя и избегать типичных недопониманий."
         }
     }
 
-    var includedItems: [String] {
+    var includedItems: [LocalizedStringResource] {
         switch self {
-            case .astrology: [AppLanguage.text("Черты вашего знака"),
-                        AppLanguage.text("Знак и ваш характер"),
-                        AppLanguage.text("Сильные и слабые стороны"),
-                        AppLanguage.text("Личностные особенности")]
-            case .behavioralPatterns: [AppLanguage.text("Повторяющиеся реакции"),
-                        AppLanguage.text("Поведение в стрессе"),
-                        AppLanguage.text("Социальные сценарии"),
-                        AppLanguage.text("Зоны личного роста")]
-            case .decisionMaking: [AppLanguage.text("Стиль выбора"),
-                        AppLanguage.text("Роль эмоций и логики"),
-                        AppLanguage.text("Реакция на неопределенность"),
-                        AppLanguage.text("Риски импульсивности")]
-            case .attachmentStyle: [AppLanguage.text("Тип привязанности"),
-                        AppLanguage.text("Поведение в отношениях"),
-                        AppLanguage.text("Триггеры и страхи"),
-                        AppLanguage.text("Зоны личного роста")]
-            case .idealPartner: [AppLanguage.text("Эмоциональные потребности"),
-                        AppLanguage.text("Подходящий темперамент"),
-                        AppLanguage.text("Важные границы"),
-                        AppLanguage.text("Портрет партнера")]
-            case .loveLanguage: [AppLanguage.text("Ваш язык любви"),
-                        AppLanguage.text("Способы проявления чувств"),
-                        AppLanguage.text("Эмоциональные потребности"),
-                        AppLanguage.text("Ошибки в коммуникации")]
+            case .astrology: ["Черты вашего знака",
+                        "Знак и ваш характер",
+                        "Сильные и слабые стороны",
+                        "Личностные особенности"]
+            case .behavioralPatterns: ["Повторяющиеся реакции",
+                        "Поведение в стрессе",
+                        "Социальные сценарии",
+                        "Зоны личного роста"]
+            case .decisionMaking: ["Стиль выбора",
+                        "Роль эмоций и логики",
+                        "Реакция на неопределенность",
+                        "Риски импульсивности"]
+            case .attachmentStyle: ["Тип привязанности",
+                        "Поведение в отношениях",
+                        "Триггеры и страхи",
+                        "Зоны личного роста"]
+            case .idealPartner: ["Эмоциональные потребности",
+                        "Подходящий темперамент",
+                        "Важные границы",
+                        "Портрет партнера"]
+            case .loveLanguage: ["Ваш язык любви",
+                        "Способы проявления чувств",
+                        "Эмоциональные потребности",
+                        "Ошибки в коммуникации"]
         }
     }
 }
@@ -160,25 +160,25 @@ enum PersonalityTestTypes: String, TestCellDisplayable, Codable {
 enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
     case astrology, behavioralPatterns, attachmentCompatibility, loveLanguages, conflictResolution, sexualCompatibility
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .astrology: AppLanguage.text("Астрология пары")
-            case .behavioralPatterns: AppLanguage.text("Поведенческие паттерны")
-            case .attachmentCompatibility: AppLanguage.text("Стили привязанности")
-            case .loveLanguages: AppLanguage.text("Языки любви")
-            case .conflictResolution: AppLanguage.text("Конфликты и примирение")
-            case .sexualCompatibility: AppLanguage.text("Сексуальная совместимость")
+            case .astrology: "Астрология пары"
+            case .behavioralPatterns: "Поведенческие паттерны"
+            case .attachmentCompatibility: "Стили привязанности"
+            case .loveLanguages: "Языки любви"
+            case .conflictResolution: "Конфликты и примирение"
+            case .sexualCompatibility: "Сексуальная совместимость"
         }
     }
 
-    var description: String {
+    var description: LocalizedStringResource {
         switch self {
-            case .astrology: AppLanguage.text("Сочетание солнечных знаков, точки гармонии и возможные противоречия")
-            case .behavioralPatterns: AppLanguage.text("Ваши особенности поведения и возможные сценарии взаимодействия")
-            case .attachmentCompatibility: AppLanguage.text("Возможные сценарии близости, доверия и личных границ")
-            case .loveLanguages: AppLanguage.text("Способы выражения заботы и возможные различия в ожиданиях")
-            case .conflictResolution: AppLanguage.text("Ваш подход к разногласиям и возможные пути примирения")
-            case .sexualCompatibility: AppLanguage.text("Возможная динамика влечения и близости")
+            case .astrology: "Сочетание солнечных знаков, точки гармонии и возможные противоречия"
+            case .behavioralPatterns: "Ваши особенности поведения и возможные сценарии взаимодействия"
+            case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ"
+            case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях"
+            case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения"
+            case .sexualCompatibility: "Возможная динамика влечения и близости"
         }
     }
 
@@ -204,43 +204,43 @@ enum CompatibilityTestTypes: String, TestCellDisplayable, Codable {
         }
     }
 
-    var deepDescription: String {
+    var deepDescription: LocalizedStringResource {
         switch self {
-            case .astrology: AppLanguage.text("Сочетание солнечных знаков, точки гармонии и возможные противоречия. Это не натальная карта и не расчёт планет.")
-            case .behavioralPatterns: AppLanguage.text("Ваши особенности поведения и возможные сценарии взаимодействия. Привычки партнёра по этим данным неизвестны.")
-            case .attachmentCompatibility: AppLanguage.text("Возможные сценарии близости, доверия и личных границ. Стиль привязанности партнёра по этим данным не определяется.")
-            case .loveLanguages: AppLanguage.text("Способы выражения заботы и возможные различия в ожиданиях. Язык любви партнёра по этим данным неизвестен.")
-            case .conflictResolution: AppLanguage.text("Ваш подход к разногласиям и возможные пути примирения. Реакции партнёра в ссоре по этим данным неизвестны.")
-            case .sexualCompatibility: AppLanguage.text("Возможная динамика влечения, темпа сближения и интимной гармонии.")
+            case .astrology: "Сочетание солнечных знаков, точки гармонии и возможные противоречия. Это не натальная карта и не расчёт планет."
+            case .behavioralPatterns: "Ваши особенности поведения и возможные сценарии взаимодействия. Привычки партнёра по этим данным неизвестны."
+            case .attachmentCompatibility: "Возможные сценарии близости, доверия и личных границ. Стиль привязанности партнёра по этим данным не определяется."
+            case .loveLanguages: "Способы выражения заботы и возможные различия в ожиданиях. Язык любви партнёра по этим данным неизвестен."
+            case .conflictResolution: "Ваш подход к разногласиям и возможные пути примирения. Реакции партнёра в ссоре по этим данным неизвестны."
+            case .sexualCompatibility: "Возможная динамика влечения, темпа сближения и интимной гармонии."
         }
     }
 
-    var includedItems: [String] {
+    var includedItems: [LocalizedStringResource] {
         switch self {
-            case .astrology: [AppLanguage.text("Совместимость знаков"),
-                        AppLanguage.text("Сильные и слабые стороны пары"),
-                        AppLanguage.text("Точки притяжения"),
-                        AppLanguage.text("Потенциал отношений")]
-            case .behavioralPatterns: [AppLanguage.text("Реакции в близости"),
-                        AppLanguage.text("Поведение в стрессе"),
-                        AppLanguage.text("Роли в отношениях"),
-                        AppLanguage.text("Повторяющиеся сценарии")]
-            case .attachmentCompatibility: [AppLanguage.text("Стили привязанности"),
-                        AppLanguage.text("Потребность в дистанции"),
-                        AppLanguage.text("Тревожные триггеры"),
-                        AppLanguage.text("Чувство безопасности")]
-            case .loveLanguages: [AppLanguage.text("Языки любви пары"),
-                        AppLanguage.text("Способы заботы"),
-                        AppLanguage.text("Ожидания от партнера"),
-                        AppLanguage.text("Эмоциональная связь")]
-            case .conflictResolution: [AppLanguage.text("Типичные конфликты"),
-                        AppLanguage.text("Триггеры напряжения"),
-                        AppLanguage.text("Стратегии примирения"),
-                        AppLanguage.text("Зоны договоренностей")]
-            case .sexualCompatibility: [AppLanguage.text("Сексуальный темперамент"),
-                        AppLanguage.text("Сексуальная химия"),
-                        AppLanguage.text("Темп сближения"),
-                        AppLanguage.text("Возможные различия")]
+            case .astrology: ["Совместимость знаков",
+                        "Сильные и слабые стороны пары",
+                        "Точки притяжения",
+                        "Потенциал отношений"]
+            case .behavioralPatterns: ["Реакции в близости",
+                        "Поведение в стрессе",
+                        "Роли в отношениях",
+                        "Повторяющиеся сценарии"]
+            case .attachmentCompatibility: ["Стили привязанности",
+                        "Потребность в дистанции",
+                        "Тревожные триггеры",
+                        "Чувство безопасности"]
+            case .loveLanguages: ["Языки любви пары",
+                        "Способы заботы",
+                        "Ожидания от партнера",
+                        "Эмоциональная связь"]
+            case .conflictResolution: ["Типичные конфликты",
+                        "Триггеры напряжения",
+                        "Стратегии примирения",
+                        "Зоны договоренностей"]
+            case .sexualCompatibility: ["Сексуальный темперамент",
+                        "Сексуальная химия",
+                        "Темп сближения",
+                        "Возможные различия"]
         }
     }
 }

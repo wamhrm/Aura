@@ -30,15 +30,15 @@ struct UserModel: Codable, Equatable, Identifiable {
         name.prefix(2).uppercased()
     }
 
-    var birthDateText: String {
-        dateOfBirth ?? AppLanguage.text("Дата рождения не указана")
+    var birthDate: Date? {
+        dateOfBirth.flatMap(BirthDateFormatter.date(string:))
     }
 
     var zodiacSign: HoroscopeTypes? {
-        guard let dateOfBirth, let date = BirthDateFormatter.date(string: dateOfBirth) else { return nil }
+        guard let birthDate else { return nil }
         let calendar = Calendar(identifier: .gregorian)
-        let day = calendar.component(.day, from: date)
-        let month = calendar.component(.month, from: date)
+        let day = calendar.component(.day, from: birthDate)
+        let month = calendar.component(.month, from: birthDate)
 
         switch (month, day) {
             case (1, 20...31), (2, 1...18): return .aquarius

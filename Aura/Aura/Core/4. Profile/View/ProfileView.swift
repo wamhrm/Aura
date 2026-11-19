@@ -22,7 +22,7 @@ struct ProfileView: View {
                         SignedInView(vm: vm, user: user, aiConsentButton: aiConsentButton)
                     }
                 }
-                .navigationTitle(AppLanguage.text("Профиль"))
+                .localizedNavigationTitle("Профиль")
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: ProfileRoutes.self) { destination in
                     destinationView(destination)
@@ -38,7 +38,7 @@ struct ProfileView: View {
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: AppLanguage.text("Сохраняем..."), isPresented: vm.isSavingProfile)
+                LoadingView(title: "Сохраняем...", isPresented: vm.isSavingProfile)
             }
             .opacity(vm.isSavingProfile ? 1 : 0)
         }

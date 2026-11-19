@@ -9,7 +9,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class OnboardingViewModelTests: AuraUnitTestCase {
+final class OnboardingViewModelTests: XCTestCase {
     func test_lateProfileResponse_doesNotEndLoadingOfANewSignIn() async {
         let auth = MockAuthService(user: makeUser(dateOfBirth: nil))
         auth.profileSaveDelay = .milliseconds(100)

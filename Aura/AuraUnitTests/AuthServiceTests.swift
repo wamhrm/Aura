@@ -12,7 +12,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class AuthServiceTests: AuraUnitTestCase {
+final class AuthServiceTests: XCTestCase {
     // MARK: - Preview services
     func test_previews_restoreAndLoadContentWithIndependentSessions() async throws {
         let welcome = PreviewServices(signedIn: false)

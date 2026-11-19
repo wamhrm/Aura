@@ -9,7 +9,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class HistoryViewModelTests: AuraUnitTestCase {
+final class HistoryViewModelTests: XCTestCase {
     func test_serverFailure_withAnEmptyList_showsTheError() async {
         // Given
         let content = MockContentService()

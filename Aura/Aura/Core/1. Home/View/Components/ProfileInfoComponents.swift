@@ -11,7 +11,7 @@ struct PsychotypeSectionsView: View {
     @Binding var profileInfo: ProfileInfoModel
 
     var body: some View {
-        ProfileInfoSection(title: AppLanguage.text("Темперамент")) {
+        ProfileInfoSection(title: "Темперамент") {
             FlowLayout() {
                 ProfileInfoOptionView(type: .introvert, selection: $profileInfo.socialType)
                 ProfileInfoOptionView(type: .ambivert, selection: $profileInfo.socialType)
@@ -19,7 +19,7 @@ struct PsychotypeSectionsView: View {
             }
         }
 
-        ProfileInfoSection(title: AppLanguage.text("Стиль в конфликте")) {
+        ProfileInfoSection(title: "Стиль в конфликте") {
             FlowLayout() {
                 ProfileInfoOptionView(type: .mediator, selection: $profileInfo.conflictStyle)
                 ProfileInfoOptionView(type: .direct, selection: $profileInfo.conflictStyle)
@@ -27,14 +27,14 @@ struct PsychotypeSectionsView: View {
             }
         }
 
-        ProfileInfoSection(title: AppLanguage.text("Эмоциональная основа")) {
+        ProfileInfoSection(title: "Эмоциональная основа") {
             FlowLayout() {
                 ProfileInfoOptionView(type: .logic, selection: $profileInfo.emotionalCore)
                 ProfileInfoOptionView(type: .intuitive, selection: $profileInfo.emotionalCore)
             }
         }
 
-        ProfileInfoSection(title: AppLanguage.text("Вы чаще")) {
+        ProfileInfoSection(title: "Вы чаще") {
             FlowLayout() {
                 ProfileInfoOptionView(type: .planner, selection: $profileInfo.decisionStyle)
                 ProfileInfoOptionView(type: .spontaneous, selection: $profileInfo.decisionStyle)
@@ -42,7 +42,7 @@ struct PsychotypeSectionsView: View {
             }
         }
 
-        ProfileInfoSection(title: AppLanguage.text("Приоритет")) {
+        ProfileInfoSection(title: "Приоритет") {
             FlowLayout() {
                 ProfileInfoOptionView(type: .stability, selection: $profileInfo.coreFocus)
                 ProfileInfoOptionView(type: .growth, selection: $profileInfo.coreFocus)
@@ -53,7 +53,7 @@ struct PsychotypeSectionsView: View {
 }
 
 struct ProfileInfoSection<Content: View>: View {
-    let title: String
+    let title: LocalizedStringResource
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -144,7 +144,7 @@ struct FlowLayout: Layout {
 #Preview {
     ScrollView {
         VStack(spacing: 16) {
-            ProfileInfoSection(title: AppLanguage.text("Ваш пол")) {
+            ProfileInfoSection(title: "Ваш пол") {
                 HStack {
                     ProfileInfoOptionView(type: .man, selection: .constant("man"))
                     ProfileInfoOptionView(type: .woman, selection: .constant(nil))

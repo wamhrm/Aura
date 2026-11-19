@@ -50,20 +50,20 @@ struct HoroscopeCellView: View {
 enum HoroscopeTypes: String, Codable {
     case aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius, pisces
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .aries: AppLanguage.text("Овен")
-            case .taurus: AppLanguage.text("Телец")
-            case .gemini: AppLanguage.text("Близнецы")
-            case .cancer: AppLanguage.text("Рак")
-            case .leo: AppLanguage.text("Лев")
-            case .virgo: AppLanguage.text("Дева")
-            case .libra: AppLanguage.text("Весы")
-            case .scorpio: AppLanguage.text("Скорпион")
-            case .sagittarius: AppLanguage.text("Стрелец")
-            case .capricorn: AppLanguage.text("Козерог")
-            case .aquarius: AppLanguage.text("Водолей")
-            case .pisces: AppLanguage.text("Рыбы")
+            case .aries: "Овен"
+            case .taurus: "Телец"
+            case .gemini: "Близнецы"
+            case .cancer: "Рак"
+            case .leo: "Лев"
+            case .virgo: "Дева"
+            case .libra: "Весы"
+            case .scorpio: "Скорпион"
+            case .sagittarius: "Стрелец"
+            case .capricorn: "Козерог"
+            case .aquarius: "Водолей"
+            case .pisces: "Рыбы"
         }
     }
     

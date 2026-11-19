@@ -15,8 +15,8 @@ struct EmailStepView: View {
             BackgroundView()
             
             VStack(alignment: .leading, spacing: 35) {
-                OnboardingHeader(title: AppLanguage.text("Какой у вас адрес электронной почты, \(vm.displayName)?"),
-                                 subtitle: AppLanguage.text("На неё придёт код, если вы забудете пароль"))
+                OnboardingHeader(title: "Какой у вас адрес электронной почты, \(vm.displayName)?",
+                                 subtitle: "На неё придёт код, если вы забудете пароль")
 
                 OnboardingTextField(text: $vm.email, type: .email)
                 

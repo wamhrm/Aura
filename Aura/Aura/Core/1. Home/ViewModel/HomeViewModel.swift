@@ -30,7 +30,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     @Published private(set) var allowsAIAnalysis = false
     @Published private(set) var isLoading = false
     @Published private var isLoadingScreen = true
-    @Published private(set) var loadingTitle = ""
+    @Published private(set) var loadingTitle: LocalizedStringResource = "Готовим результат..."
     @Published var emailConfirmation: EmailConfirmationViewModel?
 
     private let authService: any AuthServiceProtocol
@@ -53,8 +53,8 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         setupSubscriptions()
     }
 
-    var greetingText: String {
-        AppLanguage.text("Здравствуйте, \(userName.capitalized)")
+    var greetingText: LocalizedStringResource {
+        "Здравствуйте, \(userName.capitalized)"
     }
 
     var showsLoadingScreen: Bool {
@@ -143,7 +143,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
     func allowAIConsent() {
         guard !isLoading else { return }
         isLoading = true
-        loadingTitle = AppLanguage.text("Обновляем информацию")
+        loadingTitle = "Обновляем информацию"
 
         let sessionID = authService.sessionID
 
@@ -196,7 +196,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         let tests = selectedTests
         let requestID = currentPersonalityRequestID()
         isLoading = true
-        loadingTitle = AppLanguage.text("Готовим результат...")
+        loadingTitle = "Готовим результат..."
 
         let sessionID = authService.sessionID
 
@@ -265,6 +265,17 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         await refresh()
     }
 
+    func refreshLocalizedContent() {
+        guard currentUser != nil else { return }
+        horoscopeRequestID = nil
+        insightRequestID = nil
+        horoscope = nil
+        horoscopeState = .loading
+        dailyInsight = nil
+        insightState = .loading
+        Task { await refresh() }
+    }
+
     func retryHoroscope() {
         Task { await loadHoroscope() }
     }
@@ -278,11 +289,13 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         let sessionID = authService.sessionID
         let requestID = UUID()
         horoscopeRequestID = requestID
+        let languageCode = AppLanguage.requestCode
         let deadline = ContinuousClock.now + .seconds(1)
         if horoscope == nil { horoscopeState = .loading }
 
         func isCurrentRequest() -> Bool {
             requestID == horoscopeRequestID &&
+            languageCode == AppLanguage.requestCode &&
             sessionID == authService.sessionID &&
             user.dateOfBirth == signedInUser?.dateOfBirth
         }
@@ -309,6 +322,7 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         let sessionID = authService.sessionID
         let requestID = UUID()
         insightRequestID = requestID
+        let languageCode = AppLanguage.requestCode
         let deadline = ContinuousClock.now + .seconds(1)
 
         if dailyInsight?.isFromToday != true {
@@ -317,7 +331,9 @@ final class HomeViewModel: ObservableObject, AlertPresentable {
         }
 
         func isCurrentRequest() -> Bool {
-            requestID == insightRequestID && sessionID == authService.sessionID
+            requestID == insightRequestID &&
+            languageCode == AppLanguage.requestCode &&
+            sessionID == authService.sessionID
         }
 
         do {

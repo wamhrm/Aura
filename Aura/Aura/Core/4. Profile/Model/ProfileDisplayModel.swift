@@ -27,15 +27,17 @@ struct ProfileDisplayModel: Equatable {
 }
 
 extension ProfileDisplayModel {
-    static let placeholder = ProfileDisplayModel(
-        dailyTip: "Не пытайся быть продуктивным весь день. Сделай одну реально важную вещь без отвлечений — остальное шум и самообман.",
-        overview: "Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню.",
-        socialFilter: "Обладает встроенным детектором на пустую болтовню.",
-        emotionalDepth: "Чувства раскрываются постепенно, но очень надолго.",
-        temperament: 6,
-        thinking: 2,
-        organization: 8,
-        relationships: 8)
+    static var placeholder: ProfileDisplayModel {
+        ProfileDisplayModel(
+            dailyTip: AppLanguage.text("Не пытайся быть продуктивным весь день. Сделай одну реально важную вещь без отвлечений — остальное шум и самообман."),
+            overview: AppLanguage.text("Интуитивный креатор. Глубокий интроверт с мощной интуицией, который ищет настоящую связь, а не светскую болтовню."),
+            socialFilter: AppLanguage.text("Обладает встроенным детектором на пустую болтовню."),
+            emotionalDepth: AppLanguage.text("Чувства раскрываются постепенно, но очень надолго."),
+            temperament: 6,
+            thinking: 2,
+            organization: 8,
+            relationships: 8)
+    }
 
     static func make(personalityResult: PersonalityResultModel?,
                      dailyTip: DailyContentModel?) -> ProfileDisplayModel {

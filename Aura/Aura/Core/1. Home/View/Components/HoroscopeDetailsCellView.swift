@@ -41,11 +41,11 @@ struct HoroscopeDetailsCellView: View {
 enum HoroscopeDetailsCellTypes: String, Codable {
     case love, health, work
 
-    fileprivate var title: String {
+    fileprivate var title: LocalizedStringResource {
         switch self {
-            case .love: AppLanguage.text("Любовь")
-            case .health: AppLanguage.text("Здоровье")
-            case .work: AppLanguage.text("Работа")
+            case .love: "Любовь"
+            case .health: "Здоровье"
+            case .work: "Работа"
         }
     }
     

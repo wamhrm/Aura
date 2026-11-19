@@ -58,13 +58,13 @@ struct PersonalityResultView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 10)
                     
-                    ResultSectionView(title: result.overview.title) {
+                    ResultSectionView(title: Text(verbatim: result.overview.title)) {
                         Text(result.overview.description)
                             .font(.system(size: Adaptive.size(14, 15, 15)))
                             .foregroundStyle(.deepGray)
                     }
                     
-                    ResultSectionView(title: AppLanguage.text("Внутренний мир")) {
+                    ResultSectionView(title: Text("Внутренний мир")) {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
                                 EmotionalProfileBar(type: bar.key, value: bar.value)
@@ -74,7 +74,7 @@ struct PersonalityResultView: View {
                     }
                     
                     ForEach(result.sections, id: \.self) { test in
-                        ResultSectionView(title: test.selectedTest.title) {
+                        ResultSectionView(title: Text(test.selectedTest.title)) {
                             Text(test.description)
                                 .font(Adaptive.size(.system(size: 15), .callout, .callout))
                                 .foregroundStyle(.deepGray)
@@ -97,7 +97,7 @@ struct PersonalityResultView: View {
                 .padding(.horizontal)
             }
         }
-        .navigationTitle(AppLanguage.text("Результат персонального теста"))
+        .localizedNavigationTitle("Результат персонального теста")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

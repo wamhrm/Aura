@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct ResultSectionView<Content: View>: View {
-    let title: String
+    let title: Text
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title)
+            title
                 .font(Adaptive.size(.system(size: 15), .callout, .default))
                 .bold()
 
@@ -26,8 +26,8 @@ struct ResultSectionView<Content: View>: View {
 }
 
 #Preview {
-    ResultSectionView(title: AppLanguage.text("Общее")) {
-        Text(AppLanguage.text("Описание результата теста"))
+    ResultSectionView(title: Text("Общее")) {
+        Text("Описание результата теста")
             .foregroundStyle(.deepGray)
     }
     .padding(.horizontal)

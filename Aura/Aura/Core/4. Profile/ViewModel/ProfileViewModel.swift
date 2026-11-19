@@ -148,18 +148,28 @@ final class ProfileViewModel: ObservableObject, AlertPresentable {
         Task { await loadDailyTip() }
     }
 
+    func refreshLocalizedContent() {
+        tipRequestID = nil
+        dailyTip = nil
+        tipState = .loading
+        retryDailyTip()
+    }
+
     private func loadDailyTip() async {
         guard user?.allowsAIAnalysis == true, user?.dateOfBirth != nil else { return }
         if dailyTip?.isFromToday == true { return }
         let sessionID = authService.sessionID
         let requestID = UUID()
         tipRequestID = requestID
+        let languageCode = AppLanguage.requestCode
 
         dailyTip = nil
         tipState = .loading
 
         func isCurrentRequest() -> Bool {
-            requestID == tipRequestID && sessionID == authService.sessionID
+            requestID == tipRequestID &&
+            languageCode == AppLanguage.requestCode &&
+            sessionID == authService.sessionID
         }
 
         do {

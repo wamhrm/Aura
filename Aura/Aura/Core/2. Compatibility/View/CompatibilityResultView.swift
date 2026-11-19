@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CompatibilityResultView: View {
+    @Environment(\.locale) private var locale
     let result: CompatibilityResultModel
 
     var body: some View {
@@ -62,13 +63,13 @@ struct CompatibilityResultView: View {
                     .frame(width: Adaptive.size(310, 315, 320))
                     .padding(.bottom, 10)
 
-                    ResultSectionView(title: result.overview.title) {
+                    ResultSectionView(title: Text(verbatim: result.overview.title)) {
                         Text(result.overview.description)
                             .font(.system(size: Adaptive.size(14, 15, 15)))
                             .foregroundStyle(.deepGray)
                     }
 
-                    ResultSectionView(title: AppLanguage.text("Эмоциональная совместимость")) {
+                    ResultSectionView(title: Text("Эмоциональная совместимость")) {
                         VStack(spacing: 15) {
                             ForEach(result.emotionalBar, id: \.self) { bar in
                                 EmotionalProfileBar(type: bar.key, value: bar.value)
@@ -78,7 +79,7 @@ struct CompatibilityResultView: View {
                     }
 
                     ForEach(result.sections, id: \.self) { section in
-                        ResultSectionView(title: section.selectedTest.title) {
+                        ResultSectionView(title: Text(section.selectedTest.title)) {
                             Text(section.description)
                                 .font(.system(size: Adaptive.size(14, 15, 15)))
                                 .foregroundStyle(.deepGray)
@@ -97,7 +98,7 @@ struct CompatibilityResultView: View {
                         }
                     }
 
-                    ResultSectionView(title: AppLanguage.text("Прогноз будущего")) {
+                    ResultSectionView(title: Text("Прогноз будущего")) {
                         VStack(spacing: 12) {
                             resultsWithNumbersSection(.spark,
                                                       result.forecast.recognitionTitle,
@@ -114,24 +115,26 @@ struct CompatibilityResultView: View {
                 .bottomAreaPadding(15)
             }
         }
-        .navigationTitle(AppLanguage.text("Результат теста на совместимость"))
+        .localizedNavigationTitle("Результат теста на совместимость")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 extension CompatibilityResultView {
     private func compatibilityScaleBar(_ value: Int) -> some View {
-        VStack(spacing: 12) {
+        let fraction = Double(min(max(value, 0), 100)) / 100
+
+        return VStack(spacing: 12) {
             ZStack {
                 Circle()
                     .stroke(.tint.opacity(0.18), lineWidth: 8)
 
                 Circle()
-                    .trim(from: 0, to: CGFloat(min(max(value, 0), 100)) / 100)
+                    .trim(from: 0, to: CGFloat(fraction))
                     .stroke(.tint, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .rotationEffect(.degrees(-90))
 
-                Text("\(min(max(value, 0), 100))%")
+                Text(fraction, format: .percent.precision(.fractionLength(0)).locale(locale))
                     .font(Adaptive.size(.title3, .system(size: 21), .system(size: 21)))
                     .bold()
                     .foregroundStyle(.tint)
@@ -142,8 +145,8 @@ extension CompatibilityResultView {
                    height: Adaptive.size(150, 158, 168))
 
             VStack(spacing: 2) {
-                Text(AppLanguage.text("Совместимость солнечных знаков"))
-                Text(AppLanguage.text("Не зависит от выбранных разделов"))
+                Text("Совместимость солнечных знаков")
+                Text("Не зависит от выбранных разделов")
             }
             .font(Adaptive.size(.caption2, .caption, .caption))
             .foregroundStyle(Color.deepGray)
@@ -165,7 +168,8 @@ extension CompatibilityResultView {
                 .frame(width: Adaptive.size(35, 37, 38), alignment: .leading)
 
             VStack(alignment: .leading, spacing: 7) {
-                Text(type.title.uppercased())
+                Text(type.title)
+                    .textCase(.uppercase)
                     .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                     .fontWeight(.medium)
                     .foregroundStyle(.gray)
@@ -194,10 +198,10 @@ extension CompatibilityResultView {
 fileprivate enum LoveLanguageTypes {
     case spark, potential
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .spark: AppLanguage.text("Искра")
-            case .potential: AppLanguage.text("Потенциал")
+            case .spark: "Искра"
+            case .potential: "Потенциал"
         }
     }
 

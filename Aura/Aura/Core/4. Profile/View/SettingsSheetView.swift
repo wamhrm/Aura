@@ -22,7 +22,7 @@ struct SettingsSheetView: View {
                 
                 VStack(alignment: .leading, spacing: 30) {
                     VStack(alignment: .leading, spacing: 15) {
-                        headerText(AppLanguage.text("Оформление"))
+                        headerText("Оформление")
 
                         HStack(spacing: 15) {
                             themeButton(.light)
@@ -31,21 +31,24 @@ struct SettingsSheetView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 15) {
-                        headerText(AppLanguage.text("Акцентный цвет"))
+                        headerText("Акцентный цвет")
 
                         HStack {
                             ForEach(AccentColorOption.allCases) { option in
+                                let isSelected = accentColor == option.rawValue
                                 accentColorView(color: option.color,
-                                                isSelected: accentColor == option.rawValue) {
+                                                isSelected: isSelected) {
                                     accentColor = option.rawValue
                                 }
+                                .accessibilityLabel(option.title)
+                                .accessibilityAddTraits(isSelected ? .isSelected : [])
                                 .frame(maxWidth: .infinity)
                             }
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 15) {
-                        headerText(AppLanguage.text("Язык"))
+                        headerText("Язык")
                         languageMenu()
                     }
 
@@ -61,10 +64,10 @@ struct SettingsSheetView: View {
                         customButton(.deleteAccount, isLoading: vm.isDeletingAccount) {
                             vm.requestAccountDeletion()
                         }
-                        .alert(AppLanguage.text("Удалить аккаунт?"), isPresented: vm.binding(\.showDeleteAccountAlert)) {
+                        .alert("Удалить аккаунт?", isPresented: vm.binding(\.showDeleteAccountAlert)) {
                             deleteAccountAlertView()
                         } message: {
-                            Text(AppLanguage.text("Профиль, история тестов и все результаты будут удалены без возможности восстановления."))
+                            Text("Профиль, история тестов и все результаты будут удалены без возможности восстановления.")
                         }
                     }
                     .disabled(vm.isDeletingAccount)
@@ -72,12 +75,12 @@ struct SettingsSheetView: View {
                     legalLinksView()
                 }
                 .padding(.horizontal)
-                .navigationTitle(AppLanguage.text("Настройки"))
+                .localizedNavigationTitle("Настройки")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     toolbarItem()
                 }
-                .alert(AppLanguage.text("Выйти из аккаунта?"),
+                .alert("Выйти из аккаунта?",
                        isPresented: vm.binding(\.showSignOutAlert)) {
                     alertView()
                 }
@@ -85,9 +88,9 @@ struct SettingsSheetView: View {
         }
         .interactiveDismissDisabled(vm.isDeletingAccount)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
-            Button(AppLanguage.text("ОК"), role: .cancel) {}
+            Button("ОК", role: .cancel) {}
         }
-        .alert(AppLanguage.text("Не удалось удалить аккаунт"),
+        .alert("Не удалось удалить аккаунт",
                isPresented: vm.binding(\.showDeleteAccountError)) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -111,16 +114,16 @@ extension SettingsSheetView {
     
     @ViewBuilder
     private func alertView() -> some View {
-        Button(AppLanguage.text("Отмена"), role: .cancel) {}
-        Button(AppLanguage.text("Выйти"), role: .destructive) {
+        Button("Отмена", role: .cancel) {}
+        Button("Выйти", role: .destructive) {
             vm.signOut()
         }
     }
 
     @ViewBuilder
     private func deleteAccountAlertView() -> some View {
-        Button(AppLanguage.text("Отмена"), role: .cancel) {}
-        Button(AppLanguage.text("Удалить"), role: .destructive) {
+        Button("Отмена", role: .cancel) {}
+        Button("Удалить", role: .destructive) {
             vm.deleteAccount()
         }
     }
@@ -128,11 +131,11 @@ extension SettingsSheetView {
     private func legalLinksView() -> some View {
         HStack(spacing: 20) {
             if let url = Constants.privacyPolicyURL {
-                Link(AppLanguage.text("Политика конфиденциальности"), destination: url)
+                Link("Политика конфиденциальности", destination: url)
             }
 
             if let url = Constants.termsOfUseURL {
-                Link(AppLanguage.text("Условия использования"), destination: url)
+                Link("Условия использования", destination: url)
             }
         }
         .font(Adaptive.size(.caption, .footnote, .footnote))
@@ -142,14 +145,14 @@ extension SettingsSheetView {
     
     private func languageMenu() -> some View {
         Menu {
-            Picker(AppLanguage.text("Язык"), selection: $appLanguage) {
+            Picker("Язык", selection: $appLanguage) {
                 ForEach(AppLanguage.allCases) { language in
-                    Text(language.title).tag(language)
+                    languageTitle(language).tag(language)
                 }
             }
         } label: {
             HStack(spacing: 10) {
-                Text(appLanguage.title)
+                languageTitle(appLanguage)
 
                 Spacer()
 
@@ -167,7 +170,15 @@ extension SettingsSheetView {
         .buttonStyle(.plain)
     }
 
-    private func headerText(_ title: String) -> some View {
+    private func languageTitle(_ language: AppLanguage) -> Text {
+        switch language {
+            case .system: Text("Как в iPhone")
+            case .russian: Text(verbatim: "Русский")
+            case .english: Text(verbatim: "English")
+        }
+    }
+
+    private func headerText(_ title: LocalizedStringResource) -> some View {
         Text(title)
             .font(Adaptive.size(.system(size: 15), .callout, .default))
             .foregroundStyle(.secondary)
@@ -237,11 +248,11 @@ extension SettingsSheetView {
 fileprivate enum ButtonTypes {
     case updateInfo, signOut, deleteAccount
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .updateInfo: AppLanguage.text("Обновить информацию о себе")
-            case .signOut: AppLanguage.text("Выйти")
-            case .deleteAccount: AppLanguage.text("Удалить аккаунт")
+            case .updateInfo: "Обновить информацию о себе"
+            case .signOut: "Выйти"
+            case .deleteAccount: "Удалить аккаунт"
         }
     }
 
@@ -276,10 +287,10 @@ fileprivate enum ButtonTypes {
 }
 
 private extension AppTheme {
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .light: AppLanguage.text("Светлая")
-            case .dark: AppLanguage.text("Темная")
+            case .light: "Светлая"
+            case .dark: "Темная"
         }
     }
     

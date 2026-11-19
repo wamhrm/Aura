@@ -209,7 +209,7 @@ final class AuthService: ObservableObject, AuthServiceProtocol {
         restorationState = .loaded
     }
 
-    private func startSession(response: AuthTokenResponse) throws {
+    func startSession(response: AuthTokenResponse) throws {
         try keychain.saveAuthToken(response.token)
         sessionID = UUID()
         authStateSubject.send(.signedIn(response.user))

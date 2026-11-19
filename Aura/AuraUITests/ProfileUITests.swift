@@ -8,6 +8,68 @@
 import XCTest
 
 final class ProfileUITests: AuraUITestCase {
+    func test_changingLanguage_refreshesCurrentContentInBothDirections() throws {
+        try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
+        try launchSignedIn()
+        assertOnMainScreen()
+        openSettings()
+
+        let horoscopeRoute = "GET /v1/horoscope/current"
+        let insightRoute = "GET /v1/daily/insight"
+        let tipRoute = "GET /v1/daily/tip"
+        let routes = [horoscopeRoute, insightRoute, tipRoute]
+        let russianSettings = app.navigationBars["Настройки"]
+        let englishSettings = app.navigationBars["Settings"]
+        XCTAssertTrue(app.buttons["Синий"].firstMatch.exists)
+        var newDaily = try SampleResponses.object(SampleResponses.daily)
+        newDaily["text"] = "An English daily tip"
+        server.respond(route: tipRoute, body: try json(newDaily))
+        newDaily["text"] = "An English daily insight"
+        server.respond(route: insightRoute, body: try json(newDaily))
+        var newHoroscope = try SampleResponses.object(SampleResponses.horoscope)
+        newHoroscope["description"] = "An English horoscope"
+        server.respond(route: horoscopeRoute, body: try json(newHoroscope))
+
+        tapButton("Как в iPhone")
+        tapButton("English")
+        XCTAssertTrue(englishSettings.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Blue"].firstMatch.exists)
+        englishSettings.buttons.firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tabBars.firstMatch.buttons["History"].exists)
+        XCTAssertTrue(text(part: "May").exists)
+        XCTAssertTrue(text("An English daily tip").waitForExistence(timeout: 10))
+        XCTAssertTrue(text("Общий персональный вывод").exists)
+        app.tabBars.firstMatch.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Home"].waitForExistence(timeout: 5))
+        XCTAssertTrue(text("An English daily insight").waitForExistence(timeout: 10))
+        XCTAssertTrue(text("An English horoscope").waitForExistence(timeout: 10))
+        for route in routes {
+            XCTAssertEqual(server.languages(for: route).last, "en", route)
+        }
+
+        app.tabBars.firstMatch.buttons.element(boundBy: 3).tap()
+        tapButton("gearshape")
+        server.respond(route: horoscopeRoute, body: SampleResponses.horoscope)
+        server.respond(route: insightRoute, body: SampleResponses.daily)
+        server.respond(route: tipRoute, body: SampleResponses.daily)
+        tapButton("English")
+        tapButton("Русский")
+        XCTAssertTrue(russianSettings.waitForExistence(timeout: 5))
+        russianSettings.buttons.firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Профиль"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.tabBars.firstMatch.buttons["История"].exists)
+        XCTAssertTrue(text(part: "13 мая 2000").exists)
+        XCTAssertTrue(text(dailyText).waitForExistence(timeout: 10))
+        app.tabBars.firstMatch.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Главная"].waitForExistence(timeout: 5))
+        assertOnMainScreen()
+        XCTAssertTrue(text("Краткий гороскоп на неделю").waitForExistence(timeout: 10))
+        for route in routes {
+            XCTAssertEqual(server.languages(for: route).last, "ru", route)
+        }
+    }
+
     func test_withResults_profileShowsCurrentSign_andSavedResult() throws {
         // Given
         try setHistory(kind: "personality", resultKey: "personalityResult", result: SampleResponses.personalityResult)
@@ -36,6 +98,7 @@ final class ProfileUITests: AuraUITestCase {
 
         // Then
         XCTAssertTrue(text(part: "Пройдите тесты").waitForExistence(timeout: 10), "the profile did not recover")
+        XCTAssertFalse(text(part: "Интуитивный креатор").exists)
     }
 
     func test_editForm_whenSavingFails_keepsInput_andAllowsRetry() throws {

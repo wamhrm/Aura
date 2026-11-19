@@ -31,12 +31,15 @@ final class HistoryUITests: AuraUITestCase {
         openHistory()
         let entry = button(part: "Иван")
         XCTAssertTrue(entry.waitForExistence(timeout: 10), "the entry is not in the history")
+        let formattedScore = "64\u{00a0}%"
+        XCTAssertTrue(text(formattedScore).exists, "the history should show a localized percentage")
 
         // When
         entry.tap()
 
         // Then
         XCTAssertTrue(app.navigationBars["Результат теста на совместимость"].waitForExistence(timeout: 10), "the entry did not open")
+        XCTAssertTrue(text(formattedScore).exists, "the result should show the same localized percentage")
     }
 
     func test_delete_asksFirst_andRemovesTheEntry() throws {

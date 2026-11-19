@@ -16,7 +16,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
     @Published var alertMessage = ""
     @Published private(set) var showsCodeEntry = false
     @Published private(set) var isLoading = false
-    @Published private(set) var loadingTitle = ""
+    @Published private(set) var loadingTitle: LocalizedStringResource = "Отправляем..."
 
     private let authService: any AuthServiceProtocol
     private let email: String
@@ -26,17 +26,17 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         self.email = email
     }
 
-    var subtitle: String {
-        showsCodeEntry ? AppLanguage.text("Введите код из письма на \(email), чтобы подтвердить почту.")
-                       : AppLanguage.text("Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код.")
+    var subtitle: LocalizedStringResource {
+        showsCodeEntry ? "Введите код из письма на \(email), чтобы подтвердить почту."
+                       : "Чтобы проходить тесты, подтвердите почту \(email). Мы отправим на неё код."
     }
 
-    var sendCodeButtonTitle: String {
-        isLoading ? AppLanguage.text("Отправляем...") : AppLanguage.text("Подтвердить")
+    var sendCodeButtonTitle: LocalizedStringResource {
+        isLoading ? "Отправляем..." : "Подтвердить"
     }
 
-    var confirmButtonTitle: String {
-        isLoading ? AppLanguage.text("Проверяем...") : AppLanguage.text("Проверить код")
+    var confirmButtonTitle: LocalizedStringResource {
+        isLoading ? "Проверяем..." : "Проверить код"
     }
     
     var sheetHeight: CGFloat {
@@ -47,7 +47,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         guard !isLoading else { return }
 
         isLoading = true
-        loadingTitle = AppLanguage.text("Отправляем...")
+        loadingTitle = "Отправляем..."
 
         Task {
             do {
@@ -78,7 +78,7 @@ final class EmailConfirmationViewModel: ObservableObject, AlertPresentable, Iden
         }
 
         isLoading = true
-        loadingTitle = AppLanguage.text("Проверяем...")
+        loadingTitle = "Проверяем..."
 
         Task {
             do {

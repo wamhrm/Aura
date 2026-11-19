@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HistoryCellView: View {
+    @Environment(\.locale) private var locale
     let cell: HistoryCellModel
 
     var body: some View {
@@ -36,7 +37,7 @@ struct HistoryCellView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .topTrailing) {
                 if cell.kind == .compatibility {
-                    Text(cell.compatibilityScoreText)
+                    Text(Double(cell.compatibilityScore ?? 0) / 100, format: .percent.precision(.fractionLength(0)).locale(locale))
                         .font(Adaptive.size(.footnote, .system(size: 14), .system(size: 14)))
                         .foregroundStyle(.white)
                         .bold()

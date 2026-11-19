@@ -66,7 +66,7 @@ struct OnboardingView: View {
                                 vm.showNextIntroPage()
                             }
 
-                            OnboardingTextButton(title: AppLanguage.text("У меня уже есть аккаунт")) {
+                            OnboardingTextButton(title: "У меня уже есть аккаунт") {
                                 vm.showSignIn()
                             }
                         }
@@ -100,11 +100,11 @@ struct OnboardingView: View {
         }
         .animation(.easeInOut(duration: 0.35), value: vm.isLoading)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
-            Button(AppLanguage.text("ОК"), role: .cancel) { }
+            Button("ОК", role: .cancel) { }
         }
-        .alert(AppLanguage.text("Выйти из аккаунта?"), isPresented: vm.binding(\.showSignOutAlert)) {
-            Button(AppLanguage.text("Отмена"), role: .cancel) {}
-            Button(AppLanguage.text("Выйти"), role: .destructive) {
+        .alert("Выйти из аккаунта?", isPresented: vm.binding(\.showSignOutAlert)) {
+            Button("Отмена", role: .cancel) {}
+            Button("Выйти", role: .destructive) {
                 vm.signOut()
             }
         }

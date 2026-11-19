@@ -97,13 +97,17 @@ final class SignInUITests: AuraUITestCase {
         // Given
         launchOnWelcome()
         welcomeButton.tap()
-        fillField(app.secureTextFields["Пароль"].firstMatch, text: password)
+        let enteredPassword = "0123456789"
+        let passwordField = app.secureTextFields["Пароль"].firstMatch
+        fillField(passwordField, text: enteredPassword)
+        XCTAssertEqual((passwordField.value as? String)?.count, enteredPassword.count)
 
         // When
-        app.buttons["eye"].firstMatch.tap()
+        tapButton("Показать пароль")
 
         // Then
-        XCTAssertEqual(app.textFields["Пароль"].firstMatch.value as? String, password)
+        XCTAssertEqual(app.textFields["Пароль"].firstMatch.value as? String, enteredPassword)
+        XCTAssertTrue(app.buttons["Скрыть пароль"].firstMatch.exists)
     }
 
     func test_createButton_opensRegistration() {
@@ -135,7 +139,7 @@ final class SignInUITests: AuraUITestCase {
         XCTAssertEqual(alertText(), dailyLimit)
         closeAlert()
         fillField(app.textFields["Код из 6 цифр"].firstMatch, text: "123456")
-        tapButton("eye")
+        tapButton("Показать пароль")
         let newPassword = app.textFields["Новый пароль"].firstMatch
         fillField(newPassword, text: "new-password-1")
         XCTAssertEqual(newPassword.value as? String, "new-password-1")

@@ -23,6 +23,16 @@ enum AccentColorOption: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var title: LocalizedStringResource {
+        switch self {
+            case .blue: "Синий"
+            case .purple: "Фиолетовый"
+            case .red: "Красный"
+            case .teal: "Бирюзовый"
+            case .orange: "Оранжевый"
+        }
+    }
+
     var color: Color {
         switch self {
             case .blue: .accentBlue
@@ -50,64 +60,24 @@ nonisolated enum AppLanguage: String, CaseIterable, Identifiable {
         return AppLanguage(rawValue: raw) ?? .system
     }
 
-    nonisolated(unsafe) static var localeOverride: Locale?
+    static var resolvedLocale: Locale { current.locale }
 
-    static var resolvedLocale: Locale {
-        localeOverride ?? current.locale
-    }
+    static var requestCode: String { current.languageCode }
 
-    static var requestCode: String {
-        if let code = resolvedLanguageCode {
-            return code
-        }
-        let preferred = Locale.preferredLanguages.first?.lowercased() ?? "ru"
-        return preferred.hasPrefix("en") ? "en" : "ru"
-    }
-
-    static func text(_ value: String.LocalizationValue) -> String {
-        String(localized: value, bundle: localizationBundle, locale: resolvedLocale)
-    }
-
-    private static var localizationBundle: Bundle {
-        let code = resolvedLanguageCode
-        guard let code,
-              let path = Bundle.main.path(forResource: code, ofType: "lproj"),
-              let bundle = Bundle(path: path) else { return .main }
-        return bundle
-    }
-
-    private static var resolvedLanguageCode: String? {
-        if let localeOverride {
-            return localeOverride.language.languageCode?.identifier
-        }
-        switch current {
-            case .system:
-                return nil
-            case .russian:
-                return "ru"
-            case .english:
-                return "en"
-        }
-    }
-
-    var title: String {
+    var languageCode: String {
         switch self {
-            case .system: Self.text("Как в iPhone")
-            case .russian: "Русский"
-            case .english: "English"
+            case .system: Bundle.main.preferredLocalizations.first ?? Self.russian.rawValue
+            case .russian, .english: rawValue
         }
+    }
+
+    static func text(_ resource: LocalizedStringResource) -> String {
+        var resource = resource
+        resource.locale = resolvedLocale
+        return String(localized: resource)
     }
 
     var locale: Locale {
-        switch self {
-            case .system:
-                .autoupdatingCurrent
-            case .russian, .english:
-                locale(languageCode: rawValue)
-        }
-    }
-
-    private func locale(languageCode: String) -> Locale {
         let region = Locale.autoupdatingCurrent.region
         var components = Locale.Components(languageCode: Locale.LanguageCode(languageCode),
                                            languageRegion: region)

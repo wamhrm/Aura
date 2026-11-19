@@ -10,7 +10,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class ProfileViewModelTests: AuraUnitTestCase {
+final class ProfileViewModelTests: XCTestCase {
     func test_initialHistoryAndConsent_haveOneOwnerPerRequest() async {
         let auth = MockAuthService(user: makeUser(hasAIConsent: false))
         let content = MockContentService()

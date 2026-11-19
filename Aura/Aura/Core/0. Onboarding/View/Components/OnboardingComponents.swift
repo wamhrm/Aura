@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct OnboardingHeader: View {
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -58,6 +58,7 @@ struct OnboardingTextField: View {
                     Image(systemName: isTextVisible ? "eye.slash" : "eye")
                         .foregroundStyle(.deepGray)
                 }
+                .accessibilityLabel(isTextVisible ? "Скрыть пароль" : "Показать пароль")
             }
         }
         .font(Adaptive.size(.callout, .body, .body))
@@ -70,7 +71,7 @@ struct OnboardingTextField: View {
 }
 
 struct OnboardingTextButton: View {
-    let title: String
+    let title: LocalizedStringResource
     let action: () -> Void
 
     var body: some View {
@@ -84,12 +85,17 @@ struct OnboardingTextButton: View {
 }
 
 struct OnboardingLegalText: View {
+    @Environment(\.locale) private var locale
+
     var body: some View {
         let terms = Constants.termsOfUseURL?.absoluteString ?? ""
         let privacy = Constants.privacyPolicyURL?.absoluteString ?? ""
+        let message = String(localized: LocalizedStringResource(
+            "Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))",
+            locale: locale))
+        let links = try? AttributedString(markdown: message, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))
 
-        Text(LocalizedStringResource("Продолжая, вы принимаете [Условия использования](\(terms)) и [Политику конфиденциальности](\(privacy))",
-                                     locale: AppLanguage.current.locale))
+        Text(links ?? AttributedString(message))
             .font(Adaptive.size(.caption2, .caption, .caption))
             .foregroundStyle(.deepGray)
             .multilineTextAlignment(.center)
@@ -117,13 +123,13 @@ struct OnboardingIcon: View {
 enum OnboardingTextFieldTypes {
     case name, email, password, newPassword, code
 
-    fileprivate var title: String {
+    fileprivate var title: LocalizedStringResource {
         switch self {
-            case .name: AppLanguage.text("Имя")
-            case .email: AppLanguage.text("Электронная почта")
-            case .password: AppLanguage.text("Пароль")
-            case .newPassword: AppLanguage.text("Новый пароль")
-            case .code: AppLanguage.text("Код из 6 цифр")
+            case .name: "Имя"
+            case .email: "Электронная почта"
+            case .password: "Пароль"
+            case .newPassword: "Новый пароль"
+            case .code: "Код из 6 цифр"
         }
     }
 
@@ -157,11 +163,11 @@ enum OnboardingTextFieldTypes {
 #Preview {
     ScrollView {
         VStack(spacing: 20) {
-            OnboardingHeader(title: AppLanguage.text("Придумайте пароль"), subtitle: AppLanguage.text("Не меньше 8 символов"))
+            OnboardingHeader(title: "Придумайте пароль", subtitle: "Не меньше 8 символов")
 
             OnboardingTextField(text: .constant(""), type: .password)
 
-            OnboardingTextButton(title: AppLanguage.text("Забыли пароль?")) {
+            OnboardingTextButton(title: "Забыли пароль?") {
 
             }
 

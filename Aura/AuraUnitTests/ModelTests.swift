@@ -9,7 +9,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class ModelTests: AuraUnitTestCase {
+final class ModelTests: XCTestCase {
     func test_userZodiacSign_followsBirthDate_atEverySignBoundary() {
         let cases: [(String, HoroscopeTypes)] = [
             ("19.01.2000", .capricorn), ("20.01.2000", .aquarius),

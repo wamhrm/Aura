@@ -34,12 +34,12 @@ struct HomeView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 15) {
-                                Text(AppLanguage.text("ИНСАЙТ ДНЯ"))
+                                Text("ИНСАЙТ ДНЯ")
                                     .font(Adaptive.size(.callout, .default, .default))
                                     .fontWeight(.heavy)
 
                                 if !vm.allowsAIAnalysis {
-                                    AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI, чтобы получать инсайт дня"),
+                                    AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать инсайт дня",
                                                   onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
                                 } else if let insight = vm.dailyInsight {
@@ -67,7 +67,7 @@ struct HomeView: View {
 
                             if let horoscope = vm.horoscope {
                                 VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
-                                    headerText(title: AppLanguage.text("Гороскоп на неделю"), buttonTitle: AppLanguage.text("Читать")) {
+                                    headerText(title: "Гороскоп на неделю", buttonTitle: "Читать") {
                                         vm.showHoroscopeDetails()
                                     }
 
@@ -78,7 +78,7 @@ struct HomeView: View {
                                 .padding(.top, 15)
                             } else if case .failed(let message) = vm.horoscopeState {
                                 VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
-                                    Text(AppLanguage.text("Гороскоп на неделю"))
+                                    Text("Гороскоп на неделю")
                                         .font(Adaptive.size(.system(size: 15), .callout, .default))
                                         .fontWeight(.semibold)
                                         .padding(.leading, 4)
@@ -98,7 +98,7 @@ struct HomeView: View {
 
                             Button(action: compatibilityButton) {
                                 HStack {
-                                    Text(AppLanguage.text("Проверить совместимость"))
+                                    Text("Проверить совместимость")
                                         .font(Adaptive.size(.system(size: 18), .system(size: 19), .title3))
                                         .bold()
                                         .foregroundStyle(.white)
@@ -117,8 +117,8 @@ struct HomeView: View {
                             }
 
                             VStack(alignment: .leading, spacing: Adaptive.size(10, 10, 12)) {
-                                headerText(title: AppLanguage.text("Проверьте себя"),
-                                           buttonTitle: AppLanguage.text("Все тесты")) {
+                                headerText(title: "Проверьте себя",
+                                           buttonTitle: "Все тесты") {
                                     vm.showAllTests()
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
@@ -133,7 +133,7 @@ struct HomeView: View {
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
 
-                                ClassicButton(title: AppLanguage.text("Проверить себя")) {
+                                ClassicButton(title: "Проверить себя") {
                                     vm.makePersonalityTest()
                                 }
                                 .disabled(!vm.allowsAIAnalysis)
@@ -144,7 +144,7 @@ struct HomeView: View {
                             .overlay {
                                 if !vm.allowsAIAnalysis {
                                     AIConsentLock(
-                                        title: AppLanguage.text("Разрешите анализ с помощью AI для прохождения тестов"),
+                                        title: "Разрешите анализ с помощью AI для прохождения тестов",
                                         onAllow: aiConsentButton)
                                 }
                             }
@@ -155,7 +155,7 @@ struct HomeView: View {
                     .scrollIndicators(.hidden)
                     .refreshable { await vm.refresh() }
                 }
-                .navigationTitle(AppLanguage.text("Главная"))
+                .localizedNavigationTitle("Главная")
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: HomeRoutes.self) { destination in
                     destinationView(destination)
@@ -165,7 +165,7 @@ struct HomeView: View {
 
             ZStack {
                 BackgroundView()
-                LoadingView(title: vm.isLoading ? vm.loadingTitle : AppLanguage.text("Загружаем информацию"),
+                LoadingView(title: vm.isLoading ? vm.loadingTitle : "Загружаем информацию",
                             isPresented: vm.showsLoadingScreen)
             }
             .opacity(vm.showsLoadingScreen ? 1 : 0)
@@ -212,8 +212,8 @@ extension HomeView {
         }
     }
     
-    private func headerText(title: String,
-                            buttonTitle: String,
+    private func headerText(title: LocalizedStringResource,
+                            buttonTitle: LocalizedStringResource,
                             onTapHandler: @escaping () -> Void) -> some View {
         HStack {
             Text(title)

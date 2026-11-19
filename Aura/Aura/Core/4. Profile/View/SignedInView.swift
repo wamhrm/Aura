@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SignedInView: View {
     @ObservedObject var vm: ProfileViewModel
+    @Environment(\.locale) private var locale
     let user: UserModel
     let aiConsentButton: () -> Void
 
@@ -37,10 +38,14 @@ struct SignedInView: View {
                             .fontWeight(.bold)
 
                         HStack(alignment: .center, spacing: 5) {
-                            Text(user.birthDateText)
+                            if let birthDate = user.birthDate {
+                                Text(birthDate, format: .dateTime.day().month(.wide).year().locale(locale))
+                            } else {
+                                Text("Дата рождения не указана")
+                            }
 
                             if let zodiacSign = user.zodiacSign {
-                                Text("·")
+                                Text(verbatim: "·")
                                     .font(Adaptive.size(.title3, .system(size: 21), .title2))
                                     .bold()
 
@@ -57,12 +62,12 @@ struct SignedInView: View {
 
                     VStack(alignment: .leading, spacing: 15) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(AppLanguage.text("СОВЕТ ДНЯ"))
+                            Text("СОВЕТ ДНЯ")
                                 .font(Adaptive.size(.callout, .default, .default))
                                 .fontWeight(.heavy)
 
                             if vm.needsAIConsent {
-                                AIConsentLock(title: AppLanguage.text("Разрешите анализ с помощью AI, чтобы получать совет дня"),
+                                AIConsentLock(title: "Разрешите анализ с помощью AI, чтобы получать совет дня",
                                               onAllow: aiConsentButton)
                                     .frame(maxWidth: .infinity)
                             } else if let dailyTip = display.dailyTip {
@@ -87,7 +92,7 @@ struct SignedInView: View {
                         .clipShape(.rect(cornerRadius: 12))
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(AppLanguage.text("О вас"))
+                            Text("О вас")
                                 .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
@@ -121,7 +126,7 @@ struct SignedInView: View {
                         .backgroundWithShape(12, .cardBackground, showsStroke: true)
 
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(AppLanguage.text("Ваш психотип"))
+                            Text("Ваш психотип")
                                 .font(Adaptive.size(.system(size: 15), .callout, .default))
                                 .bold()
 
@@ -149,6 +154,7 @@ struct SignedInView: View {
                         .backgroundWithShape(12, .cardBackground, showsStroke: true)
                     }
                     .blur(radius: !vm.hasPersonalityTests ? 5 : 0)
+                    .accessibilityHidden(!vm.hasPersonalityTests)
                     .overlay {
                         if !vm.hasPersonalityTests {
                             lockedContentView()
@@ -164,7 +170,7 @@ struct SignedInView: View {
                 await vm.refresh()
             }
         }
-        .navigationTitle(AppLanguage.text("Профиль"))
+        .localizedNavigationTitle("Профиль")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -176,7 +182,7 @@ extension SignedInView {
             case .loading:
                 ProgressView()
             case .loaded:
-                CompleteProfileLock(title: AppLanguage.text("Пройдите тесты для получения результатов о себе"))
+                CompleteProfileLock(title: "Пройдите тесты для получения результатов о себе")
             case .failed(let message):
                 LoadFailedView(message: message) {
                     vm.retryPersonality()

@@ -9,6 +9,10 @@ import SwiftUI
 import UIKit
 
 extension View {
+    func localizedNavigationTitle(_ title: LocalizedStringResource) -> some View {
+        modifier(LocalizedNavigationTitle(title: title))
+    }
+
     func bottomAreaPadding(_ value: CGFloat) -> some View {
         self
             .safeAreaInset(edge: .bottom) { Color.clear.frame(height: value) }
@@ -100,5 +104,16 @@ extension View {
             .padding(.top, 10)
             .foregroundStyle(.white)
             .padding(padding)
+    }
+}
+
+private struct LocalizedNavigationTitle: ViewModifier {
+    @Environment(\.locale) private var locale
+    let title: LocalizedStringResource
+
+    func body(content: Content) -> some View {
+        var title = title
+        title.locale = locale
+        return content.navigationTitle(String(localized: title))
     }
 }

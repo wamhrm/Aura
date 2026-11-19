@@ -10,7 +10,7 @@ import XCTest
 @testable import Aura
 
 @MainActor
-final class HomeViewModelTests: AuraUnitTestCase {
+final class HomeViewModelTests: XCTestCase {
     func test_refreshIfNeeded_doesNotRepeatTodaysInitialRequests() async {
         let content = MockContentService()
         let viewModel = HomeViewModel(authService: MockAuthService(user: makeUser()), contentService: content)
@@ -321,7 +321,7 @@ final class HomeViewModelTests: AuraUnitTestCase {
 }
 
 @MainActor
-final class EmailConfirmationViewModelTests: AuraUnitTestCase {
+final class EmailConfirmationViewModelTests: XCTestCase {
     func test_resendingConfirmationCode_usesTheSendingTitle() async {
         let viewModel = EmailConfirmationViewModel(authService: MockAuthService(), email: "anna@mail.ru")
         viewModel.sendCode()

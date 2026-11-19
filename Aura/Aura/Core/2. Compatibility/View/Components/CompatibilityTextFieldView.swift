@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CompatibilityTextFieldView: View {
-    let title: String
+    let title: LocalizedStringResource
     @Binding var text: String
 
     var body: some View {
@@ -32,5 +32,5 @@ struct CompatibilityTextFieldView: View {
 }
 
 #Preview {
-    CompatibilityTextFieldView(title: AppLanguage.text("Введите имя"), text: .constant(""))
+    CompatibilityTextFieldView(title: "Введите имя", text: .constant(""))
 }

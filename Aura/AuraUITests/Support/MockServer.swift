@@ -15,6 +15,7 @@ final class MockServer: @unchecked Sendable {
     private var responses: [String: (status: Int, body: Data, headers: [String: String])] = [:]
     private var receivedRequests: [String] = []
     private var receivedIdempotencyKeys: [String] = []
+    private var receivedLanguages: [String: [String]] = [:]
 
     init() throws {
         listener = try NWListener(using: .tcp, on: .any)
@@ -54,6 +55,10 @@ final class MockServer: @unchecked Sendable {
         lock.withLock { receivedIdempotencyKeys }
     }
 
+    func languages(for route: String) -> [String] {
+        lock.withLock { receivedLanguages[route, default: []] }
+    }
+
     func respond(route: String, status: Int = 200, body: Data = Data(), headers: [String: String] = [:]) {
         lock.withLock { responses[route] = (status, body, headers) }
     }
@@ -89,16 +94,25 @@ final class MockServer: @unchecked Sendable {
                 .flatMap { $0.split(separator: ":", maxSplits: 1).last }
                 .map { $0.trimmingCharacters(in: .whitespaces) }
 
-            answer(connection, requestLine: lines.first.map(String.init) ?? "", idempotencyKey: idempotencyKey)
+            let language = lines
+                .first { $0.lowercased().hasPrefix("accept-language:") }
+                .flatMap { $0.split(separator: ":", maxSplits: 1).last }
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+
+            answer(connection, requestLine: lines.first.map(String.init) ?? "",
+                   idempotencyKey: idempotencyKey, language: language)
         }
     }
 
-    private func answer(_ connection: NWConnection, requestLine: String, idempotencyKey: String?) {
+    private func answer(_ connection: NWConnection, requestLine: String, idempotencyKey: String?, language: String?) {
         let route = requestLine.split(separator: " ", maxSplits: 2).prefix(2).joined(separator: " ")
         let (status, body, headers) = lock.withLock {
             self.receivedRequests.append(route)
             if let idempotencyKey {
                 self.receivedIdempotencyKeys.append(idempotencyKey)
+            }
+            if let language {
+                self.receivedLanguages[route, default: []].append(language)
             }
             return self.responses[route] ?? (404, Data(#"{"error":true,"reason":"Не найдено"}"#.utf8), [:])
         }

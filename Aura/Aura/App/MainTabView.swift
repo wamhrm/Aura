@@ -13,6 +13,7 @@ struct MainTabView: View {
     @StateObject private var historyViewModel: HistoryViewModel
     @StateObject private var profileViewModel: ProfileViewModel
 
+    @Environment(\.locale) private var locale
     @State private var selectedTab: Tabs = .home
 
     init(authService: AuthService,
@@ -42,6 +43,7 @@ struct MainTabView: View {
             } label: {
                 Image(systemName: Tabs.home.icon)
             }
+            .accessibilityLabel("Главная")
 
             Tab(value: .compatibility) {
                 CompatibilityView(vm: compatibilityViewModel) {
@@ -50,12 +52,14 @@ struct MainTabView: View {
             } label: {
                 Image(systemName: Tabs.compatibility.icon)
             }
+            .accessibilityLabel("Совместимость")
 
             Tab(value: .history) {
                 HistoryView(vm: historyViewModel)
             } label: {
                 Image(systemName: Tabs.history.icon)
             }
+            .accessibilityLabel("История")
 
             Tab(value: .profile) {
                 ProfileView(vm: profileViewModel) {
@@ -64,8 +68,13 @@ struct MainTabView: View {
             } label: {
                 Image(systemName: Tabs.profile.icon)
             }
+            .accessibilityLabel("Профиль")
         }
         .tabBarMinimizeBehavior(.never)
+        .onChange(of: locale.language.languageCode) {
+            homeViewModel.refreshLocalizedContent()
+            profileViewModel.refreshLocalizedContent()
+        }
     }
 }
 

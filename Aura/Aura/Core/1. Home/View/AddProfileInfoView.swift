@@ -17,12 +17,12 @@ struct AddProfileInfoView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    ProfileInfoSection(title: AppLanguage.text("Ваше имя")) {
-                        CompatibilityTextFieldView(title: AppLanguage.text("Введите имя"),
+                    ProfileInfoSection(title: "Ваше имя") {
+                        CompatibilityTextFieldView(title: "Введите имя",
                                                    text: $vm.name)
                     }
 
-                    ProfileInfoSection(title: AppLanguage.text("Ваш пол")) {
+                    ProfileInfoSection(title: "Ваш пол") {
                         HStack {
                             ProfileInfoOptionView(type: .man,
                                                   selection: $vm.profileInfo.gender)
@@ -31,7 +31,7 @@ struct AddProfileInfoView: View {
                         }
                     }
 
-                    ProfileInfoSection(title: AppLanguage.text("Дата рождения")) {
+                    ProfileInfoSection(title: "Дата рождения") {
                         BirthDateFieldsView(birthDate: $vm.birthDate,
                                             knowsBirthTime: $vm.knowsBirthTime,
                                             birthTime: $vm.birthTime,
@@ -40,7 +40,7 @@ struct AddProfileInfoView: View {
 
                     PsychotypeSectionsView(profileInfo: $vm.profileInfo)
 
-                    ClassicButton(title: AppLanguage.text("Готово")) {
+                    ClassicButton(title: "Готово") {
                         onSave()
                     }
                     .padding(.top, 5)
@@ -51,10 +51,10 @@ struct AddProfileInfoView: View {
             .dismissKeyboardOnTap()
             .scrollDismissesKeyboard(.interactively)
         }
-        .navigationTitle(AppLanguage.text("О вас"))
+        .localizedNavigationTitle("О вас")
         .navigationBarTitleDisplayMode(.inline)
         .alert(vm.alertMessage, isPresented: vm.alertBinding) {
-            Button(AppLanguage.text("ОК"), role: .cancel) { }
+            Button("ОК", role: .cancel) { }
         }
     }
 }
@@ -62,24 +62,24 @@ struct AddProfileInfoView: View {
 enum ProfileInfoOption: String {
     case man, woman, introvert, ambivert, extrovert, mediator, direct, avoider, logic, intuitive, planner, spontaneous, procrastinator, stability, growth, peace
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
-            case .man: AppLanguage.text("Мужской")
-            case .woman: AppLanguage.text("Женский")
-            case .introvert: AppLanguage.text("Интроверт")
-            case .ambivert: AppLanguage.text("Амбиверт")
-            case .extrovert: AppLanguage.text("Экстраверт")
-            case .mediator: AppLanguage.text("Миротворец")
-            case .direct: AppLanguage.text("Прямой")
-            case .avoider: AppLanguage.text("Избегающий")
-            case .logic: AppLanguage.text("Рациональный")
-            case .intuitive: AppLanguage.text("Интуитивный")
-            case .planner: AppLanguage.text("Планируете")
-            case .spontaneous: AppLanguage.text("По ситуации")
-            case .procrastinator: AppLanguage.text("Откладываете")
-            case .stability: AppLanguage.text("Стабильность")
-            case .growth: AppLanguage.text("Рост")
-            case .peace: AppLanguage.text("Спокойствие")
+            case .man: "Мужской"
+            case .woman: "Женский"
+            case .introvert: "Интроверт"
+            case .ambivert: "Амбиверт"
+            case .extrovert: "Экстраверт"
+            case .mediator: "Миротворец"
+            case .direct: "Прямой"
+            case .avoider: "Избегающий"
+            case .logic: "Рациональный"
+            case .intuitive: "Интуитивный"
+            case .planner: "Планируете"
+            case .spontaneous: "По ситуации"
+            case .procrastinator: "Откладываете"
+            case .stability: "Стабильность"
+            case .growth: "Рост"
+            case .peace: "Спокойствие"
         }
     }
 

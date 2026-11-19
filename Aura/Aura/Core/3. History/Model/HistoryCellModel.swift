@@ -51,10 +51,6 @@ extension HistoryCellModel {
         return date.formatted(.dateTime.day().month(.wide).year().locale(AppLanguage.resolvedLocale))
     }
 
-    var compatibilityScoreText: String {
-        "\(compatibilityScore ?? 0)%"
-    }
-    
     static let personalityPlaceholder = HistoryCellModel(
         id: UUID(),
         kind: .personality,

@@ -13,18 +13,18 @@ enum LoadState: Equatable {
 }
 
 struct LoadingView: View {
-    let title: String
+    let title: LocalizedStringResource
     var isPresented = true
 
     @State private var isRotating = false
     @State private var phraseIndex = 0
     @State private var textOpacity = 1.0
 
-    private var phrases: [String] {
-        [title, AppLanguage.text("Ещё немного"), AppLanguage.text("Почти готово")]
+    private var phrases: [LocalizedStringResource] {
+        [title, "Ещё немного", "Почти готово"]
     }
 
-    private var phrase: String {
+    private var phrase: LocalizedStringResource {
         phrases[phraseIndex % phrases.count]
     }
 
@@ -62,7 +62,7 @@ struct LoadingView: View {
         .onAppear {
             isRotating = true
         }
-        .task(id: "\(isPresented)-\(title)") {
+        .task(id: "\(isPresented)-\(title.key)") {
             phraseIndex = 0
             textOpacity = 1
             guard isPresented else { return }
@@ -96,6 +96,6 @@ struct LoadingView: View {
 #Preview("Loading") {
     ZStack {
         BackgroundView()
-        LoadingView(title: AppLanguage.text("Сохраняем профиль и настройки"))
+        LoadingView(title: "Сохраняем профиль и настройки")
     }
 }

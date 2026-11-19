@@ -29,12 +29,12 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                     .fontWeight(.medium)
                 
                 VStack(alignment: .leading, spacing: 15) {
-                    Text(AppLanguage.text("Что включено"))
+                    Text("Что включено")
                         .font(Adaptive.size(.system(size: 15), .callout, .default))
                         .bold()
                         .padding(.bottom, 5)
                     
-                    ForEach(type.includedItems, id: \.self) { item in
+                    ForEach(type.includedItems, id: \.key) { item in
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark")
                                 .foregroundStyle(.deepGray)
@@ -55,7 +55,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
                 .padding(20)
                 .backgroundWithShape(12, .cardBackground, showsStroke: true)
                 
-                ClassicButton(title: isSelected ? AppLanguage.text("Убрать") : AppLanguage.text("Выбрать")) {
+                ClassicButton(title: isSelected ? "Убрать" : "Выбрать") {
                     onTapHandler()
                 }
                 
@@ -63,7 +63,7 @@ struct TestDetailsView<Test: TestCellDisplayable>: View {
             }
             .padding(.horizontal)
         }
-        .navigationTitle(type.title)
+        .localizedNavigationTitle(type.title)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

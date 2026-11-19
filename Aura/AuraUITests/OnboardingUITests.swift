@@ -8,6 +8,34 @@
 import XCTest
 
 final class OnboardingUITests: AuraUITestCase {
+    func test_systemLanguage_usesTheFirstSupportedLanguageForOnboardingAndRequests() {
+        app.launchArguments = ["-AppleLanguages", "(fr, en, ru)"]
+        app.launch()
+        XCTAssertTrue(text("Welcome").waitForExistence(timeout: 10))
+
+        for page in ["Weekly horoscope", "Daily insight and tip", "Personality and compatibility tests"] {
+            tapButton("Continue")
+            XCTAssertTrue(text(page).waitForExistence(timeout: 5))
+        }
+
+        tapButton("Get started")
+        tapButton("Continue")
+        XCTAssertEqual(alertText(), "Enter your name")
+        closeAlert()
+        fillField(app.textFields["Name"].firstMatch, text: "Anna")
+        tapButton("Continue")
+
+        XCTAssertTrue(app.links["Terms of Use"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.links["Privacy Policy"].firstMatch.exists)
+        fillField(app.textFields["Email"].firstMatch, text: email)
+        tapButton("Continue")
+
+        XCTAssertTrue(app.secureTextFields["Password"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(text("At least 8 characters").exists)
+        XCTAssertTrue(app.buttons["Show password"].firstMatch.exists)
+        XCTAssertEqual(server.languages(for: "POST /v1/auth/email/available"), ["en"])
+    }
+
     private func openNameStep() {
         launchOnWelcome()
 
